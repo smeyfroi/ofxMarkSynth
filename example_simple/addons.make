@@ -1,0 +1,3 @@
+ofxGui
+ofxIntrospector
+ofxMarkSynth
