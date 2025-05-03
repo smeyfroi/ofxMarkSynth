@@ -22,7 +22,7 @@ void PointIntrospectorMod::initParameters() {
 }
 
 void PointIntrospectorMod::update() {
-  if (!introspectorPtr) return;
+  if (!introspectorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no introspector"; return; }
   std::for_each(newPoints.begin(), newPoints.end(), [&](const auto& p) {
     introspectorPtr->addCircle(p.x, p.y, pointSizeParameter/ofGetWindowWidth(), colorParameter, true, pointFadeParameter);
   });

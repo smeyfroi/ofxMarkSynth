@@ -25,10 +25,9 @@ void RandomPointSourceMod::update() {
   pointCount -= pointsToCreate;
   if (pointsToCreate == 0) return;
 
-  auto sp = SOURCE_POINTS; // I don't understand why this is necessary for the for_each to compile
   for (int i = 0; i < pointsToCreate; i++) {
-    std::for_each(connections[sp]->begin(),
-                  connections[sp]->end(),
+    std::for_each(connections[SOURCE_POINTS]->begin(),
+                  connections[SOURCE_POINTS]->end(),
                   [&](auto& p) {
       auto& [modPtr, sinkId] = p;
       modPtr->receive(sinkId, createRandomPoint());

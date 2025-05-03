@@ -18,7 +18,7 @@ public:
   RandomPointSourceMod(const std::string& name, const ModConfig&& config);
   void update() override;
   
-  static const int SOURCE_POINTS = 1;
+  static constexpr int SOURCE_POINTS = 1;
 
 protected:
   void initParameters() override;

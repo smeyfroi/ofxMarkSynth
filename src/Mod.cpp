@@ -20,7 +20,11 @@ ofParameterGroup& Mod::getParameterGroup() {
     parameters.setName(name);
     initParameters();
     for (const auto& [k, v] : config) {
-      parameters.get(k).fromString(v);
+      if (!parameters.contains(k)) {
+        ofLogError() << "bad parameter in " << typeid(*this).name() << " with name " << k;
+      } else {
+        parameters.get(k).fromString(v);
+      }
     }
   }
   return parameters;

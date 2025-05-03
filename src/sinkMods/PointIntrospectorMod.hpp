@@ -23,7 +23,7 @@ public:
   void receive(int sinkId, const glm::vec2& point) override;
   std::shared_ptr<Introspector> introspectorPtr;
 
-  static const int SINK_POINTS = 1;
+  static constexpr int SINK_POINTS = 1;
 
 protected:
   void initParameters() override;
