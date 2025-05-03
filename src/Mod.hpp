@@ -27,11 +27,11 @@ class Mod {
 public:
   Mod(const std::string& name, const ModConfig&& config);
   virtual ~Mod() {};
-  virtual void update() = 0;
-  virtual void draw() = 0;
+  virtual void update() {};
+  virtual void draw() {};
   ofParameterGroup& getParameterGroup();
   void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
-  virtual void receive(int sinkId, const glm::vec2& point) {}; // override for sink mods
+  virtual void receive(int sinkId, const glm::vec2& point) {};
 
 protected:
   std::string name;

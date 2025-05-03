@@ -17,7 +17,6 @@ class RandomPointSourceMod : public Mod {
 public:
   RandomPointSourceMod(const std::string& name, const ModConfig&& config);
   void update() override;
-  void draw() override;
   
   static const int SOURCE_POINTS = 1;
 

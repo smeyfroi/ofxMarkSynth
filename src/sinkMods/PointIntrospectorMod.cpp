@@ -29,9 +29,6 @@ void PointIntrospectorMod::update() {
   newPoints.clear();
 }
 
-void PointIntrospectorMod::draw() {
-}
-
 void PointIntrospectorMod::receive(int sinkId, const glm::vec2& point) {
   switch (sinkId) {
     case SINK_POINTS:

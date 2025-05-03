@@ -36,9 +36,6 @@ void RandomPointSourceMod::update() {
   }
 }
 
-void RandomPointSourceMod::draw() {
-}
-
 const glm::vec2 RandomPointSourceMod::createRandomPoint() const {
   return glm::vec2 { ofRandom(), ofRandom() };
 }
