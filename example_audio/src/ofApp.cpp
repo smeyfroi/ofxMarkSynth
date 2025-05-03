@@ -16,7 +16,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
                                                                                       ofxMarkSynth::ModConfig {
   });
   pointIntrospectorModPtr->introspectorPtr = introspectorPtr;
-  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_POINTS,
+  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
                                  pointIntrospectorModPtr,
                                  ofxMarkSynth::PointIntrospectorMod::SINK_POINTS);
   mods->push_back(pointIntrospectorModPtr);

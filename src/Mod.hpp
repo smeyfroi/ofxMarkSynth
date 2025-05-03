@@ -32,6 +32,8 @@ public:
   ofParameterGroup& getParameterGroup();
   void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec2& point) {};
+  virtual void receive(int sinkId, const glm::vec3& point) {};
+  virtual void receive(int sinkId, const float& point) {};
 
 protected:
   std::string name;
@@ -39,6 +41,7 @@ protected:
   ofParameterGroup parameters;
   virtual void initParameters() = 0;
   Connections connections;
+  template<typename T> void emit(int sourceId, const T& value);
 };
 
 

@@ -40,5 +40,18 @@ void Mod::addSink(int sourceId, ModPtr sinkModPtr, int sinkId) {
   }
 }
 
+template<typename T>
+void Mod::emit(int sourceId, const T& value) {
+  std::for_each(connections[sourceId]->begin(),
+                connections[sourceId]->end(),
+                [&](auto& p) {
+    auto& [modPtr, sinkId] = p;
+    modPtr->receive(sinkId, value);
+  });
+}
+template void Mod::emit(int sourceId, const glm::vec2& value);
+template void Mod::emit(int sourceId, const glm::vec3& value);
+template void Mod::emit(int sourceId, const float& value);
+
 
 } // ofxMarkSynth
