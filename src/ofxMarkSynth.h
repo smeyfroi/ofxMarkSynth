@@ -3,6 +3,6 @@
 #include "Mod.hpp"
 #include "RandomPointSourceMod.hpp"
 #include "AudioDataSourceMod.hpp"
-#include "PointIntrospectorMod.hpp"
+#include "IntrospectorMod.hpp"
 
 #include "Synth.hpp"

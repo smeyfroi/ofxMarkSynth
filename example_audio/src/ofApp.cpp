@@ -12,14 +12,23 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
   mods->push_back(audioDataSourceModPtr);
   
-  auto pointIntrospectorModPtr = std::make_shared<ofxMarkSynth::PointIntrospectorMod>("Point Introspector",
+  auto introspectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Point Introspector",
                                                                                       ofxMarkSynth::ModConfig {
   });
-  pointIntrospectorModPtr->introspectorPtr = introspectorPtr;
+  introspectorModPtr->introspectorPtr = introspectorPtr;
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
-                                 pointIntrospectorModPtr,
-                                 ofxMarkSynth::PointIntrospectorMod::SINK_POINTS);
-  mods->push_back(pointIntrospectorModPtr);
+                                 introspectorModPtr,
+                                 ofxMarkSynth::IntrospectorMod::SINK_POINTS);
+  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR,
+                                 introspectorModPtr,
+                                 ofxMarkSynth::IntrospectorMod::SINK_HORIZONTAL_LINES_1);
+  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_SPECTRAL_CREST_SCALAR,
+                                 introspectorModPtr,
+                                 ofxMarkSynth::IntrospectorMod::SINK_HORIZONTAL_LINES_2);
+  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_ZERO_CROSSING_RATE_SCALAR,
+                                 introspectorModPtr,
+                                 ofxMarkSynth::IntrospectorMod::SINK_HORIZONTAL_LINES_3);
+  mods->push_back(introspectorModPtr);
   
   return mods;
 }
@@ -37,6 +46,7 @@ void ofApp::setup() {
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
+  gui.getGroup("Synth").minimizeAll();
 }
 
 //--------------------------------------------------------------
