@@ -53,5 +53,17 @@ template void Mod::emit(int sourceId, const glm::vec2& value);
 template void Mod::emit(int sourceId, const glm::vec3& value);
 template void Mod::emit(int sourceId, const float& value);
 
+void Mod::receive(int sinkId, const glm::vec2& point) {
+  ofLogError() << "bad receive of glm::vec2 in " << typeid(*this).name();
+}
+
+void Mod::receive(int sinkId, const glm::vec3& point) {
+  ofLogError() << "bad receive of glm::vec3 in " << typeid(*this).name();
+}
+
+void Mod::receive(int sinkId, const float& point) {
+  ofLogError() << "bad receive of float in " << typeid(*this).name();
+}
+
 
 } // ofxMarkSynth
