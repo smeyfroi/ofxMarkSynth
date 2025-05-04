@@ -62,7 +62,7 @@ void AudioDataSourceMod::emitSpectralPoints() {
 void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
   float s = getAnalysisScalar(minComplexSpectralDifferenceParameter,
                               maxComplexSpectralDifferenceParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+                              scalar);
   emit(sourceId, s);
 }
 
