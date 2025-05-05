@@ -42,6 +42,7 @@ void Mod::addSink(int sourceId, ModPtr sinkModPtr, int sinkId) {
 
 template<typename T>
 void Mod::emit(int sourceId, const T& value) {
+  if (connections[sourceId] == nullptr) { ofLogError() << "bad connection in " << typeid(*this).name() << " with sourceId " << sourceId; return; }
   std::for_each(connections[sourceId]->begin(),
                 connections[sourceId]->end(),
                 [&](auto& p) {

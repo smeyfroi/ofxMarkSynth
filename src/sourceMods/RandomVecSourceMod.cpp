@@ -41,6 +41,7 @@ void RandomVecSourceMod::update() {
         emit(SOURCE_VEC4, createRandomVec4());
         break;
       default:
+        ofLogError() << "update in " << typeid(*this).name() << " with vecDimensions " << vecDimensions;
         break;
     }
   }

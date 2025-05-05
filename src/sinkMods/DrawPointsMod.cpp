@@ -15,16 +15,24 @@ DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config, 
 : Mod { name, std::move(config) }
 {
   fbo.allocate(fboSize.x, fboSize.y, GL_RGBA32F); // 32F to accommodate fade, but this could be an optional thing to use a smaller FBO if no fade
+  fbo.getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  fadeShader.load();
+  translateShader.load();
 }
 
 void DrawPointsMod::initParameters() {
   parameters.add(pointRadiusParameter);
-//  parameters.add(pointFadeParameter);
   parameters.add(colorParameter);
+  parameters.add(fadeParameter);
+  parameters.add(translationParameter);
 }
 
 void DrawPointsMod::update() {
-  fbo.begin();
+  glm::vec4 fade { fadeParameter->r, fadeParameter->g, fadeParameter->b, fadeParameter->a };
+  fadeShader.render(fbo, fade);
+  translateShader.render(fbo, translationParameter);
+
+  fbo.getSource().begin();
   ofScale(fbo.getWidth(), fbo.getHeight());
   ofFill();
   ofSetColor(colorParameter);
@@ -34,7 +42,7 @@ void DrawPointsMod::update() {
     ofDrawCircle(p, pointRadiusParameter / fbo.getWidth());
   });
   newPoints.clear();
-  fbo.end();
+  fbo.getSource().end();
 }
 
 void DrawPointsMod::draw() {
@@ -58,6 +66,16 @@ void DrawPointsMod::receive(int sinkId, const glm::vec2& point) {
       break;
     default:
       ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+void DrawPointsMod::receive(int sinkId, const glm::vec4& v) {
+  switch (sinkId) {
+    case SINK_POINT_COLOR:
+      colorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
+      break;
+    default:
+      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

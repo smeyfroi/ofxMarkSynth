@@ -4,16 +4,34 @@
 std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
 
+  auto randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
+    {"CreatedPerUpdate", "0.05"},
+    {"MinRadius", "1.0"},
+    {"MaxRadius", "5.0"}
+  }, std::pair<float, float>{0.0, 64.0}, std::pair<float, float>{0.0, 64.0});
+  mods->push_back(randomFloatSourceModPtr);
+
   auto randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.4"}
   }, 2);
   mods->push_back(randomVecSourceModPtr);
   
+  auto randomColourSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Colours", ofxMarkSynth::ModConfig {
+    {"CreatedPerUpdate", "0.1"}
+  }, 4);
+  mods->push_back(randomColourSourceModPtr);
+  
   auto drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
   }, ofGetWindowSize());
+  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
+                                   drawPointsModPtr,
+                                   ofxMarkSynth::DrawPointsMod::SINK_POINT_COLOR);
+  randomFloatSourceModPtr->addSink(ofxMarkSynth::RandomFloatSourceMod::SOURCE_FLOAT,
+                                   drawPointsModPtr,
+                                   ofxMarkSynth::DrawPointsMod::SINK_POINT_RADIUS);
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  drawPointsModPtr,
-                                 ofxMarkSynth::IntrospectorMod::SINK_POINTS);
+                                 ofxMarkSynth::DrawPointsMod::SINK_POINTS);
   mods->push_back(drawPointsModPtr);
   
   return mods;
@@ -21,7 +39,8 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
-  
+  ofDisableArbTex();
+
   synth.configure(createMods());
   
   parameters.add(synth.getParameterGroup("Synth"));
