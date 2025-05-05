@@ -1,3 +1,11 @@
 ofxGui
 ofxIntrospector
+ofxNetwork
+ofxOsc
+ofxHistoryPlot
+ofxGist
+ofxAudioFile
+ofxSoundObjects
+ofxAudioAnalysisClient
+ofxAudioData
 ofxMarkSynth

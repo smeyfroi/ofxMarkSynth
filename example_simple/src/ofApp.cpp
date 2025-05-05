@@ -9,12 +9,12 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   });
   mods->push_back(randomPointsSourceModPtr);
   
-  auto pointIntrospectorModPtr = std::make_shared<ofxMarkSynth::PointIntrospectorMod>("Point Introspector", ofxMarkSynth::ModConfig {
+  auto pointIntrospectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Introspector", ofxMarkSynth::ModConfig {
   });
   pointIntrospectorModPtr->introspectorPtr = introspectorPtr;
   randomPointsSourceModPtr->addSink(ofxMarkSynth::RandomPointSourceMod::SOURCE_POINTS,
                                     pointIntrospectorModPtr,
-                                    ofxMarkSynth::PointIntrospectorMod::SINK_POINTS);
+                                    ofxMarkSynth::IntrospectorMod::SINK_POINTS);
   mods->push_back(pointIntrospectorModPtr);
   
   return mods;
