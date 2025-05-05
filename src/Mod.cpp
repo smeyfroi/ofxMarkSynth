@@ -49,9 +49,15 @@ void Mod::emit(int sourceId, const T& value) {
     modPtr->receive(sinkId, value);
   });
 }
+template void Mod::emit(int sourceId, const glm::vec1& value);
 template void Mod::emit(int sourceId, const glm::vec2& value);
 template void Mod::emit(int sourceId, const glm::vec3& value);
+template void Mod::emit(int sourceId, const glm::vec4& value);
 template void Mod::emit(int sourceId, const float& value);
+
+void Mod::receive(int sinkId, const glm::vec1& point) {
+  ofLogError() << "bad receive of glm::vec1 in " << typeid(*this).name();
+}
 
 void Mod::receive(int sinkId, const glm::vec2& point) {
   ofLogError() << "bad receive of glm::vec2 in " << typeid(*this).name();
@@ -59,6 +65,10 @@ void Mod::receive(int sinkId, const glm::vec2& point) {
 
 void Mod::receive(int sinkId, const glm::vec3& point) {
   ofLogError() << "bad receive of glm::vec3 in " << typeid(*this).name();
+}
+
+void Mod::receive(int sinkId, const glm::vec4& point) {
+  ofLogError() << "bad receive of glm::vec4 in " << typeid(*this).name();
 }
 
 void Mod::receive(int sinkId, const float& point) {

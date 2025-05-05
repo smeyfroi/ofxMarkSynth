@@ -24,7 +24,9 @@ meta:
 common:
 	# dependencies with other addons, a list of them separated by spaces
 	# or use += in several lines
-	ADDON_DEPENDENCIES = ofxIntrospector ofxGui ofxAudioData
+	ADDON_DEPENDENCIES = ofxIntrospector ofxGui ofxAudioData ofxRenderer
+	ADDON_DEPENDENCIES += ofxDividedArea ofxMotionFromVideo ofxParticleSet
+	ADDON_DEPENDENCIES += ofxPlottable ofxPointClusters ofxSomPalette
 
 	# include search paths, this will be usually parsed from the file system
 	# but if the addon or addon libraries need special search paths they can be

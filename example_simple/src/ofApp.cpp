@@ -4,17 +4,17 @@
 std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
 
-  auto randomPointsSourceModPtr = std::make_shared<ofxMarkSynth::RandomPointSourceMod>("Random Points", ofxMarkSynth::ModConfig {
-    {"PointsPerUpdate", "0.4"}
-  });
-  mods->push_back(randomPointsSourceModPtr);
+  auto randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
+    {"CreatedPerUpdate", "0.4"}
+  }, 2);
+  mods->push_back(randomVecSourceModPtr);
   
   auto pointIntrospectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Introspector", ofxMarkSynth::ModConfig {
   });
   pointIntrospectorModPtr->introspectorPtr = introspectorPtr;
-  randomPointsSourceModPtr->addSink(ofxMarkSynth::RandomPointSourceMod::SOURCE_POINTS,
-                                    pointIntrospectorModPtr,
-                                    ofxMarkSynth::IntrospectorMod::SINK_POINTS);
+  randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
+                                 pointIntrospectorModPtr,
+                                 ofxMarkSynth::IntrospectorMod::SINK_POINTS);
   mods->push_back(pointIntrospectorModPtr);
   
   return mods;

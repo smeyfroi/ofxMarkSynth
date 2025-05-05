@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "RandomPointSourceMod.hpp"
+#include "RandomVecSourceMod.hpp"
 #include "AudioDataSourceMod.hpp"
 #include "IntrospectorMod.hpp"
 #include "DrawPointsMod.hpp"

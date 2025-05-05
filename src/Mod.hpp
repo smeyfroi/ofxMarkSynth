@@ -31,9 +31,11 @@ public:
   virtual void draw() {};
   ofParameterGroup& getParameterGroup();
   void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
+  virtual void receive(int sinkId, const glm::vec1& point);
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
-  virtual void receive(int sinkId, const float& point);
+  virtual void receive(int sinkId, const glm::vec4& point);
+  virtual void receive(int sinkId, const float& value);
 
 protected:
   std::string name;
