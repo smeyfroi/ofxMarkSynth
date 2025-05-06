@@ -19,6 +19,7 @@ public:
   void configure(std::unique_ptr<ModPtrs> modPtrsPtr);
   void update();
   void draw();
+  bool keyPressed(int key);
   ofParameterGroup& getParameterGroup(const std::string& groupName);
 
 private:

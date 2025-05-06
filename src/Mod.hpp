@@ -19,7 +19,7 @@ using ModPtrs = std::vector<ModPtr>;
 using SinkId = int;
 using Sinks = std::vector<std::pair<ModPtr, SinkId>>;
 using SourceId = int;
-using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>; // sourceName -> Sinks
+using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 
 
 class Mod {
@@ -29,6 +29,7 @@ public:
   virtual ~Mod() {};
   virtual void update() {};
   virtual void draw() {};
+  virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec1& point);

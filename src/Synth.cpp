@@ -26,6 +26,14 @@ void Synth::draw() {
   });
 }
 
+bool Synth::keyPressed(int key) {
+  bool result;
+  std::for_each(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [&](auto& modPtr) {
+    result |= modPtr->keyPressed(key);
+  });
+  return result;
+}
+
 ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {
   ofParameterGroup parameterGroup = parameters;
   if (parameters.size() == 0) {
