@@ -12,7 +12,7 @@ namespace ofxMarkSynth {
 
 Mod::Mod(const std::string& name_, const ModConfig&& config_)
 : name { name_ },
-config { config_ }
+config { std::move(config_) }
 {}
 
 ofParameterGroup& Mod::getParameterGroup() {

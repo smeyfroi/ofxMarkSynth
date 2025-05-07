@@ -7,6 +7,7 @@
 #include "AudioDataSourceMod.hpp"
 
 #include "SomPaletteMod.hpp"
+#include "ClusterMod.hpp"
 
 #include "IntrospectorMod.hpp"
 #include "DrawPointsMod.hpp"
