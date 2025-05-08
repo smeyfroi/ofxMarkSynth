@@ -25,7 +25,7 @@ void ClusterMod::update() {
   });
   newVecs.clear();
 
-  auto clusters = pointClusters.getClusters();
+  auto clusters = pointClusters.getClusters(); // a copy from the cluster thread
   std::for_each(clusters.cbegin(), clusters.cend(), [this](const auto& v) {
     emit(SOURCE_VEC2, v);
   });

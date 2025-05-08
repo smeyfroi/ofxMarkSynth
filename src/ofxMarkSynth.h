@@ -11,5 +11,6 @@
 
 #include "IntrospectorMod.hpp"
 #include "DrawPointsMod.hpp"
+#include "DividedAreaMod.hpp"
 
 #include "Synth.hpp"

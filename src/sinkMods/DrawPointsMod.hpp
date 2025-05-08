@@ -39,7 +39,7 @@ private:
   ofParameter<float> pointRadiusParameter { "PointRadius", 2.0, 0.0, 32.0 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<ofFloatColor> fadeParameter { "Fade", ofFloatColor { 1.0, 1.0, 1.0, 0.995 }, ofFloatColor { 0.9, 0.9, 0.9, 0.9}, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ofParameter<glm::vec2> translationParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { 0.0, 0.0 }, glm::vec2 { 0.01, 0.01 } };
+  ofParameter<glm::vec2> translationParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
 
   std::vector<glm::vec2> newPoints;
   
