@@ -34,6 +34,9 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                          dividedAreaModPtr,
                          ofxMarkSynth::DividedAreaMod::SINK_MAJOR_ANCHORS);
+  clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
+                         dividedAreaModPtr,
+                         ofxMarkSynth::DividedAreaMod::SINK_MINOR_ANCHORS);
   mods->push_back(dividedAreaModPtr);
   
   return mods;

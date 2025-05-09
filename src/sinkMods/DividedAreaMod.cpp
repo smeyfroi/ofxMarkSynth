@@ -13,7 +13,7 @@ namespace ofxMarkSynth {
 
 DividedAreaMod::DividedAreaMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) },
-  dividedArea({ ofGetWindowSize(), 7 })
+dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
 {}
 
 void DividedAreaMod::initParameters() {
