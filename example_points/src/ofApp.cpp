@@ -6,8 +6,8 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
 
   auto randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.05"},
-    {"MinRadius", "1.0"},
-    {"MaxRadius", "5.0"}
+    {"Min", "1.0"},
+    {"Max", "5.0"}
   }, std::pair<float, float>{0.0, 64.0}, std::pair<float, float>{0.0, 64.0});
   mods->push_back(randomFloatSourceModPtr);
 

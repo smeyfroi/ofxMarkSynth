@@ -26,8 +26,8 @@ protected:
 private:
   float floatCount;
   ofParameter<float> floatsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
-  ofParameter<float> minParameter { "MinRadius", 0.0, 0.0, 1.0 }; // modified in ctor
-  ofParameter<float> maxParameter { "MaxRadius", 1.0, 0.0, 1.0 }; // modified in ctor
+  ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 }; // modified in ctor
+  ofParameter<float> maxParameter { "Max", 1.0, 0.0, 1.0 }; // modified in ctor
   
   const float createRandomFloat() const;
 };

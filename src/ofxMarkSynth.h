@@ -3,6 +3,7 @@
 #include "Mod.hpp"
 
 #include "RandomVecSourceMod.hpp"
+#include "RandomHslColorMod.hpp"
 #include "RandomFloatSourceMod.hpp"
 #include "AudioDataSourceMod.hpp"
 #include "VideoFlowSourceMod.hpp"
