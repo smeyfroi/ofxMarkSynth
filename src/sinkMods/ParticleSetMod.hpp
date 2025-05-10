@@ -28,6 +28,7 @@ public:
   void receive(int sinkId, const glm::vec4& v) override;
 
   static constexpr int SINK_POINTS = 1;
+  static constexpr int SINK_POINT_VELOCITIES = 2;
   static constexpr int SINK_SPIN = 10;
   static constexpr int SINK_COLOR = 20;
 
@@ -39,7 +40,7 @@ private:
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<ofFloatColor> fadeParameter { "Fade", ofFloatColor { 1.0, 1.0, 1.0, 0.995 }, ofFloatColor { 0.9, 0.9, 0.9, 0.9}, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
 
-  std::vector<glm::vec2> newPoints;
+  std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;
   
   PingPongFbo fbo;

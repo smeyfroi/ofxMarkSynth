@@ -5,6 +5,7 @@
 #include "RandomVecSourceMod.hpp"
 #include "RandomFloatSourceMod.hpp"
 #include "AudioDataSourceMod.hpp"
+#include "VideoFlowSourceMod.hpp"
 
 #include "SomPaletteMod.hpp"
 #include "ClusterMod.hpp"

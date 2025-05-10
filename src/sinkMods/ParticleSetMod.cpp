@@ -30,8 +30,10 @@ void ParticleSetMod::initParameters() {
 void ParticleSetMod::update() {
   std::for_each(newPoints.begin(),
                 newPoints.end(),
-                [this](const auto& p) {
-    particleSet.add(p * fbo.getWidth(), {ofRandom(0.1)-0.05, ofRandom(0.1)-0.05}, colorParameter, spinParameter);
+                [this](const auto& vec) {
+    glm::vec2 p { vec.x, vec. y };
+    glm::vec2 v { vec.z, vec. w };
+    particleSet.add(p * fbo.getWidth(), v, colorParameter, spinParameter);
   });
   newPoints.clear();
   
@@ -61,7 +63,7 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
 void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
   switch (sinkId) {
     case SINK_POINTS:
-      newPoints.push_back(point);
+      newPoints.push_back(glm::vec4 { point, ofRandom(0.1)-0.05, ofRandom(0.1)-0.05 });
       break;
     default:
       ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -70,6 +72,8 @@ void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
 
 void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
+    case SINK_POINT_VELOCITIES:
+      newPoints.push_back(v);
     case SINK_COLOR:
       colorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
       break;
