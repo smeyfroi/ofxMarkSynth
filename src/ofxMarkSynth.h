@@ -15,5 +15,6 @@
 #include "DrawPointsMod.hpp"
 #include "ParticleSetMod.hpp"
 #include "DividedAreaMod.hpp"
+#include "SandLineMod.hpp"
 
 #include "Synth.hpp"
