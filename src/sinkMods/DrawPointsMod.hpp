@@ -10,8 +10,6 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "PingPongFbo.h"
-#include "TranslateShader.h"
-#include "MultiplyColorShader.h"
 
 
 namespace ofxMarkSynth {
@@ -31,6 +29,7 @@ public:
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_POINT_RADIUS = 10;
   static constexpr int SINK_POINT_COLOR = 20;
+  static constexpr int SOURCE_FBO = 100;
 
 protected:
   void initParameters() override;
@@ -38,14 +37,11 @@ protected:
 private:
   ofParameter<float> pointRadiusParameter { "PointRadius", 2.0, 0.0, 32.0 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
-  ofParameter<ofFloatColor> fadeParameter { "Fade", ofFloatColor { 1.0, 1.0, 1.0, 0.995 }, ofFloatColor { 0.9, 0.9, 0.9, 0.9}, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ofParameter<glm::vec2> translationParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
+//  ofParameter<glm::vec2> translationParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
 
   std::vector<glm::vec2> newPoints;
   
-  PingPongFbo fbo;
-  MultiplyColorShader fadeShader;
-  TranslateShader translateShader;
+  FboPtr fboPtr;
 };
 
 

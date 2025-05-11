@@ -11,6 +11,9 @@
 #include "SomPaletteMod.hpp"
 #include "ClusterMod.hpp"
 
+#include "MultiplyMod.hpp"
+#include "TranslateMod.hpp"
+
 #include "IntrospectorMod.hpp"
 #include "DrawPointsMod.hpp"
 #include "ParticleSetMod.hpp"

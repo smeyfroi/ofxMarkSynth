@@ -12,41 +12,37 @@ namespace ofxMarkSynth {
 
 
 DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config, const glm::vec2 fboSize)
-: Mod { name, std::move(config) }
+: Mod { name, std::move(config) },
+fboPtr { new PingPongFbo() }
 {
-  fbo.allocate(fboSize.x, fboSize.y, GL_RGBA32F); // 32F to accommodate fade, but this could be an optional thing to use a smaller FBO if no fade
-  fbo.getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  fadeShader.load();
-  translateShader.load();
+  fboPtr->allocate(fboSize.x, fboSize.y, GL_RGBA32F); // 32F to accommodate fade, but this could be an optional thing to use a smaller FBO if no fade
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
 }
 
 void DrawPointsMod::initParameters() {
   parameters.add(pointRadiusParameter);
   parameters.add(colorParameter);
-  parameters.add(fadeParameter);
-  parameters.add(translationParameter);
 }
 
 void DrawPointsMod::update() {
-  glm::vec4 fade { fadeParameter->r, fadeParameter->g, fadeParameter->b, fadeParameter->a };
-  fadeShader.render(fbo, fade);
-  translateShader.render(fbo, translationParameter);
-
-  fbo.getSource().begin();
-  ofScale(fbo.getWidth(), fbo.getHeight());
+  fboPtr->getSource().begin();
+  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofFill();
   ofSetColor(colorParameter);
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [this](const auto& p) {
-    ofDrawCircle(p, pointRadiusParameter / fbo.getWidth());
+    ofDrawCircle(p, pointRadiusParameter / fboPtr->getWidth());
   });
   newPoints.clear();
-  fbo.getSource().end();
+  fboPtr->getSource().end();
+  
+  emit(SOURCE_FBO, fboPtr);
 }
 
 void DrawPointsMod::draw() {
-  fbo.draw(0.0, 0.0);
+  if (hasSinkFor(SOURCE_FBO)) return;
+  fboPtr->draw(0.0, 0.0);
 }
 
 void DrawPointsMod::receive(int sinkId, const float& value) {
