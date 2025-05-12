@@ -12,12 +12,8 @@ namespace ofxMarkSynth {
 
 
 DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config, const glm::vec2 fboSize)
-: Mod { name, std::move(config) },
-fboPtr { new PingPongFbo() }
-{
-  fboPtr->allocate(fboSize.x, fboSize.y, GL_RGBA32F); // 32F to accommodate fade, but this could be an optional thing to use a smaller FBO if no fade
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-}
+: Mod { name, std::move(config) }
+{}
 
 void DrawPointsMod::initParameters() {
   parameters.add(pointRadiusParameter);
@@ -25,6 +21,7 @@ void DrawPointsMod::initParameters() {
 }
 
 void DrawPointsMod::update() {
+  if (fboPtr == nullptr) return;
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofFill();
@@ -36,13 +33,6 @@ void DrawPointsMod::update() {
   });
   newPoints.clear();
   fboPtr->getSource().end();
-  
-  emit(SOURCE_FBO, fboPtr);
-}
-
-void DrawPointsMod::draw() {
-  if (hasSinkFor(SOURCE_FBO)) return;
-  fboPtr->draw(0.0, 0.0);
 }
 
 void DrawPointsMod::receive(int sinkId, const float& value) {

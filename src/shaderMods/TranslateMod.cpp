@@ -25,23 +25,6 @@ void TranslateMod::update() {
   if (fboPtr == nullptr) return;
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   translateShader.render(*fboPtr, translation);
-  emit(SOURCE_FBO, fboPtr);
-}
-
-void TranslateMod::draw() {
-  if (fboPtr == nullptr) return;
-  if (hasSinkFor(SOURCE_FBO)) return; // TODO: refactor
-  fboPtr->draw(0, 0);
-}
-
-void TranslateMod::receive(int sinkId, const FboPtr& fboPtr_) {
-  switch (sinkId) {
-    case SINK_FBO:
-      fboPtr = fboPtr_;
-      break;
-    default:
-      ofLogError() << "PingPongFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
 }
 
 void TranslateMod::receive(int sinkId, const glm::vec2& v) {

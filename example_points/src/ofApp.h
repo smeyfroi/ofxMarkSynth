@@ -24,7 +24,7 @@ public:
 private:
 	ofxMarkSynth::Synth synth;
   std::unique_ptr<ofxMarkSynth::ModPtrs> createMods();
-  ofFbo fbo;
+  ofxMarkSynth::FboPtr fboPtr = std::make_shared<PingPongFbo>();
   
   bool guiVisible { true };
   ofxPanel gui;

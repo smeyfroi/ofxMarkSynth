@@ -25,23 +25,6 @@ void MultiplyMod::update() {
   if (fboPtr == nullptr) return;
   glm::vec4 fade { multiplyByParameter->r, multiplyByParameter->g, multiplyByParameter->b, multiplyByParameter->a };
   fadeShader.render(*fboPtr, fade);
-  emit(SOURCE_FBO, fboPtr);
-}
-
-void MultiplyMod::draw() {
-  if (fboPtr == nullptr) return;
-  if (hasSinkFor(SOURCE_FBO)) return; // TODO: refactor
-  fboPtr->draw(0, 0);
-}
-
-void MultiplyMod::receive(int sinkId, const FboPtr& fboPtr_) {
-  switch (sinkId) {
-    case SINK_FBO:
-      fboPtr = fboPtr_;
-      break;
-    default:
-      ofLogError() << "PingPongFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
 }
 
 void MultiplyMod::receive(int sinkId, const glm::vec4& v) {

@@ -25,7 +25,6 @@ using SourceId = int;
 using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 
 using FboPtr = std::shared_ptr<PingPongFbo>;
-//using FboPtr = std::unique_ptr<PingPongFbo>;
 
 
 class Mod {
@@ -46,6 +45,9 @@ public:
   virtual void receive(int sinkId, const float& value);
   virtual void receive(int sinkId, const FboPtr& fboPtr);
 
+  static constexpr int SOURCE_FBO = -1;
+  static constexpr int SINK_FBO = -2;
+
 protected:
   std::string name;
   ModConfig config;
@@ -53,6 +55,8 @@ protected:
   virtual void initParameters() = 0;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
+  FboPtr fboPtr;
+
 };
 
 

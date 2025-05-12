@@ -4,24 +4,24 @@
 std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
 
-  auto randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.05"},
     {"Min", "1.0"},
     {"Max", "5.0"}
   }, std::pair<float, float>{0.0, 64.0}, std::pair<float, float>{0.0, 64.0});
   mods->push_back(randomFloatSourceModPtr);
 
-  auto randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.4"}
   }, 2);
   mods->push_back(randomVecSourceModPtr);
   
-  auto randomColourSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Colours", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr randomColourSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Colours", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.1"}
   }, 4);
   mods->push_back(randomColourSourceModPtr);
   
-  auto drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
   }, ofGetWindowSize());
   randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
                                    drawPointsModPtr,
@@ -33,6 +33,8 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
   mods->push_back(drawPointsModPtr);
+
+  drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
   
   return mods;
 }
@@ -41,7 +43,9 @@ void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
 
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);

@@ -10,13 +10,14 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 
+
 namespace ofxMarkSynth {
 
 
 class Synth {
   
 public:
-  void configure(std::unique_ptr<ModPtrs> modPtrsPtr);
+  void configure(std::unique_ptr<ModPtrs> modPtrsPtr, std::shared_ptr<PingPongFbo> fboPtr_);
   void update();
   void draw();
   bool keyPressed(int key);
@@ -24,8 +25,8 @@ public:
 
 private:
   std::unique_ptr<ModPtrs> modPtrsPtr;
+  FboPtr fboPtr;
   ofParameterGroup parameters;
-
 };
 
 

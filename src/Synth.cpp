@@ -10,8 +10,9 @@
 namespace ofxMarkSynth {
 
 
-void Synth::configure(std::unique_ptr<ModPtrs> modPtrsPtr_) {
+void Synth::configure(std::unique_ptr<ModPtrs> modPtrsPtr_, std::shared_ptr<PingPongFbo> fboPtr_) {
   modPtrsPtr = std::move(modPtrsPtr_);
+  fboPtr = fboPtr_;
 }
 
 void Synth::update() {
@@ -24,14 +25,26 @@ void Synth::draw() {
   std::for_each(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [](auto& modPtr) {
     modPtr->draw();
   });
+  fboPtr->draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
 }
 
 bool Synth::keyPressed(int key) {
-  bool result;
-  std::for_each(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [&](auto& modPtr) {
-    result |= modPtr->keyPressed(key);
+  if (key == 'S') {
+    ofPixels pixels;
+    fboPtr->getSource().readToPixels(pixels);
+    ofSaveImage(pixels,
+                ofFilePath::getUserHomeDir()
+                +"/Documents/MarkSynth/snapshot-"
+                +ofGetTimestampString()
+                +".png",
+                OF_IMAGE_QUALITY_BEST);
+    return true;
+  }
+
+  bool handled = std::any_of(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [&](auto& modPtr) {
+    return modPtr->keyPressed(key);
   });
-  return result;
+  return handled;
 }
 
 ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {

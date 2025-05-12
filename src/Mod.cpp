@@ -82,8 +82,15 @@ void Mod::receive(int sinkId, const float& point) {
   ofLogError() << "bad receive of float in " << typeid(*this).name();
 }
 
-void Mod::receive(int sinkId, const FboPtr& fboPtr) {
-  ofLogError() << "bad receive of FboPtr in " << typeid(*this).name();
+void Mod::receive(int sinkId, const FboPtr& fboPtr_) {
+  switch (sinkId) {
+    case SINK_FBO:
+      fboPtr = fboPtr_;
+//      emit(SOURCE_FBO, fboPtr);
+      break;
+    default:
+      ofLogError() << "FboPtr receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
 }
 
 
