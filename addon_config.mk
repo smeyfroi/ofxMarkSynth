@@ -27,6 +27,7 @@ common:
 	ADDON_DEPENDENCIES = ofxIntrospector ofxGui ofxAudioData ofxRenderer
 	ADDON_DEPENDENCIES += ofxDividedArea ofxMotionFromVideo ofxParticleSet
 	ADDON_DEPENDENCIES += ofxPlottable ofxPointClusters ofxSomPalette
+	ADDON_DEPENDENCIES += ofxFFmpegRecorder
 
 	# include search paths, this will be usually parsed from the file system
 	# but if the addon or addon libraries need special search paths they can be

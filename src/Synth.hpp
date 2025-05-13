@@ -9,6 +9,7 @@
 
 #include "ofxGui.h"
 #include "Mod.hpp"
+#include "ofxFFmpegRecorder.h"
 
 
 namespace ofxMarkSynth {
@@ -17,6 +18,8 @@ namespace ofxMarkSynth {
 class Synth {
   
 public:
+  Synth();
+  ~Synth();
   void configure(std::unique_ptr<ModPtrs> modPtrsPtr, std::shared_ptr<PingPongFbo> fboPtr_);
   void update();
   void draw();
@@ -27,6 +30,11 @@ private:
   std::unique_ptr<ModPtrs> modPtrsPtr;
   FboPtr fboPtr;
   ofParameterGroup parameters;
+  
+  ofxFFmpegRecorder recorder;
+  ofFbo recorderCompositeFbo;
+  ofFbo imageCompositeFbo;
+
 };
 
 

@@ -42,6 +42,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
 void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
+  ofSetFrameRate(60);
 
   fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
   fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
@@ -68,7 +69,8 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) guiVisible = not guiVisible;
+  if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return; }
+  if (synth.keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

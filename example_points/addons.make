@@ -8,6 +8,7 @@ ofxSoundObjects
 ofxAudioAnalysisClient
 ofxAudioData
 ofxDividedArea
+ofxFFmpegRecorder
 ofxIntrospector
 ofxRenderer
 ofxMotionFromVideo

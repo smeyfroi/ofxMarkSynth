@@ -1,5 +1,5 @@
-MyAddon (rename to your addon's name)
-=====================================
+ofxMarkSynth
+============
 
 *This is a template of a README file for your addon. Fill in the relevant sections, and it should already give users a pretty good overview over your awesome addon!*
 We chose the [Markdown format](http://daringfireball.net/projects/markdown/syntax) since it can present good formatting where available (e.g. on Github) while still staying human-readable with a plain text editor.
@@ -21,7 +21,8 @@ Any steps necessary to install your addon. Optimally, this means just dropping t
 
 Dependencies
 ------------
-What other addons are needed to properly work with this one?
+
+- [NickHardeman's fork of Furkanzmc/ofxFFmpegRecorder](https://github.com/NickHardeman/ofxFFmpegRecorder)
 
 Compatibility
 ------------

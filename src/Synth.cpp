@@ -10,9 +10,30 @@
 namespace ofxMarkSynth {
 
 
+auto saveFilePath(std::string filename) {
+  return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
+}
+
+Synth::Synth() {
+  recorder.setup(/*video*/true, /*audio*/false, ofGetWindowSize(), /*fps*/30.0, /*bitrate*/10000);
+  recorder.setOverWrite(true);
+  auto recordingPath = saveFilePath("");
+  std::filesystem::create_directory(recordingPath);
+  recorder.setFFmpegPathToAddonsPath();
+  recorder.setInputPixelFormat(OF_IMAGE_COLOR);
+  
+  recorderCompositeFbo.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB);
+}
+
+Synth::~Synth() {
+  if (recorder.isRecording()) recorder.stop();
+  // TODO: could explicitly destroy all the Mods so they have a chance to clean up
+}
+
 void Synth::configure(std::unique_ptr<ModPtrs> modPtrsPtr_, std::shared_ptr<PingPongFbo> fboPtr_) {
   modPtrsPtr = std::move(modPtrsPtr_);
   fboPtr = fboPtr_;
+  imageCompositeFbo.allocate(fboPtr->getWidth(), fboPtr->getHeight(), GL_RGB);
 }
 
 void Synth::update() {
@@ -26,19 +47,41 @@ void Synth::draw() {
     modPtr->draw();
   });
   fboPtr->draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  
+  if (recorder.isRecording()) {
+    recorderCompositeFbo.clearColorBuffer(ofColor(0, 0, 0));
+    recorderCompositeFbo.begin();
+    fboPtr->draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+    recorderCompositeFbo.end();
+    ofPixels pixels;
+    recorderCompositeFbo.readToPixels(pixels);
+    recorder.addFrame(pixels);
+  }
 }
 
 bool Synth::keyPressed(int key) {
   if (key == 'S') {
+    imageCompositeFbo.clearColorBuffer(ofColor(0, 0, 0));
+    imageCompositeFbo.begin();
+    fboPtr->draw(0, 0);
+    imageCompositeFbo.end();
     ofPixels pixels;
-    fboPtr->getSource().readToPixels(pixels);
+    imageCompositeFbo.readToPixels(pixels);
     ofSaveImage(pixels,
-                ofFilePath::getUserHomeDir()
-                +"/Documents/MarkSynth/snapshot-"
-                +ofGetTimestampString()
-                +".png",
+                saveFilePath("snapshot-"+ofGetTimestampString()+".png"),
                 OF_IMAGE_QUALITY_BEST);
     return true;
+  }
+  
+  if (key == 'R') {
+    if (recorder.isRecording()) {
+      recorder.stop();
+      ofSetWindowTitle("");
+    } else {
+      recorder.setOutputPath(saveFilePath("recording-"+ofGetTimestampString()+".mp4"));
+      recorder.startCustomRecord();
+      ofSetWindowTitle("[Recording]");
+    }
   }
 
   bool handled = std::any_of(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [&](auto& modPtr) {
