@@ -20,7 +20,6 @@ class DividedAreaMod : public Mod {
 public:
   DividedAreaMod(const std::string& name, const ModConfig&& config);
   void update() override;
-  void draw() override;
   void receive(int sinkId, const glm::vec2& point) override;
 
   static constexpr int SINK_MAJOR_ANCHORS = 1;

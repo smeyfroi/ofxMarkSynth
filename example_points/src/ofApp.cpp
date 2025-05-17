@@ -6,9 +6,9 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
 
   ofxMarkSynth::ModPtr randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.05"},
-    {"Min", "1.0"},
-    {"Max", "5.0"}
-  }, std::pair<float, float>{0.0, 64.0}, std::pair<float, float>{0.0, 64.0});
+    {"Min", "0.001"},
+    {"Max", "0.05"}
+  }, std::pair<float, float>{0.0, 0.1}, std::pair<float, float>{0.0, 0.1});
   mods->push_back(randomFloatSourceModPtr);
 
   ofxMarkSynth::ModPtr randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
@@ -22,7 +22,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   mods->push_back(randomColourSourceModPtr);
   
   ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
-  }, ofGetWindowSize());
+  });
   randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
                                    drawPointsModPtr,
                                    ofxMarkSynth::DrawPointsMod::SINK_POINT_COLOR);

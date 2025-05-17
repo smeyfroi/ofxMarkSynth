@@ -32,10 +32,12 @@ void DividedAreaMod::update() {
     newMinorAnchors.pop_back();
     dividedArea.addConstrainedDividerLine(p1, p2);
   }
-}
-
-void DividedAreaMod::draw() {
-  dividedArea.draw(1.0, 1.0, 1.0, ofGetWindowWidth());
+  
+  if (fboPtr == nullptr) return;
+  fboPtr->getSource().begin();
+  ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 0.1));
+  dividedArea.draw(1.0, 1.0, 1.0, fboPtr->getWidth());
+  fboPtr->getSource().end();
 }
 
 void DividedAreaMod::receive(int sinkId, const glm::vec2& point) {

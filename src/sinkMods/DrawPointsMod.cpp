@@ -11,7 +11,7 @@
 namespace ofxMarkSynth {
 
 
-DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config, const glm::vec2 fboSize)
+DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
 {}
 
@@ -29,7 +29,7 @@ void DrawPointsMod::update() {
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [this](const auto& p) {
-    ofDrawCircle(p, pointRadiusParameter / fboPtr->getWidth());
+    ofDrawCircle(p, pointRadiusParameter);
   });
   newPoints.clear();
   fboPtr->getSource().end();

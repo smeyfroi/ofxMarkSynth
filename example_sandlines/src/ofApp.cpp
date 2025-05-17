@@ -27,7 +27,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
                                  ofxMarkSynth::ClusterMod::SINK_VEC2);
   mods->push_back(clusterModPtr);
 
-  auto sandLineModPtr = std::make_shared<ofxMarkSynth::SandLineMod>("Sand lines", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr sandLineModPtr = std::make_shared<ofxMarkSynth::SandLineMod>("Sand lines", ofxMarkSynth::ModConfig {
     {"Color", "1.0, 0.0, 0.5, 0.2"},
     {"Density", "0.4"}
   }, ofGetWindowSize());
@@ -39,6 +39,8 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
                                  ofxMarkSynth::SandLineMod::SINK_POINTS);
   mods->push_back(sandLineModPtr);
   
+  sandLineModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
+
   return mods;
 }
 
@@ -49,7 +51,9 @@ void ofApp::setup() {
   audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>();
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
 
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);

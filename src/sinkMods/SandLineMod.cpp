@@ -13,24 +13,20 @@ namespace ofxMarkSynth {
 
 SandLineMod::SandLineMod(const std::string& name, const ModConfig&& config, const glm::vec2 fboSize)
 : Mod { name, std::move(config) }
-{
-  fbo.allocate(fboSize.x, fboSize.y, GL_RGBA32F); // 32F to accommodate alpha, but this could be an optional thing
-  fbo.getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-}
+{}
 
 void SandLineMod::initParameters() {
   parameters.add(densityParameter);
   parameters.add(pointRadiusParameter);
   parameters.add(colorParameter);
-//  parameters.add(fadeParameter);
 }
 
 void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2) {
   auto distance = glm::distance(p1, p2);
-  auto grains = static_cast<int>(distance * densityParameter * fbo.getWidth());
+  auto grains = static_cast<int>(distance * densityParameter * fboPtr->getWidth());
   for (int i = 0; i < grains; i++) {
     auto position = p1 + ofRandom() * (p2 - p1);
-    auto radius = pointRadiusParameter / fbo.getWidth();
+    auto radius = pointRadiusParameter / fboPtr->getWidth();
     auto offset = glm::vec2 { radius * 2.0, radius * 2.0 } -  glm::vec2 { radius, radius };
     position += offset;
     auto r = ofRandom(0.0, radius);
@@ -39,8 +35,9 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2) {
 }
 
 void SandLineMod::update() {
-  fbo.getSource().begin();
-  ofScale(fbo.getWidth(), fbo.getHeight());
+  if (fboPtr == nullptr) return;
+  fboPtr->getSource().begin();
+  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofSetColor(colorParameter);
   ofFill();
   if (newPoints.size() > 1) {
@@ -52,11 +49,7 @@ void SandLineMod::update() {
     }
     newPoints.erase(newPoints.begin(), iter);
   }
-  fbo.getSource().end();
-}
-
-void SandLineMod::draw() {
-  fbo.draw(0.0, 0.0);
+  fboPtr->getSource().end();
 }
 
 void SandLineMod::receive(int sinkId, const float& value) {

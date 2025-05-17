@@ -11,7 +11,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   
   auto pointIntrospectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Introspector", ofxMarkSynth::ModConfig {
   });
-  pointIntrospectorModPtr->introspectorPtr = introspectorPtr;
+  pointIntrospectorModPtr->introspectorPtr = introspectorPtr; // FIXME: this is strange; there's something odd about all this
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  pointIntrospectorModPtr,
                                  ofxMarkSynth::IntrospectorMod::SINK_POINTS);
@@ -26,7 +26,9 @@ void ofApp::setup() {
   introspectorPtr = std::make_shared<Introspector>();
   introspectorPtr->visible = true;
   
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
@@ -42,7 +44,6 @@ void ofApp::update(){
 void ofApp::draw(){
   synth.draw();
   introspectorPtr->draw(ofGetWindowWidth());
-
   if (guiVisible) gui.draw();
 }
 
@@ -54,6 +55,7 @@ void ofApp::exit(){
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
   if (introspectorPtr->keyPressed(key)) return;
+  if (synth.keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

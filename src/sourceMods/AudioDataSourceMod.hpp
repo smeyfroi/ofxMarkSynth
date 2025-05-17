@@ -36,12 +36,12 @@ private:
   ofParameter<float> maxPitchParameter { "MaxPitch", 2500.0, 0.0, 6000.0 };
   ofParameter<float> minRmsParameter { "MinRms", 0.001, 0.0, 0.1 };
   ofParameter<float> maxRmsParameter { "MaxRms", 0.03, 0.0, 0.1 };
-  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 0.0, 0.0, 120.0 };
-  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 80.0, 0.0, 120.0 };
-  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 0.0, 0.0, 200.0 };
-  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 100.0, 0.0, 200.0 };
-  ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 0.0, 0.0, 100.0 };
-  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 20.0, 0.0, 100.0 };
+  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 20.0, 0.0, 120.0 };
+  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 70.0, 0.0, 120.0 };
+  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 60.0, 0.0, 200.0 };
+  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 150.0, 0.0, 200.0 };
+  ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 10.0, 0.0, 100.0 };
+  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 30.0, 0.0, 100.0 };
   
   float getAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();

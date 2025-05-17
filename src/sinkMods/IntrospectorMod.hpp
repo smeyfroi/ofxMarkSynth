@@ -15,6 +15,9 @@
 namespace ofxMarkSynth {
 
 
+// FIXME: this is assigned an FBO to use rather than receiving one,
+// which is nice in that its drawing is separate and doesn't show on
+// saved images or recordings, but still, it is non-standard.
 class IntrospectorMod : public Mod {
 
 public:

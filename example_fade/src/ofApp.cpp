@@ -9,27 +9,29 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   }, 2);
   mods->push_back(randomVecSourceModPtr);
   
-  auto drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
-  }, ofGetWindowSize());
+  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
+  });
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
   mods->push_back(drawPointsModPtr);
   
-  auto translateModPtr = std::make_shared<ofxMarkSynth::TranslateMod>("Translate", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr translateModPtr = std::make_shared<ofxMarkSynth::TranslateMod>("Translate", ofxMarkSynth::ModConfig {
   });
   drawPointsModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO,
                             translateModPtr,
                             ofxMarkSynth::TranslateMod::SINK_FBO);
   mods->push_back(translateModPtr);
   
-  auto multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade", ofxMarkSynth::ModConfig {
+  ofxMarkSynth::ModPtr multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade", ofxMarkSynth::ModConfig {
   });
   translateModPtr->addSink(ofxMarkSynth::TranslateMod::SOURCE_FBO,
                            multiplyModPtr,
                            ofxMarkSynth::MultiplyMod::SINK_FBO);
   mods->push_back(multiplyModPtr);
-  
+
+  drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
+
   return mods;
 }
 
@@ -37,7 +39,9 @@ void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
 
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
@@ -61,6 +65,7 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
+  if (synth.keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

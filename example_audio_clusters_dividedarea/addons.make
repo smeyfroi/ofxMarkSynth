@@ -17,4 +17,5 @@ ofxPlottable
 ofxPointClusters
 ofxSelfOrganizingMap
 ofxSomPalette
+ofxFFmpegRecorder
 ofxMarkSynth

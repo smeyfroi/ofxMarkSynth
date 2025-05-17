@@ -12,7 +12,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
   mods->push_back(audioDataSourceModPtr);
   
-  auto clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
+  ofxMarkSynth::ModPtr clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
                                                                   ofxMarkSynth::ModConfig {
   });
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
@@ -20,13 +20,15 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
                                  ofxMarkSynth::ClusterMod::SINK_VEC2);
   mods->push_back(clusterModPtr);
   
-  auto drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points",
+  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points",
                                                                         ofxMarkSynth::ModConfig {
-  }, ofGetWindowSize());
+  });
   clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                          drawPointsModPtr,
                          ofxMarkSynth::DrawPointsMod::SINK_POINTS);
   mods->push_back(drawPointsModPtr);
+  
+  drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
   
   return mods;
 }
@@ -40,7 +42,9 @@ void ofApp::setup() {
   audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>();
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
 
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);

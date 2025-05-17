@@ -86,7 +86,7 @@ void Mod::receive(int sinkId, const FboPtr& fboPtr_) {
   switch (sinkId) {
     case SINK_FBO:
       fboPtr = fboPtr_;
-//      emit(SOURCE_FBO, fboPtr);
+      emit(SOURCE_FBO, fboPtr);
       break;
     default:
       ofLogError() << "FboPtr receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;

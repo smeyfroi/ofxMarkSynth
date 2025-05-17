@@ -10,7 +10,6 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "PingPongFbo.h"
-#include "MultiplyColorShader.h"
 
 
 namespace ofxMarkSynth {
@@ -21,7 +20,6 @@ class SandLineMod : public Mod {
 public:
   SandLineMod(const std::string& name, const ModConfig&& config, const glm::vec2 fboSize);
   void update() override;
-  void draw() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
   void receive(int sinkId, const glm::vec4& v) override;
@@ -39,11 +37,8 @@ private:
   ofParameter<float> densityParameter { "Density", 0.1, 0.0, 0.5 };
   ofParameter<float> pointRadiusParameter { "PointRadius", 2.0, 0.0, 32.0 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 0.0, 0.0, 0.1 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-//  ofParameter<ofFloatColor> fadeParameter { "Fade", ofFloatColor { 1.0, 1.0, 1.0, 0.995 }, ofFloatColor { 0.9, 0.9, 0.9, 0.9}, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
 
   std::vector<glm::vec2> newPoints;
-  
-  PingPongFbo fbo;
 };
 
 

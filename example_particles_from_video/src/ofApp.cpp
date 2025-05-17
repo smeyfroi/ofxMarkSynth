@@ -8,13 +8,15 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   }, ofToDataPath("trimmed.mov"), true);
   mods->push_back(videoFlowSourceModPtr);
   
-  auto particleSetModPtr = std::make_shared<ofxMarkSynth::ParticleSetMod>("Particles", ofxMarkSynth::ModConfig {
-  }, ofGetWindowSize());
+  ofxMarkSynth::ModPtr particleSetModPtr = std::make_shared<ofxMarkSynth::ParticleSetMod>("Particles", ofxMarkSynth::ModConfig {
+  });
   videoFlowSourceModPtr->addSink(ofxMarkSynth::VideoFlowSourceMod::SOURCE_VEC4,
                                  particleSetModPtr,
                                  ofxMarkSynth::ParticleSetMod::SINK_POINT_VELOCITIES);
   mods->push_back(particleSetModPtr);
   
+  particleSetModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
+
   return mods;
 }
 
@@ -22,7 +24,9 @@ void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
   
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
@@ -36,7 +40,6 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
   synth.draw();
-
   if (guiVisible) gui.draw();
 }
 
@@ -47,6 +50,7 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
+  if (synth.keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

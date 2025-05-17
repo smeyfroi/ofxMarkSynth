@@ -13,7 +13,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   mods->push_back(audioDataSourceModPtr);
   
   auto introspectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Point Introspector",
-                                                                                      ofxMarkSynth::ModConfig {
+                                                                            ofxMarkSynth::ModConfig {
   });
   introspectorModPtr->introspectorPtr = introspectorPtr;
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
@@ -42,7 +42,9 @@ void ofApp::setup() {
   audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>();
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
   
-  synth.configure(createMods());
+  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  synth.configure(createMods(), fboPtr);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
@@ -60,7 +62,6 @@ void ofApp::update(){
 void ofApp::draw(){
   synth.draw();
   introspectorPtr->draw(ofGetWindowWidth());
-
   if (guiVisible) gui.draw();
 }
 
@@ -74,6 +75,7 @@ void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
   if (introspectorPtr->keyPressed(key)) return;
   if (audioAnalysisClientPtr->keyPressed(key)) return;
+  if (synth.keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

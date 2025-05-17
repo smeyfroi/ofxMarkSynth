@@ -24,7 +24,8 @@ public:
 private:
 	ofxMarkSynth::Synth synth;
   std::unique_ptr<ofxMarkSynth::ModPtrs> createMods();
-  
+  ofxMarkSynth::FboPtr fboPtr = std::make_shared<PingPongFbo>();
+
   bool guiVisible { true };
   ofxPanel gui;
   ofParameterGroup parameters; // I think we rely on this declaration coming after the synth to ensure that destructors are done in the right order

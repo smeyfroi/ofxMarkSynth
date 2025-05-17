@@ -7,9 +7,9 @@ ofxGui
 ofxSoundObjects
 ofxAudioAnalysisClient
 ofxAudioData
+ofxDividedArea
 ofxIntrospector
 ofxRenderer
-ofxDividedArea
 ofxMotionFromVideo
 ofxSpatialHash
 ofxParticleSet
@@ -17,4 +17,5 @@ ofxPlottable
 ofxPointClusters
 ofxSelfOrganizingMap
 ofxSomPalette
+ofxFFmpegRecorder
 ofxMarkSynth
