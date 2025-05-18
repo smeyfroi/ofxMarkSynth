@@ -35,25 +35,19 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   return mods;
 }
 
+ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
+  ofxMarkSynth::FboConfigPtrs fbos;
+  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
+  fbos.emplace_back(fboConfigPtrBackground);
+  return fbos;
+}
+
 void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
 
-  // Do this to set the GL wrap mode
-  // See ofFbo.cpp #allocate
-  ofFboSettings settings { nullptr };
-  settings.wrapModeVertical = GL_REPEAT;
-  settings.wrapModeHorizontal = GL_REPEAT;
-  settings.width = ofGetWindowWidth();
-  settings.height = ofGetWindowHeight();
-  settings.internalformat = GL_RGBA32F;
-  settings.numSamples = 0;
-  settings.useDepth = true;
-  settings.useStencil = true;
-  settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
-  fboPtr->allocate(settings);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  synth.configure(createMods(), fboPtr);
+  ofxMarkSynth::allocateFbo(fboPtr, ofGetWindowSize(), GL_RGBA32F, GL_REPEAT);
+  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);

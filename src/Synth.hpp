@@ -15,12 +15,24 @@
 namespace ofxMarkSynth {
 
 
+// Enable setting the GL wrap mode easily
+void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap = GL_CLAMP_TO_EDGE); // GL_REPEAT
+
+struct FboConfig {
+  std::shared_ptr<PingPongFbo> fboPtr;
+  std::unique_ptr<ofFloatColor> clearColorPtr;
+};
+
+using FboConfigPtr = std::shared_ptr<FboConfig>;
+using FboConfigPtrs = std::vector<FboConfigPtr>;
+
+
 class Synth {
   
 public:
   Synth();
   ~Synth();
-  void configure(ModPtrs&& modPtrs_, FboPtr fboPtr_);
+  void configure(ModPtrs&& modPtrs_, FboConfigPtrs&& fboConfigPtrs_, glm::vec2 compositeSize_);
   void update();
   void draw();
   bool keyPressed(int key);
@@ -28,7 +40,7 @@ public:
 
 private:
   ModPtrs modPtrs;
-  FboPtr fboPtr;
+  FboConfigPtrs fboConfigPtrs;
   ofParameterGroup parameters;
   
   ofxFFmpegRecorder recorder;

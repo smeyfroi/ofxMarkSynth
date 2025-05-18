@@ -46,8 +46,19 @@ public:
   virtual void receive(int sinkId, const float& value);
   virtual void receive(int sinkId, const FboPtr& fboPtr);
 
-  static constexpr int SOURCE_FBO = -1;
-  static constexpr int SINK_FBO = -2;
+  static constexpr int SOURCE_FBO_BEGIN = -100;
+  static constexpr int SOURCE_FBO = SOURCE_FBO_BEGIN;
+  static constexpr int SOURCE_FBO_2 = SOURCE_FBO + 1;
+  static constexpr int SOURCE_FBO_3 = SOURCE_FBO_2 + 1;
+  static constexpr int SOURCE_FBO_4 = SOURCE_FBO_3 + 1;
+  static constexpr int SOURCE_FBO_END = SOURCE_FBO_4;
+  
+  static constexpr int SINK_FBO_BEGIN = -200;
+  static constexpr int SINK_FBO = SINK_FBO_BEGIN;
+  static constexpr int SINK_FBO_2 = SINK_FBO + 1;
+  static constexpr int SINK_FBO_3 = SINK_FBO_2 + 1;
+  static constexpr int SINK_FBO_4 = SINK_FBO_3 + 1;
+  static constexpr int SINK_FBO_END = SINK_FBO_4;
 
 protected:
   std::string name;
@@ -56,7 +67,7 @@ protected:
   virtual void initParameters() = 0;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
-  FboPtr fboPtr;
+  FboPtrs fboPtrs;
 
 };
 

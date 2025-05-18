@@ -21,6 +21,7 @@ void DrawPointsMod::initParameters() {
 }
 
 void DrawPointsMod::update() {
+  auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());

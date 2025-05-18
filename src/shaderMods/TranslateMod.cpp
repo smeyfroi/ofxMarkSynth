@@ -22,6 +22,7 @@ void TranslateMod::initParameters() {
 }
 
 void TranslateMod::update() {
+  auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   translateShader.render(*fboPtr, translation);

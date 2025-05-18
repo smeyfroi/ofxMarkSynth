@@ -26,7 +26,10 @@ public:
 private:
 	ofxMarkSynth::Synth synth;
   ofxMarkSynth::ModPtrs createMods();
-  ofxMarkSynth::FboPtr fboPtr = std::make_shared<PingPongFbo>();
+  ofxMarkSynth::FboConfigPtrs createFboConfigs();
+  ofxMarkSynth::FboPtr fboPtrBackground = std::make_shared<PingPongFbo>();
+  ofxMarkSynth::FboPtr fboPtrMinorLines = std::make_shared<PingPongFbo>();
+  ofxMarkSynth::FboPtr fboPtrMajorLines = std::make_shared<PingPongFbo>();
 
   std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClientPtr;
   std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;

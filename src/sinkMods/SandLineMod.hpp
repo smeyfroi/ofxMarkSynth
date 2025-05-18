@@ -18,7 +18,7 @@ namespace ofxMarkSynth {
 class SandLineMod : public Mod {
 
 public:
-  SandLineMod(const std::string& name, const ModConfig&& config, const glm::vec2 fboSize);
+  SandLineMod(const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
@@ -32,7 +32,7 @@ protected:
   void initParameters() override;
 
 private:
-  void drawSandLine(glm::vec2 p1, glm::vec2 p2);
+  void drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale);
 
   ofParameter<float> densityParameter { "Density", 0.1, 0.0, 0.5 };
   ofParameter<float> pointRadiusParameter { "PointRadius", 2.0, 0.0, 32.0 };

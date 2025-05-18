@@ -10,6 +10,24 @@
 namespace ofxMarkSynth {
 
 
+// See ofFbo.cpp #allocate
+void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap) {
+  ofFboSettings settings { nullptr };
+  settings.wrapModeVertical = wrap;
+  settings.wrapModeHorizontal = wrap;
+  settings.width = size.x;
+  settings.height = size.y;
+  settings.internalformat = internalFormat;
+  settings.numSamples = 0;
+  settings.useDepth = true;
+  settings.useStencil = true;
+  settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+  PingPongFbo fbo;
+  fboPtr->allocate(settings);
+  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+}
+
+
 auto saveFilePath(std::string filename) {
   return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
 }
@@ -28,18 +46,27 @@ Synth::~Synth() {
   if (recorder.isRecording()) recorder.stop();
 }
 
-void Synth::configure(ModPtrs&& modPtrs_, FboPtr fboPtr_) {
+void Synth::configure(ModPtrs&& modPtrs_, FboConfigPtrs&& fboConfigPtrs_, glm::vec2 compositeSize_) {
   modPtrs = std::move(modPtrs_);
-  fboPtr = fboPtr_;
-  imageCompositeFbo.allocate(fboPtr->getWidth(), fboPtr->getHeight(), GL_RGB);
+  fboConfigPtrs = std::move(fboConfigPtrs_);
+  imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGBA);
 }
 
 void Synth::update() {
+  
+  std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
+    if (fcptr->clearColorPtr) {
+      fcptr->fboPtr->getSource().clearColorBuffer(*(fcptr->clearColorPtr));
+    }
+    fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+  });
+
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->update();
   });
 }
 
+// TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO.
   // NOTE: Is that a real thing or should the few that draw directly be refactored?
@@ -47,12 +74,21 @@ void Synth::draw() {
     modPtr->draw();
   });
   
-  fboPtr->draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  imageCompositeFbo.begin();
+  ofSetColor(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
+  ofFill();
+  ofDrawRectangle({0, 0}, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0 });
+  std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
+    fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+  });
+  imageCompositeFbo.end();
+
+  imageCompositeFbo.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
   
   if (recorder.isRecording()) {
-    recorderCompositeFbo.clearColorBuffer(ofColor(0, 0, 0));
     recorderCompositeFbo.begin();
-    fboPtr->draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+    imageCompositeFbo.draw(0, 0, recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight());
     recorderCompositeFbo.end();
     ofPixels pixels;
     recorderCompositeFbo.readToPixels(pixels);
@@ -62,10 +98,6 @@ void Synth::draw() {
 
 bool Synth::keyPressed(int key) {
   if (key == 'S') {
-    imageCompositeFbo.clearColorBuffer(ofColor(0, 0, 0));
-    imageCompositeFbo.begin();
-    fboPtr->draw(0, 0);
-    imageCompositeFbo.end();
     ofPixels pixels;
     imageCompositeFbo.readToPixels(pixels);
     ofSaveImage(pixels,

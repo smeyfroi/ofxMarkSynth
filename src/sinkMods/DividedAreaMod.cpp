@@ -33,11 +33,23 @@ void DividedAreaMod::update() {
     dividedArea.addConstrainedDividerLine(p1, p2);
   }
   
-  if (fboPtr == nullptr) return;
-  fboPtr->getSource().begin();
-  ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 0.1));
-  dividedArea.draw(1.0, 1.0, 1.0, fboPtr->getWidth());
-  fboPtr->getSource().end();
+  // constrained
+  auto fboPtr0 = fboPtrs[0];
+  if (fboPtr0 != nullptr) {
+    fboPtr0->getSource().begin();
+    ofSetColor(ofFloatColor(0.0, 0.2, 0.4, 1.0));
+    dividedArea.draw(0.0, 0.0, 1.0, fboPtr0->getWidth());
+    fboPtr0->getSource().end();
+  }
+
+  // unconstrained
+  auto fboPtr1 = fboPtrs[1];
+  if (fboPtr1 != nullptr) {
+    fboPtr1->getSource().begin();
+    ofSetColor(ofFloatColor(0.3, 0.2, 0.1, 1.0));
+    dividedArea.draw(0.0, 1.0, 0.0, fboPtr1->getWidth());
+    fboPtr1->getSource().end();
+  }
 }
 
 void DividedAreaMod::receive(int sinkId, const glm::vec2& point) {

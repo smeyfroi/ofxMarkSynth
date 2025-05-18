@@ -22,6 +22,7 @@ void MultiplyMod::initParameters() {
 }
 
 void MultiplyMod::update() {
+  auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
   glm::vec4 fade { multiplyByParameter->r, multiplyByParameter->g, multiplyByParameter->b, multiplyByParameter->a };
   fadeShader.render(*fboPtr, fade);
