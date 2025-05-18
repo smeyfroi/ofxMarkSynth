@@ -1,8 +1,8 @@
 #include "ofApp.h"
 
 //--------------------------------------------------------------
-std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
-  auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
+ofxMarkSynth::ModPtrs ofApp::createMods() {
+  auto mods = ofxMarkSynth::ModPtrs {};
 
   auto audioDataSourceModPtr = std::make_shared<ofxMarkSynth::AudioDataSourceMod>("Audio Points",
                                                                                   ofxMarkSynth::ModConfig {
@@ -10,7 +10,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
     {"MaxPitch", "2500.0"}
   });
   audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
-  mods->push_back(audioDataSourceModPtr);
+  mods.push_back(audioDataSourceModPtr);
   
   auto introspectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Point Introspector",
                                                                             ofxMarkSynth::ModConfig {
@@ -28,7 +28,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_ZERO_CROSSING_RATE_SCALAR,
                                  introspectorModPtr,
                                  ofxMarkSynth::IntrospectorMod::SINK_HORIZONTAL_LINES_3);
-  mods->push_back(introspectorModPtr);
+  mods.push_back(introspectorModPtr);
   
   return mods;
 }

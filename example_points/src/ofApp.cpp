@@ -1,25 +1,25 @@
 #include "ofApp.h"
 
 //--------------------------------------------------------------
-std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
-  auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
+ofxMarkSynth::ModPtrs ofApp::createMods() {
+  auto mods = ofxMarkSynth::ModPtrs {};
 
   ofxMarkSynth::ModPtr randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.05"},
     {"Min", "0.001"},
     {"Max", "0.05"}
   }, std::pair<float, float>{0.0, 0.1}, std::pair<float, float>{0.0, 0.1});
-  mods->push_back(randomFloatSourceModPtr);
+  mods.push_back(randomFloatSourceModPtr);
 
   ofxMarkSynth::ModPtr randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.4"}
   }, 2);
-  mods->push_back(randomVecSourceModPtr);
+  mods.push_back(randomVecSourceModPtr);
   
   ofxMarkSynth::ModPtr randomColourSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Colours", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.1"}
   }, 4);
-  mods->push_back(randomColourSourceModPtr);
+  mods.push_back(randomColourSourceModPtr);
   
   ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
   });
@@ -32,7 +32,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-  mods->push_back(drawPointsModPtr);
+  mods.push_back(drawPointsModPtr);
 
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
   

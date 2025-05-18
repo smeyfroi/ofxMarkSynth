@@ -25,6 +25,7 @@ using SourceId = int;
 using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 
 using FboPtr = std::shared_ptr<PingPongFbo>;
+using FboPtrs = std::vector<FboPtr>;
 
 
 class Mod {

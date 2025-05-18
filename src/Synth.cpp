@@ -21,31 +21,32 @@ Synth::Synth() {
   std::filesystem::create_directory(recordingPath);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
-  
   recorderCompositeFbo.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB);
 }
 
 Synth::~Synth() {
   if (recorder.isRecording()) recorder.stop();
-  // TODO: could explicitly destroy all the Mods so they have a chance to clean up
 }
 
-void Synth::configure(std::unique_ptr<ModPtrs> modPtrsPtr_, std::shared_ptr<PingPongFbo> fboPtr_) {
-  modPtrsPtr = std::move(modPtrsPtr_);
+void Synth::configure(ModPtrs&& modPtrs_, FboPtr fboPtr_) {
+  modPtrs = std::move(modPtrs_);
   fboPtr = fboPtr_;
   imageCompositeFbo.allocate(fboPtr->getWidth(), fboPtr->getHeight(), GL_RGB);
 }
 
 void Synth::update() {
-  std::for_each(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [](auto& modPtr) {
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->update();
   });
 }
 
 void Synth::draw() {
-  std::for_each(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [](auto& modPtr) {
+  // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO.
+  // NOTE: Is that a real thing or should the few that draw directly be refactored?
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->draw();
   });
+  
   fboPtr->draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
   
   if (recorder.isRecording()) {
@@ -84,7 +85,7 @@ bool Synth::keyPressed(int key) {
     }
   }
 
-  bool handled = std::any_of(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [&](auto& modPtr) {
+  bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&](auto& modPtr) {
     return modPtr->keyPressed(key);
   });
   return handled;
@@ -94,7 +95,7 @@ ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {
   ofParameterGroup parameterGroup = parameters;
   if (parameters.size() == 0) {
     parameters.setName(groupName);
-    std::for_each(modPtrsPtr->cbegin(), modPtrsPtr->cend(), [&parameterGroup](auto& modPtr) {
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [&parameterGroup](auto& modPtr) {
       parameterGroup.add(modPtr->getParameterGroup());
     });
   }

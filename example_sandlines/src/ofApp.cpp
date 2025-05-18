@@ -1,15 +1,15 @@
 #include "ofApp.h"
 
 //--------------------------------------------------------------
-std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
-  auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
+ofxMarkSynth::ModPtrs ofApp::createMods() {
+  auto mods = ofxMarkSynth::ModPtrs {};
 
   auto randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.05"},
     {"Min", "0.5"},
     {"Max", "2.0"}
   }, std::pair<float, float>{0.0, 64.0}, std::pair<float, float>{0.0, 64.0});
-  mods->push_back(randomFloatSourceModPtr);
+  mods.push_back(randomFloatSourceModPtr);
 
   auto audioDataSourceModPtr = std::make_shared<ofxMarkSynth::AudioDataSourceMod>("Audio Points",
                                                                                   ofxMarkSynth::ModConfig {
@@ -17,7 +17,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
     {"MaxPitch", "1500.0"}
   });
   audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
-  mods->push_back(audioDataSourceModPtr);
+  mods.push_back(audioDataSourceModPtr);
   
   auto clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
                                                                   ofxMarkSynth::ModConfig {
@@ -25,7 +25,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
                                  clusterModPtr,
                                  ofxMarkSynth::ClusterMod::SINK_VEC2);
-  mods->push_back(clusterModPtr);
+  mods.push_back(clusterModPtr);
 
   ofxMarkSynth::ModPtr sandLineModPtr = std::make_shared<ofxMarkSynth::SandLineMod>("Sand lines", ofxMarkSynth::ModConfig {
     {"Color", "1.0, 0.0, 0.5, 0.2"},
@@ -37,7 +37,7 @@ std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
   clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                                  sandLineModPtr,
                                  ofxMarkSynth::SandLineMod::SINK_POINTS);
-  mods->push_back(sandLineModPtr);
+  mods.push_back(sandLineModPtr);
   
   sandLineModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 

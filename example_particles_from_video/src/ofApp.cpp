@@ -1,19 +1,19 @@
 #include "ofApp.h"
 
 //--------------------------------------------------------------
-std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
-  auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
+ofxMarkSynth::ModPtrs ofApp::createMods() {
+  auto mods = ofxMarkSynth::ModPtrs {};
 
   auto videoFlowSourceModPtr = std::make_shared<ofxMarkSynth::VideoFlowSourceMod>("Video", ofxMarkSynth::ModConfig {
   }, ofToDataPath("trimmed.mov"), true);
-  mods->push_back(videoFlowSourceModPtr);
+  mods.push_back(videoFlowSourceModPtr);
   
   ofxMarkSynth::ModPtr particleSetModPtr = std::make_shared<ofxMarkSynth::ParticleSetMod>("Particles", ofxMarkSynth::ModConfig {
   });
   videoFlowSourceModPtr->addSink(ofxMarkSynth::VideoFlowSourceMod::SOURCE_VEC4,
                                  particleSetModPtr,
                                  ofxMarkSynth::ParticleSetMod::SINK_POINT_VELOCITIES);
-  mods->push_back(particleSetModPtr);
+  mods.push_back(particleSetModPtr);
   
   particleSetModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 

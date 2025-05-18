@@ -20,14 +20,14 @@ class Synth {
 public:
   Synth();
   ~Synth();
-  void configure(std::unique_ptr<ModPtrs> modPtrsPtr, std::shared_ptr<PingPongFbo> fboPtr_);
+  void configure(ModPtrs&& modPtrs_, FboPtr fboPtr_);
   void update();
   void draw();
   bool keyPressed(int key);
   ofParameterGroup& getParameterGroup(const std::string& groupName);
 
 private:
-  std::unique_ptr<ModPtrs> modPtrsPtr;
+  ModPtrs modPtrs;
   FboPtr fboPtr;
   ofParameterGroup parameters;
   

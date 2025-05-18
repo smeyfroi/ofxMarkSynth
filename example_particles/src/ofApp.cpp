@@ -1,20 +1,20 @@
 #include "ofApp.h"
 
 //--------------------------------------------------------------
-std::unique_ptr<ofxMarkSynth::ModPtrs> ofApp::createMods() {
-  auto mods = std::make_unique<ofxMarkSynth::ModPtrs>();
+ofxMarkSynth::ModPtrs ofApp::createMods() {
+  auto mods = ofxMarkSynth::ModPtrs {};
 
   auto randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.4"}
   }, 2);
-  mods->push_back(randomVecSourceModPtr);
+  mods.push_back(randomVecSourceModPtr);
   
   ofxMarkSynth::ModPtr particleSetModPtr = std::make_shared<ofxMarkSynth::ParticleSetMod>("Particles", ofxMarkSynth::ModConfig {
   });
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  particleSetModPtr,
                                  ofxMarkSynth::ParticleSetMod::SINK_POINTS);
-  mods->push_back(particleSetModPtr);
+  mods.push_back(particleSetModPtr);
   
   particleSetModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 
