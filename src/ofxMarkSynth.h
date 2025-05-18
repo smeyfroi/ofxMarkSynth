@@ -10,6 +10,7 @@
 
 #include "SomPaletteMod.hpp"
 #include "ClusterMod.hpp"
+#include "PixelSnapshotMod.hpp"
 
 #include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"

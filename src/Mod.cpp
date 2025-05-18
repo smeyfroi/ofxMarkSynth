@@ -48,7 +48,7 @@ bool Mod::hasSinkFor(int sourceId) {
 template<typename T>
 void Mod::emit(int sourceId, const T& value) {
   if (connections[sourceId] == nullptr) return;
-//  if (connections[sourceId] == nullptr) { ofLogError() << "bad connection in " << typeid(*this).name() << " with sourceId " << sourceId; return; }
+  //  if (connections[sourceId] == nullptr) { ofLogError() << "bad connection in " << typeid(*this).name() << " with sourceId " << sourceId; return; }
   std::for_each(connections[sourceId]->begin(),
                 connections[sourceId]->end(),
                 [&](auto& p) {
@@ -62,6 +62,7 @@ template void Mod::emit(int sourceId, const glm::vec3& value);
 template void Mod::emit(int sourceId, const glm::vec4& value);
 template void Mod::emit(int sourceId, const float& value);
 template void Mod::emit(int sourceId, const FboPtr& value);
+template void Mod::emit(int sourceId, const ofPixels& value);
 
 void Mod::receive(int sinkId, const glm::vec1& point) {
   ofLogError() << "bad receive of glm::vec1 in " << typeid(*this).name();
@@ -90,6 +91,10 @@ void Mod::receive(int sinkId, const FboPtr& fboPtr_) {
   } else {
     ofLogError() << "FboPtr receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void Mod::receive(int sinkId, const ofPixels& pixels) {
+  ofLogError() << "bad receive of ofPixels in " << typeid(*this).name();
 }
 
 

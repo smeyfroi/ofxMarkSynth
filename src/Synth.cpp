@@ -68,12 +68,6 @@ void Synth::update() {
 
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
-  // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO.
-  // NOTE: Is that a real thing or should the few that draw directly be refactored?
-  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
-    modPtr->draw();
-  });
-  
   imageCompositeFbo.begin();
   ofSetColor(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
   ofFill();
@@ -85,6 +79,12 @@ void Synth::draw() {
   imageCompositeFbo.end();
 
   imageCompositeFbo.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  
+  // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO.
+  // NOTE: Is that a real thing or should the few that draw directly be refactored?
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
+    modPtr->draw();
+  });
   
   if (recorder.isRecording()) {
     recorderCompositeFbo.begin();
