@@ -39,7 +39,19 @@ void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
 
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
+  // Do this to set the GL wrap mode
+  // See ofFbo.cpp #allocate
+  ofFboSettings settings { nullptr };
+  settings.wrapModeVertical = GL_REPEAT;
+  settings.wrapModeHorizontal = GL_REPEAT;
+  settings.width = ofGetWindowWidth();
+  settings.height = ofGetWindowHeight();
+  settings.internalformat = GL_RGBA32F;
+  settings.numSamples = 0;
+  settings.useDepth = true;
+  settings.useStencil = true;
+  settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+  fboPtr->allocate(settings);
   fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
   synth.configure(createMods(), fboPtr);
   
