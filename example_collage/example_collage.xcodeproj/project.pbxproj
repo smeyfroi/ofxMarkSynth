@@ -68,6 +68,7 @@
 		"A66441E0-0E72-4390-8FB9-D55DD2FADAF8" /* VUMeter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "2AB81B95-4759-45EE-9F58-8E18FFF692C7" /* VUMeter.cpp */; };
 		"AA791724-B09D-4179-A4A3-380587C5764B" /* Processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "FC163039-26E2-4936-8944-53D318AAC9CE" /* Processor.cpp */; };
 		AAC331812DDA7050003A1781 /* PixelSnapshotMod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAC331802DDA7050003A1781 /* PixelSnapshotMod.cpp */; };
+		AAC331842DDBBD0C003A1781 /* PathMod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAC331832DDBBD0C003A1781 /* PathMod.cpp */; };
 		"AC59B456-F084-4249-B820-AF8786F8E018" /* LiveClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "DE82E032-E005-425B-AE3B-4F44FEE63D71" /* LiveClient.cpp */; };
 		"AE8861CC-4139-4E10-9A9D-2D29AFCD215D" /* ofxInputField.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "A44AEB88-C429-465F-9263-13C34B676994" /* ofxInputField.cpp */; };
 		"AF13CDD0-0894-4D9F-9FB7-3F9DC4879527" /* ofxSoundSpliter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "1E85968B-17E4-4F93-83C4-BC92ABDFCB2D" /* ofxSoundSpliter.cpp */; };
@@ -294,6 +295,8 @@
 		"AA7644B1-C52A-4227-968C-F2D4C438976B" /* OscReceivedElements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = OscReceivedElements.h; sourceTree = "<group>"; };
 		AAC3317F2DDA7050003A1781 /* PixelSnapshotMod.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PixelSnapshotMod.hpp; sourceTree = "<group>"; };
 		AAC331802DDA7050003A1781 /* PixelSnapshotMod.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PixelSnapshotMod.cpp; sourceTree = "<group>"; };
+		AAC331822DDBBD0C003A1781 /* PathMod.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PathMod.hpp; sourceTree = "<group>"; };
+		AAC331832DDBBD0C003A1781 /* PathMod.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PathMod.cpp; sourceTree = "<group>"; };
 		"AC218EA5-569E-41FA-A701-02A99B778BAA" /* ofxSoundObjectBaseRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ofxSoundObjectBaseRenderer.h; sourceTree = "<group>"; };
 		"AE6E502E-80AA-434A-BB2B-9A909FC081A1" /* ofxPointClusters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ofxPointClusters.h; sourceTree = "<group>"; };
 		"B02008CA-B680-474A-A2FF-561778BE567C" /* OscTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OscTypes.cpp; sourceTree = "<group>"; };
@@ -789,6 +792,8 @@
 				"57370FC6-427C-44F9-8E77-5D7D55DE698C" /* SomPaletteMod.hpp */,
 				AAC331802DDA7050003A1781 /* PixelSnapshotMod.cpp */,
 				AAC3317F2DDA7050003A1781 /* PixelSnapshotMod.hpp */,
+				AAC331832DDBBD0C003A1781 /* PathMod.cpp */,
+				AAC331822DDBBD0C003A1781 /* PathMod.hpp */,
 			);
 			path = processMods;
 			sourceTree = "<group>";
@@ -1358,6 +1363,7 @@
 				"81210E4B-6BA5-4769-AB87-BC396DE64123" /* ofxGist.cpp in Sources */,
 				"591FA538-1CB4-4ACE-A0FA-A5BF6D447EE4" /* ofxAudioFile.cpp in Sources */,
 				"B3D4DA5D-1702-4AEB-886A-F8F7E969B3EC" /* ofxBaseGui.cpp in Sources */,
+				AAC331842DDBBD0C003A1781 /* PathMod.cpp in Sources */,
 				"849F2DA9-9737-4362-A4AA-80A53CB33148" /* ofxButton.cpp in Sources */,
 				"B228244D-3C05-427D-A109-3E4C6F39A821" /* ofxColorPicker.cpp in Sources */,
 				"B7E615C8-15B2-4BFE-A147-CC971DCF8E0C" /* ofxGuiGroup.cpp in Sources */,

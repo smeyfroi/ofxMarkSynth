@@ -11,6 +11,7 @@
 #include "SomPaletteMod.hpp"
 #include "ClusterMod.hpp"
 #include "PixelSnapshotMod.hpp"
+#include "PathMod.hpp"
 
 #include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"
