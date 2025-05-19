@@ -35,22 +35,23 @@ const ofPixels PixelSnapshotMod::createPixels(const FboPtr& fboPtr) {
   return pixels;
 }
 
-// FIXME: should draw over the viewport but doesn't
 void PixelSnapshotMod::draw() {
   if (!visible) return;
-  ofPushView();
-//  ofDisableAlphaBlending();
-//  {
-//    ofSetColor(0);
-//    ofFill();
-//    ofDrawRectangle(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
-//  }
-  ofTexture t;
-  t.allocate(pixels.getWidth(), pixels.getHeight(), GL_RGBA);
-  t.loadData(pixels);
-  ofSetColor(255);
-  t.draw({ 0, 0 }, ofGetWindowWidth(), ofGetWindowHeight());
-  ofPopView();
+  ofPushStyle();
+  {
+    // clear whatever is drawn on the window already
+    ofSetColor(ofFloatColor(0.0, 0.0, 0.0, 1.0));
+    ofFill();
+    ofDrawRectangle(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+  }
+  {
+    ofTexture t;
+    t.allocate(pixels.getWidth(), pixels.getHeight(), GL_RGBA);
+    t.loadData(pixels);
+    ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
+    t.draw({ 0, 0 }, ofGetWindowWidth(), ofGetWindowHeight());
+  }
+  ofPopStyle();
 }
 
 bool PixelSnapshotMod::keyPressed(int key) {
