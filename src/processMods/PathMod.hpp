@@ -32,7 +32,7 @@ private:
   ofParameter<int> maxVerticesParameter { "MaxVertices", 3, 0, 20 };
   ofParameter<float> vertexProximityParameter { "VertexProximity", 0.1, 0.0, 1.0 };
   
-  std::vector<glm::vec2> newVecs;
+  std::deque<glm::vec2> newVecs;
   ofPath path;
   const ofPixels createPath();
 

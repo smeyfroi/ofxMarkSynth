@@ -29,12 +29,11 @@ void PathMod::update() {
     previousVec = v;
   });
   
-  if (newPath.getCommands().size() < maxVerticesParameter + 1) return;
-  
-  // find the centroid
-    
-  // then erase points far away from the centroid
-
+  if (newPath.getCommands().size() < maxVerticesParameter + 1) {
+    // delete first point for the next try
+    if (newVecs.size() > 2) newVecs.pop_front();
+    return;
+  }
   
   newVecs.clear();
   path = newPath;
