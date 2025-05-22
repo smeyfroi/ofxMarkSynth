@@ -29,9 +29,10 @@ void PathMod::update() {
     previousVec = v;
   });
   
-  if (newPath.getCommands().size() < maxVerticesParameter + 1) {
+//  if (newPath.getCommands().size() < maxVerticesParameter + 1) {
+  if (newPath.getCommands().size() < 4) {
     // delete first point for the next try
-    if (newVecs.size() > 2) newVecs.pop_front();
+//    if (newVecs.size() > 2) newVecs.pop_front();
     return;
   }
   

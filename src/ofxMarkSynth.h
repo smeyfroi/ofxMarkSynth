@@ -21,5 +21,6 @@
 #include "ParticleSetMod.hpp"
 #include "DividedAreaMod.hpp"
 #include "SandLineMod.hpp"
+#include "CollageMod.hpp"
 
 #include "Synth.hpp"

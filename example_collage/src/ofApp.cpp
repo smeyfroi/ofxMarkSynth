@@ -30,11 +30,26 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  ofxMarkSynth::PathMod::SINK_VEC2);
   mods.push_back(pathModPtr);
 
-  // mask from path
+  ofxMarkSynth::ModPtr randomColourSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Colours", ofxMarkSynth::ModConfig {
+    {"CreatedPerUpdate", "0.01"}
+  }, 4);
+  mods.push_back(randomColourSourceModPtr);
   
-  // collage into mask from snapshot
-  
+  ofxMarkSynth::ModPtr collageModPtr = std::make_shared<ofxMarkSynth::CollageMod>("Collage", ofxMarkSynth::ModConfig {
+  });
+  pixelSnapshotModPtr->addSink(ofxMarkSynth::PixelSnapshotMod::SOURCE_PIXELS,
+                               collageModPtr,
+                               ofxMarkSynth::CollageMod::SINK_PIXELS);
+  pathModPtr->addSink(ofxMarkSynth::PathMod::SOURCE_PATH,
+                      collageModPtr,
+                      ofxMarkSynth::CollageMod::SINK_PATH);
+  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
+                      collageModPtr,
+                      ofxMarkSynth::CollageMod::SINK_COLOR);
+  mods.push_back(collageModPtr);
+
   particleSetModPtr->receive(ofxMarkSynth::ParticleSetMod::SINK_FBO, fboPtr);
+  collageModPtr->receive(ofxMarkSynth::ParticleSetMod::SINK_FBO, fboPtr);
 
   return mods;
 }

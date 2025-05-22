@@ -67,6 +67,7 @@
 		"A559CA12-322A-4A1E-AF6E-A040EA030F6E" /* OscReceivedElements.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "1B521D98-D4AE-41C0-A782-C3745E18B8A7" /* OscReceivedElements.cpp */; };
 		"A66441E0-0E72-4390-8FB9-D55DD2FADAF8" /* VUMeter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "2AB81B95-4759-45EE-9F58-8E18FFF692C7" /* VUMeter.cpp */; };
 		"AA791724-B09D-4179-A4A3-380587C5764B" /* Processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "FC163039-26E2-4936-8944-53D318AAC9CE" /* Processor.cpp */; };
+		AAA024D22DDE3FF00084B63C /* CollageMod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAA024D12DDE3FF00084B63C /* CollageMod.cpp */; };
 		AAC331812DDA7050003A1781 /* PixelSnapshotMod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAC331802DDA7050003A1781 /* PixelSnapshotMod.cpp */; };
 		AAC331842DDBBD0C003A1781 /* PathMod.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAC331832DDBBD0C003A1781 /* PathMod.cpp */; };
 		"AC59B456-F084-4249-B820-AF8786F8E018" /* LiveClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = "DE82E032-E005-425B-AE3B-4F44FEE63D71" /* LiveClient.cpp */; };
@@ -293,6 +294,8 @@
 		"AA61E683-5A93-441E-AB46-018302BD5EB5" /* ofxHistoryPlot.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxHistoryPlot.cpp; sourceTree = "<group>"; };
 		"AA644B9E-0CA7-4BC4-9795-6E1728623AD3" /* ofxAudioAnalysisClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ofxAudioAnalysisClient.h; sourceTree = "<group>"; };
 		"AA7644B1-C52A-4227-968C-F2D4C438976B" /* OscReceivedElements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = OscReceivedElements.h; sourceTree = "<group>"; };
+		AAA024D02DDE3FF00084B63C /* CollageMod.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CollageMod.hpp; sourceTree = "<group>"; };
+		AAA024D12DDE3FF00084B63C /* CollageMod.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CollageMod.cpp; sourceTree = "<group>"; };
 		AAC3317F2DDA7050003A1781 /* PixelSnapshotMod.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PixelSnapshotMod.hpp; sourceTree = "<group>"; };
 		AAC331802DDA7050003A1781 /* PixelSnapshotMod.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PixelSnapshotMod.cpp; sourceTree = "<group>"; };
 		AAC331822DDBBD0C003A1781 /* PathMod.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PathMod.hpp; sourceTree = "<group>"; };
@@ -1227,6 +1230,8 @@
 				"D96ED888-DC27-4DF9-97E0-FD071DD97D0E" /* ParticleSetMod.hpp */,
 				"C2A26742-3ADB-4009-B26B-F2242CF2EB4E" /* SandLineMod.cpp */,
 				"BD56FC85-FBE9-4493-AEE2-CB5A527319F7" /* SandLineMod.hpp */,
+				AAA024D12DDE3FF00084B63C /* CollageMod.cpp */,
+				AAA024D02DDE3FF00084B63C /* CollageMod.hpp */,
 			);
 			path = sinkMods;
 			sourceTree = "<group>";
@@ -1342,6 +1347,7 @@
 				"23540EC5-65D2-4C87-A0B1-3A6C39C626DA" /* IpEndpointName.cpp in Sources */,
 				"9F69B6B5-8ECF-45F0-AA9C-BC3DDE42AC49" /* NetworkingUtils.cpp in Sources */,
 				"50EB030C-2745-4461-833F-1237F0F68A80" /* UdpSocket.cpp in Sources */,
+				AAA024D22DDE3FF00084B63C /* CollageMod.cpp in Sources */,
 				"E1DB23D7-A6CF-496C-9913-619A95960244" /* OscOutboundPacketStream.cpp in Sources */,
 				"DC40B17C-9F14-41C7-AA89-BA94A3FD4252" /* OscPrintReceivedElements.cpp in Sources */,
 				"A559CA12-322A-4A1E-AF6E-A040EA030F6E" /* OscReceivedElements.cpp in Sources */,
