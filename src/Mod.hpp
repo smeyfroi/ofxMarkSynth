@@ -62,8 +62,9 @@ public:
   static constexpr int SINK_FBO_4 = SINK_FBO_3 + 1;
   static constexpr int SINK_FBO_END = SINK_FBO_4;
 
-protected:
   std::string name;
+
+protected:
   ModConfig config;
   ofParameterGroup parameters;
   virtual void initParameters() = 0;

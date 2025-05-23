@@ -16,16 +16,25 @@ config { std::move(config_) },
 fboPtrs(SINK_FBO_END - SINK_FBO_BEGIN)
 {}
 
+bool trySetParameterFromString(ofParameterGroup& group, const std::string& name, const std::string& stringValue) {
+  for (const auto& paramPtr : group) {
+    if (paramPtr->getName() == name) {
+      paramPtr->fromString(stringValue);
+      return true;
+    }
+    if (paramPtr->type() == typeid(ofParameterGroup).name()) {
+      return trySetParameterFromString(paramPtr->castGroup(), name, stringValue);
+    }
+  }
+  return false;
+}
+
 ofParameterGroup& Mod::getParameterGroup() {
   if (parameters.getName().empty()) {
     parameters.setName(name);
     initParameters();
     for (const auto& [k, v] : config) {
-      if (!parameters.contains(k)) {
-        ofLogError() << "bad parameter in " << typeid(*this).name() << " with name " << k;
-      } else {
-        parameters.get(k).fromString(v);
-      }
+      if (!trySetParameterFromString(parameters, k, v)) ofLogError() << "bad parameter in " << typeid(*this).name() << " with name " << k;
     }
   }
   return parameters;
