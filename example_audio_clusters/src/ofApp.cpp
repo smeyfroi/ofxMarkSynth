@@ -8,8 +8,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                                                                   ofxMarkSynth::ModConfig {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
-  });
-  audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
+  }, audioDataProcessorPtr);
   mods.push_back(audioDataSourceModPtr);
   
   ofxMarkSynth::ModPtr clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",

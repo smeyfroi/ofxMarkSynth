@@ -16,9 +16,8 @@ namespace ofxMarkSynth {
 class AudioDataSourceMod : public Mod {
 
 public:
-  AudioDataSourceMod(const std::string& name, const ModConfig&& config);
+  AudioDataSourceMod(const std::string& name, const ModConfig&& config, std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr);
   void update() override;
-  std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
   
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
   static constexpr int SOURCE_SPECTRAL_POINTS = 2;
@@ -32,6 +31,8 @@ protected:
   void initParameters() override;
 
 private:
+  std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
+  
   ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 6000.0 };
   ofParameter<float> maxPitchParameter { "MaxPitch", 2500.0, 0.0, 6000.0 };
   ofParameter<float> minRmsParameter { "MinRms", 0.001, 0.0, 0.1 };

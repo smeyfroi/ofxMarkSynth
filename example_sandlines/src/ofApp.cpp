@@ -15,10 +15,9 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                                                                   ofxMarkSynth::ModConfig {
     {"MinPitch", "50.0"},
     {"MaxPitch", "1500.0"}
-  });
-  audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
+  }, audioDataProcessorPtr);
   mods.push_back(audioDataSourceModPtr);
-  
+
   auto clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
                                                                   ofxMarkSynth::ModConfig {
   });
@@ -38,7 +37,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  sandLineModPtr,
                                  ofxMarkSynth::SandLineMod::SINK_POINTS);
   mods.push_back(sandLineModPtr);
-  
+
   sandLineModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 
   return mods;
@@ -60,7 +59,7 @@ void ofApp::setup() {
 
   ofxMarkSynth::allocateFbo(fboPtr, ofGetWindowSize(), GL_RGBA32F);
   synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
-  
+
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
 }
@@ -91,40 +90,40 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
-  
+
 }

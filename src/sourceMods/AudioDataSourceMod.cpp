@@ -11,8 +11,9 @@
 namespace ofxMarkSynth {
 
 
-AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&& config, std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr_)
+: Mod { name, std::move(config) },
+  audioDataProcessorPtr { audioDataProcessorPtr_ }
 {}
 
 void AudioDataSourceMod::initParameters() {

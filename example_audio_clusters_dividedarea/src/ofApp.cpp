@@ -8,17 +8,16 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                                                                   ofxMarkSynth::ModConfig {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
-  });
-  audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
+  }, audioDataProcessorPtr);
   mods.push_back(audioDataSourceModPtr);
-  
+
   auto clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
                                                                   ofxMarkSynth::ModConfig {});
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
                                  clusterModPtr,
                                  ofxMarkSynth::ClusterMod::SINK_VEC2);
   mods.push_back(clusterModPtr);
-  
+
   {
     ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points",
                                                                                           ofxMarkSynth::ModConfig {});
@@ -26,7 +25,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                            drawPointsModPtr,
                            ofxMarkSynth::DrawPointsMod::SINK_POINTS);
     mods.push_back(drawPointsModPtr);
-    
+
     ofxMarkSynth::ModPtr multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade Points",
                                                                                       ofxMarkSynth::ModConfig {});
     drawPointsModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO,
@@ -47,7 +46,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                            dividedAreaModPtr,
                            ofxMarkSynth::DividedAreaMod::SINK_MINOR_ANCHORS);
     mods.push_back(dividedAreaModPtr);
-    
+
     ofxMarkSynth::ModPtr multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade Unconstrained Lines",
                                                                                       ofxMarkSynth::ModConfig {});
     dividedAreaModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO_2, // Fade unconstrained lines
@@ -117,40 +116,40 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
-  
+
 }

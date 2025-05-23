@@ -8,10 +8,9 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                                                                   ofxMarkSynth::ModConfig {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
-  });
-  audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
+  }, audioDataProcessorPtr);
   mods.push_back(audioDataSourceModPtr);
-  
+
   auto audioPaletteModPtr = std::make_shared<ofxMarkSynth::SomPaletteMod>("Palette Creator",
                                                                                       ofxMarkSynth::ModConfig {
   });
@@ -19,7 +18,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  audioPaletteModPtr,
                                  ofxMarkSynth::SomPaletteMod::SINK_VEC3);
   mods.push_back(audioPaletteModPtr);
-  
+
   ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
   });
   audioPaletteModPtr->addSink(ofxMarkSynth::SomPaletteMod::SOURCE_RANDOM_VEC4,
@@ -29,7 +28,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
   mods.push_back(drawPointsModPtr);
-  
+
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 
   return mods;
@@ -86,40 +85,40 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
-  
+
 }

@@ -8,10 +8,9 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                                                                   ofxMarkSynth::ModConfig {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
-  });
-  audioDataSourceModPtr->audioDataProcessorPtr = audioDataProcessorPtr;
+  }, audioDataProcessorPtr);
   mods.push_back(audioDataSourceModPtr);
-  
+
   auto introspectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Point Introspector",
                                                                             ofxMarkSynth::ModConfig {
   });
@@ -29,7 +28,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  introspectorModPtr,
                                  ofxMarkSynth::IntrospectorMod::SINK_HORIZONTAL_LINES_3);
   mods.push_back(introspectorModPtr);
-  
+
   return mods;
 }
 
@@ -42,17 +41,17 @@ ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
-  
+
   introspectorPtr = std::make_shared<Introspector>();
   introspectorPtr->visible = true;
-  
+
   audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>();
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
-  
+
   fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
   fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
   synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
-  
+
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
   gui.getGroup("Synth").minimizeAll();
@@ -87,40 +86,40 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-  
+
 }
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
-  
+
 }
