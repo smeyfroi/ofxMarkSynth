@@ -34,15 +34,21 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
   mods.push_back(drawPointsModPtr);
 
+  ofxMarkSynth::ModPtr fluidModPtr = std::make_shared<ofxMarkSynth::FluidMod>("Fluid", ofxMarkSynth::ModConfig {
+  });
+  mods.push_back(fluidModPtr);
+
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
+  fluidModPtr->receive(ofxMarkSynth::FluidMod::SINK_VALUES_FBO, fboPtr);
+  fluidModPtr->receive(ofxMarkSynth::FluidMod::SINK_VELOCITIES_FBO, fluidVelocitiesFboPtr);
   
   return mods;
 }
 
 ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
   ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
+  auto fboConfigPtrFluidValues = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
+  fbos.emplace_back(fboConfigPtrFluidValues);
   return fbos;
 }
 
@@ -53,6 +59,8 @@ void ofApp::setup() {
 
   fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
   fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
+  fluidVelocitiesFboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB32F);
+  fluidVelocitiesFboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0));
   synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
   
   parameters.add(synth.getParameterGroup("Synth"));

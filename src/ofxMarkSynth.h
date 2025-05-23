@@ -12,6 +12,7 @@
 #include "ClusterMod.hpp"
 #include "PixelSnapshotMod.hpp"
 #include "PathMod.hpp"
+#include "FluidMod.hpp"
 
 #include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"
