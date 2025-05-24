@@ -75,4 +75,19 @@ protected:
 };
 
 
+template <typename ModT>
+ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
+  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
+  modPtrs.push_back(modPtr);
+  return modPtr;
+}
+
+template <typename ModT, typename... Args>
+ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
+  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
+  modPtrs.push_back(modPtr);
+  return modPtr;
+}
+
+
 } // ofxMarkSynth
