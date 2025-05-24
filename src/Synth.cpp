@@ -74,6 +74,7 @@ void Synth::update() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   imageCompositeFbo.begin();
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofSetColor(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
   ofFill();
   ofDrawRectangle({0, 0}, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
@@ -85,8 +86,8 @@ void Synth::draw() {
 
   imageCompositeFbo.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
   
-  // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO.
-  // NOTE: Is that a real thing or should the few that draw directly be refactored?
+  // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO,
+  // for example audio data plots or other debug views
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->draw();
   });
