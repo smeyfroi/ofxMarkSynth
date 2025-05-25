@@ -4,16 +4,12 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  auto videoFlowSourceModPtr = std::make_shared<ofxMarkSynth::VideoFlowSourceMod>("Video", ofxMarkSynth::ModConfig {
-  }, ofToDataPath("trimmed.mov"), true);
-  mods.push_back(videoFlowSourceModPtr);
+  auto videoFlowSourceModPtr = addMod<ofxMarkSynth::VideoFlowSourceMod>(mods, "Video", {}, ofToDataPath("trimmed.mov"), true);
   
-  ofxMarkSynth::ModPtr particleSetModPtr = std::make_shared<ofxMarkSynth::ParticleSetMod>("Particles", ofxMarkSynth::ModConfig {
-  });
+  auto particleSetModPtr = addMod<ofxMarkSynth::ParticleSetMod>(mods, "Particles", {});
   videoFlowSourceModPtr->addSink(ofxMarkSynth::VideoFlowSourceMod::SOURCE_VEC4,
                                  particleSetModPtr,
                                  ofxMarkSynth::ParticleSetMod::SINK_POINT_VELOCITIES);
-  mods.push_back(particleSetModPtr);
   
   particleSetModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 

@@ -4,31 +4,24 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  auto randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
+  auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
     {"CreatedPerUpdate", "0.4"}
   }, 2);
-  mods.push_back(randomVecSourceModPtr);
   
-  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
-  });
+  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-  mods.push_back(drawPointsModPtr);
   
-  ofxMarkSynth::ModPtr translateModPtr = std::make_shared<ofxMarkSynth::TranslateMod>("Translate", ofxMarkSynth::ModConfig {
-  });
+  auto translateModPtr = addMod<ofxMarkSynth::TranslateMod>(mods, "Translate", {});
   drawPointsModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO,
                             translateModPtr,
                             ofxMarkSynth::TranslateMod::SINK_FBO);
-  mods.push_back(translateModPtr);
   
-  ofxMarkSynth::ModPtr multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade", ofxMarkSynth::ModConfig {
-  });
+  auto multiplyModPtr = addMod<ofxMarkSynth::MultiplyMod>(mods, "Fade", {});
   translateModPtr->addSink(ofxMarkSynth::TranslateMod::SOURCE_FBO,
                            multiplyModPtr,
                            ofxMarkSynth::MultiplyMod::SINK_FBO);
-  mods.push_back(multiplyModPtr);
 
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 

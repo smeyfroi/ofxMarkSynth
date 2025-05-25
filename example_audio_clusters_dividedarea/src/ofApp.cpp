@@ -4,55 +4,43 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  auto audioDataSourceModPtr = std::make_shared<ofxMarkSynth::AudioDataSourceMod>("Audio Points",
-                                                                                  ofxMarkSynth::ModConfig {
+  auto audioDataSourceModPtr = addMod<ofxMarkSynth::AudioDataSourceMod>(mods, "Audio Points", {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
   }, audioDataProcessorPtr);
-  mods.push_back(audioDataSourceModPtr);
 
-  auto clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
-                                                                  ofxMarkSynth::ModConfig {});
+  auto clusterModPtr = addMod<ofxMarkSynth::ClusterMod>(mods, "Clusters", {});
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
                                  clusterModPtr,
                                  ofxMarkSynth::ClusterMod::SINK_VEC2);
-  mods.push_back(clusterModPtr);
 
   {
-    ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points",
-                                                                                          ofxMarkSynth::ModConfig {});
+    auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
     clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                            drawPointsModPtr,
                            ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-    mods.push_back(drawPointsModPtr);
 
-    ofxMarkSynth::ModPtr multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade Points",
-                                                                                      ofxMarkSynth::ModConfig {});
+    auto multiplyModPtr = addMod<ofxMarkSynth::MultiplyMod>(mods, "Fade Points", {});
     drawPointsModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO,
                               multiplyModPtr,
                               ofxMarkSynth::MultiplyMod::SINK_FBO);
-    mods.push_back(multiplyModPtr);
 
     drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtrBackground);
   }
 
   {
-    ofxMarkSynth::ModPtr dividedAreaModPtr = std::make_shared<ofxMarkSynth::DividedAreaMod>("Divided Area",
-                                                                                            ofxMarkSynth::ModConfig {});
+    auto dividedAreaModPtr = addMod<ofxMarkSynth::DividedAreaMod>(mods, "Divided Area", {});
     clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                            dividedAreaModPtr,
                            ofxMarkSynth::DividedAreaMod::SINK_MAJOR_ANCHORS);
     clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                            dividedAreaModPtr,
                            ofxMarkSynth::DividedAreaMod::SINK_MINOR_ANCHORS);
-    mods.push_back(dividedAreaModPtr);
 
-    ofxMarkSynth::ModPtr multiplyModPtr = std::make_shared<ofxMarkSynth::MultiplyMod>("Fade Unconstrained Lines",
-                                                                                      ofxMarkSynth::ModConfig {});
+    auto multiplyModPtr = addMod<ofxMarkSynth::MultiplyMod>(mods, "Fade Unconstrained Lines", {});
     dividedAreaModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO_2, // Fade unconstrained lines
                               multiplyModPtr,
                               ofxMarkSynth::MultiplyMod::SINK_FBO);
-    mods.push_back(multiplyModPtr);
 
     dividedAreaModPtr->receive(ofxMarkSynth::DividedAreaMod::SINK_FBO, fboPtrMinorLines);
     dividedAreaModPtr->receive(ofxMarkSynth::DividedAreaMod::SINK_FBO_2, fboPtrMajorLines);

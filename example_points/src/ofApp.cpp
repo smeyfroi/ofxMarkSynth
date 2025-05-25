@@ -4,25 +4,21 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  ofxMarkSynth::ModPtr randomFloatSourceModPtr = std::make_shared<ofxMarkSynth::RandomFloatSourceMod>("Random Radius", ofxMarkSynth::ModConfig {
+  auto randomFloatSourceModPtr = addMod<ofxMarkSynth::RandomFloatSourceMod>(mods, "Random Radius", {
     {"CreatedPerUpdate", "0.05"},
     {"Min", "0.001"},
     {"Max", "0.05"}
   }, std::pair<float, float>{0.0, 0.1}, std::pair<float, float>{0.0, 0.1});
-  mods.push_back(randomFloatSourceModPtr);
 
-  ofxMarkSynth::ModPtr randomVecSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Points", ofxMarkSynth::ModConfig {
+  auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
     {"CreatedPerUpdate", "0.4"}
   }, 2);
-  mods.push_back(randomVecSourceModPtr);
   
-  ofxMarkSynth::ModPtr randomColourSourceModPtr = std::make_shared<ofxMarkSynth::RandomVecSourceMod>("Random Colours", ofxMarkSynth::ModConfig {
+  auto randomColourSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Colours", ofxMarkSynth::ModConfig {
     {"CreatedPerUpdate", "0.1"}
   }, 4);
-  mods.push_back(randomColourSourceModPtr);
   
-  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
-  });
+  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
   randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
                                    drawPointsModPtr,
                                    ofxMarkSynth::DrawPointsMod::SINK_POINT_COLOR);
@@ -32,11 +28,8 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-  mods.push_back(drawPointsModPtr);
 
-  ofxMarkSynth::ModPtr fluidModPtr = std::make_shared<ofxMarkSynth::FluidMod>("Fluid", ofxMarkSynth::ModConfig {
-  });
-  mods.push_back(fluidModPtr);
+  auto fluidModPtr = addMod<ofxMarkSynth::FluidMod>(mods, "Fluid", ofxMarkSynth::ModConfig {});
 
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
   fluidModPtr->receive(ofxMarkSynth::FluidMod::SINK_VALUES_FBO, fboPtr);

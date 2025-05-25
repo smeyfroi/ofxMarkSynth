@@ -4,28 +4,20 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  auto audioDataSourceModPtr = std::make_shared<ofxMarkSynth::AudioDataSourceMod>("Audio Points",
-                                                                                  ofxMarkSynth::ModConfig {
+  auto audioDataSourceModPtr = addMod<ofxMarkSynth::AudioDataSourceMod>(mods, "Audio Points", {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
   }, audioDataProcessorPtr);
-  mods.push_back(audioDataSourceModPtr);
-  
-  ofxMarkSynth::ModPtr clusterModPtr = std::make_shared<ofxMarkSynth::ClusterMod>("Clusters",
-                                                                  ofxMarkSynth::ModConfig {
-  });
-  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
+
+  auto clusterModPtr = addMod<ofxMarkSynth::ClusterMod>(mods, "Clusters", {});
+  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_POLAR_PITCH_RMS_POINTS,
                                  clusterModPtr,
                                  ofxMarkSynth::ClusterMod::SINK_VEC2);
-  mods.push_back(clusterModPtr);
-  
-  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points",
-                                                                        ofxMarkSynth::ModConfig {
-  });
+
+  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", ofxMarkSynth::ModConfig {});
   clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
                          drawPointsModPtr,
                          ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-  mods.push_back(drawPointsModPtr);
   
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
   

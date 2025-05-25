@@ -4,17 +4,12 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  auto audioDataSourceModPtr = std::make_shared<ofxMarkSynth::AudioDataSourceMod>("Audio Points",
-                                                                                  ofxMarkSynth::ModConfig {
+  auto audioDataSourceModPtr = addMod<ofxMarkSynth::AudioDataSourceMod>(mods, "Audio Points", {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
   }, audioDataProcessorPtr);
-  mods.push_back(audioDataSourceModPtr);
 
-  auto introspectorModPtr = std::make_shared<ofxMarkSynth::IntrospectorMod>("Point Introspector",
-                                                                            ofxMarkSynth::ModConfig {
-  });
-  introspectorModPtr->introspectorPtr = introspectorPtr;
+  auto introspectorModPtr = addMod<ofxMarkSynth::IntrospectorMod>(mods, "Point Introspector", {}, introspectorPtr);
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
                                  introspectorModPtr,
                                  ofxMarkSynth::IntrospectorMod::SINK_POINTS);
@@ -27,7 +22,6 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_ZERO_CROSSING_RATE_SCALAR,
                                  introspectorModPtr,
                                  ofxMarkSynth::IntrospectorMod::SINK_HORIZONTAL_LINES_3);
-  mods.push_back(introspectorModPtr);
 
   return mods;
 }

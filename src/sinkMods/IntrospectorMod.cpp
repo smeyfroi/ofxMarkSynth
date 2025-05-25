@@ -11,8 +11,9 @@
 namespace ofxMarkSynth {
 
 
-IntrospectorMod::IntrospectorMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+IntrospectorMod::IntrospectorMod(const std::string& name, const ModConfig&& config, std::shared_ptr<Introspector> introspectorPtr_)
+: Mod { name, std::move(config) },
+  introspectorPtr { introspectorPtr_ }
 {}
 
 void IntrospectorMod::initParameters() {

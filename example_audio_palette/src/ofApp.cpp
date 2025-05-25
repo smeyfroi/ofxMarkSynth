@@ -4,30 +4,23 @@
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
-  auto audioDataSourceModPtr = std::make_shared<ofxMarkSynth::AudioDataSourceMod>("Audio Points",
-                                                                                  ofxMarkSynth::ModConfig {
+  auto audioDataSourceModPtr = addMod<ofxMarkSynth::AudioDataSourceMod>(mods, "Audio Points", {
     {"MinPitch", "50.0"},
     {"MaxPitch", "2500.0"}
   }, audioDataProcessorPtr);
-  mods.push_back(audioDataSourceModPtr);
 
-  auto audioPaletteModPtr = std::make_shared<ofxMarkSynth::SomPaletteMod>("Palette Creator",
-                                                                                      ofxMarkSynth::ModConfig {
-  });
+  auto audioPaletteModPtr = addMod<ofxMarkSynth::SomPaletteMod>(mods, "Palette Creator", {});
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_SPECTRAL_POINTS,
                                  audioPaletteModPtr,
                                  ofxMarkSynth::SomPaletteMod::SINK_VEC3);
-  mods.push_back(audioPaletteModPtr);
 
-  ofxMarkSynth::ModPtr drawPointsModPtr = std::make_shared<ofxMarkSynth::DrawPointsMod>("Draw Points", ofxMarkSynth::ModConfig {
-  });
+  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
   audioPaletteModPtr->addSink(ofxMarkSynth::SomPaletteMod::SOURCE_RANDOM_VEC4,
                                    drawPointsModPtr,
                                    ofxMarkSynth::DrawPointsMod::SINK_POINT_COLOR);
   audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
                                  drawPointsModPtr,
                                  ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-  mods.push_back(drawPointsModPtr);
 
   drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
 
