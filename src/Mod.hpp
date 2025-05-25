@@ -55,14 +55,16 @@ public:
   static constexpr int SOURCE_FBO_2 = SOURCE_FBO + 1;
   static constexpr int SOURCE_FBO_3 = SOURCE_FBO_2 + 1;
   static constexpr int SOURCE_FBO_4 = SOURCE_FBO_3 + 1;
-  static constexpr int SOURCE_FBO_END = SOURCE_FBO_4;
+  static constexpr int SOURCE_FBO_5 = SOURCE_FBO_4 + 1;
+  static constexpr int SOURCE_FBO_END = SOURCE_FBO_5;
   
   static constexpr int SINK_FBO_BEGIN = -200;
   static constexpr int SINK_FBO = SINK_FBO_BEGIN;
   static constexpr int SINK_FBO_2 = SINK_FBO + 1;
   static constexpr int SINK_FBO_3 = SINK_FBO_2 + 1;
   static constexpr int SINK_FBO_4 = SINK_FBO_3 + 1;
-  static constexpr int SINK_FBO_END = SINK_FBO_4;
+  static constexpr int SINK_FBO_5 = SINK_FBO_4 + 1;
+  static constexpr int SINK_FBO_END = SINK_FBO_5;
 
   std::string name;
 
