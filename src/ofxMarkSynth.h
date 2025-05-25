@@ -13,6 +13,7 @@
 #include "PixelSnapshotMod.hpp"
 #include "PathMod.hpp"
 #include "FluidMod.hpp"
+#include "FluidRadialImpulseMod.hpp"
 
 #include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"

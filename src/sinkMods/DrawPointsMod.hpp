@@ -7,14 +7,12 @@
 
 #pragma once
 
-#include "ofxGui.h"
 #include "Mod.hpp"
 
 
 namespace ofxMarkSynth {
 
 
-// TODO: Add an option to blur instead of fade
 class DrawPointsMod : public Mod {
 
 public:
