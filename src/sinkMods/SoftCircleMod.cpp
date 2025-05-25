@@ -1,58 +1,56 @@
 //
-//  DrawPointsMod.cpp
-//  example_points
+//  SoftCircleMod.cpp
+//  fingerprint1
 //
-//  Created by Steve Meyfroidt on 05/05/2025.
+//  Created by Steve Meyfroidt on 25/05/2025.
 //
 
-#include "DrawPointsMod.hpp"
+#include "SoftCircleMod.hpp"
 
 
 namespace ofxMarkSynth {
 
 
-DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config)
+SoftCircleMod::SoftCircleMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{}
+{
+  addImpulseSpotShader.load();
+}
 
-void DrawPointsMod::initParameters() {
-  parameters.add(pointRadiusParameter);
+void SoftCircleMod::initParameters() {
+  parameters.add(radiusParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
 }
 
-void DrawPointsMod::update() {
+void SoftCircleMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
-  fboPtr->getSource().begin();
-  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
-  ofFill();
   
+  float radius = radiusParameter;
   float multiplier = colorMultiplierParameter;
   ofFloatColor c = colorParameter;
   c *= multiplier;
-  ofSetColor(c);
   
   std::for_each(newPoints.begin(),
                 newPoints.end(),
-                [this](const auto& p) {
-    ofDrawCircle(p, pointRadiusParameter);
+                [this, fboPtr, radius, c](const auto& p) {
+    addImpulseSpotShader.render(*fboPtr, p * fboPtr->getWidth(), radius * fboPtr->getWidth(), glm::vec4 { c.r, c.g, c.b, c.a });
   });
   newPoints.clear();
-  fboPtr->getSource().end();
 }
 
-void DrawPointsMod::receive(int sinkId, const float& value) {
+void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
-      pointRadiusParameter = value;
+      radiusParameter = value;
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
-void DrawPointsMod::receive(int sinkId, const glm::vec2& point) {
+void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
   switch (sinkId) {
     case SINK_POINTS:
       newPoints.push_back(point);
@@ -62,7 +60,7 @@ void DrawPointsMod::receive(int sinkId, const glm::vec2& point) {
   }
 }
 
-void DrawPointsMod::receive(int sinkId, const glm::vec4& v) {
+void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_POINT_COLOR:
       colorParameter = ofFloatColor { v.r, v.g, v.b, v.a };

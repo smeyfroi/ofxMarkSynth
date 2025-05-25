@@ -1,22 +1,23 @@
 //
-//  DrawPointsMod.hpp
-//  example_points
+//  SoftCircleMod.hpp
+//  fingerprint1
 //
-//  Created by Steve Meyfroidt on 05/05/2025.
+//  Created by Steve Meyfroidt on 25/05/2025.
 //
 
 #pragma once
 
 #include "Mod.hpp"
+#include "AddImpulseSpotShader.h"
 
 
 namespace ofxMarkSynth {
 
 
-class DrawPointsMod : public Mod {
+class SoftCircleMod : public Mod {
 
 public:
-  DrawPointsMod(const std::string& name, const ModConfig&& config);
+  SoftCircleMod(const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
@@ -30,11 +31,12 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> pointRadiusParameter { "PointRadius", 0.001, 0.0, 0.1 };
+  ofParameter<float> radiusParameter { "Radius", 0.001, 0.0, 0.4 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
-  ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 1.0, 0.0, 1.0 };
+  ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 };
 
   std::vector<glm::vec2> newPoints;
+  AddImpulseSpotShader addImpulseSpotShader;
 };
 
 

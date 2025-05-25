@@ -28,7 +28,7 @@ void FluidRadialImpulseMod::update() {
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [this, fboPtr](const auto& p) {
-    addRadialImpulseShader.render(*fboPtr, p*fboPtr->getWidth(), impulseRadiusParameter*fboPtr->getWidth(), impulseStrengthParameter);
+    addRadialImpulseShader.render(*fboPtr, p * fboPtr->getWidth(), impulseRadiusParameter * fboPtr->getWidth(), impulseStrengthParameter);
   });
   newPoints.clear();
 }

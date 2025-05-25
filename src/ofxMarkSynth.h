@@ -13,7 +13,6 @@
 #include "PixelSnapshotMod.hpp"
 #include "PathMod.hpp"
 #include "FluidMod.hpp"
-#include "FluidRadialImpulseMod.hpp"
 
 #include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"
@@ -24,5 +23,7 @@
 #include "DividedAreaMod.hpp"
 #include "SandLineMod.hpp"
 #include "CollageMod.hpp"
+#include "FluidRadialImpulseMod.hpp"
+#include "SoftCircleMod.hpp"
 
 #include "Synth.hpp"
