@@ -49,7 +49,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   mods.push_back(collageModPtr);
 
   particleSetModPtr->receive(ofxMarkSynth::ParticleSetMod::SINK_FBO, fboPtr);
-  collageModPtr->receive(ofxMarkSynth::ParticleSetMod::SINK_FBO, fboPtr);
+  collageModPtr->receive(ofxMarkSynth::CollageMod::SINK_FBO, fboPtr);
 
   return mods;
 }
