@@ -37,7 +37,7 @@ void DividedAreaMod::update() {
   auto fboPtr0 = fboPtrs[0];
   if (fboPtr0 != nullptr) {
     fboPtr0->getSource().begin();
-    ofSetColor(ofFloatColor(0.0, 0.2, 0.4, 1.0));
+    ofSetColor(ofFloatColor(0.0, 0.0, 0.0, 1.0));
     dividedArea.draw(0.0, 0.0, 1.0, fboPtr0->getWidth());
     fboPtr0->getSource().end();
   }
@@ -46,8 +46,8 @@ void DividedAreaMod::update() {
   auto fboPtr1 = fboPtrs[1];
   if (fboPtr1 != nullptr) {
     fboPtr1->getSource().begin();
-    ofSetColor(ofFloatColor(0.3, 0.2, 0.1, 1.0));
-    dividedArea.draw(0.0, 1.0, 0.0, fboPtr1->getWidth());
+    ofSetColor(ofFloatColor(0.0, 0.0, 0.0, 1.0));
+    dividedArea.draw(0.0, 20.0, 0.0, fboPtr1->getWidth());
     fboPtr1->getSource().end();
   }
 }
