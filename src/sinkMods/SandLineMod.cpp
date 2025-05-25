@@ -36,11 +36,17 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
 
 void SandLineMod::update() {
   auto fboPtr = fboPtrs[0];
-  float drawScale = fboPtr->getWidth();
   if (fboPtr == nullptr) return;
+
+  float drawScale = fboPtr->getWidth();
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
-  ofSetColor(colorParameter);
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+
+  ofFloatColor c = colorParameter;
+  c.a *= alphaMultiplierParameter;
+  ofSetColor(c);
+
   ofFill();
   if (newPoints.size() > 1) {
     auto iter = newPoints.begin();
