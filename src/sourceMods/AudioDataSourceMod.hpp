@@ -20,7 +20,8 @@ public:
   void update() override;
   
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
-  static constexpr int SOURCE_SPECTRAL_POINTS = 2;
+  static constexpr int SOURCE_POLAR_PITCH_RMS_POINTS = 2;
+  static constexpr int SOURCE_SPECTRAL_POINTS = 5;
   static constexpr int SOURCE_PITCH_SCALAR = 10;
   static constexpr int SOURCE_RMS_SCALAR = 11;
   static constexpr int SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR = 12;
@@ -44,8 +45,9 @@ private:
   ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 10.0, 0.0, 100.0 };
   ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 30.0, 0.0, 100.0 };
   
-  float getAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
+  float getNormalisedAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();
+  void emitPolarPitchRmsPoints();
   void emitSpectralPoints();
   void emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar);
 

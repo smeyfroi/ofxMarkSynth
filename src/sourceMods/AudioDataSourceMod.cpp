@@ -6,6 +6,7 @@
 //
 
 #include "AudioDataSourceMod.hpp"
+#include <cmath>
 
 
 namespace ofxMarkSynth {
@@ -29,7 +30,7 @@ void AudioDataSourceMod::initParameters() {
   parameters.add(maxZeroCrossingRateParameter);
 }
 
-float AudioDataSourceMod::getAnalysisScalar(float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
+float AudioDataSourceMod::getNormalisedAnalysisScalar(float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
   if (minParameter == 0.0 && maxParameter == 0.0) {
     return audioDataProcessorPtr->getNormalisedScalarValue(scalar);
   } else {
@@ -38,30 +39,42 @@ float AudioDataSourceMod::getAnalysisScalar(float minParameter, float maxParamet
 }
 
 void AudioDataSourceMod::emitPitchRmsPoints() {
-  float x = getAnalysisScalar(minPitchParameter,
+  float x = getNormalisedAnalysisScalar(minPitchParameter,
                               maxPitchParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::pitch);
-  float y = getAnalysisScalar(minRmsParameter,
+  float y = getNormalisedAnalysisScalar(minRmsParameter,
                               maxRmsParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
   emit(SOURCE_PITCH_RMS_POINTS, glm::vec2 { x, y });
 }
 
+void AudioDataSourceMod::emitPolarPitchRmsPoints() {
+  // Don't normalise pitch since we wrap it round
+  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
+  float rms = getNormalisedAnalysisScalar(minRmsParameter,
+                                maxRmsParameter,
+                                ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+  float angle = pitch; // * glm::two_pi<float>();
+  float x = rms * std::cos(angle);
+  float y = rms * std::sin(angle);
+  emit(SOURCE_POLAR_PITCH_RMS_POINTS, glm::vec2 { x+0.5, y+0.5 });
+}
+
 void AudioDataSourceMod::emitSpectralPoints() {
-  float x = getAnalysisScalar(minComplexSpectralDifferenceParameter,
+  float x = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
                               maxComplexSpectralDifferenceParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
-  float y = getAnalysisScalar(minSpectralCrestParameter,
+  float y = getNormalisedAnalysisScalar(minSpectralCrestParameter,
                               maxSpectralCrestParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
-  float z = getAnalysisScalar(minZeroCrossingRateParameter,
+  float z = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
                               maxZeroCrossingRateParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
   emit(SOURCE_SPECTRAL_POINTS, glm::vec3 { x, y, z });
 }
 
 void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
-  float s = getAnalysisScalar(minComplexSpectralDifferenceParameter,
+  float s = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
                               maxComplexSpectralDifferenceParameter,
                               scalar);
   emit(sourceId, s);
@@ -71,6 +84,7 @@ void AudioDataSourceMod::update() {
   if (!audioDataProcessorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no audioDataProcessor"; return; }
   if (audioDataProcessorPtr->isDataValid()) {
     if (connections.contains(SOURCE_PITCH_RMS_POINTS)) emitPitchRmsPoints();
+    if (connections.contains(SOURCE_POLAR_PITCH_RMS_POINTS)) emitPolarPitchRmsPoints();
     if (connections.contains(SOURCE_SPECTRAL_POINTS)) emitSpectralPoints();
     if (connections.contains(SOURCE_PITCH_SCALAR)) emitScalar(SOURCE_PITCH_SCALAR, minPitchParameter, maxPitchParameter, ofxAudioAnalysisClient::AnalysisScalar::pitch);
     if (connections.contains(SOURCE_RMS_SCALAR)) emitScalar(SOURCE_RMS_SCALAR, minRmsParameter, maxRmsParameter, ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
