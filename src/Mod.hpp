@@ -28,6 +28,8 @@ using FboPtr = std::shared_ptr<PingPongFbo>;
 using FboPtrs = std::vector<FboPtr>;
 
 
+// NOTE: A Mod will emit its FBOs when they are received, which means
+// that dependents need to be hooked up BEFORE the FBOs are sent to Mods.
 class Mod {
   
 public:

@@ -41,7 +41,7 @@ ofParameterGroup& Mod::getParameterGroup() {
 }
 
 void Mod::addSink(int sourceId, ModPtr sinkModPtr, int sinkId) {
-  if (!connections.contains(sourceId)) {
+  if (! (connections.contains(sourceId) && connections[sourceId] != nullptr)) {
     auto sinksPtr = std::make_unique<Sinks>();
     sinksPtr->emplace_back(std::pair {sinkModPtr, sinkId});
     connections.emplace(sourceId, std::move(sinksPtr));
