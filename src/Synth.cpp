@@ -24,13 +24,17 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap) 
   settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
   PingPongFbo fbo;
   fboPtr->allocate(settings);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
 }
 
+void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode) {
+  allocateFbo(fboPtr, size, internalFormat, wrap);
+  fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearColor, clearOnUpdate, blendMode));
+}
 
 auto saveFilePath(std::string filename) {
   return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
 }
+
 
 Synth::Synth() {
   recorder.setup(/*video*/true, /*audio*/false, ofGetWindowSize(), /*fps*/30.0, /*bitrate*/10000);
@@ -46,26 +50,28 @@ Synth::~Synth() {
   if (recorder.isRecording()) recorder.stop();
 }
 
-void Synth::configure(ModPtrs&& modPtrs_, FboConfigPtrs&& fboConfigPtrs_, glm::vec2 compositeSize_) {
-  modPtrs = std::move(modPtrs_);
-  
+void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_) {
   if (std::any_of(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     return fcptr->fboPtr->getSource().isAllocated();
   })) ofLogError() << "Unallocated FBO";
   fboConfigPtrs = std::move(fboConfigPtrs_);
   
+  modPtrs = std::move(modPtrs_);
+  
   imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGBA);
 }
 
 void Synth::update() {
-  
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
-    if (fcptr->clearColorPtr) {
-      fcptr->fboPtr->getSource().clearColorBuffer(*(fcptr->clearColorPtr));
+    if (fcptr->clearOnUpdate) {
+      fcptr->fboPtr->getSource().begin();
+      ofSetColor(fcptr->clearColor);
+      ofFill();
+      ofDrawRectangle({0.0, 0.0}, fcptr->fboPtr->getWidth(), fcptr->fboPtr->getHeight());
+      fcptr->fboPtr->getSource().end();
     }
-    fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
   });
-
+  
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->update();
   });
@@ -74,20 +80,25 @@ void Synth::update() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   imageCompositeFbo.begin();
+  
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofSetColor(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
   ofFill();
   ofDrawRectangle({0, 0}, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0 });
-  std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
+  
+  size_t i = 0;
+  std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
+    ofEnableBlendMode(fcptr->blendMode);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, fboParameters.getFloat(i) });
     fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+    ++i;
   });
-  imageCompositeFbo.end();
 
+  imageCompositeFbo.end();
   imageCompositeFbo.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
   
-  // NOTE: This Mod::draw is for unusual Mods that draw directly and not on an FBO,
-  // for example audio data plots or other debug views
+  // NOTE: This Mod::draw is for Mods that draw directly and not on an FBO,
+  // for example audio data plots and other debug views
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->draw();
   });
@@ -129,12 +140,24 @@ bool Synth::keyPressed(int key) {
   return handled;
 }
 
+ofParameterGroup& Synth::getFboParameterGroup() {
+  if (fboParameters.size() == 0) {
+    fboParameters.setName("Layers");
+    std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
+      auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, 1.0, 0.0, 1.0);
+      fboParamPtrs.push_back(fboParam);
+      fboParameters.add(*fboParam);
+    });
+  }
+  return fboParameters;
+}
+
 ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {
-  ofParameterGroup parameterGroup = parameters;
   if (parameters.size() == 0) {
     parameters.setName(groupName);
-    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [&parameterGroup](auto& modPtr) {
-      parameterGroup.add(modPtr->getParameterGroup());
+    parameters.add(getFboParameterGroup());
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
+      parameters.add(modPtr->getParameterGroup());
     });
   }
   return parameters;

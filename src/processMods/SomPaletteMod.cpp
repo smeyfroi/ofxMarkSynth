@@ -14,7 +14,7 @@ namespace ofxMarkSynth {
 SomPaletteMod::SomPaletteMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
 {
-  somPalette.setVisible(true);
+  somPalette.setVisible(false);
 }
 
 void SomPaletteMod::initParameters() {

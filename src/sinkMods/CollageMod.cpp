@@ -27,11 +27,14 @@ void CollageMod::update() {
   if (path.getCommands().size() <= 2) return;
   if (! collageSourceTexture.isAllocated()) return;
 
+  auto fboPtr = fboPtrs[0];
+  if (!fboPtr) return;
+
   // TODO: check a dirty flag? Or let the collage build up over multiple updates as now?
   
   // Make a mask texture from the normalised path
   ofFbo maskFbo;
-  maskFbo.allocate(fboPtrs[0]->getWidth(), fboPtrs[0]->getHeight());
+  maskFbo.allocate(fboPtr->getWidth(), fboPtr->getHeight());
   maskFbo.begin();
   {
     ofPath maskPath = path;
@@ -57,19 +60,29 @@ void CollageMod::update() {
   float scale = std::fminf(scaleX, scaleY);
 
   // draw scaled, coloured pixels into the FBO through the mask using a blend mode
-  fboPtrs[0]->getSource().begin();
+  fboPtr->getSource().begin();
   {
-    ofEnableBlendMode(OF_BLENDMODE_ADD);
+//    ofEnableBlendMode(OF_BLENDMODE_ADD);
+    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
     ofFloatColor c = colorParameter;
-    c -= 0.5; c *= strengthParameter;
-    ofSetColor(c);
+    c -= 0.5; c *= strengthParameter; c.a *= strengthParameter;
     maskShader.render(collageSourceTexture, maskFbo,
-                      fboPtrs[0]->getWidth(), fboPtrs[0]->getHeight(),
+                      fboPtr->getWidth(), fboPtr->getHeight(),
                       false,
                       {pathBounds.x+pathBounds.width/2.0, pathBounds.y+pathBounds.height/2.0},
                       {scale, scale});
   }
-  fboPtrs[0]->getSource().end();
+  fboPtr->getSource().end();
+  
+  // draw outline on path
+//  fboPtr->getSource().begin();
+//  {
+//    ofScale(fboPtr->getWidth(), fboPtr->getHeight());
+//    path.setStrokeColor({0.0, 0.0, 0.0, 0.0});
+//    path.setStrokeWidth(1.0);
+//    path.draw();
+//  }
+//  fboPtr->getSource().end();
 }
 
 void CollageMod::receive(int sinkId, const ofPixels& pixels) {

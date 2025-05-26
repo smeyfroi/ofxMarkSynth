@@ -15,16 +15,20 @@
 namespace ofxMarkSynth {
 
 
-// Enable setting the GL wrap mode easily
-void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap = GL_CLAMP_TO_EDGE); // GL_REPEAT
-
 struct FboConfig {
+  std::string name;
   std::shared_ptr<PingPongFbo> fboPtr;
-  std::unique_ptr<ofFloatColor> clearColorPtr;
+  ofFloatColor clearColor;
+  bool clearOnUpdate;
+  ofBlendMode blendMode;
 };
 
 using FboConfigPtr = std::shared_ptr<FboConfig>;
 using FboConfigPtrs = std::vector<FboConfigPtr>;
+
+// Enable setting the GL wrap mode easily
+void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap = GL_CLAMP_TO_EDGE); // GL_REPEAT
+void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode);
 
 
 class Synth {
@@ -32,16 +36,19 @@ class Synth {
 public:
   Synth();
   ~Synth();
-  void configure(ModPtrs&& modPtrs_, FboConfigPtrs&& fboConfigPtrs_, glm::vec2 compositeSize_);
+  void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void update();
   void draw();
   bool keyPressed(int key);
+  ofParameterGroup& getFboParameterGroup();
   ofParameterGroup& getParameterGroup(const std::string& groupName);
 
 private:
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
   ofParameterGroup parameters;
+  ofParameterGroup fboParameters;
+  std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
