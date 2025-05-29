@@ -33,6 +33,7 @@ protected:
 
 private:
   std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
+  float lastUpdated = 0.0;
   
   ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 6000.0 };
   ofParameter<float> maxPitchParameter { "MaxPitch", 2500.0, 0.0, 6000.0 };

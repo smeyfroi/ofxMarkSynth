@@ -24,7 +24,6 @@ void ParticleSetMod::initParameters() {
 void ParticleSetMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
-  particleSet.forceScale = 1.0 / fboPtr->getWidth();
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [this](const auto& vec) {

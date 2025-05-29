@@ -82,7 +82,8 @@ void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxP
 
 void AudioDataSourceMod::update() {
   if (!audioDataProcessorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no audioDataProcessor"; return; }
-  if (audioDataProcessorPtr->isDataValid()) {
+  if (audioDataProcessorPtr->isDataUpdated(lastUpdated)) {
+    lastUpdated = audioDataProcessorPtr->getLastUpdateTimestamp();
     if (connections.contains(SOURCE_PITCH_RMS_POINTS)) emitPitchRmsPoints();
     if (connections.contains(SOURCE_POLAR_PITCH_RMS_POINTS)) emitPolarPitchRmsPoints();
     if (connections.contains(SOURCE_SPECTRAL_POINTS)) emitSpectralPoints();

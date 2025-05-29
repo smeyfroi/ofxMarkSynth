@@ -23,16 +23,14 @@ void PathMod::initParameters() {
 void PathMod::update() {
   ofPath newPath;
   glm::vec2 previousVec { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
-  std::for_each(newVecs.cbegin(), newVecs.cend(), [&](const auto& v) {
+  std::for_each(newVecs.crbegin(), newVecs.crend(), [&](const auto& v) { // start from the back, which is the newest points
     if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > vertexProximityParameter) return;
     newPath.lineTo(v);
     previousVec = v;
   });
   
-//  if (newPath.getCommands().size() < maxVerticesParameter + 1) {
   if (newPath.getCommands().size() < 4) {
-    // delete first point for the next try
-//    if (newVecs.size() > 2) newVecs.pop_front();
+    if (newVecs.size() > maxVerticesParameter * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
     return;
   }
   
