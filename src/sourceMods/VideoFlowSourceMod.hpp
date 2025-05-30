@@ -17,9 +17,12 @@ namespace ofxMarkSynth {
 class VideoFlowSourceMod : public Mod {
 
 public:
+  VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size);
   VideoFlowSourceMod(const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute);
   void update() override;
-  
+  void draw() override;
+  bool keyPressed(int key) override;
+
   static constexpr int SOURCE_VEC4 = 4; // { x, y, dx, dy }
 
 protected:
@@ -32,6 +35,7 @@ private:
   ofParameter<float> samplesPerUpdateParameter { "SamplesPerUpdate", 0.1, 0.0, 1.0 };
   ofParameter<float> velocityScaleParameter {"velocityScale", 1.0, 0.0, 10.0};
 
+  bool visible;
 };
 
 

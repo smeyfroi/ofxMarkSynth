@@ -11,6 +11,12 @@
 namespace ofxMarkSynth {
 
 
+VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size)
+: Mod { name, std::move(config) }
+{
+  motionFromVideo.initialiseCamera(deviceID, size);
+}
+
 VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute)
 : Mod { name, std::move(config) }
 {
@@ -38,6 +44,18 @@ void VideoFlowSourceMod::update() {
       });
     }
   }
+}
+
+void VideoFlowSourceMod::draw() {
+  if (visible) motionFromVideo.drawVideo();
+}
+
+bool VideoFlowSourceMod::keyPressed(int key) {
+  if (key == 'V') {
+    visible = !visible;
+    return true;
+  }
+  return false;
 }
 
 
