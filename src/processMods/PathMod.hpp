@@ -29,10 +29,12 @@ protected:
 
 private:
   float updateCount;
+  ofParameter<int> strategyParameter { "Strategy", 1, 0, 3 };
   ofParameter<int> maxVerticesParameter { "MaxVertices", 3, 0, 20 };
   ofParameter<float> vertexProximityParameter { "VertexProximity", 0.1, 0.0, 1.0 };
   
   std::deque<glm::vec2> newVecs;
+  std::vector<glm::vec2> findCloseNewPoints() const;
   ofPath path;
   const ofPixels createPath();
 

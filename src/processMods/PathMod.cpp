@@ -6,6 +6,7 @@
 //
 
 #include "PathMod.hpp"
+#include "ofxConvexHull.h"
 
 
 namespace ofxMarkSynth {
@@ -16,27 +17,99 @@ PathMod::PathMod(const std::string& name, const ModConfig&& config)
 {}
 
 void PathMod::initParameters() {
+  parameters.add(strategyParameter);
   parameters.add(maxVerticesParameter);
   parameters.add(vertexProximityParameter);
 }
 
-void PathMod::update() {
-  ofPath newPath;
+std::vector<glm::vec2> PathMod::findCloseNewPoints() const {
+  std::vector<glm::vec2> result;
   glm::vec2 previousVec { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
   std::for_each(newVecs.crbegin(), newVecs.crend(), [&](const auto& v) { // start from the back, which is the newest points
     if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > vertexProximityParameter) return;
-    newPath.lineTo(v);
+    result.push_back(v);
     previousVec = v;
   });
+  return result;
+}
+
+ofPath makePolyPath(const std::vector<glm::vec2>& points) {
+  ofPath path;
+  std::for_each(points.crbegin(), points.crend(), [&](const auto& p) {
+    path.lineTo(p);
+  });
+  return path;
+}
+
+// FIXME: this doesn't work very well... mostly triangles, loads of (0,0) filtered out
+ofPath makeConvexHullPath(const std::vector<glm::vec2>& points) {
+  std::vector<ofPoint> ofPoints(points.size());
+  std::transform(points.cbegin(), points.cend(), std::back_inserter(ofPoints),
+                 [](const glm::vec2& v) { return ofPoint { v.x, v.y }; });
   
-  if (newPath.getCommands().size() < 4) {
+  ofxConvexHull convexHull;
+  vector<ofPoint>hullOfPoints = convexHull.getConvexHull(ofPoints);
+  
+  std::vector<glm::vec2> hullPoints(hullOfPoints.size());
+  auto validEndIter = std::remove_if(hullOfPoints.begin(), hullOfPoints.end(),
+                                     [](const auto& p) { return (p.x == 0.0 && p.y == 0.0); });
+  std::transform(hullOfPoints.begin(), validEndIter, std::back_inserter(hullPoints),
+                 [](const ofPoint& v) { ofLogNotice() << v << "|"; return glm::vec2 { v.x, v.y }; });
+  
+  ofPath result = makePolyPath(hullPoints);
+  result.close();
+  return result;
+}
+
+ofPath makeBoundsPath(const std::vector<glm::vec2>& points) {
+  glm::vec2 tl { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
+  glm::vec2 br { std::numeric_limits<float>::min(), std::numeric_limits<float>::min() };
+  std::for_each(points.cbegin(), points.cend(), [&](const auto& p) {
+    if (p.x < tl.x) tl.x = p.x;
+    else if (p.x > br.x) br.x = p.x;
+    if (p.y < tl.y) tl.y = p.y;
+    else if (p.y > br.y) br.y = p.y;
+  });
+  ofPath path;
+  path.moveTo(tl); path.lineTo(br.x, tl.y); path.lineTo(br); path.lineTo(tl.x, br.y);
+  path.close();
+  return path;
+}
+
+ofPath makeHorizontalStripesPath(const std::vector<glm::vec2>& points) {
+  ofPath path;
+  for (auto iter = points.cbegin(); iter < points.cend() - 1; iter++) {
+    auto p1 = *iter; iter++; auto p2 = *iter;
+    path.moveTo(0.0, p1.y); path.lineTo(1.0, p1.y); path.lineTo(1.0, p2.y); path.lineTo(0.0, p2.y);
+  }
+  path.close();
+  return path;
+}
+
+void PathMod::update() {
+  auto points = findCloseNewPoints();
+  if (points.size() < 4) {
     if (newVecs.size() > maxVerticesParameter * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
     return;
   }
-  
-  newVecs.clear();
-  path = newPath;
-  path.close();
+
+  switch (strategyParameter) {
+    case 0:
+      path = makePolyPath(points);
+      break;
+    case 1:
+      path = makeBoundsPath(points);
+      break;
+    case 2:
+      path = makeHorizontalStripesPath(points);
+      break;
+    case 3:
+      path = makeConvexHullPath(points);
+      break;
+    default:
+      break;
+  }
+
   path.setColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
   path.setFilled(true);
   newVecs.clear();
