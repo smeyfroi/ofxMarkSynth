@@ -34,8 +34,6 @@ private:
   int maxSamplesPerUpdate = 1000;
   ofParameter<float> samplesPerUpdateParameter { "SamplesPerUpdate", 0.1, 0.0, 1.0 };
   ofParameter<float> velocityScaleParameter {"velocityScale", 1.0, 0.0, 10.0};
-
-  bool visible;
 };
 
 

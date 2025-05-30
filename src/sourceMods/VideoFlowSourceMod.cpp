@@ -47,15 +47,11 @@ void VideoFlowSourceMod::update() {
 }
 
 void VideoFlowSourceMod::draw() {
-  if (visible) motionFromVideo.drawVideo();
+  motionFromVideo.draw();
 }
 
 bool VideoFlowSourceMod::keyPressed(int key) {
-  if (key == 'V') {
-    visible = !visible;
-    return true;
-  }
-  return false;
+  return motionFromVideo.keyPressed(key);
 }
 
 
