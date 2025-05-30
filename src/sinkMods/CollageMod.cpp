@@ -74,6 +74,7 @@ void CollageMod::update() {
   }
   fboPtr->getSource().end();
   
+// THIS IS WRONG: feed points forward into a DividedArea instead
   // draw outline on path
 //  fboPtr->getSource().begin();
 //  {
@@ -85,7 +86,7 @@ void CollageMod::update() {
 //  fboPtr->getSource().end();
 }
 
-void CollageMod::receive(int sinkId, const ofPixels& pixels) {
+void CollageMod::receive(int sinkId, const ofFloatPixels& pixels) {
   switch (sinkId) {
     case SINK_PIXELS:
       collageSourceTexture.allocate(pixels);

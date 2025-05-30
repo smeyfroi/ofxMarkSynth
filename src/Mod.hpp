@@ -47,7 +47,7 @@ public:
   virtual void receive(int sinkId, const glm::vec4& point);
   virtual void receive(int sinkId, const float& value);
   virtual void receive(int sinkId, const FboPtr& fboPtr);
-  virtual void receive(int sinkId, const ofPixels& pixels);
+  virtual void receive(int sinkId, const ofFloatPixels& pixels);
   virtual void receive(int sinkId, const ofPath& path);
 
   static constexpr int SOURCE_FBO_BEGIN = -100;

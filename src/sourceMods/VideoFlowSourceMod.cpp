@@ -31,6 +31,8 @@ void VideoFlowSourceMod::initParameters() {
 
 void VideoFlowSourceMod::update() {
   motionFromVideo.update();
+  
+  emit(SOURCE_FLOW_PIXELS, motionFromVideo.getMotionPixels());
 
   int samples = maxSamplesPerUpdate * samplesPerUpdateParameter;
   glm::vec2 videoSize = motionFromVideo.getSize();

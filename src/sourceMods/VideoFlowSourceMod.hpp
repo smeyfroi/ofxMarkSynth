@@ -23,6 +23,7 @@ public:
   void draw() override;
   bool keyPressed(int key) override;
 
+  static constexpr int SOURCE_FLOW_PIXELS = 1;
   static constexpr int SOURCE_VEC4 = 4; // { x, y, dx, dy }
 
 protected:

@@ -16,6 +16,7 @@
 
 #include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"
+#include "AddTextureMod.hpp"
 
 #include "IntrospectorMod.hpp"
 #include "DrawPointsMod.hpp"
