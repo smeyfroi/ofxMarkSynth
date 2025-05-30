@@ -22,12 +22,19 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap) 
   settings.useDepth = true;
   settings.useStencil = true;
   settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
-  PingPongFbo fbo;
   fboPtr->allocate(settings);
 }
 
 void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode) {
   allocateFbo(fboPtr, size, internalFormat, wrap);
+//  fboPtr->getSource().clearColorBuffer(clearColor);
+  // Don't know why clearColorBuffer doesn't work
+  fboPtr->getSource().begin();
+  ofSetColor(clearColor);
+  ofFill();
+  ofDrawRectangle(0, 0, fboPtr->getWidth(), fboPtr->getHeight());
+  fboPtr->getSource().end();
+
   fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearColor, clearOnUpdate, blendMode));
 }
 
@@ -80,9 +87,9 @@ void Synth::update() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   imageCompositeFbo.begin();
-  
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  ofSetColor(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
+  
+  ofSetColor(backgroundColorParameter);
   ofFill();
   ofDrawRectangle({0, 0}, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
   
@@ -140,6 +147,16 @@ bool Synth::keyPressed(int key) {
   return handled;
 }
 
+void Synth::minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
+  for (int i = 0; i < guiGroup.getNumControls(); ++i) {
+    auto control = guiGroup.getControl(i);
+    if (auto childGuiGroup = dynamic_cast<ofxGuiGroup*>(control)) {
+      childGuiGroup->minimize();
+      minimizeAllGuiGroupsRecursive(*childGuiGroup);
+    }
+  }
+}
+
 ofParameterGroup& Synth::getFboParameterGroup() {
   if (fboParameters.size() == 0) {
     fboParameters.setName("Layers");
@@ -155,6 +172,7 @@ ofParameterGroup& Synth::getFboParameterGroup() {
 ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {
   if (parameters.size() == 0) {
     parameters.setName(groupName);
+    parameters.add(backgroundColorParameter);
     parameters.add(getFboParameterGroup());
     std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
       parameters.add(modPtr->getParameterGroup());

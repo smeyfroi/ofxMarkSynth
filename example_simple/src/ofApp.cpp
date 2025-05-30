@@ -17,10 +17,10 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
 }
 
 ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
-  return fbos;
+  ofxMarkSynth::FboConfigPtrs fboConfigPtrs;
+  ofFloatColor backgroundColor { 0.3, 0.0, 0.3, 0.7 };
+  addFboConfigPtr(fboConfigPtrs, "background", fboPtr, ofGetWindowSize(), GL_RGBA, GL_CLAMP_TO_EDGE, backgroundColor, false, OF_BLENDMODE_ALPHA);
+  return fboConfigPtrs;
 }
 
 void ofApp::setup() {
@@ -29,12 +29,11 @@ void ofApp::setup() {
   introspectorPtr = std::make_shared<Introspector>();
   introspectorPtr->visible = true;
   
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
+  synth.configure(createFboConfigs(), createMods(), ofGetWindowSize());
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
+  synth.minimizeAllGuiGroupsRecursive(gui);
 }
 
 //--------------------------------------------------------------

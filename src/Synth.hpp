@@ -42,6 +42,7 @@ public:
   bool keyPressed(int key);
   ofParameterGroup& getFboParameterGroup();
   ofParameterGroup& getParameterGroup(const std::string& groupName);
+  void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup);
 
 private:
   ModPtrs modPtrs;
@@ -49,6 +50,7 @@ private:
   ofParameterGroup parameters;
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
+  ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
