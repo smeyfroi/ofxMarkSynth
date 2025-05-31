@@ -54,7 +54,7 @@ ofPath makeConvexHullPath(const std::vector<glm::vec2>& points) {
   auto validEndIter = std::remove_if(hullOfPoints.begin(), hullOfPoints.end(),
                                      [](const auto& p) { return (p.x == 0.0 && p.y == 0.0); });
   std::transform(hullOfPoints.begin(), validEndIter, std::back_inserter(hullPoints),
-                 [](const ofPoint& v) { ofLogNotice() << v << "|"; return glm::vec2 { v.x, v.y }; });
+                 [](const ofPoint& v) { return glm::vec2 { v.x, v.y }; });
   
   ofPath result = makePolyPath(hullPoints);
   result.close();
