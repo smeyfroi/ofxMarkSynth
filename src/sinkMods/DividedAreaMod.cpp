@@ -6,6 +6,7 @@
 //
 
 #include "DividedAreaMod.hpp"
+#include "LineGeom.h"
 
 
 namespace ofxMarkSynth {
@@ -17,13 +18,11 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
 {}
 
 void DividedAreaMod::initParameters() {
+  parameters.add(angleParameter);
   parameters.add(dividedArea.getParameterGroup());
 }
 
-void DividedAreaMod::update() {
-  dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
-  newMajorAnchors.clear();
-  
+void DividedAreaMod::addConstrainedLinesThroughPointPairs() {
   int pairs = newMinorAnchors.size() / 2;
   for (int i = 0; i < pairs; i++) {
     auto p1 = newMinorAnchors.back();
@@ -32,8 +31,25 @@ void DividedAreaMod::update() {
     newMinorAnchors.pop_back();
     dividedArea.addConstrainedDividerLine(p1, p2);
   }
+}
+
+// glm::vec2 endPointForSegment(const glm::vec2& startPoint, float angleRadians, float length) {
+void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
+  float angle = angleParameter;
+  std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [this](const auto& p) {
+    auto endPoint = endPointForSegment(p, angleParameter * glm::pi<float>(), 0.01);
+    dividedArea.addConstrainedDividerLine(p, endPoint); // must stay inside normalised coords
+  });
+}
+
+void DividedAreaMod::update() {
+  dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
+  newMajorAnchors.clear();
   
-  // constrained
+  addConstrainedLinesThroughPointPairs();
+//  addConstrainedLinesThroughPointAngles();
+  
+  // draw constrained
   auto fboPtr0 = fboPtrs[0];
   if (fboPtr0 != nullptr) {
     fboPtr0->getSource().begin();
@@ -42,7 +58,7 @@ void DividedAreaMod::update() {
     fboPtr0->getSource().end();
   }
 
-  // unconstrained
+  // draw unconstrained
   auto fboPtr1 = fboPtrs[1];
   if (fboPtr1 != nullptr) {
     fboPtr1->getSource().begin();

@@ -36,9 +36,15 @@ protected:
   void initParameters() override;
 
 private:
+  ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.1 };
+
   std::vector<glm::vec2> newMajorAnchors;
   std::vector<glm::vec2> newMinorAnchors;
   DividedArea dividedArea;
+  
+  void addConstrainedLinesThroughPointPairs();
+  void addConstrainedLinesThroughPointAngles();
+
 };
 
 
