@@ -26,8 +26,6 @@ public:
 
   static constexpr int SINK_MAJOR_ANCHORS = 1;
   static constexpr int SINK_MINOR_ANCHORS = 10;
-  // TODO: an alternative strategy would add constrained lines at some angle through an anchor
-  // TODO: an alternative strategy would add constrained lines centred on one anchor through the rest
 
   // SINK_FBO for drawing constrained lines
   // SINK_FBO_2 for drawing unconstrained lines
@@ -36,7 +34,8 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.1 };
+  ofParameter<int> strategyParameter { "Strategy", 2, 0, 2 };
+  ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
 
   std::vector<glm::vec2> newMajorAnchors;
   std::vector<glm::vec2> newMinorAnchors;
@@ -44,6 +43,7 @@ private:
   
   void addConstrainedLinesThroughPointPairs();
   void addConstrainedLinesThroughPointAngles();
+  void addConstrainedLinesRadiating();
 
 };
 

@@ -18,6 +18,7 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
 {}
 
 void DividedAreaMod::initParameters() {
+  parameters.add(strategyParameter);
   parameters.add(angleParameter);
   parameters.add(dividedArea.getParameterGroup());
 }
@@ -33,21 +34,41 @@ void DividedAreaMod::addConstrainedLinesThroughPointPairs() {
   }
 }
 
-// glm::vec2 endPointForSegment(const glm::vec2& startPoint, float angleRadians, float length) {
 void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
   float angle = angleParameter;
   std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [this](const auto& p) {
     auto endPoint = endPointForSegment(p, angleParameter * glm::pi<float>(), 0.01);
     dividedArea.addConstrainedDividerLine(p, endPoint); // must stay inside normalised coords
   });
+  newMinorAnchors.clear();
+}
+
+void DividedAreaMod::addConstrainedLinesRadiating() {
+  if (newMinorAnchors.size() < 7) return;
+  glm::vec2 centrePoint = newMinorAnchors.back(); newMinorAnchors.pop_back();
+  std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [this, centrePoint](const auto& p) {
+    dividedArea.addConstrainedDividerLine(centrePoint, p);
+  });
+  newMinorAnchors.clear();
 }
 
 void DividedAreaMod::update() {
   dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
   newMajorAnchors.clear();
   
-  addConstrainedLinesThroughPointPairs();
-//  addConstrainedLinesThroughPointAngles();
+  switch (strategyParameter) {
+    case 0:
+      addConstrainedLinesThroughPointPairs();
+      break;
+    case 1:
+      addConstrainedLinesThroughPointAngles();
+      break;
+    case 2:
+      addConstrainedLinesRadiating();
+      break;
+    default:
+      break;
+  }
   
   // draw constrained
   auto fboPtr0 = fboPtrs[0];
