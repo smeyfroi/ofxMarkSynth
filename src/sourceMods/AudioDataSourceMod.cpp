@@ -57,7 +57,12 @@ void AudioDataSourceMod::emitPolarPitchRmsPoints() {
   float angle = pitch; // * glm::two_pi<float>();
   float x = rms * std::cos(angle);
   float y = rms * std::sin(angle);
-  emit(SOURCE_POLAR_PITCH_RMS_POINTS, glm::vec2 { x+0.5, y+0.5 });
+  x += 0.5; y += 0.5;
+  if (x < 0.0) x += 1.0;
+  if (x > 1.0) x -= 1.0;
+  if (y < 0.0) y += 1.0;
+  if (y > 1.0) y -= 1.0;
+  emit(SOURCE_POLAR_PITCH_RMS_POINTS, glm::vec2 { x, y });
 }
 
 void AudioDataSourceMod::emitSpectralPoints() {
