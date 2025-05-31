@@ -38,7 +38,7 @@ void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboP
   fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearColor, clearOnUpdate, blendMode));
 }
 
-auto saveFilePath(std::string filename) {
+std::string saveFilePath(std::string filename) {
   return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
 }
 

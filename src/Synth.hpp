@@ -59,4 +59,7 @@ private:
 };
 
 
+std::string saveFilePath(std::string filename);
+
+
 } // ofxMarkSynth

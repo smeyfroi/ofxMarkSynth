@@ -9,6 +9,7 @@
 
 #include "Mod.hpp"
 #include "ofxMotionFromVideo.h"
+#include "ofxFFmpegRecorder.h"
 
 
 namespace ofxMarkSynth {
@@ -17,8 +18,9 @@ namespace ofxMarkSynth {
 class VideoFlowSourceMod : public Mod {
 
 public:
-  VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size);
+  VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording, std::string recordingPath);
   VideoFlowSourceMod(const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute);
+  ~VideoFlowSourceMod();
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
@@ -35,6 +37,12 @@ private:
   int maxSamplesPerUpdate = 1000;
   ofParameter<float> samplesPerUpdateParameter { "SamplesPerUpdate", 0.1, 0.0, 1.0 };
   ofParameter<float> velocityScaleParameter {"velocityScale", 1.0, 0.0, 10.0};
+  
+  bool saveRecording;
+  std::string recordingDir;
+  ofxFFmpegRecorder recorder;
+  void initRecorder();
+
 };
 
 

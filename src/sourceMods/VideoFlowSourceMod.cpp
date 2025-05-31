@@ -11,8 +11,10 @@
 namespace ofxMarkSynth {
 
 
-VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size)
-: Mod { name, std::move(config) }
+VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording_, std::string recordingDir_)
+: Mod { name, std::move(config) },
+saveRecording { saveRecording_ },
+recordingDir { recordingDir_ }
 {
   motionFromVideo.initialiseCamera(deviceID, size);
 }
@@ -21,6 +23,21 @@ VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&
 : Mod { name, std::move(config) }
 {
   motionFromVideo.load(videoFilePath, mute);
+}
+
+VideoFlowSourceMod::~VideoFlowSourceMod() {
+  if (saveRecording) recorder.stop();
+}
+
+void VideoFlowSourceMod::initRecorder() {
+  recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/6000);
+  recorder.setOverWrite(true);
+  if (recordingDir == "") recordingDir = ofToDataPath("video-flow-recordings");
+  std::filesystem::create_directory(recordingDir);
+  recorder.setFFmpegPathToAddonsPath();
+  recorder.setInputPixelFormat(OF_IMAGE_COLOR);
+  recorder.setOutputPath(recordingDir+"/video-flow-recording-"+ofGetTimestampString()+".mp4");
+  recorder.startCustomRecord();
 }
 
 void VideoFlowSourceMod::initParameters() {
@@ -50,6 +67,13 @@ void VideoFlowSourceMod::update() {
 
 void VideoFlowSourceMod::draw() {
   motionFromVideo.draw();
+  
+  if (saveRecording) {
+    if (!recorder.isRecording()) initRecorder();
+    ofPixels pixels;
+    motionFromVideo.getVideoFbo().readToPixels(pixels);
+    recorder.addFrame(pixels);
+  }
 }
 
 bool VideoFlowSourceMod::keyPressed(int key) {
