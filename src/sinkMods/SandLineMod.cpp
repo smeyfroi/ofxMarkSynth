@@ -41,7 +41,7 @@ void SandLineMod::update() {
   float drawScale = fboPtr->getWidth();
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofEnableBlendMode(OF_BLENDMODE_ADD);
 
   ofFloatColor c = colorParameter;
   c.a *= alphaMultiplierParameter;
