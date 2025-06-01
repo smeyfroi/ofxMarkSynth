@@ -34,7 +34,7 @@ void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboP
 class Synth {
   
 public:
-  Synth();
+  Synth(std::string name);
   ~Synth();
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void update();
@@ -45,6 +45,7 @@ public:
   void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup);
 
 private:
+  std::string name;
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
   ofParameterGroup parameters;
@@ -55,7 +56,11 @@ private:
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
   ofFbo imageCompositeFbo;
-
+  
+  bool guiVisible { true };
+  ofxPanel gui;
+  bool plusKeyPressed { false };
+  bool equalsKeyPressed { false };
 };
 
 

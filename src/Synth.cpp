@@ -42,12 +42,20 @@ std::string saveFilePath(std::string filename) {
   return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
 }
 
+constexpr std::string SETTINGS_FOLDER_NAME = "settings";
+constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawings";
+constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 
-Synth::Synth() {
+
+Synth::Synth(std::string name_) :
+name { name_ }
+{
+  std::filesystem::create_directory(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
+  std::filesystem::create_directory(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
+  std::filesystem::create_directory(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name));
+
   recorder.setup(/*video*/true, /*audio*/false, ofGetWindowSize(), /*fps*/30.0, /*bitrate*/10000);
   recorder.setOverWrite(true);
-  auto recordingPath = saveFilePath("");
-  std::filesystem::create_directory(recordingPath);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
   recorderCompositeFbo.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB);
@@ -66,6 +74,10 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   modPtrs = std::move(modPtrs_);
   
   imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGBA);
+
+  parameters = getParameterGroup("Synth");
+  gui.setup(parameters);
+  minimizeAllGuiGroupsRecursive(gui);
 }
 
 void Synth::update() {
@@ -118,14 +130,45 @@ void Synth::draw() {
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
   }
+  
+  if (guiVisible) gui.draw();
 }
 
 bool Synth::keyPressed(int key) {
+  if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
+
+  // >>> Deal with the `[+=][0-9]` chords
+  if (key == '+') {
+    plusKeyPressed = true;
+    equalsKeyPressed = false;
+    return true;
+  }
+  if (key == '=') {
+    equalsKeyPressed = true;
+    plusKeyPressed = false;
+    return true;
+  }
+  if (key >= '0' && key <= '9') {
+    if (plusKeyPressed) {
+      gui.saveToFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
+      plusKeyPressed = false;
+      return true;
+    } else if (equalsKeyPressed) {
+      gui.loadFromFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
+      equalsKeyPressed = false;
+      return true;
+    }
+  } else {
+    equalsKeyPressed = false;
+    plusKeyPressed = false;
+  }
+  // <<<
+  
   if (key == 'S') {
     ofPixels pixels;
     imageCompositeFbo.readToPixels(pixels);
     ofSaveImage(pixels,
-                saveFilePath("snapshot-"+ofGetTimestampString()+".png"),
+                saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".png"),
                 OF_IMAGE_QUALITY_BEST);
     return true;
   }
@@ -135,7 +178,7 @@ bool Synth::keyPressed(int key) {
       recorder.stop();
       ofSetWindowTitle("");
     } else {
-      recorder.setOutputPath(saveFilePath("recording-"+ofGetTimestampString()+".mp4"));
+      recorder.setOutputPath(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".mp4"));
       recorder.startCustomRecord();
       ofSetWindowTitle("[Recording]");
     }
