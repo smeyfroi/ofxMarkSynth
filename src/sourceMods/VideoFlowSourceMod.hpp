@@ -34,8 +34,8 @@ protected:
 private:
   MotionFromVideo motionFromVideo;
   
-  int maxSamplesPerUpdate = 1000;
-  ofParameter<float> samplesPerUpdateParameter { "SamplesPerUpdate", 0.1, 0.0, 1.0 };
+  int maxSamplesPerUpdate = 10000;
+  ofParameter<float> samplesPerUpdateParameter { "SamplesPerUpdate", 0.1, 0.0, 1.0 }; // normalised against maxSamplesPerUpdate
   ofParameter<float> velocityScaleParameter {"velocityScale", 1.0, 0.0, 10.0};
   
   bool saveRecording;
