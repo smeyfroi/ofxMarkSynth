@@ -22,6 +22,7 @@ void AddTextureMod::initParameters() {
 }
 
 void AddTextureMod::update() {
+  if (!addTexture.isAllocated()) return;
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
   addTextureShader.render(*fboPtr, addTexture, scaleParameter);
