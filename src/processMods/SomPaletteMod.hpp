@@ -27,8 +27,8 @@ public:
 
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SOURCE_RANDOM_VEC4 = 2; // RGBA float color
-//  static constexpr int SOURCE_RANDOM_VEC4_DARK = 3; // RGBA float color
-//  static constexpr int SOURCE_RANDOM_VEC4_LIGHT = 4; // RGBA float color
+  static constexpr int SOURCE_RANDOM_DARK_VEC4 = 3; // RGBA float color
+  static constexpr int SOURCE_RANDOM_LIGHT_VEC4 = 4; // RGBA float color
 
 protected:
   void initParameters() override;
@@ -44,6 +44,8 @@ private:
   std::ranlux24_base randomGen { 0 }; // fast generator with fixed seed
   std::uniform_int_distribution<> randomDistrib { 0, SomPalette::size - 1 };
   glm::vec4 createRandomVec4(int i);
+  glm::vec4 createRandomLightVec4(int i);
+  glm::vec4 createRandomDarkVec4(int i);
 };
 
 

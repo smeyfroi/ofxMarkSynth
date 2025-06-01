@@ -29,10 +29,22 @@ void SomPaletteMod::update() {
   somPalette.update();
   
   emit(SOURCE_RANDOM_VEC4, createRandomVec4(randomDistrib(randomGen)));
+  emit(SOURCE_RANDOM_LIGHT_VEC4, createRandomLightVec4(randomDistrib(randomGen)));
+  emit(SOURCE_RANDOM_DARK_VEC4, createRandomDarkVec4(randomDistrib(randomGen)));
 }
 
 glm::vec4 SomPaletteMod::createRandomVec4(int i) {
   ofFloatColor c = somPalette.getColor(i);
+  return { c.r, c.g, c.b, c.a };
+}
+
+glm::vec4 SomPaletteMod::createRandomLightVec4(int i) {
+  ofFloatColor c = somPalette.getColor((SomPalette::size - 1) - i/2);
+  return { c.r, c.g, c.b, c.a };
+}
+
+glm::vec4 SomPaletteMod::createRandomDarkVec4(int i) {
+  ofFloatColor c = somPalette.getColor(i/2);
   return { c.r, c.g, c.b, c.a };
 }
 
