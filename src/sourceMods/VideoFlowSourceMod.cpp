@@ -49,18 +49,20 @@ void VideoFlowSourceMod::initParameters() {
 void VideoFlowSourceMod::update() {
   motionFromVideo.update();
   
-  emit(SOURCE_FLOW_PIXELS, motionFromVideo.getMotionPixels());
-
-  int samples = maxSamplesPerUpdate * samplesPerUpdateParameter;
-  glm::vec2 videoSize = motionFromVideo.getSize();
-  for (int i = 0; i < samples; i++) {
-    if (auto vec = motionFromVideo.trySampleMotion()) {
-      emit(SOURCE_VEC4, glm::vec4 {
-        vec->x / videoSize.x,
-        vec->y / videoSize.y,
-        vec->z * velocityScaleParameter / videoSize.x,
-        vec->w * velocityScaleParameter / videoSize.y
-      });
+  if (motionFromVideo.isReady()) {
+    emit(SOURCE_FLOW_PIXELS, motionFromVideo.getMotionPixels());
+    
+    int samples = maxSamplesPerUpdate * samplesPerUpdateParameter;
+    glm::vec2 videoSize = motionFromVideo.getSize();
+    for (int i = 0; i < samples; i++) {
+      if (auto vec = motionFromVideo.trySampleMotion()) {
+        emit(SOURCE_VEC4, glm::vec4 {
+          vec->x / videoSize.x,
+          vec->y / videoSize.y,
+          vec->z * velocityScaleParameter / videoSize.x,
+          vec->w * velocityScaleParameter / videoSize.y
+        });
+      }
     }
   }
 }
