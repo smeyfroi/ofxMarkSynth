@@ -62,10 +62,12 @@ void CollageMod::update() {
   // draw scaled, coloured pixels into the FBO through the mask using a blend mode
   fboPtr->getSource().begin();
   {
-//    ofEnableBlendMode(OF_BLENDMODE_ADD);
-    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+    ofEnableBlendMode(OF_BLENDMODE_ADD);
+//    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
     ofFloatColor c = colorParameter;
     c -= 0.5; c *= strengthParameter; c.a *= strengthParameter;
+//    c *= strengthParameter; c.a *= strengthParameter;
+    ofSetColor(c);
     maskShader.render(collageSourceTexture, maskFbo,
                       fboPtr->getWidth(), fboPtr->getHeight(),
                       false,

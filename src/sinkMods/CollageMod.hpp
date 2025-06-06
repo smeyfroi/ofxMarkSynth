@@ -38,7 +38,7 @@ private:
   MaskShader maskShader;
 
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ofParameter<float> strengthParameter { "Strength", 0.1, 0.0, 2.0 };
+  ofParameter<float> strengthParameter { "Strength", 0.5, 0.0, 2.0 };
 };
 
 
