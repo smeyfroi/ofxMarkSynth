@@ -37,8 +37,8 @@ private:
   
   ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 6000.0 };
   ofParameter<float> maxPitchParameter { "MaxPitch", 2500.0, 0.0, 6000.0 };
-  ofParameter<float> minRmsParameter { "MinRms", 0.001, 0.0, 0.1 };
-  ofParameter<float> maxRmsParameter { "MaxRms", 0.04, 0.0, 0.1 };
+  ofParameter<float> minRmsParameter { "MinRms", 0.005, 0.0, 0.1 };
+  ofParameter<float> maxRmsParameter { "MaxRms", 0.05, 0.0, 0.2 };
   ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 20.0, 0.0, 120.0 };
   ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 70.0, 0.0, 120.0 };
   ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 60.0, 0.0, 200.0 };

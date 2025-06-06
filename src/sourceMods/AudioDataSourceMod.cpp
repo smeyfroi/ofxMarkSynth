@@ -49,12 +49,19 @@ void AudioDataSourceMod::emitPitchRmsPoints() {
 }
 
 void AudioDataSourceMod::emitPolarPitchRmsPoints() {
-  // Don't normalise pitch since we wrap it round
-  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
+//  // Don't normalise pitch since we wrap it round
+//  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
+//  float rms = getNormalisedAnalysisScalar(minRmsParameter,
+//                                maxRmsParameter,
+//                                ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+//  float angle = pitch; // * glm::two_pi<float>();
+  float pitch = getNormalisedAnalysisScalar(minPitchParameter,
+                                            maxPitchParameter,
+                                            ofxAudioAnalysisClient::AnalysisScalar::pitch);
   float rms = getNormalisedAnalysisScalar(minRmsParameter,
                                 maxRmsParameter,
                                 ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
-  float angle = pitch; // * glm::two_pi<float>();
+  float angle = pitch * glm::two_pi<float>();
   float x = rms * std::cos(angle);
   float y = rms * std::sin(angle);
   x += 0.5; y += 0.5;
