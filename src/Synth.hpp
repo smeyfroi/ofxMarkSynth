@@ -34,7 +34,7 @@ void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboP
 class Synth {
   
 public:
-  Synth(std::string name);
+  Synth(std::string name = "Synth");
   ~Synth();
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void update();
@@ -43,9 +43,9 @@ public:
   ofParameterGroup& getFboParameterGroup();
   ofParameterGroup& getParameterGroup(const std::string& groupName);
   void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup);
+  std::string name;
 
 private:
-  std::string name;
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
   ofParameterGroup parameters;
