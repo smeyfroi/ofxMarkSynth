@@ -41,9 +41,9 @@ void VideoFlowSourceMod::initRecorder() {
 }
 
 void VideoFlowSourceMod::initParameters() {
-  parameters.add(motionFromVideo.getParameterGroup());
   parameters.add(samplesPerUpdateParameter);
   parameters.add(velocityScaleParameter);
+  parameters.add(motionFromVideo.getParameterGroup());
 }
 
 void VideoFlowSourceMod::update() {
