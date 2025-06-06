@@ -28,6 +28,9 @@ public:
   static constexpr int SINK_POINT_VELOCITIES = 2;
   static constexpr int SINK_SPIN = 10;
   static constexpr int SINK_COLOR = 20;
+  
+  static constexpr int BLEND_STRATEGY_ADD = 0;
+  static constexpr int BLEND_STRATEGY_ALPHA = 1;
 
 protected:
   void initParameters() override;
@@ -35,6 +38,7 @@ protected:
 private:
   ofParameter<float> spinParameter { "Spin", 0.03, 0.0, 0.05 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<int> blendStrategy { "BlendStrategy", 0, 0, 1 };
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;
