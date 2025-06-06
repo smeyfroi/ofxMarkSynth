@@ -34,7 +34,7 @@ protected:
 
 private:
   ofParameter<float> spinParameter { "Spin", 0.03, 0.0, 0.05 };
-  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor(1.0, 0.5, 0.2, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;

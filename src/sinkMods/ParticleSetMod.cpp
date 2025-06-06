@@ -37,7 +37,8 @@ void ParticleSetMod::update() {
   newPoints.clear();
   
   fboPtr->getSource().begin();
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+//  ofEnableBlendMode(OF_BLENDMODE_ALPHA);  // *********************************
+  ofEnableBlendMode(OF_BLENDMODE_ADD);
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   particleSet.draw();
   fboPtr->getSource().end();
