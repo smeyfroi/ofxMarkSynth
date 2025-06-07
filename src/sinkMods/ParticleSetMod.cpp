@@ -13,13 +13,32 @@ namespace ofxMarkSynth {
 
 ParticleSetMod::ParticleSetMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{}
+{
+  addTextureThresholdedShader.load();
+}
 
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);
   parameters.add(colorParameter);
   parameters.add(blendStrategy);
   parameters.add(particleSet.getParameterGroup());
+}
+
+void ParticleSetMod::initTempFbo() {
+  if (! tempFbo.isAllocated()) {
+    auto fboPtr = fboPtrs[0];
+    ofFboSettings settings { nullptr };
+    settings.wrapModeVertical = GL_REPEAT;
+    settings.wrapModeHorizontal = GL_REPEAT;
+    settings.width = fboPtr->getWidth();
+    settings.height = fboPtr->getHeight();
+    settings.internalformat = GL_RGBA32F;
+    settings.numSamples = 0;
+    settings.useDepth = true;
+    settings.useStencil = true;
+    settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+    tempFbo.allocate(settings);
+  }
 }
 
 void ParticleSetMod::update() {
@@ -37,7 +56,8 @@ void ParticleSetMod::update() {
   });
   newPoints.clear();
   
-  fboPtr->getSource().begin();
+  initTempFbo();
+  tempFbo.begin();
   if (blendStrategy == BLEND_STRATEGY_ALPHA) {
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   } else {
@@ -45,7 +65,9 @@ void ParticleSetMod::update() {
   }
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   particleSet.draw();
-  fboPtr->getSource().end();
+  tempFbo.end();
+
+  addTextureThresholdedShader.render(*fboPtr, tempFbo);
 }
 
 void ParticleSetMod::receive(int sinkId, const float& value) {

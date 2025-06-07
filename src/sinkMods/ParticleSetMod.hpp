@@ -10,6 +10,7 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxParticleSet.h"
+#include "AddTextureThresholded.h"
 
 
 namespace ofxMarkSynth {
@@ -42,6 +43,10 @@ private:
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;
+  
+  AddTextureThresholdedShader addTextureThresholdedShader;
+  ofFbo tempFbo;
+  void initTempFbo();
 };
 
 
