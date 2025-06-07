@@ -65,8 +65,7 @@ void CollageMod::update() {
     ofEnableBlendMode(OF_BLENDMODE_ADD);
 //    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
     ofFloatColor c = colorParameter;
-    c -= 0.5; c *= strengthParameter; c.a *= strengthParameter;
-//    c *= strengthParameter; c.a *= strengthParameter;
+    c *= strengthParameter; c.a *= strengthParameter;
     ofSetColor(c);
     maskShader.render(collageSourceTexture, maskFbo,
                       fboPtr->getWidth(), fboPtr->getHeight(),
