@@ -111,7 +111,7 @@ void Synth::draw() {
     fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
     ++i;
   });
-
+  
   imageCompositeFbo.end();
   imageCompositeFbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
   
@@ -129,8 +129,15 @@ void Synth::draw() {
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
   }
-  
+}
+
+void Synth::drawGui() {
   if (guiVisible) gui.draw();
+}
+
+void Synth::setGuiSize(glm::vec2 size) {
+  gui.setPosition(0.0, 0.0);
+  gui.setSize(size.x, size.y);
 }
 
 bool Synth::keyPressed(int key) {

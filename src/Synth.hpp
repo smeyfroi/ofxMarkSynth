@@ -39,6 +39,8 @@ public:
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void update();
   void draw();
+  void drawGui();
+  void setGuiSize(glm::vec2 size);
   bool keyPressed(int key);
   ofParameterGroup& getFboParameterGroup();
   ofParameterGroup& getParameterGroup(const std::string& groupName);
