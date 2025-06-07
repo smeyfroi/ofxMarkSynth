@@ -18,6 +18,7 @@
 #include "TranslateMod.hpp"
 #include "AddTextureMod.hpp"
 #include "LogisticFnMod.hpp"
+#include "ClampMod.hpp"
 
 #include "IntrospectorMod.hpp"
 #include "DrawPointsMod.hpp"
