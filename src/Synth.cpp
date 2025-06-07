@@ -73,7 +73,7 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   
   modPtrs = std::move(modPtrs_);
   
-  imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGBA);
+  imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB);
 
   parameters = getParameterGroup("Synth");
   gui.setup(parameters);
@@ -84,6 +84,7 @@ void Synth::update() {
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();
+      ofEnableBlendMode(OF_BLENDMODE_DISABLED);
       ofSetColor(fcptr->clearColor);
       ofFill();
       ofDrawRectangle({0.0, 0.0}, fcptr->fboPtr->getWidth(), fcptr->fboPtr->getHeight());
@@ -99,11 +100,9 @@ void Synth::update() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   imageCompositeFbo.begin();
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  
   ofSetColor(backgroundColorParameter);
   ofFill();
-  ofDrawRectangle({0, 0}, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+  ofDrawRectangle(0.0, 0.0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
   
   size_t i = 0;
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
@@ -114,7 +113,7 @@ void Synth::draw() {
   });
 
   imageCompositeFbo.end();
-  imageCompositeFbo.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  imageCompositeFbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
   
   // NOTE: This Mod::draw is for Mods that draw directly and not on an FBO,
   // for example audio data plots and other debug views
