@@ -9,6 +9,7 @@
 #include "Mod.hpp"
 #include "PingPongFbo.h"
 #include "MaskShader.h"
+#include "AddTextureThresholded.h"
 
 
 namespace ofxMarkSynth {
@@ -19,6 +20,7 @@ class CollageMod : public Mod {
 public:
   CollageMod(const std::string& name, const ModConfig&& config);
   void update() override;
+//  void draw() override;
   void receive(int sinkId, const ofPath& path) override;
   void receive(int sinkId, const ofFloatPixels& pixels) override;
   void receive(int sinkId, const glm::vec4& v) override;
@@ -35,6 +37,9 @@ private:
 
   ofPath path;
   ofTexture collageSourceTexture;
+  AddTextureThresholdedShader addTextureThresholdedShader;
+  ofFbo tempFbo;
+  void initTempFbo();
   MaskShader maskShader;
 
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };

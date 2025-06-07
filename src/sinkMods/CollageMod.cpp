@@ -7,6 +7,7 @@
 
 
 #include "CollageMod.hpp"
+#include "AddTextureThresholded.h"
 
 
 namespace ofxMarkSynth {
@@ -16,11 +17,29 @@ CollageMod::CollageMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
 {
   maskShader.load();
+  addTextureThresholdedShader.load();
 }
 
 void CollageMod::initParameters() {
   parameters.add(colorParameter);
   parameters.add(strengthParameter);
+}
+
+void CollageMod::initTempFbo() {
+  if (! tempFbo.isAllocated()) {
+    auto fboPtr = fboPtrs[0];
+    ofFboSettings settings { nullptr };
+    settings.wrapModeVertical = GL_REPEAT;
+    settings.wrapModeHorizontal = GL_REPEAT;
+    settings.width = fboPtr->getWidth();
+    settings.height = fboPtr->getHeight();
+    settings.internalformat = GL_RGBA32F;
+    settings.numSamples = 0;
+    settings.useDepth = true;
+    settings.useStencil = true;
+    settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+    tempFbo.allocate(settings);
+  }
 }
 
 void CollageMod::update() {
@@ -29,8 +48,6 @@ void CollageMod::update() {
 
   auto fboPtr = fboPtrs[0];
   if (!fboPtr) return;
-
-  // TODO: check a dirty flag? Or let the collage build up over multiple updates as now?
   
   // Make a mask texture from the normalised path
   ofFbo maskFbo;
@@ -59,22 +76,27 @@ void CollageMod::update() {
   float scaleY = std::fminf(MAX_SCALE, 1.0 / pathBounds.height);
   float scale = std::fminf(scaleX, scaleY);
 
-  // draw scaled, coloured pixels into the FBO through the mask using a blend mode
-  fboPtr->getSource().begin();
+  // draw scaled, coloured pixels into a temporary FBO through the mask using a blend mode
+  initTempFbo();
+  tempFbo.begin();
   {
+    ofClear(0, 0, 0, 0);
     ofEnableBlendMode(OF_BLENDMODE_ADD);
 //    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
     ofFloatColor c = colorParameter;
     c *= strengthParameter; c.a *= strengthParameter;
     ofSetColor(c);
     maskShader.render(collageSourceTexture, maskFbo,
-                      fboPtr->getWidth(), fboPtr->getHeight(),
+                      tempFbo.getWidth(), tempFbo.getHeight(),
                       false,
                       {pathBounds.x+pathBounds.width/2.0, pathBounds.y+pathBounds.height/2.0},
                       {scale, scale});
   }
-  fboPtr->getSource().end();
+  tempFbo.end();
   
+  // Then composite the collage FBO onto the target with a threshold
+  addTextureThresholdedShader.render(*fboPtr, tempFbo);
+
 // THIS IS WRONG: feed points forward into a DividedArea instead
   // draw outline on path
 //  fboPtr->getSource().begin();
@@ -86,6 +108,10 @@ void CollageMod::update() {
 //  }
 //  fboPtr->getSource().end();
 }
+
+//void CollageMod::draw() {
+//  tempFbo.draw(0, 0);
+//}
 
 void CollageMod::receive(int sinkId, const ofFloatPixels& pixels) {
   switch (sinkId) {
