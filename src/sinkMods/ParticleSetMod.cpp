@@ -20,7 +20,6 @@ ParticleSetMod::ParticleSetMod(const std::string& name, const ModConfig&& config
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);
   parameters.add(colorParameter);
-  parameters.add(blendStrategy);
   parameters.add(particleSet.getParameterGroup());
 }
 
@@ -58,11 +57,7 @@ void ParticleSetMod::update() {
   
   initTempFbo();
   tempFbo.begin();
-  if (blendStrategy == BLEND_STRATEGY_ALPHA) {
-    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  } else {
-    ofEnableBlendMode(OF_BLENDMODE_ADD);
-  }
+  ofClear(0, 0, 0, 0);
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   particleSet.draw();
   tempFbo.end();

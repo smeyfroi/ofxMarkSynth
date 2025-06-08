@@ -21,15 +21,15 @@ class MultiplyMod : public Mod {
 public:
   MultiplyMod(const std::string& name, const ModConfig&& config);
   void update() override;
-  void receive(int sinkId, const glm::vec4& v) override;
+  void receive(int sinkId, const float& v) override;
 
-  static constexpr int SINK_VEC4 = 10;
+  static constexpr int SINK_FADE = 10;
 
 protected:
   void initParameters() override;
 
 private:
-  ofParameter<glm::vec4> multiplyByParameter { "Multiply By", glm::vec4 { 1.0, 1.0, 1.0, 0.995 }, glm::vec4 { 0.0, 0.0, 0.0, 0.0 }, glm::vec4 { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<float> multiplyByParameter { "Multiply By", 0.995, 0.0, 1.0 };
 
   MultiplyColorShader fadeShader;
 };

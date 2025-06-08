@@ -24,17 +24,16 @@ void MultiplyMod::initParameters() {
 void MultiplyMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
-  glm::vec4 fade { multiplyByParameter->r, multiplyByParameter->g, multiplyByParameter->b, multiplyByParameter->a };
-  fadeShader.render(*fboPtr, fade);
+  fadeShader.render(*fboPtr, multiplyByParameter);
 }
 
-void MultiplyMod::receive(int sinkId, const glm::vec4& v) {
+void MultiplyMod::receive(int sinkId, const float& v) {
   switch (sinkId) {
-    case SINK_VEC4:
+    case SINK_FADE:
       multiplyByParameter = v;
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
