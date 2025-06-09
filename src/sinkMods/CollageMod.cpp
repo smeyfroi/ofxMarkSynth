@@ -71,9 +71,14 @@ void CollageMod::update() {
   }
 
   // find a proportional scale to some limit to fill the mask with a reduced view of part of the pixels
-  constexpr float MAX_SCALE = 3.0;
-  float scaleX = std::fminf(MAX_SCALE, 1.0 / pathBounds.width);
-  float scaleY = std::fminf(MAX_SCALE, 1.0 / pathBounds.height);
+//  constexpr float MAX_SCALE = 3.0;
+//  float scaleX = std::fminf(MAX_SCALE, 1.0 / pathBounds.width);
+//  float scaleY = std::fminf(MAX_SCALE, 1.0 / pathBounds.height);
+//  float scale = std::fminf(scaleX, scaleY);
+
+  // scale to fit the incoming pixels in the path bounds
+  float scaleX = 1.0 / pathBounds.width;
+  float scaleY = 1.0 / pathBounds.height;
   float scale = std::fminf(scaleX, scaleY);
 
   // draw scaled, coloured pixels into a temporary FBO through the mask using a blend mode

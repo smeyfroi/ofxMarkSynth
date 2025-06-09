@@ -29,6 +29,7 @@ private:
   float updateCount;
   ofParameter<float> snapshotsPerUpdateParameter { "SnapshotsPerUpdate", 1.0/30.0, 0.0, 1.0 };
   
+  ofFbo resampledFbo;
   ofFloatPixels pixels;
   const ofPixels createPixels(const FboPtr& fboPtr);
 

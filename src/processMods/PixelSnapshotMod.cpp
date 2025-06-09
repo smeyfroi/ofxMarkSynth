@@ -13,7 +13,9 @@ namespace ofxMarkSynth {
 
 PixelSnapshotMod::PixelSnapshotMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{}
+{
+  resampledFbo.allocate(1024, 1024);
+}
 
 void PixelSnapshotMod::initParameters() {
   parameters.add(snapshotsPerUpdateParameter);
@@ -31,7 +33,10 @@ void PixelSnapshotMod::update() {
 }
 
 const ofPixels PixelSnapshotMod::createPixels(const FboPtr& fboPtr) {
-  fboPtr->getSource().readToPixels(pixels);
+  resampledFbo.begin();
+  fboPtr->getSource().draw(0, 0);
+  resampledFbo.end();
+  resampledFbo.readToPixels(pixels);
   return pixels;
 }
 
