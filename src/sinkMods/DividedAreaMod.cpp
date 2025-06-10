@@ -108,10 +108,10 @@ void DividedAreaMod::update() {
 void DividedAreaMod::receive(int sinkId, const glm::vec2& point) {
   switch (sinkId) {
     case SINK_MAJOR_ANCHORS:
-      newMajorAnchors.push_back(point);
+      if (newMajorAnchors.size() < 1 || newMajorAnchors.back() != point) newMajorAnchors.push_back(point);
       break;
     case SINK_MINOR_ANCHORS:
-      newMinorAnchors.push_back(point);
+      if (newMajorAnchors.size() < 1 || newMajorAnchors.back() != point) newMinorAnchors.push_back(point);
       break;
     default:
       ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
