@@ -38,7 +38,10 @@ void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
   float angle = angleParameter;
   std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [this](const auto& p) {
     auto endPoint = endPointForSegment(p, angleParameter * glm::pi<float>(), 0.01);
-    dividedArea.addConstrainedDividerLine(p, endPoint); // must stay inside normalised coords
+    if (endPoint.x > 0.0 && endPoint.x < 1.0 && endPoint.y > 0.0 && endPoint.y < 1.0) {
+      // must stay inside normalised coords
+      dividedArea.addConstrainedDividerLine(p, endPoint);
+    }
   });
   newMinorAnchors.clear();
 }
@@ -70,12 +73,20 @@ void DividedAreaMod::update() {
       break;
   }
   
+  const float maxLineWidth = 160.0;
+  const float minLineWidth = 110.0;
+
   // draw constrained
   auto fboPtr0 = fboPtrs[0];
   if (fboPtr0 != nullptr) {
     fboPtr0->getSource().begin();
-    ofSetColor(ofFloatColor(0.0, 0.0, 0.0, 1.0));
-    dividedArea.draw(0.0, 0.0, 1.0, fboPtr0->getWidth());
+    const ofFloatColor majorDividerColor { 0.0, 0.0, 0.0, 1.0 };
+    ofSetColor(majorDividerColor);
+//    dividedArea.draw(0.0, 0.0, 1.0, fboPtr0->getWidth());
+    dividedArea.draw({},
+                     { minLineWidth, maxLineWidth, majorDividerColor },
+                     {},
+                     fboPtr0->getWidth());
     fboPtr0->getSource().end();
   }
 
@@ -83,8 +94,13 @@ void DividedAreaMod::update() {
   auto fboPtr1 = fboPtrs[1];
   if (fboPtr1 != nullptr) {
     fboPtr1->getSource().begin();
-    ofSetColor(ofFloatColor(0.0, 0.0, 0.0, 1.0));
-    dividedArea.draw(0.0, 20.0, 0.0, fboPtr1->getWidth());
+    const ofFloatColor minorDividerColor { 0.0, 0.0, 0.0, 1.0 };
+    ofSetColor(minorDividerColor);
+    dividedArea.draw({},
+                     {},
+                     { minLineWidth*0.1f, minLineWidth*0.4f, minorDividerColor, 0.7 },
+                     fboPtr0->getWidth());
+//    dividedArea.draw(0.0, 20.0, 0.0, fboPtr1->getWidth());
     fboPtr1->getSource().end();
   }
 }
