@@ -27,6 +27,8 @@ void FluidMod::update() {
       return;
     }
   }
+  
+  assert(fboPtrs[0]->getSource().isAllocated() && fboPtrs[1]->getSource().isAllocated());
   fluidSimulation.update();
 }
 

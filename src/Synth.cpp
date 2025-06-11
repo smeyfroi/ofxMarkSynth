@@ -6,6 +6,7 @@
 //
 
 #include "Synth.hpp"
+#include "ofxTimeMeasurements.h"
 
 namespace ofxMarkSynth {
 
@@ -110,12 +111,16 @@ void Synth::update() {
   });
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
+    TS_SCOPE(modPtr->name);
+    TSGL_START(modPtr->name);
     modPtr->update();
+    TSGL_STOP(modPtr->name);
   });
 }
 
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
+  TSGL_START("Synth::draw");
   imageCompositeFbo.begin();
   ofSetColor(backgroundColorParameter);
   ofFill();
@@ -146,6 +151,7 @@ void Synth::draw() {
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
   }
+  TSGL_STOP("Synth::draw");
 }
 
 void Synth::drawGui() {
@@ -197,7 +203,7 @@ bool Synth::keyPressed(int key) {
     }
     return true;
   }
-  
+
   if (key == 'R') {
     if (recorder.isRecording()) {
       recorder.stop();
@@ -209,7 +215,7 @@ bool Synth::keyPressed(int key) {
     }
   }
 
-  bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&](auto& modPtr) {
+  bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&key](auto& modPtr) {
     return modPtr->keyPressed(key);
   });
   return handled;
