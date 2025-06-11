@@ -10,9 +10,19 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxFFmpegRecorder.h"
+#include "ofThread.h"
 
 
 namespace ofxMarkSynth {
+
+
+struct PixelsToFile : public ofThread {
+  void save(const std::string& filepath_, ofPixels&& pixels_);
+  void threadedFunction();
+  std::string filepath;
+  ofPixels pixels;
+  bool isReady = true;
+};
 
 
 struct FboConfig {
@@ -63,6 +73,8 @@ private:
   ofxPanel gui;
   bool plusKeyPressed { false };
   bool equalsKeyPressed { false };
+  
+  PixelsToFile pixelsToFile;
 };
 
 

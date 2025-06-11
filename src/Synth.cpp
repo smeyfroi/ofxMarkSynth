@@ -10,6 +10,23 @@
 namespace ofxMarkSynth {
 
 
+void PixelsToFile::save(const std::string& filepath_, ofPixels&& pixels_)
+{
+  if (!isReady) return;
+  isReady = false;
+  pixels = pixels_;
+  filepath = filepath_;
+  startThread();
+}
+
+void PixelsToFile::threadedFunction() {
+  ofLogNotice() << "Saving drawing to " << filepath;
+  ofSaveImage(pixels, filepath, OF_IMAGE_QUALITY_BEST);
+  isReady = true;
+  ofLogNotice() << "Done saving drawing to " << filepath;
+}
+
+
 // See ofFbo.cpp #allocate
 void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap) {
   ofFboSettings settings { nullptr };
@@ -171,11 +188,13 @@ bool Synth::keyPressed(int key) {
   // <<<
   
   if (key == 'S') {
-    ofPixels pixels;
-    imageCompositeFbo.readToPixels(pixels);
-    ofSaveImage(pixels,
-                saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".png"),
-                OF_IMAGE_QUALITY_BEST);
+    if (pixelsToFile.isReady) {
+      std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".png");
+      ofLogNotice() << "Fetch drawing to save to " << filepath;
+      ofPixels pixels;
+      imageCompositeFbo.readToPixels(pixels);
+      pixelsToFile.save(filepath, std::move(pixels));
+    }
     return true;
   }
   
