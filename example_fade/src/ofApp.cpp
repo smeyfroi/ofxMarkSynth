@@ -30,8 +30,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
 
 ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
   ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
+  addFboConfigPtr(fbos, "foreground", fboPtr, ofGetWindowSize()*8.0, GL_RGBA32F, GL_REPEAT, ofColor::black, false, OF_BLENDMODE_ALPHA);
   return fbos;
 }
 
@@ -39,8 +38,7 @@ void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
 
-  ofxMarkSynth::allocateFbo(fboPtr, ofGetWindowSize(), GL_RGBA32F, GL_REPEAT);
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
+  synth.configure(createFboConfigs(), createMods(), ofGetWindowSize()*8.0);
   
   parameters.add(synth.getParameterGroup("Synth"));
   gui.setup(parameters);
