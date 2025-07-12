@@ -68,9 +68,9 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 Synth::Synth(std::string name_) :
 name { name_ }
 {
-  std::filesystem::create_directory(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
-  std::filesystem::create_directory(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
-  std::filesystem::create_directory(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name));
+  std::filesystem::create_directories(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
+  std::filesystem::create_directories(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
+  std::filesystem::create_directories(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name));
 
   recorder.setup(/*video*/true, /*audio*/false, ofGetWindowSize(), /*fps*/30.0, /*bitrate*/10000);
   recorder.setOverWrite(true);
@@ -111,9 +111,10 @@ void Synth::update() {
   });
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
-    TS_SCOPE(modPtr->name);
     TSGL_START(modPtr->name);
+//    TS_START(modPtr->name);
     modPtr->update();
+//    TS_STOP(modPtr->name);
     TSGL_STOP(modPtr->name);
   });
 }
