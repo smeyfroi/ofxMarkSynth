@@ -7,7 +7,9 @@ ofxGui
 ofxSoundObjects
 ofxAudioAnalysisClient
 ofxAudioData
+ofxConvexHull
 ofxDividedArea
+ofxFFmpegRecorder
 ofxIntrospector
 ofxRenderer
 ofxMotionFromVideo
@@ -17,5 +19,5 @@ ofxPlottable
 ofxPointClusters
 ofxSelfOrganizingMap
 ofxSomPalette
-ofxFFmpegRecorder
+ofxTimeMeasurements
 ofxMarkSynth
