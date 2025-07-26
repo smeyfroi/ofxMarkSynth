@@ -34,7 +34,7 @@ void TranslateMod::receive(int sinkId, const glm::vec2& v) {
       translateByParameter = v;
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
