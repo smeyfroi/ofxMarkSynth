@@ -33,7 +33,7 @@ void CollageMod::initTempFbo() {
     settings.wrapModeHorizontal = GL_REPEAT;
     settings.width = fboPtr->getWidth();
     settings.height = fboPtr->getHeight();
-    settings.internalformat = GL_RGBA32F;
+    settings.internalformat = FLOAT_A_MODE;
     settings.numSamples = 0;
     settings.useDepth = true;
     settings.useStencil = true;

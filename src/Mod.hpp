@@ -14,6 +14,20 @@
 namespace ofxMarkSynth {
 
 
+// See ofGLUtils ofGetGLInternalFormat
+#ifndef TARGET_OS_IOS
+constexpr GLint FLOAT_A_MODE = GL_RGBA32F;
+constexpr GLint FLOAT_MODE = GL_RGB32F;
+constexpr GLint INT_A_MODE = GL_RGBA8;
+constexpr GLint INT_MODE = GL_RGB8;
+#else
+constexpr GLint FLOAT_A_MODE = GL_RGBA;
+constexpr GLint FLOAT_MODE = GL_RGB;
+constexpr GLint INT_A_MODE = GL_RGBA;
+constexpr GLint INT_MODE = GL_RGB;
+#endif
+
+
 class Mod;
 using ModConfig = std::unordered_map<std::string, std::string>;
 using ModPtr = std::shared_ptr<Mod>;
