@@ -29,4 +29,6 @@
 #include "FluidRadialImpulseMod.hpp"
 #include "SoftCircleMod.hpp"
 
+#include "FadeMod.hpp"
+
 #include "Synth.hpp"
