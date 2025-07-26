@@ -9,7 +9,9 @@
 
 #include "Mod.hpp"
 #include "ofxMotionFromVideo.h"
+#ifndef TARGET_OS_IOS
 #include "ofxFFmpegRecorder.h"
+#endif
 
 
 namespace ofxMarkSynth {
@@ -40,9 +42,10 @@ private:
   
   bool saveRecording;
   std::string recordingDir;
+#ifndef TARGET_OS_IOS
   ofxFFmpegRecorder recorder;
   void initRecorder();
-
+#endif
 };
 
 

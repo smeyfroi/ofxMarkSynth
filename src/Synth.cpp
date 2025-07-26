@@ -68,19 +68,25 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 Synth::Synth(std::string name_) :
 name { name_ }
 {
+#ifndef TARGET_OS_IOS
   std::filesystem::create_directories(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
   std::filesystem::create_directories(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
   std::filesystem::create_directories(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name));
+#endif
 
+#ifndef TARGET_OS_IOS
   recorder.setup(/*video*/true, /*audio*/false, ofGetWindowSize(), /*fps*/30.0, /*bitrate*/10000);
   recorder.setOverWrite(true);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
   recorderCompositeFbo.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB);
+#endif
 }
 
 Synth::~Synth() {
+#ifndef TARGET_OS_IOS
   if (recorder.isRecording()) recorder.stop();
+#endif
 }
 
 void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_) {
@@ -130,7 +136,8 @@ void Synth::draw() {
   size_t i = 0;
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
     ofEnableBlendMode(fcptr->blendMode);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, fboParameters.getFloat(i) });
+    float layerAlpha = fboParameters.getFloat(i);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, layerAlpha });
     fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
     ++i;
   });
@@ -144,6 +151,7 @@ void Synth::draw() {
     modPtr->draw();
   });
   
+#ifndef TARGET_OS_IOS
   if (recorder.isRecording()) {
     recorderCompositeFbo.begin();
     imageCompositeFbo.draw(0, 0, recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight());
@@ -152,6 +160,8 @@ void Synth::draw() {
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
   }
+#endif
+
   TSGL_STOP("Synth::draw");
 }
 
@@ -205,6 +215,7 @@ bool Synth::keyPressed(int key) {
     return true;
   }
 
+#ifndef TARGET_OS_IOS
   if (key == 'R') {
     if (recorder.isRecording()) {
       recorder.stop();
@@ -215,6 +226,7 @@ bool Synth::keyPressed(int key) {
       ofSetWindowTitle("[Recording]");
     }
   }
+#endif
 
   bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&key](auto& modPtr) {
     return modPtr->keyPressed(key);

@@ -26,9 +26,12 @@ VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&
 }
 
 VideoFlowSourceMod::~VideoFlowSourceMod() {
+#ifndef TARGET_OS_IOS
   if (saveRecording) recorder.stop();
+#endif
 }
 
+#ifndef TARGET_OS_IOS
 void VideoFlowSourceMod::initRecorder() {
   recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/6000);
   recorder.setOverWrite(true);
@@ -39,6 +42,7 @@ void VideoFlowSourceMod::initRecorder() {
   recorder.setOutputPath(recordingDir+"/video-flow-recording-"+ofGetTimestampString()+".mp4");
   recorder.startCustomRecord();
 }
+#endif
 
 void VideoFlowSourceMod::initParameters() {
   parameters.add(samplesPerUpdateParameter);
@@ -70,12 +74,14 @@ void VideoFlowSourceMod::update() {
 void VideoFlowSourceMod::draw() {
   motionFromVideo.draw();
   
+#ifndef TARGET_OS_IOS
   if (saveRecording) {
     if (!recorder.isRecording()) initRecorder();
     ofPixels pixels;
     motionFromVideo.getVideoFbo().readToPixels(pixels);
     recorder.addFrame(pixels);
   }
+#endif
 }
 
 bool VideoFlowSourceMod::keyPressed(int key) {

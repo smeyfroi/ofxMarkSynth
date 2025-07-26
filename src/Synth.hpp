@@ -9,7 +9,9 @@
 
 #include "ofxGui.h"
 #include "Mod.hpp"
+#ifndef TARGET_OS_IOS
 #include "ofxFFmpegRecorder.h"
+#endif
 #include "ofThread.h"
 
 
@@ -65,8 +67,10 @@ private:
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   
+#ifndef TARGET_OS_IOS
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
+#endif
   ofFbo imageCompositeFbo;
   
   bool guiVisible { true };
