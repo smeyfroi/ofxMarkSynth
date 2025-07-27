@@ -24,6 +24,8 @@ public:
 
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_POINT_RADIUS = 10;
+  static constexpr int SINK_POINT_RADIUS_VARIANCE = 11;
+  static constexpr int SINK_POINT_RADIUS_VARIANCE_SCALE = 12;
   static constexpr int SINK_POINT_COLOR = 20;
 
 protected:
@@ -31,6 +33,8 @@ protected:
 
 private:
   ofParameter<float> pointRadiusParameter { "PointRadius", 0.001, 0.0, 0.1 };
+  ofParameter<float> pointRadiusVarianceParameter { "PointRadiusVariance", 0.0, 0.0, 1.0 };
+  ofParameter<float> pointRadiusVarianceScaleParameter { "PointRadiusVarianceScale", 0.001, 0.0, 1.0 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 1.0, 0.0, 1.0 };
 

@@ -17,6 +17,8 @@ DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config)
 
 void DrawPointsMod::initParameters() {
   parameters.add(pointRadiusParameter);
+  parameters.add(pointRadiusVarianceParameter);
+  parameters.add(pointRadiusVarianceScaleParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
 }
@@ -32,13 +34,18 @@ void DrawPointsMod::update() {
   ofFloatColor c = colorParameter;
   c *= multiplier;
   ofSetColor(c);
+  ofSetLineWidth(0);
   
-  std::for_each(newPoints.begin(),
-                newPoints.end(),
-                [this](const auto& p) {
-    ofDrawCircle(p, pointRadiusParameter);
+  float pointRadius = pointRadiusParameter;
+  float pointRadiusVariance = pointRadiusVarianceParameter;
+  float pointRadiusVarianceScale = pointRadiusVarianceScaleParameter;
+  pointRadius += pointRadiusVariance * pointRadiusVarianceScale;
+  
+  std::for_each(newPoints.begin(), newPoints.end(), [pointRadius](const auto& p) {
+    ofDrawCircle(p, pointRadius);
   });
   newPoints.clear();
+
   fboPtr->getSource().end();
 }
 
@@ -46,6 +53,9 @@ void DrawPointsMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
       pointRadiusParameter = value;
+      break;
+    case SINK_POINT_RADIUS_VARIANCE:
+      pointRadiusVarianceParameter = value;
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
