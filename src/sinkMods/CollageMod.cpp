@@ -37,7 +37,7 @@ void CollageMod::initTempFbo() {
     settings.numSamples = 0;
     settings.useDepth = true;
     settings.useStencil = true;
-    settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+//    settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
     tempFbo.allocate(settings);
   }
 }

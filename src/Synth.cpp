@@ -33,13 +33,16 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap) 
   ofFboSettings settings { nullptr };
   settings.wrapModeVertical = wrap;
   settings.wrapModeHorizontal = wrap;
+  
   settings.width = size.x;
   settings.height = size.y;
   settings.internalformat = internalFormat;
   settings.numSamples = 0;
-  settings.useDepth = true;
-  settings.useStencil = true;
-  settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+  
+  settings.useDepth = false;
+  settings.useStencil = false; // true;
+  settings.textureTarget = GL_TEXTURE_2D;
+
   fboPtr->allocate(settings);
 }
 
