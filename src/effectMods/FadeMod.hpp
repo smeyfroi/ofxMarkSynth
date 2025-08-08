@@ -30,8 +30,8 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<glm::vec2> translationParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
-  ofParameter<float> alphaParameter { "Translation Alpha", 0.999, 0.99, 1.0 };
+  ofParameter<glm::vec2> translationParameter { "Translation", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
+  ofParameter<float> alphaParameter { "Translation Alpha", 1.0, 0.99, 1.0 };
   ofParameter<float> fadeAmountParameter { "Fade Amount", 0.01, 0.0, 0.1 };
 
   TranslateEffect translateEffect;

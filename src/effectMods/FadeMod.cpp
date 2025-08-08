@@ -49,7 +49,7 @@ void FadeMod::update() {
     
     fboPtr->getSource().begin();
     fadeEffect.fadeAmount = fadeAmount;
-    fadeEffect.draw();
+    fadeEffect.draw(fboPtr->getSource().getWidth(), fboPtr->getSource().getHeight());
     fboPtr->getSource().end();
   }
 }
