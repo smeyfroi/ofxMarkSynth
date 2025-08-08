@@ -13,9 +13,7 @@ namespace ofxMarkSynth {
 
 MultiplyMod::MultiplyMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{
-  fadeShader.load();
-}
+{}
 
 void MultiplyMod::initParameters() {
   parameters.add(multiplyByParameter);
@@ -24,7 +22,15 @@ void MultiplyMod::initParameters() {
 void MultiplyMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
-  fadeShader.render(*fboPtr, multiplyByParameter);
+  fboPtr->getSource().begin();
+  float m = multiplyByParameter;
+  ofSetColor(ofFloatColor { m, m, m, 1.0 });
+  ofEnableBlendMode(OF_BLENDMODE_MULTIPLY);
+//  ofSetColor(ofFloatColor { 0.0, 0.0, 0.0, float(1.0-multiplyByParameter) });
+//  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofFill();
+  ofDrawRectangle(0, 0, fboPtr->getWidth(), fboPtr->getHeight());
+  fboPtr->getSource().end();
 }
 
 void MultiplyMod::receive(int sinkId, const float& v) {

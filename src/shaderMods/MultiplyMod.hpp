@@ -30,8 +30,6 @@ protected:
 
 private:
   ofParameter<float> multiplyByParameter { "Multiply By", 0.995, 0.0, 1.0 };
-
-  MultiplyColorShader fadeShader;
 };
 
 
