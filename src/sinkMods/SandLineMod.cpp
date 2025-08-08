@@ -19,6 +19,7 @@ void SandLineMod::initParameters() {
   parameters.add(densityParameter);
   parameters.add(pointRadiusParameter);
   parameters.add(colorParameter);
+  parameters.add(alphaMultiplierParameter);
 }
 
 void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
