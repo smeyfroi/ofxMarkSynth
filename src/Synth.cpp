@@ -140,9 +140,10 @@ void Synth::draw() {
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
     ofEnableBlendMode(fcptr->blendMode);
     float layerAlpha = fboParameters.getFloat(i);
+    ++i;
+    if (layerAlpha == 0.0) return;
     ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, layerAlpha });
     fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-    ++i;
   });
   
   imageCompositeFbo.end();
@@ -265,7 +266,8 @@ ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {
     parameters.add(backgroundColorParameter);
     parameters.add(getFboParameterGroup());
     std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
-      parameters.add(modPtr->getParameterGroup());
+      ofParameterGroup& pg = modPtr->getParameterGroup();
+      if (pg.size() != 0) parameters.add(pg);
     });
   }
   return parameters;
