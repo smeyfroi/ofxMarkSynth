@@ -33,9 +33,9 @@ void ParticleSetMod::initTempFbo() {
     settings.height = fboPtr->getHeight();
     settings.internalformat = FLOAT_A_MODE;
     settings.numSamples = 0;
-    settings.useDepth = true;
-    settings.useStencil = true;
-    settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
+    settings.useDepth = false;
+    settings.useStencil = false;
+    settings.textureTarget = GL_TEXTURE_2D;
     tempFbo.allocate(settings);
   }
 }
