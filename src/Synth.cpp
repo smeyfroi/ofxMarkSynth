@@ -11,6 +11,19 @@
 namespace ofxMarkSynth {
 
 
+
+void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
+  for (int i = 0; i < guiGroup.getNumControls(); ++i) {
+    auto control = guiGroup.getControl(i);
+    if (auto childGuiGroup = dynamic_cast<ofxGuiGroup*>(control)) {
+      childGuiGroup->minimize();
+      minimizeAllGuiGroupsRecursive(*childGuiGroup);
+    }
+  }
+}
+
+
+
 void PixelsToFile::save(const std::string& filepath_, ofPixels&& pixels_)
 {
   if (!isReady) return;
@@ -26,6 +39,7 @@ void PixelsToFile::threadedFunction() {
   isReady = true;
   ofLogNotice() << "Done saving drawing to " << filepath;
 }
+
 
 
 // See ofFbo.cpp #allocate
@@ -48,18 +62,15 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap) 
 
 void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode) {
   allocateFbo(fboPtr, size, internalFormat, wrap);
-//  fboPtr->getSource().clearColorBuffer(clearColor);
-  // Don't know why clearColorBuffer doesn't work
   fboPtr->getSource().begin();
-  ofSetColor(clearColor);
-  ofFill();
-  ofDrawRectangle(0, 0, fboPtr->getWidth(), fboPtr->getHeight());
+  ofClear(clearColor);
   fboPtr->getSource().end();
-
   fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearColor, clearOnUpdate, blendMode));
 }
 
-std::string saveFilePath(std::string filename) {
+
+
+std::string saveFilePath(const std::string& filename) {
   return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
 }
 
@@ -68,8 +79,9 @@ constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawings";
 constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 
 
-Synth::Synth(std::string name_) :
-name { name_ }
+
+Synth::Synth(const std::string& name_, const ModConfig&& config) :
+Mod(name_, std::move(config))
 {
 #ifndef TARGET_OS_IOS
   std::filesystem::create_directories(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
@@ -102,19 +114,26 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   
   imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB);
 
-  parameters = getParameterGroup("Synth");
+  parameters = getParameterGroup();
   gui.setup(parameters);
   minimizeAllGuiGroupsRecursive(gui);
+}
+
+void Synth::receive(int sinkId, const glm::vec4& v) {
+  switch (sinkId) {
+    case SINK_BACKGROUND_COLOR:
+      backgroundColorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
+      break;
+    default:
+      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
 }
 
 void Synth::update() {
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();
-      ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-      ofSetColor(fcptr->clearColor);
-      ofFill();
-      ofDrawRectangle({0.0, 0.0}, fcptr->fboPtr->getWidth(), fcptr->fboPtr->getHeight());
+      ofClear(fcptr->clearColor);
       fcptr->fboPtr->getSource().end();
     }
   });
@@ -238,16 +257,6 @@ bool Synth::keyPressed(int key) {
   return handled;
 }
 
-void Synth::minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
-  for (int i = 0; i < guiGroup.getNumControls(); ++i) {
-    auto control = guiGroup.getControl(i);
-    if (auto childGuiGroup = dynamic_cast<ofxGuiGroup*>(control)) {
-      childGuiGroup->minimize();
-      minimizeAllGuiGroupsRecursive(*childGuiGroup);
-    }
-  }
-}
-
 ofParameterGroup& Synth::getFboParameterGroup() {
   if (fboParameters.size() == 0) {
     fboParameters.setName("Layers");
@@ -260,18 +269,15 @@ ofParameterGroup& Synth::getFboParameterGroup() {
   return fboParameters;
 }
 
-ofParameterGroup& Synth::getParameterGroup(const std::string& groupName) {
-  if (parameters.size() == 0) {
-    parameters.setName(groupName);
-    parameters.add(backgroundColorParameter);
-    parameters.add(getFboParameterGroup());
-    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
-      ofParameterGroup& pg = modPtr->getParameterGroup();
-      if (pg.size() != 0) parameters.add(pg);
-    });
-  }
-  return parameters;
+void Synth::initParameters() {
+  parameters.add(backgroundColorParameter);
+  parameters.add(getFboParameterGroup());
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
+    ofParameterGroup& pg = modPtr->getParameterGroup();
+    if (pg.size() != 0) parameters.add(pg);
+  });
 }
+
 
 
 } // ofxMarkSynth

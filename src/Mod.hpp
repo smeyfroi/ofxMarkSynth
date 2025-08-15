@@ -48,7 +48,7 @@ class Mod {
   
 public:
   Mod(const std::string& name, const ModConfig&& config);
-  virtual ~Mod() {};
+  virtual ~Mod() = default;
   virtual void update() {};
   virtual void draw() {};
   virtual bool keyPressed(int key) { return false; };

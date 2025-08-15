@@ -57,6 +57,9 @@ void DrawPointsMod::receive(int sinkId, const float& value) {
     case SINK_POINT_RADIUS_VARIANCE:
       pointRadiusVarianceParameter = value;
       break;
+    case SINK_POINT_COLOR_MULTIPLIER:
+      colorMultiplierParameter = value;
+      break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }

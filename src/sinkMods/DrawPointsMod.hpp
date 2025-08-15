@@ -27,6 +27,7 @@ public:
   static constexpr int SINK_POINT_RADIUS_VARIANCE = 11;
   static constexpr int SINK_POINT_RADIUS_VARIANCE_SCALE = 12;
   static constexpr int SINK_POINT_COLOR = 20;
+  static constexpr int SINK_POINT_COLOR_MULTIPLIER = 21;
 
 protected:
   void initParameters() override;

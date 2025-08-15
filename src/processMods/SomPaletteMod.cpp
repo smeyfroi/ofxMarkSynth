@@ -31,6 +31,8 @@ void SomPaletteMod::update() {
   emit(SOURCE_RANDOM_VEC4, createRandomVec4(randomDistrib(randomGen)));
   emit(SOURCE_RANDOM_LIGHT_VEC4, createRandomLightVec4(randomDistrib(randomGen)));
   emit(SOURCE_RANDOM_DARK_VEC4, createRandomDarkVec4(randomDistrib(randomGen)));
+  const ofFloatColor& darkestColor = somPalette.getColor(0);
+  emit(SOURCE_DARKEST_VEC4, glm::vec4 { darkestColor.r, darkestColor.g, darkestColor.b, 1.0 });
 }
 
 glm::vec4 SomPaletteMod::createRandomVec4(int i) {

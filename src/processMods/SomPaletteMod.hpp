@@ -29,6 +29,7 @@ public:
   static constexpr int SOURCE_RANDOM_VEC4 = 2; // RGBA float color
   static constexpr int SOURCE_RANDOM_DARK_VEC4 = 3; // RGBA float color
   static constexpr int SOURCE_RANDOM_LIGHT_VEC4 = 4; // RGBA float color
+  static constexpr int SOURCE_DARKEST_VEC4 = 10; // RGBA float color
 
 protected:
   void initParameters() override;

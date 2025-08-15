@@ -43,30 +43,32 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap =
 void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode);
 
 
-class Synth {
+class Synth : public Mod {
   
 public:
-  Synth(std::string name = "Synth");
+  Synth(const std::string& name, const ModConfig&& config);
   ~Synth();
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
-  void update();
-  void draw();
+  void receive(int sinkId, const glm::vec4& v) override;
+  void update() override;
+  void draw() override;
   void drawGui();
   void setGuiSize(glm::vec2 size);
-  bool keyPressed(int key);
+  bool keyPressed(int key) override;
   ofParameterGroup& getFboParameterGroup();
-  ofParameterGroup& getParameterGroup(const std::string& groupName);
-  void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup);
-  std::string name;
+  
+  static constexpr int SINK_BACKGROUND_COLOR = 100;
+
+protected:
+  void initParameters() override;
 
 private:
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
-  ofParameterGroup parameters;
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  
+
 #ifndef TARGET_OS_IOS
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
@@ -82,7 +84,7 @@ private:
 };
 
 
-std::string saveFilePath(std::string filename);
+std::string saveFilePath(const std::string& filename);
 
 
 } // ofxMarkSynth
