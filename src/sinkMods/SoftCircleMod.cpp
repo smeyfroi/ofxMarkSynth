@@ -23,6 +23,7 @@ void SoftCircleMod::initParameters() {
   parameters.add(radiusVarianceScaleParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
+  parameters.add(softnessParameter);
 }
 
 void SoftCircleMod::update() {
