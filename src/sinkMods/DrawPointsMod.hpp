@@ -33,9 +33,9 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> pointRadiusParameter { "PointRadius", 0.001, 0.0, 0.1 };
-  ofParameter<float> pointRadiusVarianceParameter { "PointRadiusVariance", 0.0, 0.0, 1.0 };
-  ofParameter<float> pointRadiusVarianceScaleParameter { "PointRadiusVarianceScale", 0.001, 0.0, 1.0 };
+  ofParameter<float> radiusParameter { "Radius", 0.001, 0.0, 0.1 };
+  ofParameter<float> radiusVarianceParameter { "RadiusVariance", 0.0, 0.0, 1.0 };
+  ofParameter<float> radiusVarianceScaleParameter { "RadiusVarianceScale", 0.001, 0.0, 1.0 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 1.0, 0.0, 1.0 };
 

@@ -14,11 +14,13 @@ namespace ofxMarkSynth {
 SoftCircleMod::SoftCircleMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
 {
-  addImpulseSpotShader.load();
+  softCircleShader.load();
 }
 
 void SoftCircleMod::initParameters() {
   parameters.add(radiusParameter);
+  parameters.add(radiusVarianceParameter);
+  parameters.add(radiusVarianceScaleParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
 }
@@ -28,15 +30,24 @@ void SoftCircleMod::update() {
   if (fboPtr == nullptr) return;
   
   float radius = radiusParameter;
+  float radiusVariance = radiusVarianceParameter;
+  float radiusVarianceScale = radiusVarianceScaleParameter;
+  radius += radiusVariance * radiusVarianceScale;
+
   float multiplier = colorMultiplierParameter;
   ofFloatColor c = colorParameter;
   c *= multiplier;
   
+  float softness = softnessParameter;
+
+  fboPtr->getSource().begin();
   std::for_each(newPoints.begin(),
                 newPoints.end(),
-                [this, fboPtr, radius, c](const auto& p) {
-    addImpulseSpotShader.render(*fboPtr, p * fboPtr->getWidth(), radius * fboPtr->getWidth(), glm::vec4 { c.r, c.g, c.b, c.a });
+                [this, fboPtr, radius, c, softness](const auto& p) {
+    softCircleShader.render(p * fboPtr->getSize(), radius * fboPtr->getWidth(), c, softness);
   });
+  fboPtr->getSource().end();
+  
   newPoints.clear();
 }
 
@@ -44,6 +55,15 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
       radiusParameter = value;
+      break;
+    case SINK_POINT_RADIUS_VARIANCE:
+      radiusVarianceParameter = value;
+      break;
+    case SINK_POINT_COLOR_MULTIPLIER:
+      colorMultiplierParameter = value;
+      break;
+    case SINK_POINT_SOFTNESS:
+      softnessParameter = value;
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;

@@ -16,9 +16,9 @@ DrawPointsMod::DrawPointsMod(const std::string& name, const ModConfig&& config)
 {}
 
 void DrawPointsMod::initParameters() {
-  parameters.add(pointRadiusParameter);
-  parameters.add(pointRadiusVarianceParameter);
-  parameters.add(pointRadiusVarianceScaleParameter);
+  parameters.add(radiusParameter);
+  parameters.add(radiusVarianceParameter);
+  parameters.add(radiusVarianceScaleParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
 }
@@ -26,6 +26,7 @@ void DrawPointsMod::initParameters() {
 void DrawPointsMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
+  
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofFill();
@@ -36,9 +37,9 @@ void DrawPointsMod::update() {
   ofSetColor(c);
   ofSetLineWidth(0);
   
-  float pointRadius = pointRadiusParameter;
-  float pointRadiusVariance = pointRadiusVarianceParameter;
-  float pointRadiusVarianceScale = pointRadiusVarianceScaleParameter;
+  float pointRadius = radiusParameter;
+  float pointRadiusVariance = radiusVarianceParameter;
+  float pointRadiusVarianceScale = radiusVarianceScaleParameter;
   pointRadius += pointRadiusVariance * pointRadiusVarianceScale;
   
   std::for_each(newPoints.begin(), newPoints.end(), [pointRadius](const auto& p) {
@@ -52,10 +53,10 @@ void DrawPointsMod::update() {
 void DrawPointsMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
-      pointRadiusParameter = value;
+      radiusParameter = value;
       break;
     case SINK_POINT_RADIUS_VARIANCE:
-      pointRadiusVarianceParameter = value;
+      radiusVarianceParameter = value;
       break;
     case SINK_POINT_COLOR_MULTIPLIER:
       colorMultiplierParameter = value;
