@@ -113,6 +113,11 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   modPtrs = std::move(modPtrs_);
   
   imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB);
+  compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
+  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0;
+  sidePanelHeight = ofGetWindowHeight();
+  leftCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
+  rightCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
 
   parameters = getParameterGroup();
   gui.setup(parameters);
@@ -145,28 +150,36 @@ void Synth::update() {
 //    TS_STOP(modPtr->name);
     TSGL_STOP(modPtr->name);
   });
+  
+  updateSidePanels();
 }
 
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   TSGL_START("Synth::draw");
   imageCompositeFbo.begin();
-  ofSetColor(backgroundColorParameter);
-  ofFill();
-  ofDrawRectangle(0.0, 0.0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-  
-  size_t i = 0;
-  std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
-    ofEnableBlendMode(fcptr->blendMode);
-    float layerAlpha = fboParameters.getFloat(i);
-    ++i;
-    if (layerAlpha == 0.0) return;
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, layerAlpha });
-    fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-  });
-  
+  {
+    ofClear(backgroundColorParameter);
+    size_t i = 0;
+    std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
+      ofEnableBlendMode(fcptr->blendMode);
+      float layerAlpha = fboParameters.getFloat(i);
+      ++i;
+      if (layerAlpha == 0.0) return;
+      ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, layerAlpha });
+      fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+    });
+  }
   imageCompositeFbo.end();
-  imageCompositeFbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+
+  drawSidePanels();
+  
+  ofPushMatrix();
+  ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
+  ofScale(compositeScale, compositeScale);
+  ofSetColor(255);
+  imageCompositeFbo.draw(0.0, 0.0);
+  ofPopMatrix();
   
   // NOTE: This Mod::draw is for Mods that draw directly and not on an FBO,
   // for example audio data plots and other debug views
@@ -255,6 +268,43 @@ bool Synth::keyPressed(int key) {
     return modPtr->keyPressed(key);
   });
   return handled;
+}
+
+void Synth::drawSidePanels() {
+  float cycleElapsed = (ofGetElapsedTimef() - sidePanelLastUpdate) / sidePanelTimeoutSecs;
+
+  constexpr float visibility = 0.8f;
+  
+  // old panels fade out
+  ofSetColor(ofFloatColor { visibility, visibility, visibility, 1.0f - cycleElapsed });
+  leftCompositeFbo.getTarget().draw(0.0, 0.0);
+  rightCompositeFbo.getTarget().draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
+
+  // new panels fade in
+  ofSetColor(ofFloatColor { visibility, visibility, visibility, cycleElapsed });
+  leftCompositeFbo.getSource().draw(0.0, 0.0);
+  rightCompositeFbo.getSource().draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
+}
+
+// target is the outgoing image; source is the incoming one
+void Synth::updateSidePanels() {
+  if (ofGetElapsedTimef() - sidePanelLastUpdate < sidePanelTimeoutSecs) return;
+
+  sidePanelLastUpdate = ofGetElapsedTimef();
+  leftCompositeFbo.swap();
+  rightCompositeFbo.swap();
+
+  float leftPanelX = imageCompositeFbo.getWidth() / 2.0 - sidePanelWidth;
+  float leftPanelY = (imageCompositeFbo.getHeight() - sidePanelHeight) / 2.0;
+  float rightPanelX = imageCompositeFbo.getWidth() / 2.0;
+  float rightPanelY = leftPanelY;
+  
+  leftCompositeFbo.getSource().begin();
+  imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelX, leftPanelY);
+  leftCompositeFbo.getSource().end();
+  rightCompositeFbo.getSource().begin();
+  imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelX, rightPanelY);
+  rightCompositeFbo.getSource().end();
 }
 
 ofParameterGroup& Synth::getFboParameterGroup() {

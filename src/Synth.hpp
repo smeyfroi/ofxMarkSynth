@@ -63,6 +63,14 @@ protected:
   void initParameters() override;
 
 private:
+  void updateSidePanels();
+  float sidePanelLastUpdate { 0.0 };
+  float sidePanelTimeoutSecs { 5.0 };
+
+  void drawSidePanels();
+  PingPongFbo leftCompositeFbo, rightCompositeFbo;
+  float compositeScale, sidePanelWidth, sidePanelHeight;
+
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
   ofParameterGroup fboParameters;
