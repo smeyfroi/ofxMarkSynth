@@ -64,8 +64,10 @@ protected:
 
 private:
   void updateSidePanels();
-  float sidePanelLastUpdate { 0.0 };
-  float sidePanelTimeoutSecs { 5.0 };
+  float leftSidePanelLastUpdate { 0.0 };
+  float rightSidePanelLastUpdate { 0.0 };
+  float leftSidePanelTimeoutSecs { 8.0 };
+  float rightSidePanelTimeoutSecs { 10.0 };
 
   void drawSidePanels();
   PingPongFbo leftCompositeFbo, rightCompositeFbo;
