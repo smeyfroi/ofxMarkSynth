@@ -18,7 +18,8 @@ SmearMod::SmearMod(const std::string& name, const ModConfig&& config)
 }
 
 void SmearMod::initParameters() {
-  parameters.add(alphaParameter);
+  parameters.add(mixNewParameter);
+  parameters.add(alphaMultiplierParameter);
   parameters.add(translateByParameter);
 }
 
@@ -26,14 +27,15 @@ void SmearMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
-  float alpha = alphaParameter;
-  smearShader.render(*fboPtr, translation, alpha);
+  float mixNew = mixNewParameter;
+  float alphaMultiplier = alphaMultiplierParameter;
+  smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier);
 }
 
 void SmearMod::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_FLOAT:
-      alphaParameter = v;
+      mixNewParameter = v;
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;

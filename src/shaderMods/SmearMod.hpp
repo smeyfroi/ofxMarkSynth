@@ -31,7 +31,8 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> alphaParameter { "Alpha", 0.9, 0.0, 1.0 };
+  ofParameter<float> mixNewParameter { "MixNew", 0.9, 0.0, 1.0 };
+  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.995, 0.9, 1.0 };
   ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
 
   SmearShader smearShader;
