@@ -83,6 +83,8 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 Synth::Synth(const std::string& name_, const ModConfig&& config) :
 Mod(name_, std::move(config))
 {
+  tonemapShader.load();
+  
 #ifndef TARGET_OS_IOS
   std::filesystem::create_directories(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
   std::filesystem::create_directories(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
@@ -116,8 +118,10 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
   sidePanelHeight = ofGetWindowHeight();
-  leftCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
-  rightCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
+  leftPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
+  leftPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
+  rightPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
+  rightPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
 
   parameters = getParameterGroup();
   gui.setup(parameters);
@@ -178,7 +182,9 @@ void Synth::draw() {
   ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
   ofScale(compositeScale, compositeScale);
   ofSetColor(255);
+  tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter);
   imageCompositeFbo.draw(0.0, 0.0);
+  tonemapShader.end();
   ofPopMatrix();
   
   // NOTE: This Mod::draw is for Mods that draw directly and not on an FBO,
@@ -271,44 +277,57 @@ bool Synth::keyPressed(int key) {
 }
 
 void Synth::drawSidePanels() {
-  constexpr float visibility = 0.7f;
-  
   float leftCycleElapsed = (ofGetElapsedTimef() - leftSidePanelLastUpdate) / leftSidePanelTimeoutSecs;
   float rightCycleElapsed = (ofGetElapsedTimef() - rightSidePanelLastUpdate) / rightSidePanelTimeoutSecs;
 
-  // old panels fade out
-  ofSetColor(ofFloatColor { visibility, visibility, visibility, 1.0f - leftCycleElapsed });
-  leftCompositeFbo.getTarget().draw(0.0, 0.0);
-  ofSetColor(ofFloatColor { visibility, visibility, visibility, 1.0f - rightCycleElapsed });
-  rightCompositeFbo.getTarget().draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
+  // old panels fade out; new panels fade in
+  ofBlendMode(OF_BLENDMODE_ALPHA);
+  leftPanelCompositeFbo.begin();
+  {
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - leftCycleElapsed });
+    leftPanelFbo.getTarget().draw(0.0, 0.0);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, leftCycleElapsed });
+    leftPanelFbo.getSource().draw(0.0, 0.0);
+  }
+  leftPanelCompositeFbo.end();
 
-  // new panels fade in
-  ofSetColor(ofFloatColor { visibility, visibility, visibility, leftCycleElapsed });
-  leftCompositeFbo.getSource().draw(0.0, 0.0);
-  ofSetColor(ofFloatColor { visibility, visibility, visibility, rightCycleElapsed });
-  rightCompositeFbo.getSource().draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
+  rightPanelCompositeFbo.begin();
+  {
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - rightCycleElapsed });
+    rightPanelFbo.getTarget().draw(0.0, 0.0);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, rightCycleElapsed });
+    rightPanelFbo.getSource().draw(0.0, 0.0);
+  }
+  rightPanelCompositeFbo.end();
+
+  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter);
+  ofSetColor(255);
+  ofBlendMode(OF_BLENDMODE_DISABLED);
+  leftPanelCompositeFbo.draw(0.0, 0.0);
+  rightPanelCompositeFbo.draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
+  tonemapShader.end();
 }
 
 // target is the outgoing image; source is the incoming one
 void Synth::updateSidePanels() {
   if (ofGetElapsedTimef() - leftSidePanelLastUpdate > leftSidePanelTimeoutSecs) {
     leftSidePanelLastUpdate = ofGetElapsedTimef();
-    leftCompositeFbo.swap();
+    leftPanelFbo.swap();
     float leftPanelX = imageCompositeFbo.getWidth() / 2.0 - sidePanelWidth;
     float leftPanelY = (imageCompositeFbo.getHeight() - sidePanelHeight) / 2.0;
-    leftCompositeFbo.getSource().begin();
+    leftPanelFbo.getSource().begin();
     imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelX, leftPanelY);
-    leftCompositeFbo.getSource().end();
+    leftPanelFbo.getSource().end();
   }
     
   if (ofGetElapsedTimef() - rightSidePanelLastUpdate > rightSidePanelTimeoutSecs) {
     rightSidePanelLastUpdate = ofGetElapsedTimef();
-    rightCompositeFbo.swap();
+    rightPanelFbo.swap();
     float rightPanelX = imageCompositeFbo.getWidth() / 2.0;
     float rightPanelY = (imageCompositeFbo.getHeight() - sidePanelHeight) / 2.0;
-    rightCompositeFbo.getSource().begin();
+    rightPanelFbo.getSource().begin();
     imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelX, rightPanelY);
-    rightCompositeFbo.getSource().end();
+    rightPanelFbo.getSource().end();
   }
 }
 
@@ -326,6 +345,13 @@ ofParameterGroup& Synth::getFboParameterGroup() {
 
 void Synth::initParameters() {
   parameters.add(backgroundColorParameter);
+  toneMapParameters.setName("Tone Mapping");
+  toneMapParameters.add(toneMapTypeParameter);
+  toneMapParameters.add(exposureParameter);
+  toneMapParameters.add(gammaParameter);
+  toneMapParameters.add(whitePointParameter);
+  toneMapParameters.add(sideExposureParameter);
+  parameters.add(toneMapParameters);
   parameters.add(getFboParameterGroup());
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
     ofParameterGroup& pg = modPtr->getParameterGroup();

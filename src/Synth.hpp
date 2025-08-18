@@ -13,6 +13,7 @@
 #include "ofxFFmpegRecorder.h"
 #endif
 #include "ofThread.h"
+#include "TonemapShader.h"
 
 
 namespace ofxMarkSynth {
@@ -70,20 +71,29 @@ private:
   float rightSidePanelTimeoutSecs { 10.0 };
 
   void drawSidePanels();
-  PingPongFbo leftCompositeFbo, rightCompositeFbo;
+  PingPongFbo leftPanelFbo, rightPanelFbo;
+  ofFbo leftPanelCompositeFbo, rightPanelCompositeFbo;
   float compositeScale, sidePanelWidth, sidePanelHeight;
 
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
+  
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameterGroup toneMapParameters;
+  ofParameter<int> toneMapTypeParameter { "tone map type", 1, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
+  ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
+  ofParameter<float> gammaParameter { "gamma", 1.4, 0.1, 5.0 }; // 2.2
+  ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
+  ofParameter<float> sideExposureParameter { "sideExposure", 0.4, 0.0, 4.0 };
 
 #ifndef TARGET_OS_IOS
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
 #endif
   ofFbo imageCompositeFbo;
+  TonemapShader tonemapShader;
   
   bool guiVisible { true };
   ofxPanel gui;
