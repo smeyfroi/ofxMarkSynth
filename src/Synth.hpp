@@ -20,10 +20,10 @@ namespace ofxMarkSynth {
 
 
 struct PixelsToFile : public ofThread {
-  void save(const std::string& filepath_, ofPixels&& pixels_);
+  void save(const std::string& filepath_, ofFloatPixels&& pixels_);
   void threadedFunction();
   std::string filepath;
-  ofPixels pixels;
+  ofFloatPixels pixels;
   bool isReady = true;
 };
 
@@ -68,7 +68,7 @@ private:
   float leftSidePanelLastUpdate { 0.0 };
   float rightSidePanelLastUpdate { 0.0 };
   float leftSidePanelTimeoutSecs { 8.0 };
-  float rightSidePanelTimeoutSecs { 10.0 };
+  float rightSidePanelTimeoutSecs { 12.0 };
 
   void drawSidePanels();
   PingPongFbo leftPanelFbo, rightPanelFbo;

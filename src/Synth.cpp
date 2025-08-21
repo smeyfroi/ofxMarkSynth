@@ -7,6 +7,7 @@
 
 #include "Synth.hpp"
 #include "ofxTimeMeasurements.h"
+#include "ofxTinyEXR.h"
 
 namespace ofxMarkSynth {
 
@@ -24,7 +25,7 @@ void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
 
 
 
-void PixelsToFile::save(const std::string& filepath_, ofPixels&& pixels_)
+void PixelsToFile::save(const std::string& filepath_, ofFloatPixels&& pixels_)
 {
   if (!isReady) return;
   isReady = false;
@@ -35,7 +36,11 @@ void PixelsToFile::save(const std::string& filepath_, ofPixels&& pixels_)
 
 void PixelsToFile::threadedFunction() {
   ofLogNotice() << "Saving drawing to " << filepath;
-  ofSaveImage(pixels, filepath, OF_IMAGE_QUALITY_BEST);
+  
+  ofxTinyEXR exrIO;
+  bool saved = exrIO.savePixels(pixels, filepath);
+  if (!saved) ofLogWarning() << "Failed to save EXR image";
+  
   isReady = true;
   ofLogNotice() << "Done saving drawing to " << filepath;
 }
@@ -114,14 +119,14 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   
   modPtrs = std::move(modPtrs_);
   
-  imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB);
+  imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
   sidePanelHeight = ofGetWindowHeight();
-  leftPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
-  leftPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
-  rightPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
-  rightPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB);
+  leftPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+  leftPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+  rightPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+  rightPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
 
   parameters = getParameterGroup();
   gui.setup(parameters);
@@ -248,9 +253,10 @@ bool Synth::keyPressed(int key) {
   
   if (key == 'S') {
     if (pixelsToFile.isReady) {
-      std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".png");
+      std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
       ofLogNotice() << "Fetch drawing to save to " << filepath;
-      ofPixels pixels;
+      ofFloatPixels pixels;
+      pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);
       imageCompositeFbo.readToPixels(pixels);
       pixelsToFile.save(filepath, std::move(pixels));
     }
