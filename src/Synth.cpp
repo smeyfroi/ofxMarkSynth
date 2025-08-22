@@ -169,8 +169,9 @@ void Synth::draw() {
   imageCompositeFbo.begin();
   {
     ofFloatColor backgroundColor = backgroundColorParameter;
-    backgroundColor *= 0.5; backgroundColor.a = 1.0;
+    backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0;
     ofClear(backgroundColor);
+    
     size_t i = 0;
     std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
       ofEnableBlendMode(fcptr->blendMode);
@@ -352,14 +353,15 @@ ofParameterGroup& Synth::getFboParameterGroup() {
 }
 
 void Synth::initParameters() {
-  parameters.add(backgroundColorParameter);
-  toneMapParameters.setName("Tone Mapping");
-  toneMapParameters.add(toneMapTypeParameter);
-  toneMapParameters.add(exposureParameter);
-  toneMapParameters.add(gammaParameter);
-  toneMapParameters.add(whitePointParameter);
-  toneMapParameters.add(sideExposureParameter);
-  parameters.add(toneMapParameters);
+  displayParameters.setName("Display");
+  displayParameters.add(backgroundColorParameter);
+  displayParameters.add(backgroundMultiplierParameter);
+  displayParameters.add(toneMapTypeParameter);
+  displayParameters.add(exposureParameter);
+  displayParameters.add(gammaParameter);
+  displayParameters.add(whitePointParameter);
+  displayParameters.add(sideExposureParameter);
+  parameters.add(displayParameters);
   parameters.add(getFboParameterGroup());
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
     ofParameterGroup& pg = modPtr->getParameterGroup();
