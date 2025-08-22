@@ -168,7 +168,9 @@ void Synth::draw() {
   TSGL_START("Synth::draw");
   imageCompositeFbo.begin();
   {
-    ofClear(backgroundColorParameter);
+    ofFloatColor backgroundColor = backgroundColorParameter;
+    backgroundColor *= 0.5; backgroundColor.a = 1.0;
+    ofClear(backgroundColor);
     size_t i = 0;
     std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
       ofEnableBlendMode(fcptr->blendMode);
