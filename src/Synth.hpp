@@ -19,12 +19,11 @@
 namespace ofxMarkSynth {
 
 
-struct PixelsToFile : public ofThread {
+struct SaveToFileThread : public ofThread {
   void save(const std::string& filepath_, ofFloatPixels&& pixels_);
   void threadedFunction();
   std::string filepath;
   ofFloatPixels pixels;
-  bool isReady = true;
 };
 
 
@@ -48,7 +47,7 @@ class Synth : public Mod {
   
 public:
   Synth(const std::string& name, const ModConfig&& config);
-  ~Synth();
+  void shutdown();
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void receive(int sinkId, const glm::vec4& v) override;
   void update() override;
@@ -101,7 +100,7 @@ private:
   bool plusKeyPressed { false };
   bool equalsKeyPressed { false };
   
-  PixelsToFile pixelsToFile;
+  std::vector<SaveToFileThread*> saveToFileThreads;
 };
 
 

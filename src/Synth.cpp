@@ -25,23 +25,20 @@ void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
 
 
 
-void PixelsToFile::save(const std::string& filepath_, ofFloatPixels&& pixels_)
+void SaveToFileThread::save(const std::string& filepath_, ofFloatPixels&& pixels_)
 {
-  if (!isReady) return;
-  isReady = false;
   pixels = pixels_;
   filepath = filepath_;
   startThread();
 }
 
-void PixelsToFile::threadedFunction() {
+void SaveToFileThread::threadedFunction() {
   ofLogNotice() << "Saving drawing to " << filepath;
   
   ofxTinyEXR exrIO;
   bool saved = exrIO.savePixels(pixels, filepath);
   if (!saved) ofLogWarning() << "Failed to save EXR image";
   
-  isReady = true;
   ofLogNotice() << "Done saving drawing to " << filepath;
 }
 
@@ -105,10 +102,18 @@ Mod(name_, std::move(config))
 #endif
 }
 
-Synth::~Synth() {
+void Synth::shutdown() {
+  ofLogNotice() << "Synth::shutdown " << name << std::endl;
+  
 #ifndef TARGET_OS_IOS
   if (recorder.isRecording()) recorder.stop();
 #endif
+  
+  std::for_each(saveToFileThreads.begin(), saveToFileThreads.end(), [](auto& thread) {
+    ofLogNotice() << "Waiting for save thread to finish" << std::endl;
+    thread->waitForThread(false);
+    ofLogNotice() << "Done waiting for save thread to finish" << std::endl;
+  });
 }
 
 void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_) {
@@ -255,14 +260,14 @@ bool Synth::keyPressed(int key) {
   // <<<
   
   if (key == 'S') {
-    if (pixelsToFile.isReady) {
-      std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
-      ofLogNotice() << "Fetch drawing to save to " << filepath;
-      ofFloatPixels pixels;
-      pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);
-      imageCompositeFbo.readToPixels(pixels);
-      pixelsToFile.save(filepath, std::move(pixels));
-    }
+    SaveToFileThread* threadPtr = new SaveToFileThread();
+    std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
+    ofLogNotice() << "Fetch drawing to save to " << filepath;
+    ofFloatPixels pixels;
+    pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);
+    imageCompositeFbo.readToPixels(pixels);
+    threadPtr->save(filepath, std::move(pixels));
+    saveToFileThreads.push_back(threadPtr);
     return true;
   }
 
