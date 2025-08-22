@@ -106,7 +106,11 @@ void Synth::shutdown() {
   ofLogNotice() << "Synth::shutdown " << name << std::endl;
   
 #ifndef TARGET_OS_IOS
-  if (recorder.isRecording()) recorder.stop();
+  if (recorder.isRecording()) {
+    ofLogNotice() << "Stopping recording" << std::endl;
+    recorder.stop();
+    ofLogNotice() << "Recording stopped" << std::endl;
+  }
 #endif
   
   std::for_each(saveToFileThreads.begin(), saveToFileThreads.end(), [](auto& thread) {
