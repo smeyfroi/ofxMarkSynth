@@ -20,18 +20,37 @@ void SandLineMod::initParameters() {
   parameters.add(pointRadiusParameter);
   parameters.add(colorParameter);
   parameters.add(alphaMultiplierParameter);
+  parameters.add(stdDevAlongParameter);
+  parameters.add(stdDevPerpendicularParameter);
 }
 
 void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
-  auto distance = glm::distance(p1, p2);
-  auto grains = static_cast<int>(distance * densityParameter * drawScale);
+  static std::mt19937 generator(std::random_device{}());
+
+  glm::vec2 lineVector = p2 - p1;
+  float lineLength = glm::length(lineVector);
+  glm::vec2 midpoint = (p1 + p2) * 0.5f;
+  glm::vec2 unitDirection = glm::normalize(lineVector);
+  glm::vec2 perpendicular { -unitDirection.y, unitDirection.x };
+  
+  std::normal_distribution<float> alongDist(0.0f, stdDevAlongParameter * lineLength);
+  std::normal_distribution<float> perpDist(0.0f, stdDevPerpendicularParameter * lineLength);
+
+  auto grains = static_cast<int>(lineLength * densityParameter * drawScale);
+  float maxRadius = pointRadiusParameter / drawScale;
+
   for (int i = 0; i < grains; i++) {
-    auto position = p1 + ofRandom() * (p2 - p1);
-    auto radius = pointRadiusParameter / drawScale;
-    auto offset = glm::vec2 { radius * 2.0, radius * 2.0 } -  glm::vec2 { radius, radius };
-    position += offset;
-    auto r = ofRandom(0.0, radius);
-    ofDrawCircle(position, r);
+    float offsetAlong = alongDist(generator);
+
+    // Clamp to line bounds (optional - remove for unbounded distribution)
+//    float halfLength = lineLength * 0.5f;
+//    offset = glm::clamp(offset, -halfLength, halfLength);
+
+    float offsetPerp = perpDist(generator);
+
+    glm::vec2 point = midpoint + (offsetAlong * unitDirection) + (offsetPerp * perpendicular);
+    auto r = ofRandom(0.0, maxRadius);
+    ofDrawCircle(point, r);
   }
 }
 
@@ -42,7 +61,7 @@ void SandLineMod::update() {
   float drawScale = fboPtr->getWidth();
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
-  ofEnableBlendMode(OF_BLENDMODE_ADD);
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
   ofFloatColor c = colorParameter;
   c.a *= alphaMultiplierParameter;

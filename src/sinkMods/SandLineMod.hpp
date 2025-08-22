@@ -34,10 +34,12 @@ protected:
 private:
   void drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale);
 
-  ofParameter<float> densityParameter { "Density", 0.1, 0.0, 0.5 };
-  ofParameter<float> pointRadiusParameter { "PointRadius", 2.0, 0.0, 32.0 };
-  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 0.0, 0.0, 0.1 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.5, 0.0, 1.0 };
+  ofParameter<float> densityParameter { "Density", 0.05, 0.0, 0.5 };
+  ofParameter<float> pointRadiusParameter { "PointRadius", 1.0, 0.0, 32.0 };
+  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.05, 0.0, 1.0 };
+  ofParameter<float> stdDevAlongParameter { "StdDevAlong", 0.5, 0.0, 1.0 };
+  ofParameter<float> stdDevPerpendicularParameter { "StdDevPerpendicular", 0.01, 0.0, 0.1 };
 
   std::vector<glm::vec2> newPoints;
 };
