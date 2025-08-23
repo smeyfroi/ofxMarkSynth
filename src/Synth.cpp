@@ -163,9 +163,9 @@ void Synth::update() {
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     TSGL_START(modPtr->name);
-//    TS_START(modPtr->name);
+    TS_START(modPtr->name);
     modPtr->update();
-//    TS_STOP(modPtr->name);
+    TS_STOP(modPtr->name);
     TSGL_STOP(modPtr->name);
   });
   
@@ -326,25 +326,29 @@ void Synth::drawSidePanels() {
   tonemapShader.end();
 }
 
+glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
+  float x = ofRandom(bounds.x / 4.0, bounds.x * 3.0 / 4.0 - rectSize.x);
+  float y = ofRandom(bounds.y / 4.0, bounds.y * 3.0 / 4.0 - rectSize.y);
+  return { x, y };
+}
+
 // target is the outgoing image; source is the incoming one
 void Synth::updateSidePanels() {
   if (ofGetElapsedTimef() - leftSidePanelLastUpdate > leftSidePanelTimeoutSecs) {
     leftSidePanelLastUpdate = ofGetElapsedTimef();
     leftPanelFbo.swap();
-    float leftPanelX = imageCompositeFbo.getWidth() / 2.0 - sidePanelWidth;
-    float leftPanelY = (imageCompositeFbo.getHeight() - sidePanelHeight) / 2.0;
+    glm::vec2 leftPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
     leftPanelFbo.getSource().begin();
-    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelX, leftPanelY);
+    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelImageOrigin.x, leftPanelImageOrigin.y);
     leftPanelFbo.getSource().end();
   }
-    
+
   if (ofGetElapsedTimef() - rightSidePanelLastUpdate > rightSidePanelTimeoutSecs) {
     rightSidePanelLastUpdate = ofGetElapsedTimef();
     rightPanelFbo.swap();
-    float rightPanelX = imageCompositeFbo.getWidth() / 2.0;
-    float rightPanelY = (imageCompositeFbo.getHeight() - sidePanelHeight) / 2.0;
+    glm::vec2 rightPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
     rightPanelFbo.getSource().begin();
-    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelX, rightPanelY);
+    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelImageOrigin.x, rightPanelImageOrigin.y);
     rightPanelFbo.getSource().end();
   }
 }
