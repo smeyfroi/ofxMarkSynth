@@ -14,10 +14,12 @@ namespace ofxMarkSynth {
 SomPaletteMod::SomPaletteMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
 {
+  somPalette.numIterations = iterationsParameter;
   somPalette.setVisible(false);
 }
 
 void SomPaletteMod::initParameters() {
+  parameters.add(iterationsParameter);
 }
 
 void SomPaletteMod::update() {
@@ -67,6 +69,27 @@ void SomPaletteMod::receive(int sinkId, const glm::vec3& v) {
       ofLogError() << "glm::vec3 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
+
+void SomPaletteMod::receive(int sinkId, const float& v) {
+  switch (sinkId) {
+    case SINK_AUDIO_TIMBRE_CHANGE:
+      ofLogNotice() << "SomPaletteMod::receive audio timbre change; switching palette";
+      somPalette.switchPalette();
+      break;
+    default:
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+float SomPaletteMod::bidToReceive(int sinkId) {
+  switch (sinkId) {
+    case SINK_AUDIO_TIMBRE_CHANGE:
+      if (somPalette.nextPaletteIsReady()) return 0.8;
+    default:
+      return 0.0;
+  }
+}
+  
 
 
 } // ofxMarkSynth

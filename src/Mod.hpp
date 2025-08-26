@@ -55,6 +55,7 @@ public:
   ofParameterGroup& getParameterGroup();
   void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
   bool hasSinkFor(int sourceId);
+  virtual float bidToReceive(int sinkId) { return 0.0; };
   virtual void receive(int sinkId, const glm::vec1& point);
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
@@ -79,6 +80,9 @@ public:
   static constexpr int SINK_FBO_4 = SINK_FBO_3 + 1;
   static constexpr int SINK_FBO_5 = SINK_FBO_4 + 1;
   static constexpr int SINK_FBO_END = SINK_FBO_5;
+
+  static constexpr int SINK_AUDIO_ONSET = -300;
+  static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
 
   std::string name;
 

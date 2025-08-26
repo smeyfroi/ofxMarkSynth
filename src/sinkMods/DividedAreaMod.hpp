@@ -34,7 +34,7 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<int> strategyParameter { "Strategy", 2, 0, 2 };
+  ofParameter<int> strategyParameter { "Strategy", 2, 0, 2 }; // 0 = point pairs, 1 = point angles, 2 = radiating
   ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
 
   std::vector<glm::vec2> newMajorAnchors;

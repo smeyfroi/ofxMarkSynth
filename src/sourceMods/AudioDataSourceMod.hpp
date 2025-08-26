@@ -27,6 +27,8 @@ public:
   static constexpr int SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR = 12;
   static constexpr int SOURCE_SPECTRAL_CREST_SCALAR = 13;
   static constexpr int SOURCE_ZERO_CROSSING_RATE_SCALAR = 14;
+  static constexpr int SOURCE_ONSET1 = 20;
+  static constexpr int SOURCE_TIMBRE_CHANGE = 21;
 
 protected:
   void initParameters() override;
@@ -39,10 +41,10 @@ private:
   ofParameter<float> maxPitchParameter { "MaxPitch", 2500.0, 0.0, 6000.0 };
   ofParameter<float> minRmsParameter { "MinRms", 0.005, 0.0, 0.1 };
   ofParameter<float> maxRmsParameter { "MaxRms", 0.05, 0.0, 0.2 };
-  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 20.0, 0.0, 120.0 };
-  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 70.0, 0.0, 120.0 };
-  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 60.0, 0.0, 200.0 };
-  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 150.0, 0.0, 200.0 };
+  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 20.0, 0.0, 2000.0 };
+  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 70.0, 0.0, 2000.0 };
+  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 60.0, 0.0, 500.0 };
+  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 150.0, 0.0, 500.0 };
   ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 10.0, 0.0, 100.0 };
   ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 30.0, 0.0, 100.0 };
   

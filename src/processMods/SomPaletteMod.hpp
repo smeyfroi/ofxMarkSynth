@@ -24,6 +24,8 @@ public:
   void draw() override;
   bool keyPressed(int key) override;
   void receive(int sinkId, const glm::vec3& v) override;
+  void receive(int sinkId, const float& v) override;
+  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SOURCE_RANDOM_VEC4 = 2; // RGBA float color
@@ -36,9 +38,9 @@ protected:
 
 private:
 //  ofParameter<float> learningRateParameter { "LearningRate", 0.01, 0.0, 1.0 };
-//  ofParameter<float> iterationsParameter { "Iterations", 10000.0, 1000.0, 100000.0 };
+  ofParameter<float> iterationsParameter { "Iterations", 3000.0, 1000.0, 100000.0 };
 
-  ContinuousSomPalette somPalette { 16, 16, 0.02, 4000 };
+  ContinuousSomPalette somPalette { 16, 16, 0.02 };
 
   std::vector<glm::vec3> newVecs;
   

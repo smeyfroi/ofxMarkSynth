@@ -50,6 +50,7 @@ public:
   void shutdown();
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void receive(int sinkId, const glm::vec4& v) override;
+  void receive(int sinkId, const float& v) override;
   void update() override;
   void draw() override;
   void drawGui();

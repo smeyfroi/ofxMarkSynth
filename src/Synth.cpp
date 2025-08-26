@@ -152,6 +152,32 @@ void Synth::receive(int sinkId, const glm::vec4& v) {
   }
 }
 
+void Synth::receive(int sinkId, const float& v) {
+  switch (sinkId) {
+    case SINK_AUDIO_ONSET:
+    case SINK_AUDIO_TIMBRE_CHANGE:
+//      ofLogNotice() << "Synth " << name << " received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " with value " << v;
+      {
+        // make a map of ModPtr to "bid" for this change
+        // then find the highest bid and action that Mod
+        std::map<ModPtr, float> modBids;
+        std::for_each(modPtrs.cbegin(), modPtrs.cend(), [sinkId, &modBids](auto& modPtr) {
+          modBids[modPtr] = modPtr->bidToReceive(sinkId);
+        });
+        auto winningModIt = std::max_element(modBids.cbegin(), modBids.cend(), [](const auto& a, const auto& b) {
+          return a.second < b.second;
+        });
+        if (winningModIt != modBids.cend() && winningModIt->second > 0.0) {
+          ofLogNotice() << "Synth " << name << " awarding " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " to Mod " << winningModIt->first->name << " with bid " << winningModIt->second;
+          winningModIt->first->receive(sinkId, v);
+        }
+      }
+      break;
+    default:
+      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
 void Synth::update() {
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     if (fcptr->clearOnUpdate) {

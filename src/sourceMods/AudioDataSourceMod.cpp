@@ -31,11 +31,11 @@ void AudioDataSourceMod::initParameters() {
 }
 
 float AudioDataSourceMod::getNormalisedAnalysisScalar(float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
-  if (minParameter == 0.0 && maxParameter == 0.0) {
-    return audioDataProcessorPtr->getNormalisedScalarValue(scalar);
-  } else {
+//  if (minParameter == 0.0 && maxParameter == 0.0) {
+//    return audioDataProcessorPtr->getNormalisedScalarValue(scalar);
+//  } else {
     return audioDataProcessorPtr->getNormalisedScalarValue(scalar, minParameter, maxParameter);
-  }
+//  }
 }
 
 void AudioDataSourceMod::emitPitchRmsPoints() {
@@ -49,11 +49,11 @@ void AudioDataSourceMod::emitPitchRmsPoints() {
 }
 
 void AudioDataSourceMod::emitPolarPitchRmsPoints() {
-//  // Don't normalise pitch since we wrap it round
-  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
-//  float pitch = getNormalisedAnalysisScalar(minPitchParameter,
-//                                            maxPitchParameter,
-//                                            ofxAudioAnalysisClient::AnalysisScalar::pitch);
+  // Note that pitch is wrapped around within the min/max range
+//  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
+  float pitch = getNormalisedAnalysisScalar(minPitchParameter,
+                                            maxPitchParameter,
+                                            ofxAudioAnalysisClient::AnalysisScalar::pitch);
   float rms = getNormalisedAnalysisScalar(minRmsParameter,
                                 maxRmsParameter,
                                 ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
@@ -100,6 +100,8 @@ void AudioDataSourceMod::update() {
     if (connections.contains(SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR)) emitScalar(SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR, minComplexSpectralDifferenceParameter, maxComplexSpectralDifferenceParameter, ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
     if (connections.contains(SOURCE_SPECTRAL_CREST_SCALAR)) emitScalar(SOURCE_SPECTRAL_CREST_SCALAR, minSpectralCrestParameter, maxSpectralCrestParameter, ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
     if (connections.contains(SOURCE_ZERO_CROSSING_RATE_SCALAR)) emitScalar(SOURCE_ZERO_CROSSING_RATE_SCALAR, minZeroCrossingRateParameter, maxZeroCrossingRateParameter, ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
+    if (audioDataProcessorPtr->detectOnset1()) emit(SOURCE_ONSET1, 1.0f);
+    if (audioDataProcessorPtr->detectTimbreChange1()) emit(SOURCE_TIMBRE_CHANGE, 1.0f);
   }
 }
 
