@@ -156,10 +156,8 @@ void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_AUDIO_ONSET:
     case SINK_AUDIO_TIMBRE_CHANGE:
-//      ofLogNotice() << "Synth " << name << " received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " with value " << v;
       {
-        // make a map of ModPtr to "bid" for this change
-        // then find the highest bid and action that Mod
+        // make a map of ModPtr to "bid" for this change then find the highest bid and action that Mod
         std::map<ModPtr, float> modBids;
         std::for_each(modPtrs.cbegin(), modPtrs.cend(), [sinkId, &modBids](auto& modPtr) {
           modBids[modPtr] = modPtr->bidToReceive(sinkId);

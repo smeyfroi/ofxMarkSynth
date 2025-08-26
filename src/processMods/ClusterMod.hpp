@@ -21,6 +21,8 @@ public:
   ClusterMod(const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
+  void receive(int sinkId, const float& v) override;
+  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_VEC2 = 1;
   static constexpr int SOURCE_VEC2 = 2;

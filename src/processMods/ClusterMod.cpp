@@ -43,5 +43,28 @@ void ClusterMod::receive(int sinkId, const glm::vec2& v) {
   }
 }
 
+void ClusterMod::receive(int sinkId, const float& v) {
+  switch (sinkId) {
+    case SINK_AUDIO_ONSET:
+      {
+        int newSize = pointClusters.getMinClusters() + ofRandom(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
+        ofLogNotice() << "ClusterMod::receive audio onset; changing size to " << newSize;
+        pointClusters.clustersParameter.set(newSize);
+      }
+      break;
+    default:
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+float ClusterMod::bidToReceive(int sinkId) {
+  switch (sinkId) {
+    case SINK_AUDIO_ONSET:
+      if (pointClusters.size() >= pointClusters.getMinClusters() && pointClusters.size() <= pointClusters.getMaxClusters()) return 0.1;
+    default:
+      return 0.0;
+  }
+}
+
 
 } // ofxMarkSynth
