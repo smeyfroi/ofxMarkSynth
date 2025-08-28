@@ -34,7 +34,7 @@ float AudioDataSourceMod::getNormalisedAnalysisScalar(float minParameter, float 
 //  if (minParameter == 0.0 && maxParameter == 0.0) {
 //    return audioDataProcessorPtr->getNormalisedScalarValue(scalar);
 //  } else {
-    return audioDataProcessorPtr->getNormalisedScalarValue(scalar, minParameter, maxParameter);
+    return audioDataProcessorPtr->getNormalisedScalarValue(scalar, minParameter, maxParameter, true);
 //  }
 }
 
@@ -57,7 +57,7 @@ void AudioDataSourceMod::emitPolarPitchRmsPoints() {
   float rms = getNormalisedAnalysisScalar(minRmsParameter,
                                 maxRmsParameter,
                                 ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
-  float angle = std::fmod(pitch * glm::two_pi<float>(), glm::two_pi<float>());
+  float angle = std::fmod(2 * pitch * glm::two_pi<float>(), glm::two_pi<float>()); // map pitch to two circumferences to avoid bunching
   float x = rms * std::cos(angle);
   float y = rms * std::sin(angle);
   x += 0.5; y += 0.5;
