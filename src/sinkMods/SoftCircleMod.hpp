@@ -22,6 +22,7 @@ public:
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
   void receive(int sinkId, const glm::vec4& v) override;
+  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_POINT_RADIUS = 10;
