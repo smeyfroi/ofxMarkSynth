@@ -85,7 +85,7 @@ private:
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
   ofParameter<int> toneMapTypeParameter { "tone map type", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
   ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
-  ofParameter<float> gammaParameter { "gamma", 1.8, 0.1, 5.0 }; // 2.2
+  ofParameter<float> gammaParameter { "gamma", 2.0, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
   ofParameter<float> sideExposureParameter { "sideExposure", 0.3, 0.0, 4.0 };
 
