@@ -66,9 +66,9 @@ ofPath makeBoundsPath(const std::vector<glm::vec2>& points) {
   glm::vec2 br { std::numeric_limits<float>::min(), std::numeric_limits<float>::min() };
   std::for_each(points.cbegin(), points.cend(), [&](const auto& p) {
     if (p.x < tl.x) tl.x = p.x;
-    else if (p.x > br.x) br.x = p.x;
+    if (p.x > br.x) br.x = p.x;
     if (p.y < tl.y) tl.y = p.y;
-    else if (p.y > br.y) br.y = p.y;
+    if (p.y > br.y) br.y = p.y;
   });
   ofPath path;
   path.moveTo(tl); path.lineTo(br.x, tl.y); path.lineTo(br); path.lineTo(tl.x, br.y);
