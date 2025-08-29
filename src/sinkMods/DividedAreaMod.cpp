@@ -99,7 +99,7 @@ void DividedAreaMod::update() {
     const ofFloatColor minorDividerColor { 0.0, 0.0, 0.0, 1.0 };
     dividedArea.draw({},
                      {},
-                     { minLineWidth*0.1f, minLineWidth*0.4f, minorDividerColor, 0.7 },
+                     { minLineWidth*0.15f, minLineWidth*0.25f, minorDividerColor, 0.7 },
                      fboPtr0->getWidth());
 //    ofSetColor(minorDividerColor);
 //    dividedArea.draw(0.0, 0.0, 10.0, fboPtr0->getWidth());
