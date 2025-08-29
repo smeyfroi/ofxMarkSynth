@@ -23,9 +23,13 @@ public:
   DividedAreaMod(const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const glm::vec2& point) override;
+  void receive(int sinkId, const ofPath& path) override;
+  void receive(int sinkId, const float& point) override;
+  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_MAJOR_ANCHORS = 1;
   static constexpr int SINK_MINOR_ANCHORS = 10;
+  static constexpr int SINK_MINOR_PATH = 20;
 
   // SINK_FBO for drawing constrained lines
   // SINK_FBO_2 for drawing unconstrained lines
@@ -34,8 +38,9 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<int> strategyParameter { "Strategy", 2, 0, 2 }; // 0 = point pairs, 1 = point angles, 2 = radiating
+  ofParameter<int> strategyParameter { "Strategy", 0, 0, 2 }; // 0 = point pairs, 1 = point angles, 2 = radiating
   ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
+  float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;
   std::vector<glm::vec2> newMinorAnchors;
