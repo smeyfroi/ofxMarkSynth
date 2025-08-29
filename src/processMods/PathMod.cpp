@@ -118,12 +118,7 @@ void PathMod::update() {
 
 void PathMod::draw() {
   if (!visible) return;
-  ofPushMatrix();
-  {
-    ofScale(ofGetWindowWidth(), ofGetWindowHeight());
-    path.draw();
-  }
-  ofPopMatrix();
+  path.draw();
 }
 
 bool PathMod::keyPressed(int key) {
