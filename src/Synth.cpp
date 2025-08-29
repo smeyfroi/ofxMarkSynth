@@ -221,18 +221,23 @@ void Synth::draw() {
   
   ofPushMatrix();
   ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
+  
+  ofPushMatrix();
   ofScale(compositeScale, compositeScale);
   ofSetColor(255);
   tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter);
   imageCompositeFbo.draw(0.0, 0.0);
   tonemapShader.end();
   ofPopMatrix();
-  
-  // NOTE: This Mod::draw is for Mods that draw directly and not on an FBO,
+
+  // For Mods that draw directly and not on an FBO,
   // for example audio data plots and other debug views
+  ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // hack
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
     modPtr->draw();
   });
+  
+  ofPopMatrix();
   
 #ifndef TARGET_OS_IOS
   if (recorder.isRecording()) {
