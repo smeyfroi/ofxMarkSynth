@@ -7,7 +7,6 @@
 
 
 #include "CollageMod.hpp"
-#include "AddTextureThresholded.h"
 
 
 namespace ofxMarkSynth {
@@ -15,108 +14,74 @@ namespace ofxMarkSynth {
 
 CollageMod::CollageMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{
-  maskShader.load();
-  addTextureThresholdedShader.load();
-}
+{}
 
 void CollageMod::initParameters() {
+  parameters.add(strategyParameter);
   parameters.add(colorParameter);
   parameters.add(strengthParameter);
 }
 
-void CollageMod::initTempFbo() {
-  if (! tempFbo.isAllocated()) {
-    auto fboPtr = fboPtrs[0];
-    ofFboSettings settings { nullptr };
-    settings.wrapModeVertical = GL_REPEAT;
-    settings.wrapModeHorizontal = GL_REPEAT;
-    settings.width = fboPtr->getWidth();
-    settings.height = fboPtr->getHeight();
-    settings.internalformat = FLOAT_A_MODE;
-    settings.numSamples = 0;
-    settings.useDepth = true;
-    settings.useStencil = true;
-//    settings.textureTarget = ofGetUsingArbTex() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D;
-    tempFbo.allocate(settings);
-  }
-}
-
 void CollageMod::update() {
   if (path.getCommands().size() <= 2) return;
-  if (! collageSourceTexture.isAllocated()) return;
+  if (strategyParameter == 1 && !collageSourceTexture.isAllocated()) return;
 
   auto fboPtr = fboPtrs[0];
   if (!fboPtr) return;
   
-  // Make a mask texture from the normalised path
-  ofFbo maskFbo;
-  maskFbo.allocate(fboPtr->getWidth(), fboPtr->getHeight());
-  maskFbo.begin();
-  {
-    ofPath maskPath = path;
-    ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-    ofClear(0, 255);
-    ofSetColor(255);
-    maskPath.setFilled(true);
-    maskPath.scale(maskFbo.getWidth(), maskFbo.getHeight());
-    maskPath.draw();
-  }
-  maskFbo.end();
+  fboPtr->getSource().begin();
+  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
 
-  // find normalised path bounds
-  ofRectangle pathBounds;
-  for (const auto& polyline : path.getOutline()) {
-    pathBounds = pathBounds.getUnion(polyline.getBoundingBox());
-  }
-
-  // find a proportional scale to some limit to fill the mask with a reduced view of part of the pixels
-//  constexpr float MAX_SCALE = 3.0;
-//  float scaleX = std::fminf(MAX_SCALE, 1.0 / pathBounds.width);
-//  float scaleY = std::fminf(MAX_SCALE, 1.0 / pathBounds.height);
-//  float scale = std::fminf(scaleX, scaleY);
-
-  // scale to fit the incoming pixels in the path bounds
-  float scaleX = 1.0 / pathBounds.width;
-  float scaleY = 1.0 / pathBounds.height;
-  float scale = std::fminf(scaleX, scaleY);
-
-  // draw scaled, coloured pixels into a temporary FBO through the mask using a blend mode
-  initTempFbo();
-  tempFbo.begin();
-  {
-    ofClear(0, 0, 0, 0);
+  if (strategyParameter == 0) {
+    // tint
     ofEnableBlendMode(OF_BLENDMODE_ADD);
-//    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+    ofFloatColor c = colorParameter;
+    c *= strengthParameter; c.a *= strengthParameter;
+    path.setFilled(true);
+    path.setColor(c);
+    path.draw();
+    
+  } else if (strategyParameter == 1) {
+    // paste tinted
+    glEnable(GL_STENCIL_TEST);
+    glClear(GL_STENCIL_BUFFER_BIT);
+
+    // Setup stencil: write 1s where path is drawn
+    glStencilFunc(GL_ALWAYS, 1, 1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glColorMask(false, false, false, false);
+
+    path.setFilled(true);
+    path.draw();
+
+    // Now only draw where stencil is 1
+    glStencilFunc(GL_EQUAL, 1, 1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glColorMask(true, true, true, true);
+
+    ofEnableBlendMode(OF_BLENDMODE_ADD);
     ofFloatColor c = colorParameter;
     c *= strengthParameter; c.a *= strengthParameter;
     ofSetColor(c);
-    maskShader.render(collageSourceTexture, maskFbo,
-                      tempFbo.getWidth(), tempFbo.getHeight(),
-                      false,
-                      {pathBounds.x+pathBounds.width/2.0, pathBounds.y+pathBounds.height/2.0},
-                      {scale, scale});
+//    ofSetColor(255);
+    
+    ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
+//    for (const auto& polyline : path.getOutline()) {
+//      normalisedPathBounds = normalisedPathBounds.getUnion(polyline.getBoundingBox());
+//    }
+    float x = normalisedPathBounds.x;
+    float y = normalisedPathBounds.y;
+    float w = normalisedPathBounds.width;
+    float h = normalisedPathBounds.height;
+
+    collageSourceTexture.draw(x, y, w, h);
+
+    glDisable(GL_STENCIL_TEST);
   }
-  tempFbo.end();
-  
-  // Then composite the collage FBO onto the target with a threshold
-  addTextureThresholdedShader.render(*fboPtr, tempFbo);
+  fboPtr->getSource().end();
 
-// THIS IS WRONG: feed points forward into a DividedArea instead
-  // draw outline on path
-//  fboPtr->getSource().begin();
-//  {
-//    ofScale(fboPtr->getWidth(), fboPtr->getHeight());
-//    path.setStrokeColor({0.0, 0.0, 0.0, 0.0});
-//    path.setStrokeWidth(1.0);
-//    path.draw();
-//  }
-//  fboPtr->getSource().end();
+  path.clear();
 }
-
-//void CollageMod::draw() {
-//  tempFbo.draw(0, 0);
-//}
 
 void CollageMod::receive(int sinkId, const ofFloatPixels& pixels) {
   switch (sinkId) {

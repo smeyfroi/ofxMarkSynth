@@ -14,13 +14,13 @@ namespace ofxMarkSynth {
 FadeMod::FadeMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
 {
-  translateEffect.load();
+//  translateEffect.load();
   fadeEffect.load();
 }
 
 void FadeMod::initParameters() {
-  parameters.add(translationParameter);
-  parameters.add(alphaParameter);
+//  parameters.add(translationParameter);
+//  parameters.add(alphaParameter);
   parameters.add(fadeAmountParameter);
 }
 
@@ -28,12 +28,12 @@ void FadeMod::update() {
   auto fboPtr = fboPtrs[0];
   if (fboPtr == nullptr) return;
   
-  glm::vec2 translation { translationParameter->x, translationParameter->y };
-  float alpha = alphaParameter;
-  
-  translateEffect.translateBy = translation;
-  translateEffect.alpha = alpha;
-  translateEffect.draw(*fboPtr);
+//  glm::vec2 translation { translationParameter->x, translationParameter->y };
+//  float alpha = alphaParameter;
+//  
+//  translateEffect.translateBy = translation;
+//  translateEffect.alpha = alpha;
+//  translateEffect.draw(*fboPtr);
   
   float fadeAmount = fadeAmountParameter;
   if (fadeAmount != 0.0) {
@@ -54,25 +54,25 @@ void FadeMod::update() {
   }
 }
 
-void FadeMod::receive(int sinkId, const float& v) {
-  switch (sinkId) {
-    case SINK_ALPHA:
-      alphaParameter = v;
-      break;
-    default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
+//void FadeMod::receive(int sinkId, const float& v) {
+//  switch (sinkId) {
+//    case SINK_ALPHA:
+//      alphaParameter = v;
+//      break;
+//    default:
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+//  }
+//}
 
-void FadeMod::receive(int sinkId, const glm::vec2& v) {
-  switch (sinkId) {
-    case SINK_TRANSLATION:
-      translationParameter = v;
-      break;
-    default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
+//void FadeMod::receive(int sinkId, const glm::vec2& v) {
+//  switch (sinkId) {
+//    case SINK_TRANSLATION:
+//      translationParameter = v;
+//      break;
+//    default:
+//      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+//  }
+//}
 
 
 } // ofxMarkSynth

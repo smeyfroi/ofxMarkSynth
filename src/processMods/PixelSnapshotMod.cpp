@@ -13,12 +13,11 @@ namespace ofxMarkSynth {
 
 PixelSnapshotMod::PixelSnapshotMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{
-  resampledFbo.allocate(1024, 1024);
-}
+{}
 
 void PixelSnapshotMod::initParameters() {
   parameters.add(snapshotsPerUpdateParameter);
+  parameters.add(sizeParameter);
 }
 
 void PixelSnapshotMod::update() {
@@ -32,31 +31,36 @@ void PixelSnapshotMod::update() {
   }
 }
 
-const ofPixels PixelSnapshotMod::createPixels(const FboPtr& fboPtr) {
-  resampledFbo.begin();
-  fboPtr->getSource().draw(0, 0);
-  resampledFbo.end();
-  resampledFbo.readToPixels(pixels);
+const ofFloatPixels PixelSnapshotMod::createPixels(const FboPtr& fboPtr) {
+  auto format = fboPtr->getSource().getTexture().getTextureData().glInternalFormat;
+  if (!pixels.isAllocated() || pixels.getWidth() != sizeParameter || pixels.getHeight() != sizeParameter) {
+    pixels.allocate(sizeParameter, sizeParameter, ofGetImageTypeFromGLType(format));
+  }
+
+  int x = ofRandom(0, fboPtr->getWidth() - pixels.getWidth());
+  int y = ofRandom(0, fboPtr->getHeight() - pixels.getHeight());
+  
+  fboPtr->getSource().bind();
+  glReadPixels(x, y, pixels.getWidth(), pixels.getHeight(), GL_RGBA/*format*/, GL_FLOAT, pixels.getData()); // FIXME: assumes float RGBA
+  fboPtr->getSource().unbind();
+
   return pixels;
 }
 
 void PixelSnapshotMod::draw() {
   if (!visible) return;
-  ofPushStyle();
   {
-    // clear whatever is drawn on the window already
-    ofSetColor(ofFloatColor(0.0, 0.0, 0.0, 1.0));
+    ofSetColor(ofFloatColor(0.2, 0.2, 0.2, 1.0));
     ofFill();
-    ofDrawRectangle(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+    ofDrawRectangle(0.0, 0.0, 1.0, 1.0);
   }
   {
     ofTexture t;
     t.allocate(pixels.getWidth(), pixels.getHeight(), GL_RGBA);
     t.loadData(pixels);
     ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
-    t.draw({ 0, 0 }, ofGetWindowWidth(), ofGetWindowHeight());
+    t.draw({ 0, 0 }, 1.0, 1.0);
   }
-  ofPopStyle();
 }
 
 bool PixelSnapshotMod::keyPressed(int key) {
