@@ -25,11 +25,13 @@ void FluidRadialImpulseMod::initParameters() {
 void FluidRadialImpulseMod::update() {
   auto fboPtr = fboPtrs[0]; // this needs to be the fluid velocities fbo
   if (fboPtr == nullptr) return;
+  fboPtr->getSource().begin();
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [this, fboPtr](const auto& p) {
-    addRadialImpulseShader.render(*fboPtr, p * fboPtr->getWidth(), impulseRadiusParameter * fboPtr->getWidth(), impulseStrengthParameter);
+    addRadialImpulseShader.render(p * fboPtr->getWidth(), impulseRadiusParameter * fboPtr->getWidth(), impulseStrengthParameter);
   });
+  fboPtr->getSource().end();
   newPoints.clear();
 }
 

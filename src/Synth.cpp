@@ -65,7 +65,7 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, 
 void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil) {
   allocateFbo(fboPtr, size, internalFormat, wrap, useStencil);
   fboPtr->getSource().begin();
-  ofClear(clearColor);
+  fboPtr->getSource().clearColorBuffer(clearColor);
   fboPtr->getSource().end();
   fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearColor, clearOnUpdate, blendMode));
 }
