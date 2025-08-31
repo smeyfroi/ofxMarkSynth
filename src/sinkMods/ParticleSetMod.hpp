@@ -10,7 +10,7 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxParticleSet.h"
-#include "AddTextureThresholded.h"
+//#include "AddTextureThresholded.h"
 
 
 namespace ofxMarkSynth {
@@ -29,9 +29,6 @@ public:
   static constexpr int SINK_POINT_VELOCITIES = 2;
   static constexpr int SINK_SPIN = 10;
   static constexpr int SINK_COLOR = 20;
-  
-  static constexpr int BLEND_STRATEGY_ADD = 0;
-  static constexpr int BLEND_STRATEGY_ALPHA = 1;
 
 protected:
   void initParameters() override;
@@ -42,10 +39,6 @@ private:
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;
-  
-  AddTextureThresholdedShader addTextureThresholdedShader;
-  ofFbo tempFbo;
-  void initTempFbo();
 };
 
 

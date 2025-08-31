@@ -13,31 +13,12 @@ namespace ofxMarkSynth {
 
 ParticleSetMod::ParticleSetMod(const std::string& name, const ModConfig&& config)
 : Mod { name, std::move(config) }
-{
-  addTextureThresholdedShader.load();
-}
+{}
 
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);
   parameters.add(colorParameter);
   parameters.add(particleSet.getParameterGroup());
-}
-
-void ParticleSetMod::initTempFbo() {
-  if (! tempFbo.isAllocated()) {
-    auto fboPtr = fboPtrs[0];
-    ofFboSettings settings { nullptr };
-    settings.wrapModeVertical = GL_REPEAT;
-    settings.wrapModeHorizontal = GL_REPEAT;
-    settings.width = fboPtr->getWidth();
-    settings.height = fboPtr->getHeight();
-    settings.internalformat = FLOAT_A_MODE;
-    settings.numSamples = 0;
-    settings.useDepth = false;
-    settings.useStencil = false;
-    settings.textureTarget = GL_TEXTURE_2D;
-    tempFbo.allocate(settings);
-  }
 }
 
 void ParticleSetMod::update() {
@@ -46,23 +27,18 @@ void ParticleSetMod::update() {
   
   particleSet.update();
   
-  std::for_each(newPoints.begin(),
-                newPoints.end(),
-                [this](const auto& vec) {
+  std::for_each(newPoints.begin(), newPoints.end(), [this](const auto& vec) {
     glm::vec2 p { vec.x, vec.y };
     glm::vec2 v { vec.z, vec.w };
     particleSet.add(p, v, colorParameter, spinParameter);
   });
   newPoints.clear();
   
-  initTempFbo();
-  tempFbo.begin();
-  ofClear(0, 0, 0, 0);
+  fboPtr->getSource().begin();
+  ofEnableBlendMode(OF_BLENDMODE_DISABLED);
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   particleSet.draw();
-  tempFbo.end();
-
-  addTextureThresholdedShader.render(*fboPtr, tempFbo);
+  fboPtr->getSource().end();
 }
 
 void ParticleSetMod::receive(int sinkId, const float& value) {
