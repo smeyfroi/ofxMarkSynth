@@ -32,6 +32,7 @@ public:
   static constexpr int SOURCE_RANDOM_DARK_VEC4 = 3; // RGBA float color
   static constexpr int SOURCE_RANDOM_LIGHT_VEC4 = 4; // RGBA float color
   static constexpr int SOURCE_DARKEST_VEC4 = 10; // RGBA float color
+  static constexpr int SOURCE_FIELD = 1; // SOM as float field in RG pixels converted from RGB
 
 protected:
   void initParameters() override;
@@ -46,7 +47,7 @@ private:
   
   std::ranlux24_base randomGen { 0 }; // fast generator with fixed seed
   std::uniform_int_distribution<> randomDistrib { 0, SomPalette::size - 1 };
-  glm::vec4 createRandomVec4(int i);
+  glm::vec4 createVec4(int i);
   glm::vec4 createRandomLightVec4(int i);
   glm::vec4 createRandomDarkVec4(int i);
 };

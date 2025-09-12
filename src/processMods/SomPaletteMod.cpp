@@ -22,6 +22,36 @@ void SomPaletteMod::initParameters() {
   parameters.add(iterationsParameter);
 }
 
+// u = 0.7071 R + 0.7071 G
+// v = 0.5774 R + 0.5774 G - 1.1547 B
+ofFloatPixels rgbToRG_Simple(const ofFloatPixels& in) {
+  const int w = in.getWidth();
+  const int h = in.getHeight();
+  
+  ofFloatPixels result;
+  result.allocate(w, h, 2);
+  
+  const float* src = in.getData();
+  float* dst = result.getData();
+  const size_t n = static_cast<size_t>(w) * static_cast<size_t>(h);
+  
+  constexpr float uR = 0.70710678f, uG = 0.70710678f, uB = 0.0f;
+  constexpr float vR = 0.57735027f, vG = 0.57735027f, vB = -1.15470054f;
+  
+  for (size_t i = 0; i < n; ++i) {
+    float R = src[3*i + 0];
+    float G = src[3*i + 1];
+    float B = src[3*i + 2];
+    
+    float u = uR*R + uG*G + uB*B;
+    float v = vR*R + vG*G + vB*B;
+    
+    dst[2*i + 0] = u;
+    dst[2*i + 1] = v;
+  }
+  return result;
+}
+
 void SomPaletteMod::update() {
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v){
     std::array<double, 3> data { v.x, v.y, v.z };
@@ -30,26 +60,24 @@ void SomPaletteMod::update() {
   newVecs.clear();
   somPalette.update();
   
-  emit(SOURCE_RANDOM_VEC4, createRandomVec4(randomDistrib(randomGen)));
+  emit(SOURCE_RANDOM_VEC4, createVec4(randomDistrib(randomGen)));
   emit(SOURCE_RANDOM_LIGHT_VEC4, createRandomLightVec4(randomDistrib(randomGen)));
   emit(SOURCE_RANDOM_DARK_VEC4, createRandomDarkVec4(randomDistrib(randomGen)));
-  const ofFloatColor& darkestColor = somPalette.getColor(0);
-  emit(SOURCE_DARKEST_VEC4, glm::vec4 { darkestColor.r, darkestColor.g, darkestColor.b, 1.0 });
+  emit(SOURCE_DARKEST_VEC4, createVec4(0));
+  emit(SOURCE_FIELD, rgbToRG_Simple(somPalette.getPixelsRef())); // we make a copy
 }
 
-glm::vec4 SomPaletteMod::createRandomVec4(int i) {
+glm::vec4 SomPaletteMod::createVec4(int i) {
   ofFloatColor c = somPalette.getColor(i);
-  return { c.r, c.g, c.b, c.a };
+  return { c.r, c.g, c.b, 1.0 };
 }
 
 glm::vec4 SomPaletteMod::createRandomLightVec4(int i) {
-  ofFloatColor c = somPalette.getColor((SomPalette::size - 1) - i/2);
-  return { c.r, c.g, c.b, c.a };
+  return createVec4((SomPalette::size - 1) - i/2);
 }
 
 glm::vec4 SomPaletteMod::createRandomDarkVec4(int i) {
-  ofFloatColor c = somPalette.getColor(i/2);
-  return { c.r, c.g, c.b, c.a };
+  return createVec4(i/2);
 }
 
 void SomPaletteMod::draw() {

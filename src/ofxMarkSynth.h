@@ -29,6 +29,7 @@
 #include "CollageMod.hpp"
 #include "FluidRadialImpulseMod.hpp"
 #include "SoftCircleMod.hpp"
+#include "ParticleFieldMod.hpp"
 
 #include "FadeMod.hpp"
 
