@@ -42,8 +42,8 @@ using FboPtr = std::shared_ptr<PingPongFbo>;
 using FboPtrs = std::vector<FboPtr>;
 
 
-// NOTE: A Mod will emit its FBOs when they are received, which means
-// that dependents need to be hooked up BEFORE the FBOs are sent to Mods.
+// NOTE: A Mod will emit its FboPtrs when they are received, which means
+// that dependents need to be hooked up BEFORE the FboPtrs are sent to Mods.
 class Mod {
   
 public:
@@ -54,7 +54,7 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
-  bool hasSinkFor(int sourceId);
+  bool hasSinkFor(int sourceId); // can't be const because connections is not mutable
   virtual float bidToReceive(int sinkId) { return 0.0; };
   virtual void receive(int sinkId, const glm::vec1& point);
   virtual void receive(int sinkId, const glm::vec2& point);
@@ -64,6 +64,7 @@ public:
   virtual void receive(int sinkId, const FboPtr& fboPtr);
   virtual void receive(int sinkId, const ofFloatPixels& pixels);
   virtual void receive(int sinkId, const ofPath& path);
+  virtual void receive(int sinkId, const ofFbo& fbo);
 
   static constexpr int SOURCE_FBO_BEGIN = -100;
   static constexpr int SOURCE_FBO = SOURCE_FBO_BEGIN;
@@ -93,23 +94,7 @@ protected:
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
   FboPtrs fboPtrs;
-
 };
-
-
-template <typename ModT>
-ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
-  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
-  modPtrs.push_back(modPtr);
-  return modPtr;
-}
-
-template <typename ModT, typename... Args>
-ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
-  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
-  modPtrs.push_back(modPtr);
-  return modPtr;
-}
 
 
 } // ofxMarkSynth

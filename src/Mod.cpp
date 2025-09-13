@@ -51,7 +51,9 @@ void Mod::addSink(int sourceId, ModPtr sinkModPtr, int sinkId) {
 }
 
 bool Mod::hasSinkFor(int sourceId) {
-  return (connections.contains(sourceId) && connections[sourceId] != nullptr && !connections[sourceId]->empty());
+  return (connections.contains(sourceId) &&
+          connections[sourceId] != nullptr &&
+          !connections[sourceId]->empty());
 }
 
 template<typename T>
@@ -74,6 +76,7 @@ template void Mod::emit(int sourceId, const FboPtr& value);
 template void Mod::emit(int sourceId, const ofPixels& value);
 template void Mod::emit(int sourceId, const ofFloatPixels& value);
 template void Mod::emit(int sourceId, const ofPath& value);
+template void Mod::emit(int sourceId, const ofFbo& value);
 
 void Mod::receive(int sinkId, const glm::vec1& point) {
   ofLogError() << "bad receive of glm::vec1 in " << typeid(*this).name();
@@ -110,6 +113,10 @@ void Mod::receive(int sinkId, const ofFloatPixels& pixels) {
 
 void Mod::receive(int sinkId, const ofPath& path) {
   ofLogError() << "bad receive of ofPath in " << typeid(*this).name();
+}
+
+void Mod::receive(int sinkId, const ofFbo& fbo) {
+  ofLogError() << "bad receive of ofFbo in " << typeid(*this).name();
 }
 
 
