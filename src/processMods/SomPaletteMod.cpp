@@ -22,34 +22,40 @@ void SomPaletteMod::initParameters() {
   parameters.add(iterationsParameter);
 }
 
-// u = 0.7071 R + 0.7071 G
-// v = 0.5774 R + 0.5774 G - 1.1547 B
-ofFloatPixels rgbToRG_Simple(const ofFloatPixels& in) {
+ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
   const int w = in.getWidth();
   const int h = in.getHeight();
-  
-  ofFloatPixels result;
-  result.allocate(w, h, 2);
-  
+
+  ofFloatPixels out;
+  out.allocate(w, h, 2);
+
   const float* src = in.getData();
-  float* dst = result.getData();
+  float* dst = out.getData();
   const size_t n = static_cast<size_t>(w) * static_cast<size_t>(h);
-  
-  constexpr float uR = 0.70710678f, uG = 0.70710678f, uB = 0.0f;
-  constexpr float vR = 0.57735027f, vG = 0.57735027f, vB = -1.15470054f;
-  
+
+  // Orthonormal opponent axes:
+  // e1 = ( 1, -1,  0) / sqrt(2)  -> red-green
+  // e2 = ( 1,  1, -2) / sqrt(6)  -> blue-yellow
+  constexpr float invSqrt2 = 0.7071067811865476f;
+  constexpr float invSqrt6 = 0.4082482904638631f;
+
   for (size_t i = 0; i < n; ++i) {
     float R = src[3*i + 0];
     float G = src[3*i + 1];
     float B = src[3*i + 2];
-    
-    float u = uR*R + uG*G + uB*B;
-    float v = vR*R + vG*G + vB*B;
-    
+
+    // center around neutral gray to make outputs zero-mean
+    float r = R - 0.5f;
+    float g = G - 0.5f;
+    float b = B - 0.5f;
+
+    float u = (r - g) * invSqrt2;              // red-green
+    float v = (r + g - 2.0f*b) * invSqrt6;     // blue-yellow
+
     dst[2*i + 0] = u;
     dst[2*i + 1] = v;
   }
-  return result;
+  return out;
 }
 
 void SomPaletteMod::ensureFieldFbo(int w, int h) {
@@ -82,7 +88,7 @@ void SomPaletteMod::update() {
   emit(SOURCE_DARKEST_VEC4, createVec4(0));
   
   // convert RGB -> RG (float2), upload into FBO texture, emit FBO
-  ofFloatPixels converted = rgbToRG_Simple(somPalette.getPixelsRef());
+  ofFloatPixels converted = rgbToRG_Opponent(somPalette.getPixelsRef());
   ensureFieldFbo(converted.getWidth(), converted.getHeight());
   fieldFbo.getTexture().loadData(converted);
   emit(SOURCE_FIELD, fieldFbo);
