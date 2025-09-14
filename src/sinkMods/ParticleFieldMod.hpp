@@ -18,9 +18,9 @@ class ParticleFieldMod : public Mod {
 public:
   ParticleFieldMod(const std::string& name, const ModConfig&& config, float fieldValueOffset_ = 0.5);
   void update() override;
-  void receive(int sinkId, const ofFloatPixels& value) override;
+  void receive(int sinkId, const ofFbo& value) override;
 
-  static constexpr int SINK_FIELD = 10;
+  static constexpr int SINK_FIELD_FBO = 11;
   
 protected:
   void initParameters() override;

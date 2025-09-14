@@ -14,7 +14,7 @@ namespace ofxMarkSynth {
 ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float fieldValueOffset_)
 : Mod { name, std::move(config) }
 {
-  particleField.setup(600'000, ofFloatColor(1.0, 1.0, 1.0, 0.3), fieldValueOffset_);
+  particleField.setup(700'000, ofFloatColor(1.0, 1.0, 1.0, 0.3), fieldValueOffset_);
 }
 
 void ParticleFieldMod::initParameters() {
@@ -29,10 +29,10 @@ void ParticleFieldMod::update() {
   particleField.draw(fboPtr->getSource());
 }
 
-void ParticleFieldMod::receive(int sinkId, const ofFloatPixels& value) {
+void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
   switch (sinkId) {
-    case SINK_FIELD:
-      particleField.setFieldTexture(value);
+    case SINK_FIELD_FBO:
+      particleField.setField(value);
       break;
     default:
       ofLogError() << "ofPixels receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
