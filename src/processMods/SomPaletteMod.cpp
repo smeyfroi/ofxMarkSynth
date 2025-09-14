@@ -52,6 +52,22 @@ ofFloatPixels rgbToRG_Simple(const ofFloatPixels& in) {
   return result;
 }
 
+void SomPaletteMod::ensureFieldFbo(int w, int h) {
+  if (fieldFbo.isAllocated()
+      && fieldFbo.getWidth() == w && fieldFbo.getHeight() == h) {
+    return;
+  }
+  ofFbo::Settings s;
+  s.width = w;
+  s.height = h;
+  s.internalformat = GL_RG16F;
+  s.useDepth = false;
+  s.useStencil = false;
+  s.numColorbuffers = 1;
+  s.textureTarget = GL_TEXTURE_2D;
+  fieldFbo.allocate(s);
+}
+
 void SomPaletteMod::update() {
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v){
     std::array<double, 3> data { v.x, v.y, v.z };
@@ -64,7 +80,12 @@ void SomPaletteMod::update() {
   emit(SOURCE_RANDOM_LIGHT_VEC4, createRandomLightVec4(randomDistrib(randomGen)));
   emit(SOURCE_RANDOM_DARK_VEC4, createRandomDarkVec4(randomDistrib(randomGen)));
   emit(SOURCE_DARKEST_VEC4, createVec4(0));
-  emit(SOURCE_FIELD, rgbToRG_Simple(somPalette.getPixelsRef())); // we make a copy
+  
+  // convert RGB -> RG (float2), upload into FBO texture, emit FBO
+  ofFloatPixels converted = rgbToRG_Simple(somPalette.getPixelsRef());
+  ensureFieldFbo(converted.getWidth(), converted.getHeight());
+  fieldFbo.getTexture().loadData(converted);
+  emit(SOURCE_FIELD, fieldFbo);
 }
 
 glm::vec4 SomPaletteMod::createVec4(int i) {
