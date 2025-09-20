@@ -85,7 +85,6 @@ void DividedAreaMod::update() {
     const ofFloatColor majorDividerColor { 0.0, 0.0, 0.0, 1.0 };
     dividedArea.draw({},
                      { minLineWidth, maxLineWidth, majorDividerColor },
-                     {},
                      fboPtr0->getWidth());
 //    ofSetColor(majorDividerColor);
 //    dividedArea.draw(0.0, 20.0, 0.0, fboPtr1->getWidth());
@@ -97,10 +96,7 @@ void DividedAreaMod::update() {
   if (fboPtr1 != nullptr) {
     fboPtr1->getSource().begin();
     const ofFloatColor minorDividerColor { 0.0, 0.0, 0.0, 1.0 };
-    dividedArea.draw({},
-                     {},
-                     { minLineWidth*0.15f, minLineWidth*0.25f, minorDividerColor, 0.7 },
-                     fboPtr0->getWidth());
+    dividedArea.drawInstanced(fboPtr0->getWidth());
 //    ofSetColor(minorDividerColor);
 //    dividedArea.draw(0.0, 0.0, 10.0, fboPtr0->getWidth());
     fboPtr1->getSource().end();
