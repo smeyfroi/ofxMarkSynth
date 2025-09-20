@@ -75,6 +75,8 @@ void SomPaletteMod::ensureFieldFbo(int w, int h) {
 }
 
 void SomPaletteMod::update() {
+  if (newVecs.empty()) return;
+  
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v){
     std::array<double, 3> data { v.x, v.y, v.z };
     somPalette.addInstanceData(data);
@@ -88,7 +90,9 @@ void SomPaletteMod::update() {
   emit(SOURCE_DARKEST_VEC4, createVec4(0));
   
   // convert RGB -> RG (float2), upload into FBO texture, emit FBO
-  ofFloatPixels converted = rgbToRG_Opponent(somPalette.getPixelsRef());
+  const ofPixels& pixelsRef = somPalette.getPixelsRef();
+  if (pixelsRef.getWidth() == 0 || pixelsRef.getHeight() == 0) return;
+  ofFloatPixels converted = rgbToRG_Opponent(pixelsRef);
   ensureFieldFbo(converted.getWidth(), converted.getHeight());
   fieldFbo.getTexture().loadData(converted);
   emit(SOURCE_FIELD, fieldFbo);
