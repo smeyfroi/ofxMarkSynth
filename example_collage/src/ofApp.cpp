@@ -1,11 +1,13 @@
 #include "ofApp.h"
 
+using namespace ofxMarkSynth;
+
 //--------------------------------------------------------------
 ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
   auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
-    {"CreatedPerUpdate", "0.4"}
+    {"CreatedPerUpdate", "0.05"}
   }, 2);
   
   auto particleSetModPtr = addMod<ofxMarkSynth::ParticleSetMod>(mods, "Particles", {});
@@ -28,15 +30,15 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   }, 4);
   
   auto collageModPtr = addMod<ofxMarkSynth::CollageMod>(mods, "Collage", {});
-  pixelSnapshotModPtr->addSink(ofxMarkSynth::PixelSnapshotMod::SOURCE_PIXELS,
-                               collageModPtr,
-                               ofxMarkSynth::CollageMod::SINK_PIXELS);
-  pathModPtr->addSink(ofxMarkSynth::PathMod::SOURCE_PATH,
-                      collageModPtr,
-                      ofxMarkSynth::CollageMod::SINK_PATH);
-  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
-                      collageModPtr,
-                      ofxMarkSynth::CollageMod::SINK_COLOR);
+//  pixelSnapshotModPtr->addSink(ofxMarkSynth::PixelSnapshotMod::SOURCE_PIXELS,
+//                               collageModPtr,
+//                               ofxMarkSynth::CollageMod::SINK_PIXELS);
+//  pathModPtr->addSink(ofxMarkSynth::PathMod::SOURCE_PATH,
+//                      collageModPtr,
+//                      ofxMarkSynth::CollageMod::SINK_PATH);
+//  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
+//                      collageModPtr,
+//                      ofxMarkSynth::CollageMod::SINK_COLOR);
 
   particleSetModPtr->receive(ofxMarkSynth::ParticleSetMod::SINK_FBO, fboPtr);
   collageModPtr->receive(ofxMarkSynth::CollageMod::SINK_FBO, fboPtr);
@@ -45,32 +47,30 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
 }
 
 ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
-  return fbos;
+  ofxMarkSynth::FboConfigPtrs fboConfigPtrs;
+  addFboConfigPtr(fboConfigPtrs, "foreground", fboPtr, {ofGetWindowWidth(), ofGetWindowHeight()}, GL_RGBA32F, GL_CLAMP_TO_EDGE, ofColor::black, false, OF_BLENDMODE_ALPHA, false, 0);
+  return fboConfigPtrs;
 }
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
   
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
+  synth = std::make_shared<Synth>("Synth", ModConfig {});
+  synth->configure(createFboConfigs(), createMods(), ofGetWindowSize());
   
-  parameters.add(synth.getParameterGroup("Synth"));
+  parameters.add(synth->getParameterGroup());
   gui.setup(parameters);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  synth.update();
+  synth->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
+  synth->draw();
   if (guiVisible) gui.draw();
 }
 
@@ -81,7 +81,7 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
-  if (synth.keyPressed(key)) return;
+  if (synth->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------
