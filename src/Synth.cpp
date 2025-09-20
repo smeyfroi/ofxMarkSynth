@@ -130,12 +130,15 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   
   imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
+  
   sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
-  sidePanelHeight = ofGetWindowHeight();
-  leftPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
-  leftPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
-  rightPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
-  rightPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+  if (sidePanelWidth > 0.0) {
+    sidePanelHeight = ofGetWindowHeight();
+    leftPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+    leftPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+    rightPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+    rightPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+  }
 
   parameters = getParameterGroup();
   gui.setup(parameters);
@@ -324,6 +327,8 @@ bool Synth::keyPressed(int key) {
 }
 
 void Synth::drawSidePanels() {
+  if (sidePanelWidth <= 0.0) return;
+  
   float leftCycleElapsed = (ofGetElapsedTimef() - leftSidePanelLastUpdate) / leftSidePanelTimeoutSecs;
   float rightCycleElapsed = (ofGetElapsedTimef() - rightSidePanelLastUpdate) / rightSidePanelTimeoutSecs;
 
@@ -363,6 +368,8 @@ glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
 
 // target is the outgoing image; source is the incoming one
 void Synth::updateSidePanels() {
+  if (sidePanelWidth <= 0.0) return;
+  
   if (ofGetElapsedTimef() - leftSidePanelLastUpdate > leftSidePanelTimeoutSecs) {
     leftSidePanelLastUpdate = ofGetElapsedTimef();
     leftPanelFbo.swap();
