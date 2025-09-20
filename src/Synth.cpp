@@ -45,7 +45,7 @@ void SaveToFileThread::threadedFunction() {
 
 
 // See ofFbo.cpp #allocate
-void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool useStencil) {
+void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool useStencil, int numSamples) {
   ofFboSettings settings { nullptr };
   settings.wrapModeVertical = wrap;
   settings.wrapModeHorizontal = wrap;
@@ -53,7 +53,7 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, 
   settings.width = size.x;
   settings.height = size.y;
   settings.internalformat = internalFormat;
-  settings.numSamples = 0;
+  settings.numSamples = numSamples;
   
   settings.useDepth = false;
   settings.useStencil = useStencil;
@@ -62,8 +62,8 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, 
   fboPtr->allocate(settings);
 }
 
-void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil) {
-  allocateFbo(fboPtr, size, internalFormat, wrap, useStencil);
+void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples) {
+  allocateFbo(fboPtr, size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->getSource().begin();
   fboPtr->getSource().clearColorBuffer(clearColor);
   fboPtr->getSource().end();
