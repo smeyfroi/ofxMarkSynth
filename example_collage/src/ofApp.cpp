@@ -7,7 +7,7 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   auto mods = ofxMarkSynth::ModPtrs {};
 
   auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
-    {"CreatedPerUpdate", "0.05"}
+    {"CreatedPerUpdate", "0.5"}
   }, 2);
   
   auto particleSetModPtr = addMod<ofxMarkSynth::ParticleSetMod>(mods, "Particles", {});
@@ -15,9 +15,9 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
                                  particleSetModPtr,
                                  ofxMarkSynth::ParticleSetMod::SINK_POINTS);
   
-  auto pixelSnapshotModPtr = addMod<ofxMarkSynth::PixelSnapshotMod>(mods, "Snapshot", {});
+  auto snapshotModPtr = addMod<ofxMarkSynth::PixelSnapshotMod>(mods, "Snapshot", {});
   particleSetModPtr->addSink(ofxMarkSynth::ParticleSetMod::SOURCE_FBO,
-                             pixelSnapshotModPtr,
+                             snapshotModPtr,
                              ofxMarkSynth::PixelSnapshotMod::SINK_FBO);
   
   auto pathModPtr = addMod<ofxMarkSynth::PathMod>(mods, "Path", {});
@@ -30,15 +30,15 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
   }, 4);
   
   auto collageModPtr = addMod<ofxMarkSynth::CollageMod>(mods, "Collage", {});
-//  pixelSnapshotModPtr->addSink(ofxMarkSynth::PixelSnapshotMod::SOURCE_PIXELS,
-//                               collageModPtr,
-//                               ofxMarkSynth::CollageMod::SINK_PIXELS);
-//  pathModPtr->addSink(ofxMarkSynth::PathMod::SOURCE_PATH,
-//                      collageModPtr,
-//                      ofxMarkSynth::CollageMod::SINK_PATH);
-//  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
-//                      collageModPtr,
-//                      ofxMarkSynth::CollageMod::SINK_COLOR);
+  snapshotModPtr->addSink(ofxMarkSynth::PixelSnapshotMod::SOURCE_SNAPSHOT,
+                          collageModPtr,
+                          ofxMarkSynth::CollageMod::SINK_SNAPSHOT_FBO);
+  pathModPtr->addSink(ofxMarkSynth::PathMod::SOURCE_PATH,
+                      collageModPtr,
+                      ofxMarkSynth::CollageMod::SINK_PATH);
+  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
+                      collageModPtr,
+                      ofxMarkSynth::CollageMod::SINK_COLOR);
 
   particleSetModPtr->receive(ofxMarkSynth::ParticleSetMod::SINK_FBO, fboPtr);
   collageModPtr->receive(ofxMarkSynth::CollageMod::SINK_FBO, fboPtr);
@@ -48,13 +48,14 @@ ofxMarkSynth::ModPtrs ofApp::createMods() {
 
 ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
   ofxMarkSynth::FboConfigPtrs fboConfigPtrs;
-  addFboConfigPtr(fboConfigPtrs, "foreground", fboPtr, {ofGetWindowWidth(), ofGetWindowHeight()}, GL_RGBA32F, GL_CLAMP_TO_EDGE, ofColor::black, false, OF_BLENDMODE_ALPHA, false, 0);
+  addFboConfigPtr(fboConfigPtrs, "foreground", fboPtr, {ofGetWindowWidth(), ofGetWindowHeight()}, GL_RGBA8, GL_CLAMP_TO_EDGE, ofColor::black, false, OF_BLENDMODE_ALPHA, true, 0); // useStencil for CollageMod
   return fboConfigPtrs;
 }
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofDisableArbTex();
+  ofSetFrameRate(60);
   
   synth = std::make_shared<Synth>("Synth", ModConfig {});
   synth->configure(createFboConfigs(), createMods(), ofGetWindowSize());
@@ -70,6 +71,7 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   synth->draw();
   if (guiVisible) gui.draw();
 }

@@ -24,7 +24,7 @@ void CollageMod::initParameters() {
 
 void CollageMod::update() {
   if (path.getCommands().size() <= 2) return;
-  if (strategyParameter == 1 && !collageSourceTexture.isAllocated()) return;
+  if (strategyParameter == 1 && !snapshotFbo.isAllocated()) return;
 
   auto fboPtr = fboPtrs[0];
   if (!fboPtr) return;
@@ -34,59 +34,69 @@ void CollageMod::update() {
 
   if (strategyParameter == 0) {
     // tint
-    ofEnableBlendMode(OF_BLENDMODE_ADD);
+    ofEnableBlendMode(OF_BLENDMODE_DISABLED); // reset first
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     ofFloatColor c = colorParameter;
     c *= strengthParameter; c.a *= strengthParameter;
+    
     path.setFilled(true);
     path.setColor(c);
     path.draw();
-    
-  } else if (strategyParameter == 1) {
-    // paste tinted
-    glEnable(GL_STENCIL_TEST);
-    glClear(GL_STENCIL_BUFFER_BIT);
-
-    // Setup stencil: write 1s where path is drawn
-    glStencilFunc(GL_ALWAYS, 1, 1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glColorMask(false, false, false, false);
-
-    path.setFilled(true);
-    path.draw();
-
-    // Now only draw where stencil is 1
-    glStencilFunc(GL_EQUAL, 1, 1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glColorMask(true, true, true, true);
-
-    ofEnableBlendMode(OF_BLENDMODE_ADD);
-    ofFloatColor c = colorParameter;
-    c *= strengthParameter; c.a *= strengthParameter;
-    ofSetColor(c);
-//    ofSetColor(255);
-    
-    ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
-//    for (const auto& polyline : path.getOutline()) {
-//      normalisedPathBounds = normalisedPathBounds.getUnion(polyline.getBoundingBox());
-//    }
-    float x = normalisedPathBounds.x;
-    float y = normalisedPathBounds.y;
-    float w = normalisedPathBounds.width;
-    float h = normalisedPathBounds.height;
-
-    collageSourceTexture.draw(x, y, w, h);
-
-    glDisable(GL_STENCIL_TEST);
   }
-  fboPtr->getSource().end();
+  
+  ofFloatColor c;
+  if (strategyParameter == 1) {
+    c = colorParameter;
+  } else {
+    c = ofFloatColor(1.0, 1.0, 1.0, 1.0);
+  }
+  c *= strengthParameter; c.a *= strengthParameter;
+    
+  glEnable(GL_STENCIL_TEST);
+  glClear(GL_STENCIL_BUFFER_BIT);
 
+  // Setup stencil: write 1s where path is drawn
+  glStencilFunc(GL_ALWAYS, 1, 1);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+  glColorMask(false, false, false, false);
+
+  path.setFilled(true);
+  path.draw();
+
+  // Now only draw where stencil is 1
+  glStencilFunc(GL_EQUAL, 1, 1);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+  glColorMask(true, true, true, true);
+
+  ofEnableBlendMode(OF_BLENDMODE_DISABLED); // reset first
+  glEnable(GL_BLEND);
+  glBlendEquation(GL_FUNC_ADD);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  
+  ofSetColor(c);
+  
+  ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
+  float x = normalisedPathBounds.x;
+  float y = normalisedPathBounds.y;
+  float w = normalisedPathBounds.width;
+  float h = normalisedPathBounds.height;
+
+  snapshotFbo.draw(x, y, w, h);
+
+  glDisable(GL_STENCIL_TEST);
+  
+  fboPtr->getSource().end();
   path.clear();
 }
 
-void CollageMod::receive(int sinkId, const ofFloatPixels& pixels) {
+void CollageMod::receive(int sinkId, const ofFbo& value) {
   switch (sinkId) {
-    case SINK_PIXELS:
-      collageSourceTexture.allocate(pixels);
+    case SINK_SNAPSHOT_FBO:
+      //  ofxMarkSynth::fboCopyBlit(newFieldFbo, fieldFbo);
+      //  ofxMarkSynth::fboCopyDraw(newFieldFbo, fieldFbo);
+      snapshotFbo = value;
       break;
     default:
       ofLogError() << "ofPixels receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;

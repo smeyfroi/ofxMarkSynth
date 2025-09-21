@@ -41,7 +41,6 @@ ofPath makePolyPath(const std::vector<glm::vec2>& points) {
   return path;
 }
 
-// FIXME: this doesn't work very well... mostly triangles, loads of (0,0) filtered out
 ofPath makeConvexHullPath(const std::vector<glm::vec2>& points) {
   std::vector<ofPoint> ofPoints(points.size());
   std::transform(points.cbegin(), points.cend(), std::back_inserter(ofPoints),
@@ -50,7 +49,7 @@ ofPath makeConvexHullPath(const std::vector<glm::vec2>& points) {
   ofxConvexHull convexHull;
   vector<ofPoint>hullOfPoints = convexHull.getConvexHull(ofPoints);
   
-  std::vector<glm::vec2> hullPoints(hullOfPoints.size());
+  std::vector<glm::vec2> hullPoints;
   auto validEndIter = std::remove_if(hullOfPoints.begin(), hullOfPoints.end(),
                                      [](const auto& p) { return (p.x == 0.0 && p.y == 0.0); });
   std::transform(hullOfPoints.begin(), validEndIter, std::back_inserter(hullPoints),

@@ -20,7 +20,7 @@ public:
   void draw() override;
   bool keyPressed(int key) override;
 
-  static constexpr int SOURCE_PIXELS = 1;
+  static constexpr int SOURCE_SNAPSHOT = 10; // FBO snapshot
 
 protected:
   void initParameters() override;
@@ -28,10 +28,10 @@ protected:
 private:
   float updateCount;
   ofParameter<float> snapshotsPerUpdateParameter { "SnapshotsPerUpdate", 1.0/30.0, 0.0, 1.0 };
-  ofParameter<int> sizeParameter { "Size", 1024, 0, 10240 };
+  ofParameter<int> sizeParameter { "Size", 1024, 0, 10240 }; // must be smaller than the source FBO
   
-  ofFloatPixels pixels;
-  const ofFloatPixels createPixels(const FboPtr& fboPtr);
+  ofFbo snapshotFbo;
+  const ofFbo createSnapshot(const FboPtr& fboPtr);
 
   bool visible = false;
 };

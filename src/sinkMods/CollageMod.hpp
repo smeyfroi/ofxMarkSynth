@@ -21,22 +21,22 @@ public:
   CollageMod(const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const ofPath& path) override;
-  void receive(int sinkId, const ofFloatPixels& pixels) override;
+  void receive(int sinkId, const ofFbo& value) override;
   void receive(int sinkId, const glm::vec4& v) override;
   
   static constexpr int SINK_PATH = 1;
-  static constexpr int SINK_PIXELS = 10;
+  static constexpr int SINK_SNAPSHOT_FBO = 11;
   static constexpr int SINK_COLOR = 20;
 
 protected:
   void initParameters() override;
 
   ofPath path;
-  ofTexture collageSourceTexture;
+  ofFbo snapshotFbo;
 
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ofParameter<float> strengthParameter { "Strength", 1.0, 0.0, 2.0 };
-  ofParameter<int> strategyParameter { "Strategy", 1, 0, 1 }; // 0=tint; 1=add tinted pixels; 2=add pixels
+  ofParameter<float> strengthParameter { "Strength", 0.25, 0.0, 2.0 };
+  ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
 };
 
 

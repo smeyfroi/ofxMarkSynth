@@ -26,41 +26,35 @@ void PixelSnapshotMod::update() {
 
   updateCount += snapshotsPerUpdateParameter;
   if (updateCount >= 1.0) {
-    emit(SOURCE_PIXELS, createPixels(fboPtr));
+    emit(SOURCE_SNAPSHOT, createSnapshot(fboPtr));
     updateCount = 0;
   }
 }
 
-const ofFloatPixels PixelSnapshotMod::createPixels(const FboPtr& fboPtr) {
-  auto format = fboPtr->getSource().getTexture().getTextureData().glInternalFormat;
-  if (!pixels.isAllocated() || pixels.getWidth() != sizeParameter || pixels.getHeight() != sizeParameter) {
-    pixels.allocate(sizeParameter, sizeParameter, ofGetImageTypeFromGLType(format));
+const ofFbo PixelSnapshotMod::createSnapshot(const FboPtr& fboPtr) {
+  if (snapshotFbo.getWidth() != sizeParameter || snapshotFbo.getHeight() != sizeParameter) {
+    snapshotFbo.allocate(sizeParameter, sizeParameter, GL_RGBA8);
   }
 
-  int x = ofRandom(0, fboPtr->getWidth() - pixels.getWidth());
-  int y = ofRandom(0, fboPtr->getHeight() - pixels.getHeight());
+  // This is built for snapshots from a very large source
+  int x = ofRandom(0, fboPtr->getWidth() - snapshotFbo.getWidth());
+  int y = ofRandom(0, fboPtr->getHeight() - snapshotFbo.getHeight());
   
-  fboPtr->getSource().bind();
-  glReadPixels(x, y, pixels.getWidth(), pixels.getHeight(), GL_RGBA/*format*/, GL_FLOAT, pixels.getData()); // FIXME: assumes float RGBA
-  fboPtr->getSource().unbind();
+  snapshotFbo.begin();
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
+  fboPtr->getSource().draw(-x, -y);
+  snapshotFbo.end();
 
-  return pixels;
+  return snapshotFbo;
 }
 
 void PixelSnapshotMod::draw() {
   if (!visible) return;
-  {
-    ofSetColor(ofFloatColor(0.2, 0.2, 0.2, 1.0));
-    ofFill();
-    ofDrawRectangle(0.0, 0.0, 1.0, 1.0);
-  }
-  {
-    ofTexture t;
-    t.allocate(pixels.getWidth(), pixels.getHeight(), GL_RGBA);
-    t.loadData(pixels);
-    ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
-    t.draw({ 0, 0 }, 1.0, 1.0);
-  }
+  ofClear(ofFloatColor(0.0, 0.0, 0.0, 1.0));
+  ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  snapshotFbo.draw(0.0, 0.0, 1.0, 1.0);
 }
 
 bool PixelSnapshotMod::keyPressed(int key) {
