@@ -87,8 +87,6 @@ public:
 
   std::string name;
   
-  virtual bool usesOpenGL() const noexcept { return true; }; // override false to guide ofxTimeMeasurement
-
 protected:
   ModConfig config;
   ofParameterGroup parameters;

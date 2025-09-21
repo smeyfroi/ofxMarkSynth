@@ -189,11 +189,11 @@ void Synth::update() {
   });
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
-    if (modPtr->usesOpenGL()) { TSGL_START(modPtr->name); }
+    TSGL_START(modPtr->name);
     TS_START(modPtr->name);
     modPtr->update();
     TS_STOP(modPtr->name);
-    if (modPtr->usesOpenGL()) { TSGL_STOP(modPtr->name); }
+    TSGL_STOP(modPtr->name);
   });
   
   updateSidePanels();

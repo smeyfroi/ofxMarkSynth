@@ -30,8 +30,6 @@ public:
   static constexpr int SOURCE_ONSET1 = 20;
   static constexpr int SOURCE_TIMBRE_CHANGE = 21;
 
-  bool usesOpenGL() const noexcept override { return false; };
-
 protected:
   void initParameters() override;
 
