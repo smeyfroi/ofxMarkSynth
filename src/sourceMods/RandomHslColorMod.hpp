@@ -20,6 +20,8 @@ public:
   
   static constexpr int SOURCE_VEC4 = 1;
 
+  bool usesOpenGL() const noexcept override { return false; };
+
 protected:
   void initParameters() override;
 

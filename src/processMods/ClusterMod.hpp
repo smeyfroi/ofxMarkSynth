@@ -27,6 +27,8 @@ public:
   static constexpr int SINK_VEC2 = 1;
   static constexpr int SOURCE_VEC2 = 2;
 
+  bool usesOpenGL() const noexcept override { return false; };
+  
 protected:
   void initParameters() override;
 

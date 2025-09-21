@@ -189,11 +189,11 @@ void Synth::update() {
   });
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
-    TSGL_START(modPtr->name);
+    if (modPtr->usesOpenGL()) { TSGL_START(modPtr->name); }
     TS_START(modPtr->name);
     modPtr->update();
     TS_STOP(modPtr->name);
-    TSGL_STOP(modPtr->name);
+    if (modPtr->usesOpenGL()) { TSGL_STOP(modPtr->name); }
   });
   
   updateSidePanels();
@@ -202,6 +202,7 @@ void Synth::update() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   TSGL_START("Synth::draw");
+  
   imageCompositeFbo.begin();
   {
     ofFloatColor backgroundColor = backgroundColorParameter;

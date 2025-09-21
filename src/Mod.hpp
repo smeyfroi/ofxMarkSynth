@@ -86,6 +86,8 @@ public:
   static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
 
   std::string name;
+  
+  virtual bool usesOpenGL() const noexcept { return true; }; // override false to guide ofxTimeMeasurement
 
 protected:
   ModConfig config;
