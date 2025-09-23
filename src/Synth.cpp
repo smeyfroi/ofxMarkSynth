@@ -338,20 +338,28 @@ void Synth::drawSidePanels() {
 
   // old panels fade out; new panels fade in
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+
+  // Easing helpers (clamped to [0,1])
+  auto easeIn = [&](float x){ return x * x * x; };
+
+  // Left panel
   leftPanelCompositeFbo.begin();
   {
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - leftCycleElapsed });
+    float alphaIn = easeIn(leftCycleElapsed); // drop quickly, then ease
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
     leftPanelFbo.getTarget().draw(0.0, 0.0);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, leftCycleElapsed });
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
     leftPanelFbo.getSource().draw(0.0, 0.0);
   }
   leftPanelCompositeFbo.end();
 
+  // Right panel
   rightPanelCompositeFbo.begin();
   {
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - rightCycleElapsed });
+    float alphaIn = easeIn(rightCycleElapsed);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
     rightPanelFbo.getTarget().draw(0.0, 0.0);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, rightCycleElapsed });
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
     rightPanelFbo.getSource().draw(0.0, 0.0);
   }
   rightPanelCompositeFbo.end();
