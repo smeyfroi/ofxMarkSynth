@@ -224,23 +224,26 @@ void Synth::draw() {
   drawSidePanels();
   
   ofPushMatrix();
-  ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
-  
-  ofPushMatrix();
-  ofScale(compositeScale, compositeScale);
-  ofSetColor(255);
-  tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter);
-  imageCompositeFbo.draw(0.0, 0.0);
-  tonemapShader.end();
-  ofPopMatrix();
-
-  // For Mods that draw directly and not on an FBO,
-  // for example audio data plots and other debug views
-  ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // hack
-  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
-    modPtr->draw();
-  });
-  
+  {
+    ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
+    
+    ofPushMatrix();
+    {
+      ofScale(compositeScale, compositeScale);
+      ofSetColor(255);
+      tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter);
+      imageCompositeFbo.draw(0.0, 0.0);
+      tonemapShader.end();
+    }
+    ofPopMatrix();
+    
+    // For Mods that draw directly and not on an FBO,
+    // for example audio data plots and other debug views
+    ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // hack
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
+      modPtr->draw();
+    });
+  }
   ofPopMatrix();
   
 #ifndef TARGET_OS_IOS
@@ -334,7 +337,7 @@ void Synth::drawSidePanels() {
   float rightCycleElapsed = (ofGetElapsedTimef() - rightSidePanelLastUpdate) / rightSidePanelTimeoutSecs;
 
   // old panels fade out; new panels fade in
-  ofBlendMode(OF_BLENDMODE_ALPHA);
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   leftPanelCompositeFbo.begin();
   {
     ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - leftCycleElapsed });
@@ -353,9 +356,10 @@ void Synth::drawSidePanels() {
   }
   rightPanelCompositeFbo.end();
 
-  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter);
   ofSetColor(255);
+  ofSetColor(ofFloatColor { 1.0, 0.0, 0.0, 0.3f });
   ofBlendMode(OF_BLENDMODE_DISABLED);
+  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter);
   leftPanelCompositeFbo.draw(0.0, 0.0);
   rightPanelCompositeFbo.draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
   tonemapShader.end();
