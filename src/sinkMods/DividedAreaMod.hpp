@@ -25,11 +25,14 @@ public:
   void receive(int sinkId, const glm::vec2& point) override;
   void receive(int sinkId, const ofPath& path) override;
   void receive(int sinkId, const float& point) override;
+  void receive(int sinkId, const glm::vec4& v) override;
   float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_MAJOR_ANCHORS = 1;
   static constexpr int SINK_MINOR_ANCHORS = 10;
   static constexpr int SINK_MINOR_PATH = 20;
+  static constexpr int SINK_MINOR_LINES_COLOR = 30;
+  static constexpr int SINK_MAJOR_LINES_COLOR = 31;
 
   // SINK_FBO for drawing constrained lines
   // SINK_FBO_2 for drawing unconstrained lines
@@ -40,6 +43,8 @@ protected:
 private:
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 2 }; // 0 = point pairs, 1 = point angles, 2 = radiating
   ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
+  ofParameter<ofFloatColor> minorLineColorParameter { "MinorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;

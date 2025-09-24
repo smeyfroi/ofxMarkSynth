@@ -20,27 +20,31 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
 void DividedAreaMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(angleParameter);
+  parameters.add(minorLineColorParameter);
+  parameters.add(majorLineColorParameter);
   parameters.add(dividedArea.getParameterGroup());
 }
 
 void DividedAreaMod::addConstrainedLinesThroughPointPairs() {
+  const ofFloatColor minorDividerColor = minorLineColorParameter;
   int pairs = newMinorAnchors.size() / 2;
   for (int i = 0; i < pairs; i++) {
     auto p1 = newMinorAnchors.back();
     newMinorAnchors.pop_back();
     auto p2 = newMinorAnchors.back();
     newMinorAnchors.pop_back();
-    dividedArea.addConstrainedDividerLine(p1, p2);
+    dividedArea.addConstrainedDividerLine(p1, p2, minorDividerColor);
   }
 }
 
 void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
+  const ofFloatColor minorDividerColor = minorLineColorParameter;
   float angle = angleParameter;
-  std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [this](const auto& p) {
+  std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [&](const auto& p) {
     auto endPoint = endPointForSegment(p, angleParameter * glm::pi<float>(), 0.01);
     if (endPoint.x > 0.0 && endPoint.x < 1.0 && endPoint.y > 0.0 && endPoint.y < 1.0) {
       // must stay inside normalised coords
-      dividedArea.addConstrainedDividerLine(p, endPoint);
+      dividedArea.addConstrainedDividerLine(p, endPoint, minorDividerColor);
     }
   });
   newMinorAnchors.clear();
@@ -48,9 +52,10 @@ void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
 
 void DividedAreaMod::addConstrainedLinesRadiating() {
   if (newMinorAnchors.size() < 7) return;
+  const ofFloatColor minorDividerColor = minorLineColorParameter;
   glm::vec2 centrePoint = newMinorAnchors.back(); newMinorAnchors.pop_back();
-  std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [this, centrePoint](const auto& p) {
-    dividedArea.addConstrainedDividerLine(centrePoint, p);
+  std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [&](const auto& p) {
+    dividedArea.addConstrainedDividerLine(centrePoint, p, minorDividerColor);
   });
   newMinorAnchors.clear();
 }
@@ -82,7 +87,7 @@ void DividedAreaMod::update() {
   auto fboPtr0 = fboPtrs[0];
   if (fboPtr0 != nullptr) {
     fboPtr0->getSource().begin();
-    const ofFloatColor majorDividerColor { 0.0, 0.0, 0.0, 1.0 };
+    const ofFloatColor majorDividerColor = majorLineColorParameter;
     dividedArea.draw({},
                      { minLineWidth, maxLineWidth, majorDividerColor },
                      fboPtr0->getWidth());
@@ -95,7 +100,6 @@ void DividedAreaMod::update() {
   auto fboPtr1 = fboPtrs[1];
   if (fboPtr1 != nullptr) {
     fboPtr1->getSource().begin();
-    const ofFloatColor minorDividerColor { 0.0, 0.0, 0.0, 1.0 };
     dividedArea.drawInstanced(fboPtr0->getWidth());
 //    ofSetColor(minorDividerColor);
 //    dividedArea.draw(0.0, 0.0, 10.0, fboPtr0->getWidth());
@@ -157,6 +161,19 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
+  switch (sinkId) {
+    case SINK_MINOR_LINES_COLOR:
+      minorLineColorParameter = ofFloatColor(v.x, v.y, v.z, v.w);
+      break;
+    case SINK_MAJOR_LINES_COLOR:
+      majorLineColorParameter = ofFloatColor(v.x, v.y, v.z, v.w);
+      break;
+    default:
+      ofLogError() << "ofFloatColor receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
