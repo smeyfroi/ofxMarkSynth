@@ -30,8 +30,8 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> impulseRadiusParameter { "ImpulseRadius", 0.001, 0.0, 0.1 };
-  ofParameter<float> impulseStrengthParameter { "ImpulseStrength", 0.01, 0.0, 0.1 };
+  ofParameter<float> impulseRadiusParameter { "ImpulseRadius", 0.001, 0.0, 0.3 };
+  ofParameter<float> impulseStrengthParameter { "ImpulseStrength", 0.01, 0.0, 0.3 };
 
   std::vector<glm::vec2> newPoints;
   
