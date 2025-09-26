@@ -9,7 +9,7 @@
 
 #include "ofxGui.h"
 #include "Mod.hpp"
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
 #include "ofxFFmpegRecorder.h"
 #endif
 #include "ofThread.h"
@@ -85,10 +85,20 @@ private:
   float leftSidePanelTimeoutSecs { 7.0 };
   float rightSidePanelTimeoutSecs { 11.0 };
 
-  void drawSidePanels();
+  float compositeScale;
+  ofFbo imageCompositeFbo;
+  void drawCompositeImage();
+  
+  void drawCompositeSideImages();
+  void drawMiddlePanel(float w, float h, float scale);
+  void drawDebugViews();
+
+  float sidePanelWidth, sidePanelHeight;
   PingPongFbo leftPanelFbo, rightPanelFbo;
   ofFbo leftPanelCompositeFbo, rightPanelCompositeFbo;
-  float compositeScale, sidePanelWidth, sidePanelHeight;
+  void drawSidePanels(float xleft, float xright, float w, float h);
+
+  TonemapShader tonemapShader;
 
   ModPtrs modPtrs;
   FboConfigPtrs fboConfigPtrs;
@@ -102,14 +112,12 @@ private:
   ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
   ofParameter<float> gammaParameter { "gamma", 2.2, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
-  ofParameter<float> sideExposureParameter { "sideExposure", 0.3, 0.0, 4.0 };
+  ofParameter<float> sideExposureParameter { "sideExposure", 0.2, 0.0, 4.0 };
 
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
 #endif
-  ofFbo imageCompositeFbo;
-  TonemapShader tonemapShader;
   
   bool guiVisible { true };
   ofxPanel gui;

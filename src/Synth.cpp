@@ -8,6 +8,7 @@
 #include "Synth.hpp"
 #include "ofxTimeMeasurements.h"
 #include "ofxTinyEXR.h"
+#include "ofConstants.h"
 
 namespace ofxMarkSynth {
 
@@ -87,25 +88,25 @@ Mod(name_, std::move(config))
 {
   tonemapShader.load();
   
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   std::filesystem::create_directories(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
   std::filesystem::create_directories(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
   std::filesystem::create_directories(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name));
 #endif
 
-#ifndef TARGET_OS_IOS
-  recorder.setup(/*video*/true, /*audio*/false, ofGetWindowSize(), /*fps*/30.0, /*bitrate*/10000);
+#ifdef TARGET_MAC
+  recorderCompositeFbo.allocate(1920, 1080, GL_RGB);
+  recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/10000);
   recorder.setOverWrite(true);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
-  recorderCompositeFbo.allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB);
 #endif
 }
 
 void Synth::shutdown() {
   ofLogNotice() << "Synth::shutdown " << name << std::endl;
   
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   if (recorder.isRecording()) {
     ofLogNotice() << "Stopping recording" << std::endl;
     recorder.stop();
@@ -134,10 +135,10 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
   if (sidePanelWidth > 0.0) {
     sidePanelHeight = ofGetWindowHeight();
-    leftPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
-    leftPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
-    rightPanelFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
-    rightPanelCompositeFbo.allocate(sidePanelWidth, compositeSize_.y, GL_RGB16F);
+    leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+    leftPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+    rightPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+    rightPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
   }
 
   parameters = getParameterGroup();
@@ -199,10 +200,36 @@ void Synth::update() {
   updateSidePanels();
 }
 
-// TODO: Could the draw to composite be a Mod that could then forward an FBO?
-void Synth::draw() {
-  TSGL_START("Synth::draw");
+glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
+  float x = ofRandom(bounds.x / 4.0, bounds.x * 3.0 / 4.0 - rectSize.x);
+  float y = ofRandom(bounds.y / 4.0, bounds.y * 3.0 / 4.0 - rectSize.y);
+  return { x, y };
+}
+
+// target is the outgoing image; source is the incoming one
+void Synth::updateSidePanels() {
+  if (sidePanelWidth <= 0.0) return;
   
+  if (ofGetElapsedTimef() - leftSidePanelLastUpdate > leftSidePanelTimeoutSecs) {
+    leftSidePanelLastUpdate = ofGetElapsedTimef();
+    leftPanelFbo.swap();
+    glm::vec2 leftPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
+    leftPanelFbo.getSource().begin();
+    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelImageOrigin.x, leftPanelImageOrigin.y);
+    leftPanelFbo.getSource().end();
+  }
+
+  if (ofGetElapsedTimef() - rightSidePanelLastUpdate > rightSidePanelTimeoutSecs) {
+    rightSidePanelLastUpdate = ofGetElapsedTimef();
+    rightPanelFbo.swap();
+    glm::vec2 rightPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
+    rightPanelFbo.getSource().begin();
+    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelImageOrigin.x, rightPanelImageOrigin.y);
+    rightPanelFbo.getSource().end();
+  }
+}
+
+void Synth::drawCompositeImage() {
   imageCompositeFbo.begin();
   {
     ofFloatColor backgroundColor = backgroundColorParameter;
@@ -220,16 +247,60 @@ void Synth::draw() {
     });
   }
   imageCompositeFbo.end();
+}
 
-  drawSidePanels();
+void Synth::drawCompositeSideImages() {
+  if (sidePanelWidth <= 0.0) return;
   
+  float leftCycleElapsed = (ofGetElapsedTimef() - leftSidePanelLastUpdate) / leftSidePanelTimeoutSecs;
+  float rightCycleElapsed = (ofGetElapsedTimef() - rightSidePanelLastUpdate) / rightSidePanelTimeoutSecs;
+
+  // old panels fade out; new panels fade in
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+
+  // Easing helpers (clamped to [0,1])
+  auto easeIn = [&](float x){ return x * x * x; };
+
+  // Left panel
+  leftPanelCompositeFbo.begin();
+  {
+    float alphaIn = easeIn(leftCycleElapsed); // drop quickly, then ease
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
+    leftPanelFbo.getTarget().draw(0.0, 0.0);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
+    leftPanelFbo.getSource().draw(0.0, 0.0);
+  }
+  leftPanelCompositeFbo.end();
+
+  // Right panel
+  rightPanelCompositeFbo.begin();
+  {
+    float alphaIn = easeIn(rightCycleElapsed);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
+    rightPanelFbo.getTarget().draw(0.0, 0.0);
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
+    rightPanelFbo.getSource().draw(0.0, 0.0);
+  }
+  rightPanelCompositeFbo.end();
+}
+
+void Synth::drawSidePanels(float xleft, float xright, float w, float h) {
+  ofSetColor(255);
+  ofSetColor(ofFloatColor { 1.0, 0.0, 0.0, 0.3f });
+  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter);
+  leftPanelCompositeFbo.draw(xleft, 0.0, w, h);
+  rightPanelCompositeFbo.draw(xright, 0.0, w, h);
+  tonemapShader.end();
+}
+
+void Synth::drawMiddlePanel(float w, float h, float scale) {
   ofPushMatrix();
   {
-    ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
+    ofTranslate((w - imageCompositeFbo.getWidth() * scale) / 2.0, (h - imageCompositeFbo.getHeight() * scale) / 2.0);
     
     ofPushMatrix();
     {
-      ofScale(compositeScale, compositeScale);
+      ofScale(scale, scale);
       ofSetColor(255);
       tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter);
       imageCompositeFbo.draw(0.0, 0.0);
@@ -237,20 +308,45 @@ void Synth::draw() {
     }
     ofPopMatrix();
     
+  }
+  ofPopMatrix();
+}
+
+void Synth::drawDebugViews() {
+  ofPushMatrix();
+  {
+    ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
     // For Mods that draw directly and not on an FBO,
     // for example audio data plots and other debug views
-    ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // hack
+    ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // everything needs to draw in [0,1]x[0,1]
     std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
       modPtr->draw();
     });
   }
   ofPopMatrix();
+}
+
+// TODO: Could the draw to composite be a Mod that could then forward an FBO?
+void Synth::draw() {
+  TSGL_START("Synth::draw");
   
-#ifndef TARGET_OS_IOS
+  drawCompositeImage();
+  drawCompositeSideImages();
+  
+  ofBlendMode(OF_BLENDMODE_DISABLED);
+  drawSidePanels(0.0, ofGetWindowWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
+  drawMiddlePanel(ofGetWindowWidth(), ofGetWindowHeight(), compositeScale);
+  drawDebugViews();
+
+#ifdef TARGET_MAC
   if (recorder.isRecording()) {
     recorderCompositeFbo.begin();
-    imageCompositeFbo.draw(0, 0, recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight());
+    float scale = recorderCompositeFbo.getHeight() / imageCompositeFbo.getHeight(); // could precompute this
+    float sidePanelWidth = (recorderCompositeFbo.getWidth() - imageCompositeFbo.getWidth() * scale) / 2.0; // could precompute this
+    drawSidePanels(0.0, recorderCompositeFbo.getWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
+    drawMiddlePanel(recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight(), scale);
     recorderCompositeFbo.end();
+//    recorderCompositeFbo.draw(0,0);
     ofPixels pixels;
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
@@ -311,7 +407,7 @@ bool Synth::keyPressed(int key) {
     return true;
   }
 
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   if (key == 'R') {
     if (recorder.isRecording()) {
       recorder.stop();
@@ -328,78 +424,6 @@ bool Synth::keyPressed(int key) {
     return modPtr->keyPressed(key);
   });
   return handled;
-}
-
-void Synth::drawSidePanels() {
-  if (sidePanelWidth <= 0.0) return;
-  
-  float leftCycleElapsed = (ofGetElapsedTimef() - leftSidePanelLastUpdate) / leftSidePanelTimeoutSecs;
-  float rightCycleElapsed = (ofGetElapsedTimef() - rightSidePanelLastUpdate) / rightSidePanelTimeoutSecs;
-
-  // old panels fade out; new panels fade in
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-
-  // Easing helpers (clamped to [0,1])
-  auto easeIn = [&](float x){ return x * x * x; };
-
-  // Left panel
-  leftPanelCompositeFbo.begin();
-  {
-    float alphaIn = easeIn(leftCycleElapsed); // drop quickly, then ease
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
-    leftPanelFbo.getTarget().draw(0.0, 0.0);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
-    leftPanelFbo.getSource().draw(0.0, 0.0);
-  }
-  leftPanelCompositeFbo.end();
-
-  // Right panel
-  rightPanelCompositeFbo.begin();
-  {
-    float alphaIn = easeIn(rightCycleElapsed);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
-    rightPanelFbo.getTarget().draw(0.0, 0.0);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
-    rightPanelFbo.getSource().draw(0.0, 0.0);
-  }
-  rightPanelCompositeFbo.end();
-
-  ofSetColor(255);
-  ofSetColor(ofFloatColor { 1.0, 0.0, 0.0, 0.3f });
-  ofBlendMode(OF_BLENDMODE_DISABLED);
-  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter);
-  leftPanelCompositeFbo.draw(0.0, 0.0);
-  rightPanelCompositeFbo.draw(ofGetWindowWidth() - sidePanelWidth, 0.0);
-  tonemapShader.end();
-}
-
-glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
-  float x = ofRandom(bounds.x / 4.0, bounds.x * 3.0 / 4.0 - rectSize.x);
-  float y = ofRandom(bounds.y / 4.0, bounds.y * 3.0 / 4.0 - rectSize.y);
-  return { x, y };
-}
-
-// target is the outgoing image; source is the incoming one
-void Synth::updateSidePanels() {
-  if (sidePanelWidth <= 0.0) return;
-  
-  if (ofGetElapsedTimef() - leftSidePanelLastUpdate > leftSidePanelTimeoutSecs) {
-    leftSidePanelLastUpdate = ofGetElapsedTimef();
-    leftPanelFbo.swap();
-    glm::vec2 leftPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
-    leftPanelFbo.getSource().begin();
-    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelImageOrigin.x, leftPanelImageOrigin.y);
-    leftPanelFbo.getSource().end();
-  }
-
-  if (ofGetElapsedTimef() - rightSidePanelLastUpdate > rightSidePanelTimeoutSecs) {
-    rightSidePanelLastUpdate = ofGetElapsedTimef();
-    rightPanelFbo.swap();
-    glm::vec2 rightPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
-    rightPanelFbo.getSource().begin();
-    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelImageOrigin.x, rightPanelImageOrigin.y);
-    rightPanelFbo.getSource().end();
-  }
 }
 
 ofParameterGroup& Synth::getFboParameterGroup() {
