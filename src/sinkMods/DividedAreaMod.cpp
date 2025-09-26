@@ -173,7 +173,7 @@ void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
       majorLineColorParameter = ofFloatColor(v.x, v.y, v.z, v.w);
       break;
     default:
-      ofLogError() << "ofFloatColor receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

@@ -44,48 +44,50 @@ void CollageMod::update() {
     path.setFilled(true);
     path.setColor(c);
     path.draw();
-  }
-  
-  ofFloatColor c;
-  if (strategyParameter == 1) {
-    c = colorParameter;
-  } else {
-    c = ofFloatColor(1.0, 1.0, 1.0, 1.0);
-  }
-  c *= strengthParameter; c.a *= strengthParameter;
     
-  glEnable(GL_STENCIL_TEST);
-  glClear(GL_STENCIL_BUFFER_BIT);
-
-  // Setup stencil: write 1s where path is drawn
-  glStencilFunc(GL_ALWAYS, 1, 1);
-  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-  glColorMask(false, false, false, false);
-
-  path.setFilled(true);
-  path.draw();
-
-  // Now only draw where stencil is 1
-  glStencilFunc(GL_EQUAL, 1, 1);
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-  glColorMask(true, true, true, true);
-
-  ofEnableBlendMode(OF_BLENDMODE_DISABLED); // reset first
-  glEnable(GL_BLEND);
-  glBlendEquation(GL_FUNC_ADD);
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  
-  ofSetColor(c);
-  
-  ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
-  float x = normalisedPathBounds.x;
-  float y = normalisedPathBounds.y;
-  float w = normalisedPathBounds.width;
-  float h = normalisedPathBounds.height;
-
-  snapshotFbo.draw(x, y, w, h);
-
-  glDisable(GL_STENCIL_TEST);
+  } else {
+    ofFloatColor c;
+    if (strategyParameter == 1) {
+      c = colorParameter;
+    } else {
+      c = ofFloatColor(1.0, 1.0, 1.0, 1.0);
+    }
+    c *= strengthParameter; c.a *= strengthParameter;
+    
+    glEnable(GL_STENCIL_TEST);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    
+    // Setup stencil: write 1s where path is drawn
+    glStencilFunc(GL_ALWAYS, 1, 1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glColorMask(false, false, false, false);
+    
+    path.setFilled(true);
+    path.draw();
+    
+    // Now only draw where stencil is 1
+    glStencilFunc(GL_EQUAL, 1, 1);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glColorMask(true, true, true, true);
+    
+    ofEnableBlendMode(OF_BLENDMODE_DISABLED); // reset first
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    
+    ofSetColor(c);
+    ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
+    float x = normalisedPathBounds.x;
+    float y = normalisedPathBounds.y;
+    float w = normalisedPathBounds.width;
+    float h = normalisedPathBounds.height;
+    
+    // TODO: limit the scaling to some limit, and optionally crop
+    
+    snapshotFbo.draw(x, y, w, h);
+    
+    glDisable(GL_STENCIL_TEST);
+  }
   
   fboPtr->getSource().end();
   path.clear();
