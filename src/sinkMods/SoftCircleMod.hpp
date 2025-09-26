@@ -40,7 +40,8 @@ private:
   ofParameter<float> radiusVarianceParameter { "RadiusVariance", 0.0, 0.0, 1.0 };
   ofParameter<float> radiusVarianceScaleParameter { "RadiusVarianceScale", 0.001, 0.0, 1.0 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
-  ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 };
+  ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 }; // RGB
+  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A
   ofParameter<float> softnessParameter { "Softness", 0.3, 0.0, 1.0 };
 
   std::vector<glm::vec2> newPoints;

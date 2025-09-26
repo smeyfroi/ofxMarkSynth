@@ -23,6 +23,7 @@ void SoftCircleMod::initParameters() {
   parameters.add(radiusVarianceScaleParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
+  parameters.add(alphaMultiplierParameter);
   parameters.add(softnessParameter);
 }
 
@@ -38,6 +39,7 @@ void SoftCircleMod::update() {
   float multiplier = colorMultiplierParameter;
   ofFloatColor c = colorParameter;
   c *= multiplier;
+  c.a *= alphaMultiplierParameter;
   
   float softness = softnessParameter;
 
