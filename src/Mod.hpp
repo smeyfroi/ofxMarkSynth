@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 
 // See ofGLUtils ofGetGLInternalFormat
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
 constexpr GLint FLOAT_A_MODE = GL_RGBA32F;
 constexpr GLint FLOAT_MODE = GL_RGB32F;
 constexpr GLint INT_A_MODE = GL_RGBA8;

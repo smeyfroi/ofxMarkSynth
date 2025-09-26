@@ -26,12 +26,12 @@ VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&
 }
 
 VideoFlowSourceMod::~VideoFlowSourceMod() {
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   if (saveRecording) recorder.stop();
 #endif
 }
 
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
 void VideoFlowSourceMod::initRecorder() {
   recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/6000);
   recorder.setOverWrite(true);
@@ -59,7 +59,7 @@ void VideoFlowSourceMod::update() {
 void VideoFlowSourceMod::draw() {
   motionFromVideo.draw();
   
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   if (saveRecording) {
     if (!recorder.isRecording()) initRecorder();
     ofPixels pixels;

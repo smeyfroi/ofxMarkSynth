@@ -9,7 +9,7 @@
 
 #include "Mod.hpp"
 #include "ofxMotionFromVideo.h"
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
 #include "ofxFFmpegRecorder.h"
 #endif
 
@@ -37,7 +37,7 @@ private:
   
   bool saveRecording;
   std::string recordingDir;
-#ifndef TARGET_OS_IOS
+#ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
   void initRecorder();
 #endif
