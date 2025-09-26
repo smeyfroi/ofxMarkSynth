@@ -11,10 +11,10 @@
 namespace ofxMarkSynth {
 
 
-ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float fieldValueOffset_)
+ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float fieldValueOffset_, int particleCount_)
 : Mod { name, std::move(config) }
 {
-  particleField.setup(700'000, ofFloatColor(1.0, 1.0, 1.0, 0.3), fieldValueOffset_);
+  particleField.setup(particleCount_, ofFloatColor(1.0, 1.0, 1.0, 0.3), fieldValueOffset_);
 }
 
 void ParticleFieldMod::initParameters() {
