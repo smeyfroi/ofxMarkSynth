@@ -53,8 +53,8 @@ public:
   virtual void draw() {};
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
-  void addSink(int sourceId, ModPtr sinkModPtr, int sinkId);
-  bool hasSinkFor(int sourceId); // can't be const because connections is not mutable
+  void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
+//  bool hasSinkFor(int sourceId); // can't be const because connections is not mutable
   virtual float bidToReceive(int sinkId) { return 0.0; };
   virtual void receive(int sinkId, const glm::vec1& point);
   virtual void receive(int sinkId, const glm::vec2& point);

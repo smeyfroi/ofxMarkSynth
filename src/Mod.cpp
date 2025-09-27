@@ -40,7 +40,7 @@ ofParameterGroup& Mod::getParameterGroup() {
   return parameters;
 }
 
-void Mod::addSink(int sourceId, ModPtr sinkModPtr, int sinkId) {
+void Mod::connect(int sourceId, ModPtr sinkModPtr, int sinkId) {
   if (! (connections.contains(sourceId) && connections[sourceId] != nullptr)) {
     auto sinksPtr = std::make_unique<Sinks>();
     sinksPtr->emplace_back(std::pair {sinkModPtr, sinkId});
@@ -50,11 +50,11 @@ void Mod::addSink(int sourceId, ModPtr sinkModPtr, int sinkId) {
   }
 }
 
-bool Mod::hasSinkFor(int sourceId) {
-  return (connections.contains(sourceId) &&
-          connections[sourceId] != nullptr &&
-          !connections[sourceId]->empty());
-}
+//bool Mod::hasSinkFor(int sourceId) {
+//  return (connections.contains(sourceId) &&
+//          connections[sourceId] != nullptr &&
+//          !connections[sourceId]->empty());
+//}
 
 template<typename T>
 void Mod::emit(int sourceId, const T& value) {
