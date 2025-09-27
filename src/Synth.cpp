@@ -26,11 +26,14 @@ void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
 
 
 
+uint SaveToFileThread::activeThreadCount = 0;
+
 void SaveToFileThread::save(const std::string& filepath_, ofFloatPixels&& pixels_)
 {
   pixels = pixels_;
   filepath = filepath_;
   startThread();
+  activeThreadCount++;
 }
 
 void SaveToFileThread::threadedFunction() {
@@ -38,6 +41,7 @@ void SaveToFileThread::threadedFunction() {
   
   ofxTinyEXR exrIO;
   bool saved = exrIO.savePixels(pixels, filepath);
+  activeThreadCount--;
   if (!saved) ofLogWarning() << "Failed to save EXR image";
   
   ofLogNotice() << "Done saving drawing to " << filepath;
@@ -100,6 +104,7 @@ Mod(name_, std::move(config))
   recorder.setOverWrite(true);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
+//  recorder.setVideoCodec("h264"); // doesn't work, nor h265
 #endif
 }
 
@@ -144,6 +149,9 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   parameters = getParameterGroup();
   gui.setup(parameters);
   minimizeAllGuiGroupsRecursive(gui);
+
+  gui.add(recorderStatus.setup("Recording", ""));
+  gui.add(saveStatus.setup("Saving", ""));
 }
 
 void Synth::receive(int sinkId, const glm::vec4& v) {
@@ -181,6 +189,9 @@ void Synth::receive(int sinkId, const float& v) {
 }
 
 void Synth::update() {
+  recorderStatus = ofToString(recorder.isRecording());
+  saveStatus = ofToString(SaveToFileThread::activeThreadCount);
+  
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();

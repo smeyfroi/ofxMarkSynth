@@ -24,6 +24,7 @@ struct SaveToFileThread : public ofThread {
   void threadedFunction();
   std::string filepath;
   ofFloatPixels pixels;
+  static uint activeThreadCount;
 };
 
 
@@ -105,6 +106,8 @@ private:
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   
+  ofxLabel recorderStatus;
+  ofxLabel saveStatus;
   ofParameterGroup displayParameters;
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
