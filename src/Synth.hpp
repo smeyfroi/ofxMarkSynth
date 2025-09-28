@@ -62,7 +62,7 @@ ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& n
 class Synth : public Mod {
   
 public:
-  Synth(const std::string& name, const ModConfig&& config);
+  Synth(const std::string& name, const ModConfig&& config, bool startPaused = true);
   void shutdown();
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void receive(int sinkId, const glm::vec4& v) override;
@@ -80,6 +80,8 @@ protected:
   void initParameters() override;
 
 private:
+  bool paused;
+  
   void updateSidePanels();
   float leftSidePanelLastUpdate { 0.0 };
   float rightSidePanelLastUpdate { 0.0 };
@@ -108,6 +110,7 @@ private:
   
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
+  ofxLabel pauseStatus;
   ofParameterGroup displayParameters;
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };

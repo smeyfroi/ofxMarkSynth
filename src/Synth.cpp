@@ -87,8 +87,9 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 
 
 
-Synth::Synth(const std::string& name_, const ModConfig&& config) :
-Mod(name_, std::move(config))
+Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused) :
+Mod(name_, std::move(config)),
+paused { startPaused }
 {
   tonemapShader.load();
   
@@ -150,8 +151,9 @@ void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::v
   gui.setup(parameters);
   minimizeAllGuiGroupsRecursive(gui);
 
+  gui.add(pauseStatus.setup("Paused", ""));
   gui.add(recorderStatus.setup("Recording", ""));
-  gui.add(saveStatus.setup("Saving", ""));
+  gui.add(saveStatus.setup("# Image Saves", ""));
 }
 
 void Synth::receive(int sinkId, const glm::vec4& v) {
@@ -189,8 +191,11 @@ void Synth::receive(int sinkId, const float& v) {
 }
 
 void Synth::update() {
-  recorderStatus = ofToString(recorder.isRecording());
+  pauseStatus = paused ? "Yes" : "No";
+  recorderStatus = recorder.isRecording() ? "Yes" : "No";
   saveStatus = ofToString(SaveToFileThread::activeThreadCount);
+  
+  if (paused) return;
   
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     if (fcptr->clearOnUpdate) {
@@ -350,7 +355,7 @@ void Synth::draw() {
   drawDebugViews();
 
 #ifdef TARGET_MAC
-  if (recorder.isRecording()) {
+  if (!paused && recorder.isRecording()) {
     recorderCompositeFbo.begin();
     float scale = recorderCompositeFbo.getHeight() / imageCompositeFbo.getHeight(); // could precompute this
     float sidePanelWidth = (recorderCompositeFbo.getWidth() - imageCompositeFbo.getWidth() * scale) / 2.0; // could precompute this
@@ -378,6 +383,15 @@ void Synth::setGuiSize(glm::vec2 size) {
 
 bool Synth::keyPressed(int key) {
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
+  
+  if (key == OF_KEY_SPACE) {
+    paused = not paused;
+    // We don't need to pause Mods individually yet, but if we did:
+//    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
+//      modPtr->setPaused(paused);
+//    });
+    return true;
+  }
 
   // >>> Deal with the `[+=][0-9]` chords
   if (key == '+') {
