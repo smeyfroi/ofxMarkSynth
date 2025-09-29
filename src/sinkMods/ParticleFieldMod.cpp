@@ -35,7 +35,7 @@ void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
       particleField.setField(value);
       break;
     default:
-      ofLogError() << "ofPixels receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
