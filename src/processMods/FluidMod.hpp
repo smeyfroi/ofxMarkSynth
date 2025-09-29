@@ -18,6 +18,7 @@ class FluidMod : public Mod {
 public:
   FluidMod(const std::string& name, const ModConfig&& config);
   void update() override;
+  void setup();
 
   static constexpr int SINK_VALUES_FBO = SINK_FBO;
   static constexpr int SINK_VELOCITIES_FBO = SINK_FBO_2;

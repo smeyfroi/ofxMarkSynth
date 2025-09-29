@@ -27,7 +27,8 @@ public:
 
   static constexpr int SINK_VEC2 = 10;
   static constexpr int SINK_FLOAT = 11;
-  static constexpr int SINK_FIELD_FBO = 20;
+  static constexpr int SINK_FIELD_1_FBO = 20;
+  static constexpr int SINK_FIELD_2_FBO = 21;
 
 protected:
   void initParameters() override;
@@ -37,13 +38,16 @@ private:
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.998, 0.9, 1.0 };
 //  ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
   ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
-  ofParameter<float> fieldMultiplierParameter { "FieldMultiplier", 0.001, 0.0, 0.01 };
-//  ofParameter<glm::vec2> fieldBiasParameter { "FieldBias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
-  ofParameter<glm::vec2> fieldBiasParameter { "FieldBias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
+  ofParameter<float> field1MultiplierParameter { "Field1Multiplier", 0.001, 0.0, 0.1 };
+//  ofParameter<glm::vec2> field1BiasParameter { "Field1Bias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
+  ofParameter<glm::vec2> field1BiasParameter { "Field1Bias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
+  ofParameter<float> field2MultiplierParameter { "Field2Multiplier", 0.005, 0.0, 0.1 };
+//  ofParameter<glm::vec2> field2BiasParameter { "Field2Bias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
+  ofParameter<glm::vec2> field2BiasParameter { "Field2Bias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
 
   SmearShader smearShader;
   
-  ofFbo fieldFbo;
+  ofFbo field1Fbo, field2Fbo;
 };
 
 

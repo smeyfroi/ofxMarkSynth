@@ -19,7 +19,7 @@ void FluidMod::initParameters() {
   parameters.add(fluidSimulation.getParameterGroup());
 }
 
-void FluidMod::update() {
+void FluidMod::setup() {
   if (!fluidSimulation.isSetup()) {
     if (fboPtrs[0] && fboPtrs[1]) {
       fluidSimulation.setup(fboPtrs[0], fboPtrs[1]);
@@ -27,8 +27,12 @@ void FluidMod::update() {
       return;
     }
   }
-  
+}
+
+void FluidMod::update() {
+  setup();
   assert(fboPtrs[0]->getSource().isAllocated() && fboPtrs[1]->getSource().isAllocated());
+  
   fluidSimulation.update();
 }
 
