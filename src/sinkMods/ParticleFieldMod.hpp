@@ -16,12 +16,13 @@ namespace ofxMarkSynth {
 class ParticleFieldMod : public Mod {
   
 public:
-  ParticleFieldMod(const std::string& name, const ModConfig&& config, float fieldValueOffset_ = 0.5, int particleCount_ = 500'000);
+  ParticleFieldMod(const std::string& name, const ModConfig&& config, float field1Bias_ = -0.5, float field2Bias_ = -0.5, int particleCount_ = 500'000);
   void update() override;
   void receive(int sinkId, const ofFbo& value) override;
 
-  static constexpr int SINK_FIELD_FBO = 11;
-  
+  static constexpr int SINK_FIELD_1_FBO = 20;
+  static constexpr int SINK_FIELD_2_FBO = 21;
+
 protected:
   void initParameters() override;
   

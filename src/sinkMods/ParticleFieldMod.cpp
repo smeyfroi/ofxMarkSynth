@@ -11,10 +11,10 @@
 namespace ofxMarkSynth {
 
 
-ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float fieldValueOffset_, int particleCount_)
+ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float field1ValueOffset_, float field2ValueOffset_, int particleCount_)
 : Mod { name, std::move(config) }
 {
-  particleField.setup(particleCount_, ofFloatColor(1.0, 1.0, 1.0, 0.3), fieldValueOffset_);
+  particleField.setup(particleCount_, ofFloatColor(1.0, 1.0, 1.0, 0.3), field1ValueOffset_, field2ValueOffset_);
 }
 
 void ParticleFieldMod::initParameters() {
@@ -31,8 +31,11 @@ void ParticleFieldMod::update() {
 
 void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
   switch (sinkId) {
-    case SINK_FIELD_FBO:
-      particleField.setField(value);
+    case SINK_FIELD_1_FBO:
+      particleField.setField1(value.getTexture());
+      break;
+    case SINK_FIELD_2_FBO:
+      particleField.setField2(value.getTexture());
       break;
     default:
       ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
