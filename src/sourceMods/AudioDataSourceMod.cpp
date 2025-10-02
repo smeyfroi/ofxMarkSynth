@@ -39,25 +39,23 @@ float AudioDataSourceMod::getNormalisedAnalysisScalar(float minParameter, float 
 }
 
 void AudioDataSourceMod::emitPitchRmsPoints() {
-  float x = getNormalisedAnalysisScalar(minPitchParameter,
-                              maxPitchParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::pitch);
-  float y = getNormalisedAnalysisScalar(minRmsParameter,
-                              maxRmsParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+  float x = getNormalisedAnalysisScalar(minPitchParameter, maxPitchParameter,
+                                        ofxAudioAnalysisClient::AnalysisScalar::pitch);
+  float y = getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
+                                        ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
   emit(SOURCE_PITCH_RMS_POINTS, glm::vec2 { x, y });
 }
 
 void AudioDataSourceMod::emitPolarPitchRmsPoints() {
   // Note that pitch is wrapped around within the min/max range
 //  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
-  float pitch = getNormalisedAnalysisScalar(minPitchParameter,
-                                            maxPitchParameter,
+  float pitch = getNormalisedAnalysisScalar(minPitchParameter, maxPitchParameter,
                                             ofxAudioAnalysisClient::AnalysisScalar::pitch);
-  float rms = getNormalisedAnalysisScalar(minRmsParameter,
-                                maxRmsParameter,
-                                ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
-  float angle = std::fmod(2 * pitch * glm::two_pi<float>(), glm::two_pi<float>()); // map pitch to two circumferences to avoid bunching
+  // 0.7 to get into the corners
+  float rms = 0.7 * getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
+                                          ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+  // map pitch to two circumferences to avoid bunching
+  float angle = std::fmod(2 * pitch * glm::two_pi<float>(), glm::two_pi<float>());
   float x = rms * std::cos(angle);
   float y = rms * std::sin(angle);
   x += 0.5; y += 0.5;
@@ -82,9 +80,7 @@ void AudioDataSourceMod::emitSpectralPoints() {
 }
 
 void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
-  float s = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
-                              maxComplexSpectralDifferenceParameter,
-                              scalar);
+  float s = getNormalisedAnalysisScalar(minParameter, maxParameter, scalar);
   emit(sourceId, s);
 }
 
