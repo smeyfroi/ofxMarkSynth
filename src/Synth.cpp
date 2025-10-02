@@ -213,7 +213,13 @@ void Synth::update() {
     TSGL_STOP(modPtr->name);
   });
   
+  TSGL_START("Synth-updateComposites");
+  TS_START("Synth-updateComposites");
+  updateCompositeImage();
+  updateCompositeSideImages();
   updateSidePanels();
+  TS_STOP("Synth-updateComposites");
+  TSGL_STOP("Synth-updateComposites");
 }
 
 glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
@@ -245,7 +251,7 @@ void Synth::updateSidePanels() {
   }
 }
 
-void Synth::drawCompositeImage() {
+void Synth::updateCompositeImage() {
   imageCompositeFbo.begin();
   {
     ofFloatColor backgroundColor = backgroundColorParameter;
@@ -265,7 +271,7 @@ void Synth::drawCompositeImage() {
   imageCompositeFbo.end();
 }
 
-void Synth::drawCompositeSideImages() {
+void Synth::updateCompositeSideImages() {
   if (sidePanelWidth <= 0.0) return;
   
   float leftCycleElapsed = (ofGetElapsedTimef() - leftSidePanelLastUpdate) / leftSidePanelTimeoutSecs;
@@ -345,9 +351,6 @@ void Synth::drawDebugViews() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   TSGL_START("Synth::draw");
-  
-  drawCompositeImage();
-  drawCompositeSideImages();
   
   ofBlendMode(OF_BLENDMODE_DISABLED);
   drawSidePanels(0.0, ofGetWindowWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);

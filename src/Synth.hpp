@@ -74,6 +74,7 @@ public:
   bool keyPressed(int key) override;
   ofParameterGroup& getFboParameterGroup();
   
+  static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SINK_BACKGROUND_COLOR = 100;
 
 protected:
@@ -81,25 +82,25 @@ protected:
 
 private:
   bool paused;
+
+  float compositeScale;
+  ofFbo imageCompositeFbo;
+  void updateCompositeImage();
   
-  void updateSidePanels();
+  float sidePanelWidth, sidePanelHeight;
+  PingPongFbo leftPanelFbo, rightPanelFbo;
+  ofFbo leftPanelCompositeFbo, rightPanelCompositeFbo;
+  void updateCompositeSideImages();
+  
   float leftSidePanelLastUpdate { 0.0 };
   float rightSidePanelLastUpdate { 0.0 };
   float leftSidePanelTimeoutSecs { 7.0 };
   float rightSidePanelTimeoutSecs { 11.0 };
+  void updateSidePanels();
 
-  float compositeScale;
-  ofFbo imageCompositeFbo;
-  void drawCompositeImage();
-  
-  void drawCompositeSideImages();
   void drawMiddlePanel(float w, float h, float scale);
-  void drawDebugViews();
-
-  float sidePanelWidth, sidePanelHeight;
-  PingPongFbo leftPanelFbo, rightPanelFbo;
-  ofFbo leftPanelCompositeFbo, rightPanelCompositeFbo;
   void drawSidePanels(float xleft, float xright, float w, float h);
+  void drawDebugViews();
 
   TonemapShader tonemapShader;
 
@@ -118,7 +119,7 @@ private:
   ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
   ofParameter<float> gammaParameter { "gamma", 2.2, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
-  ofParameter<float> sideExposureParameter { "sideExposure", 0.2, 0.0, 4.0 };
+  ofParameter<float> sideExposureParameter { "sideExposure", 0.25, 0.0, 4.0 };
 
 #ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
