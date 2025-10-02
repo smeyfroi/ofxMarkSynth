@@ -220,6 +220,8 @@ void Synth::update() {
   updateSidePanels();
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
+  
+  emit(Synth::SOURCE_COMPOSITE_FBO, imageCompositeFbo);
 }
 
 glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {

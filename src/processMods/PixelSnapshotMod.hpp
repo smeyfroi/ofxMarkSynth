@@ -19,8 +19,10 @@ public:
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
+  void receive(int sinkId, const ofFbo& value) override;
 
-  static constexpr int SOURCE_SNAPSHOT = 10; // FBO snapshot
+  static constexpr int SINK_SNAPSHOT_SOURCE = 10;
+  static constexpr int SOURCE_SNAPSHOT = 11;
 
 protected:
   void initParameters() override;
@@ -30,8 +32,9 @@ private:
   ofParameter<float> snapshotsPerUpdateParameter { "SnapshotsPerUpdate", 1.0/30.0, 0.0, 1.0 };
   ofParameter<int> sizeParameter { "Size", 1024, 0, 10240 }; // must be smaller than the source FBO
   
+  ofFbo sourceFbo;
   ofFbo snapshotFbo;
-  const ofFbo createSnapshot(const FboPtr& fboPtr);
+  const ofFbo createSnapshot(const ofFbo& fbo);
 
   bool visible = false;
 };

@@ -20,12 +20,13 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
 void DividedAreaMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(angleParameter);
+  parameters.add(pathWidthParameter);
   parameters.add(minorLineColorParameter);
   parameters.add(majorLineColorParameter);
   parameters.add(dividedArea.getParameterGroup());
 }
 
-void DividedAreaMod::addConstrainedLinesThroughPointPairs() {
+void DividedAreaMod::addConstrainedLinesThroughPointPairs(float width) {
   const ofFloatColor minorDividerColor = minorLineColorParameter;
   int pairs = newMinorAnchors.size() / 2;
   for (int i = 0; i < pairs; i++) {
@@ -33,7 +34,7 @@ void DividedAreaMod::addConstrainedLinesThroughPointPairs() {
     newMinorAnchors.pop_back();
     auto p2 = newMinorAnchors.back();
     newMinorAnchors.pop_back();
-    dividedArea.addConstrainedDividerLine(p1, p2, minorDividerColor);
+    dividedArea.addConstrainedDividerLine(p1, p2, minorDividerColor, width);
   }
 }
 
@@ -136,6 +137,7 @@ void DividedAreaMod::receive(int sinkId, const ofPath& path) {
           }
         }
       }
+      addConstrainedLinesThroughPointPairs(pathWidthParameter); // add lines for a path immediately
       break;
     default:
       ofLogError() << "ofPath receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;

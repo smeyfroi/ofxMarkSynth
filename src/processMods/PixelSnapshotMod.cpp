@@ -21,32 +21,43 @@ void PixelSnapshotMod::initParameters() {
 }
 
 void PixelSnapshotMod::update() {
-  auto fboPtr = fboPtrs[0];
-  if (!fboPtr) return;
+  if (!sourceFbo.isAllocated()) return;
 
   updateCount += snapshotsPerUpdateParameter;
   if (updateCount >= 1.0) {
-    emit(SOURCE_SNAPSHOT, createSnapshot(fboPtr));
+    emit(SOURCE_SNAPSHOT, createSnapshot(sourceFbo));
     updateCount = 0;
   }
 }
 
-const ofFbo PixelSnapshotMod::createSnapshot(const FboPtr& fboPtr) {
+const ofFbo PixelSnapshotMod::createSnapshot(const ofFbo& fbo) {
   if (snapshotFbo.getWidth() != sizeParameter || snapshotFbo.getHeight() != sizeParameter) {
     snapshotFbo.allocate(sizeParameter, sizeParameter, GL_RGBA8);
   }
 
   // This is built for snapshots from a very large source
-  int x = ofRandom(0, fboPtr->getWidth() - snapshotFbo.getWidth());
-  int y = ofRandom(0, fboPtr->getHeight() - snapshotFbo.getHeight());
+  int x = ofRandom(0, fbo.getWidth() - snapshotFbo.getWidth());
+  int y = ofRandom(0, fbo.getHeight() - snapshotFbo.getHeight());
   
   snapshotFbo.begin();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
-  fboPtr->getSource().draw(-x, -y);
+  fbo.draw(-x, -y);
   snapshotFbo.end();
 
   return snapshotFbo;
+}
+
+void PixelSnapshotMod::receive(int sinkId, const ofFbo& value) {
+  switch (sinkId) {
+    case SINK_SNAPSHOT_SOURCE:
+      //  ofxMarkSynth::fboCopyBlit(newFieldFbo, fieldFbo);
+      //  ofxMarkSynth::fboCopyDraw(newFieldFbo, fieldFbo);
+      sourceFbo = value;
+      break;
+    default:
+      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
 }
 
 void PixelSnapshotMod::draw() {

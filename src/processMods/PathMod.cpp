@@ -19,14 +19,16 @@ PathMod::PathMod(const std::string& name, const ModConfig&& config)
 void PathMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(maxVerticesParameter);
-  parameters.add(vertexProximityParameter);
+  parameters.add(minVertexProximityParameter);
+  parameters.add(maxVertexProximityParameter);
 }
 
 std::vector<glm::vec2> PathMod::findCloseNewPoints() const {
   std::vector<glm::vec2> result;
   glm::vec2 previousVec { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
   std::for_each(newVecs.crbegin(), newVecs.crend(), [&](const auto& v) { // start from the back, which is the newest points
-    if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > vertexProximityParameter) return;
+    if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > maxVertexProximityParameter) return;
+    if (glm::distance2(previousVec, v) < minVertexProximityParameter) return;
     result.push_back(v);
     previousVec = v;
   });
@@ -35,9 +37,16 @@ std::vector<glm::vec2> PathMod::findCloseNewPoints() const {
 
 ofPath makePolyPath(const std::vector<glm::vec2>& points) {
   ofPath path;
+  bool firstVertex = true;
   std::for_each(points.crbegin(), points.crend(), [&](const auto& p) {
-    path.lineTo(p);
+    if (firstVertex) {
+      path.moveTo(p);
+      firstVertex = false;
+    } else {
+      path.lineTo(p);
+    }
   });
+  path.close();
   return path;
 }
 
@@ -51,7 +60,7 @@ ofPath makeConvexHullPath(const std::vector<glm::vec2>& points) {
   
   std::vector<glm::vec2> hullPoints;
   auto validEndIter = std::remove_if(hullOfPoints.begin(), hullOfPoints.end(),
-                                     [](const auto& p) { return (p.x == 0.0 && p.y == 0.0); });
+                                     [](const auto& p) { return (std::abs(p.x) < std::numeric_limits<float>::epsilon() && std::abs(p.y) < std::numeric_limits<float>::epsilon()); });
   std::transform(hullOfPoints.begin(), validEndIter, std::back_inserter(hullPoints),
                  [](const ofPoint& v) { return glm::vec2 { v.x, v.y }; });
   
@@ -110,7 +119,7 @@ void PathMod::update() {
   }
 
   path.setColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
-  path.setFilled(true);
+//  path.setFilled(true);
   newVecs.clear();
   emit(SOURCE_PATH, path);
 }

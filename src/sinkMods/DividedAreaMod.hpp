@@ -45,13 +45,14 @@ private:
   ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
   ofParameter<ofFloatColor> minorLineColorParameter { "MinorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.01 };
   float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;
   std::vector<glm::vec2> newMinorAnchors;
   DividedArea dividedArea;
   
-  void addConstrainedLinesThroughPointPairs();
+  void addConstrainedLinesThroughPointPairs(float width = -1.0); // default delegates to DividedArea
   void addConstrainedLinesThroughPointAngles();
   void addConstrainedLinesRadiating();
 

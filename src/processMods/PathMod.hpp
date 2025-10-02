@@ -31,7 +31,8 @@ private:
   float updateCount;
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 3 }; // 0=polypath; 1=bounds; 2=horizontals; 3=convex hull
   ofParameter<int> maxVerticesParameter { "MaxVertices", 3, 0, 20 };
-  ofParameter<float> vertexProximityParameter { "VertexProximity", 0.1, 0.0, 1.0 };
+  ofParameter<float> maxVertexProximityParameter { "MaxVertexProximity", 0.07, 0.0, 1.0 };
+  ofParameter<float> minVertexProximityParameter { "MinVertexProximity", 0.01, 0.0, 1.0 };
   
   std::deque<glm::vec2> newVecs;
   std::vector<glm::vec2> findCloseNewPoints() const;
