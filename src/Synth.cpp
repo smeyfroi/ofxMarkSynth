@@ -101,7 +101,7 @@ paused { startPaused }
 
 #ifdef TARGET_MAC
   recorderCompositeFbo.allocate(1920, 1080, GL_RGB);
-  recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/10000);
+  recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/12000);
   recorder.setOverWrite(true);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
