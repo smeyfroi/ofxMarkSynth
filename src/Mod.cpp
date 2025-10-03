@@ -10,6 +10,20 @@
 namespace ofxMarkSynth {
 
 
+
+ModPtr findModPtrByName(const std::vector<ModPtr>& mods, const std::string& name) {
+  auto it = std::find_if(mods.begin(), mods.end(), [&name](const ModPtr& modPtr) {
+//    ofLogNotice() << "Looking for Mod with name " << name << ", checking Mod with name " << modPtr->name;
+    return modPtr->name == name;
+  });
+  if (it == mods.end()) {
+    ofLogError() << "No mod found with name " << name;
+    ofExit();
+  }
+  return *it;
+}
+
+
 Mod::Mod(const std::string& name_, const ModConfig&& config_)
 : name { name_ },
 config { std::move(config_) },

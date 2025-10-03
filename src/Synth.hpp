@@ -63,7 +63,7 @@ class Synth : public Mod {
   
 public:
   Synth(const std::string& name, const ModConfig&& config, bool startPaused = true);
-  void shutdown();
+  void shutdown() override;
   void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;

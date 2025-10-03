@@ -112,6 +112,10 @@ paused { startPaused }
 void Synth::shutdown() {
   ofLogNotice() << "Synth::shutdown " << name << std::endl;
   
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
+    modPtr->shutdown();
+  });
+  
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {
     ofLogNotice() << "Stopping recording" << std::endl;
@@ -353,7 +357,6 @@ void Synth::drawDebugViews() {
 // TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   TSGL_START("Synth::draw");
-  
   ofBlendMode(OF_BLENDMODE_DISABLED);
   drawSidePanels(0.0, ofGetWindowWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
   drawMiddlePanel(ofGetWindowWidth(), ofGetWindowHeight(), compositeScale);
@@ -367,7 +370,6 @@ void Synth::draw() {
     drawSidePanels(0.0, recorderCompositeFbo.getWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
     drawMiddlePanel(recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight(), scale);
     recorderCompositeFbo.end();
-//    recorderCompositeFbo.draw(0,0);
     ofPixels pixels;
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);

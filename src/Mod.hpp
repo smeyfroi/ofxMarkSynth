@@ -41,6 +41,7 @@ using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 using FboPtr = std::shared_ptr<PingPongFbo>;
 using FboPtrs = std::vector<FboPtr>;
 
+ModPtr findModPtrByName(const std::vector<ModPtr>& mods, const std::string& name);
 
 // NOTE: A Mod will emit its FboPtrs when they are received, which means
 // that dependents need to be hooked up BEFORE the FboPtrs are sent to Mods.
@@ -49,6 +50,7 @@ class Mod {
 public:
   Mod(const std::string& name, const ModConfig&& config);
   virtual ~Mod() = default;
+  virtual void shutdown() {};
   virtual void update() {};
   virtual void draw() {};
   virtual bool keyPressed(int key) { return false; };

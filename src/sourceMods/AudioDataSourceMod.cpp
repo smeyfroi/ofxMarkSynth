@@ -12,10 +12,23 @@
 namespace ofxMarkSynth {
 
 
-AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&& config, std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr_)
-: Mod { name, std::move(config) },
-  audioDataProcessorPtr { audioDataProcessorPtr_ }
-{}
+AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&& config, const std::string& micDeviceName, bool recordAudio, const std::filesystem::path& recordingPath)
+: Mod { name, std::move(config) }
+{
+  //      audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav");
+  //      audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Bell Plates.wav");
+  //      audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Sound Bath.wav");
+  //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-trombone-melody.wav");
+  //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/nightsong.wav");
+  //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/treganna.wav");
+
+    std::filesystem::create_directory(recordingPath);
+    audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(micDeviceName, recordAudio, recordingPath);
+
+    audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
+    audioDataProcessorPtr->setDefaultValiditySpecs();
+    audioDataPlotsPtr = std::make_shared<ofxAudioData::Plots>(audioDataProcessorPtr);
+}
 
 void AudioDataSourceMod::initParameters() {
   parameters.add(minPitchParameter);
@@ -86,19 +99,68 @@ void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxP
 
 void AudioDataSourceMod::update() {
   if (!audioDataProcessorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no audioDataProcessor"; return; }
-  if (audioDataProcessorPtr->isDataUpdated(lastUpdated)) {
-    lastUpdated = audioDataProcessorPtr->getLastUpdateTimestamp();
-    if (connections.contains(SOURCE_PITCH_RMS_POINTS)) emitPitchRmsPoints();
-    if (connections.contains(SOURCE_POLAR_PITCH_RMS_POINTS)) emitPolarPitchRmsPoints();
-    if (connections.contains(SOURCE_SPECTRAL_POINTS)) emitSpectralPoints();
-    if (connections.contains(SOURCE_PITCH_SCALAR)) emitScalar(SOURCE_PITCH_SCALAR, minPitchParameter, maxPitchParameter, ofxAudioAnalysisClient::AnalysisScalar::pitch);
-    if (connections.contains(SOURCE_RMS_SCALAR)) emitScalar(SOURCE_RMS_SCALAR, minRmsParameter, maxRmsParameter, ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
-    if (connections.contains(SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR)) emitScalar(SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR, minComplexSpectralDifferenceParameter, maxComplexSpectralDifferenceParameter, ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
-    if (connections.contains(SOURCE_SPECTRAL_CREST_SCALAR)) emitScalar(SOURCE_SPECTRAL_CREST_SCALAR, minSpectralCrestParameter, maxSpectralCrestParameter, ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
-    if (connections.contains(SOURCE_ZERO_CROSSING_RATE_SCALAR)) emitScalar(SOURCE_ZERO_CROSSING_RATE_SCALAR, minZeroCrossingRateParameter, maxZeroCrossingRateParameter, ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
-    if (audioDataProcessorPtr->detectOnset1()) emit(SOURCE_ONSET1, 1.0f);
-    if (audioDataProcessorPtr->detectTimbreChange1()) emit(SOURCE_TIMBRE_CHANGE, 1.0f);
+  audioDataProcessorPtr->update();
+  
+  if (!audioDataProcessorPtr->isDataUpdated(lastUpdated)) return;
+  
+  lastUpdated = audioDataProcessorPtr->getLastUpdateTimestamp();
+  
+  for (const auto& [sourceId, sinks] : connections) {
+    switch (sourceId) {
+      case SOURCE_PITCH_RMS_POINTS:
+        emitPitchRmsPoints();
+        break;
+      case SOURCE_POLAR_PITCH_RMS_POINTS:
+        emitPolarPitchRmsPoints();
+        break;
+      case SOURCE_SPECTRAL_POINTS:
+        emitSpectralPoints();
+        break;
+      case SOURCE_PITCH_SCALAR:
+        emitScalar(SOURCE_PITCH_SCALAR, minPitchParameter, maxPitchParameter,
+                   ofxAudioAnalysisClient::AnalysisScalar::pitch);
+        break;
+      case SOURCE_RMS_SCALAR:
+        emitScalar(SOURCE_RMS_SCALAR, minRmsParameter, maxRmsParameter,
+                   ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+        break;
+      case SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR:
+        emitScalar(SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR, minComplexSpectralDifferenceParameter,
+                   maxComplexSpectralDifferenceParameter,
+                   ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+        break;
+      case SOURCE_SPECTRAL_CREST_SCALAR:
+        emitScalar(SOURCE_SPECTRAL_CREST_SCALAR, minSpectralCrestParameter, maxSpectralCrestParameter,
+                   ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+        break;
+      case SOURCE_ZERO_CROSSING_RATE_SCALAR:
+        emitScalar(SOURCE_ZERO_CROSSING_RATE_SCALAR, minZeroCrossingRateParameter, maxZeroCrossingRateParameter,
+                   ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
+        break;
+      default:
+        break;
+    }
   }
+  
+  if (audioDataProcessorPtr->detectOnset1()) emit(SOURCE_ONSET1, 1.0f);
+  if (audioDataProcessorPtr->detectTimbreChange1()) emit(SOURCE_TIMBRE_CHANGE, 1.0f);
+}
+
+bool AudioDataSourceMod::keyPressed(int key) {
+  if (audioAnalysisClientPtr->keyPressed(key)) return true;
+  if (audioDataPlotsPtr->keyPressed(key)) return true;
+  return false;
+}
+
+void AudioDataSourceMod::draw() {
+  ofPushMatrix();
+  audioDataPlotsPtr->drawPlots();
+  ofPopMatrix();
+}
+
+void AudioDataSourceMod::shutdown() {
+  audioAnalysisClientPtr->stopRecording();
+  audioAnalysisClientPtr->closeStream();
 }
 
 
