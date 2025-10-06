@@ -67,12 +67,13 @@ void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, 
   fboPtr->allocate(settings);
 }
 
-void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples) {
+const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
+void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples) {
   allocateFbo(fboPtr, size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->getSource().begin();
-  fboPtr->getSource().clearColorBuffer(clearColor);
+  fboPtr->getSource().clearColorBuffer(DEFAULT_CLEAR_COLOR);
   fboPtr->getSource().end();
-  fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearColor, clearOnUpdate, blendMode));
+  fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearOnUpdate, blendMode));
 }
 
 
@@ -105,7 +106,7 @@ paused { startPaused }
   recorder.setOverWrite(true);
   recorder.setFFmpegPathToAddonsPath();
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
-//  recorder.setVideoCodec("h264"); // doesn't work, nor h265
+//  recorder.setVideoCodec("libx264"); // doesn't work, nor h265
 #endif
 }
 
@@ -204,7 +205,7 @@ void Synth::update() {
   std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
     if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();
-      ofClear(fcptr->clearColor);
+      ofClear(DEFAULT_CLEAR_COLOR);
       fcptr->fboPtr->getSource().end();
     }
   });
@@ -376,6 +377,11 @@ void Synth::draw() {
 #endif
 
   TSGL_STOP("Synth::draw");
+}
+
+void Synth::audioCallback(float* buffer, int bufferSize, int nChannels) {
+  if (!recorder.isRecording()) return;
+//  recorder.addBuffer(buffer, bufferSize, nChannels);
 }
 
 void Synth::drawGui() {

@@ -31,7 +31,6 @@ struct SaveToFileThread : public ofThread {
 struct FboConfig {
   std::string name;
   std::shared_ptr<PingPongFbo> fboPtr;
-  ofFloatColor clearColor;
   bool clearOnUpdate;
   ofBlendMode blendMode;
 };
@@ -41,7 +40,7 @@ using FboConfigPtrs = std::vector<FboConfigPtr>;
 
 // Enable setting the GL wrap mode easily
 void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap = GL_CLAMP_TO_EDGE, bool useStencil = false, int numSamples = 0); // GL_REPEAT
-void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, ofFloatColor clearColor, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples);
+void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples);
 
 
 template <typename ModT>
