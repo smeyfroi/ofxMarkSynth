@@ -26,6 +26,7 @@ public:
   void receive(int sinkId, const ofPath& path) override;
   void receive(int sinkId, const float& point) override;
   void receive(int sinkId, const glm::vec4& v) override;
+  void receive(int sinkId, const ofFbo& v) override;
   float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_MAJOR_ANCHORS = 1;
@@ -33,6 +34,7 @@ public:
   static constexpr int SINK_MINOR_PATH = 20;
   static constexpr int SINK_MINOR_LINES_COLOR = 30;
   static constexpr int SINK_MAJOR_LINES_COLOR = 31;
+  static constexpr int SINK_BACKGROUND_SOURCE = 100; // for refraction on major lines
 
   // SINK_FBO for drawing constrained lines
   // SINK_FBO_2 for drawing unconstrained lines
@@ -56,6 +58,7 @@ private:
   void addConstrainedLinesThroughPointAngles();
   void addConstrainedLinesRadiating();
 
+  ofFbo backgroundFbo;
 };
 
 

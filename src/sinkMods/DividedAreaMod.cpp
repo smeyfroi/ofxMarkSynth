@@ -85,25 +85,25 @@ void DividedAreaMod::update() {
   const float minLineWidth = 110.0;
 
   // draw unconstrained
-  auto fboPtr0 = fboPtrs[0];
-  if (fboPtr0 != nullptr) {
+  auto fboPtr0 = fboPtrs[0]; // MajorLines
+  if (fboPtr0 != nullptr && backgroundFbo.isAllocated()) {
     fboPtr0->getSource().begin();
     const ofFloatColor majorDividerColor = majorLineColorParameter;
-    dividedArea.draw({},
-                     { minLineWidth, maxLineWidth, majorDividerColor },
-                     fboPtr0->getWidth());
-//    ofSetColor(majorDividerColor);
-//    dividedArea.draw(0.0, 20.0, 0.0, fboPtr1->getWidth());
+//    dividedArea.draw({},
+//                     { minLineWidth, maxLineWidth, majorDividerColor },
+//                     fboPtr0->getWidth());
+    ofSetColor(majorDividerColor);
+    dividedArea.draw(0.0, 200.0, fboPtr0->getWidth(), backgroundFbo);
     fboPtr0->getSource().end();
   }
 
   // draw constrained
-  auto fboPtr1 = fboPtrs[1];
+  auto fboPtr1 = fboPtrs[1]; // Minor Lines
   if (fboPtr1 != nullptr) {
     fboPtr1->getSource().begin();
-    dividedArea.drawInstanced(fboPtr0->getWidth());
+    dividedArea.drawInstanced(fboPtr1->getWidth());
 //    ofSetColor(minorDividerColor);
-//    dividedArea.draw(0.0, 0.0, 10.0, fboPtr0->getWidth());
+//    dividedArea.draw(0.0, 0.0, 10.0, fboPtr1->getWidth());
     fboPtr1->getSource().end();
   }
 }
@@ -176,6 +176,16 @@ void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
+  switch (sinkId) {
+    case SINK_BACKGROUND_SOURCE:
+      backgroundFbo = v;
+      break;
+    default:
+      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
