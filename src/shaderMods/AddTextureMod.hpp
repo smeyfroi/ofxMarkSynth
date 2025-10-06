@@ -26,7 +26,7 @@ public:
   void receive(int sinkId, const ofFloatPixels& pixels) override;
 
   static constexpr int SINK_SCALE = 10;
-  static constexpr int SINK_TARGET_FBO = SINK_FBO_BEGIN;
+  static constexpr int SINK_TARGET_FBO = SINK_FBOPTR_BEGIN;
   static constexpr int SINK_ADD_PIXELS = 100;
   
 protected:

@@ -27,7 +27,7 @@ ModPtr findModPtrByName(const std::vector<ModPtr>& mods, const std::string& name
 Mod::Mod(const std::string& name_, const ModConfig&& config_)
 : name { name_ },
 config { std::move(config_) },
-fboPtrs(SINK_FBO_END - SINK_FBO_BEGIN)
+fboPtrs(SINK_FBOPTR_END - SINK_FBOPTR_BEGIN)
 {}
 
 bool trySetParameterFromString(ofParameterGroup& group, const std::string& name, const std::string& stringValue) {
@@ -113,9 +113,9 @@ void Mod::receive(int sinkId, const float& point) {
 }
 
 void Mod::receive(int sinkId, const FboPtr& fboPtr_) {
-  if (sinkId >= SINK_FBO_BEGIN && sinkId <= SINK_FBO_END) {
-    fboPtrs[sinkId - SINK_FBO_BEGIN] = fboPtr_;
-    emit(SOURCE_FBO_BEGIN + sinkId - SINK_FBO_BEGIN, fboPtr_);
+  if (sinkId >= SINK_FBOPTR_BEGIN && sinkId <= SINK_FBOPTR_END) {
+    fboPtrs[sinkId - SINK_FBOPTR_BEGIN] = fboPtr_;
+//    emit(SOURCE_FBOPTR_BEGIN + sinkId - SINK_FBOPTR_BEGIN, fboPtr_);
   } else {
     ofLogError() << "FboPtr receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
