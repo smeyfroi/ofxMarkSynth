@@ -354,7 +354,6 @@ void Synth::drawDebugViews() {
   ofPopMatrix();
 }
 
-// TODO: Could the draw to composite be a Mod that could then forward an FBO?
 void Synth::draw() {
   TSGL_START("Synth::draw");
   ofBlendMode(OF_BLENDMODE_DISABLED);
