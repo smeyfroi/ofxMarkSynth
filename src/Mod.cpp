@@ -115,7 +115,6 @@ void Mod::receive(int sinkId, const float& point) {
 void Mod::receive(int sinkId, const FboPtr& fboPtr_) {
   if (sinkId >= SINK_FBOPTR_BEGIN && sinkId <= SINK_FBOPTR_END) {
     fboPtrs[sinkId - SINK_FBOPTR_BEGIN] = fboPtr_;
-//    emit(SOURCE_FBOPTR_BEGIN + sinkId - SINK_FBOPTR_BEGIN, fboPtr_);
   } else {
     ofLogError() << "FboPtr receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
