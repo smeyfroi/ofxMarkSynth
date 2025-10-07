@@ -43,8 +43,6 @@ using FboPtrs = std::vector<FboPtr>;
 
 ModPtr findModPtrByName(const std::vector<ModPtr>& mods, const std::string& name);
 
-// NOTE: A Mod will emit its FboPtrs when they are received, which means
-// that dependents need to be hooked up BEFORE the FboPtrs are sent to Mods.
 class Mod {
   
 public:
@@ -56,9 +54,7 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
-//  bool hasSinkFor(int sourceId); // can't be const because connections is not mutable
   virtual float bidToReceive(int sinkId) { return 0.0; };
-  virtual void receive(int sinkId, const glm::vec1& point);
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
   virtual void receive(int sinkId, const glm::vec4& point);

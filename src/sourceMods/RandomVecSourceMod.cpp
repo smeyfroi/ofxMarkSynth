@@ -28,9 +28,6 @@ void RandomVecSourceMod::update() {
 
   for (int i = 0; i < vecsToCreate; i++) {
     switch (vecDimensions) {
-      case SOURCE_VEC1:
-        emit(SOURCE_VEC1, createRandomVec1());
-        break;
       case SOURCE_VEC2:
         emit(SOURCE_VEC2, createRandomVec2());
         break;
@@ -45,10 +42,6 @@ void RandomVecSourceMod::update() {
         break;
     }
   }
-}
-
-const glm::vec1 RandomVecSourceMod::createRandomVec1() const {
-  return glm::vec1 { ofRandom() };
 }
 
 const glm::vec2 RandomVecSourceMod::createRandomVec2() const {

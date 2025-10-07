@@ -133,11 +133,7 @@ void Synth::shutdown() {
 }
 
 void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_) {
-  if (std::any_of(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
-    return fcptr->fboPtr->getSource().isAllocated();
-  })) ofLogError() << "Unallocated FBO";
   fboConfigPtrs = std::move(fboConfigPtrs_);
-  
   modPtrs = std::move(modPtrs_);
   
   imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB16F);
