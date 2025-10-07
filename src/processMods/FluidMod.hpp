@@ -20,8 +20,8 @@ public:
   void update() override;
   void setup();
 
-  static constexpr int SINK_VALUES_FBO = SINK_FBOPTR;
-  static constexpr int SINK_VELOCITIES_FBO = SINK_FBOPTR_2;
+  static constexpr int SINK_VALUES_FBOPTR = SINK_FBOPTR;
+  static constexpr int SINK_VELOCITIES_FBOPTR = SINK_FBOPTR_2;
   
 protected:
   void initParameters() override;
