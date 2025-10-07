@@ -23,6 +23,7 @@ public:
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
+  void registerAudioCallback(ofxAudioAnalysisClient::LocalGistClient::AudioFrameCallback audioFrameCallback);
 
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
   static constexpr int SOURCE_POLAR_PITCH_RMS_POINTS = 2;

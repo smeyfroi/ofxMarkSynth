@@ -12,21 +12,17 @@
 #ifdef TARGET_MAC
 #include "ofxFFmpegRecorder.h"
 #endif
-#include "ofThread.h"
 #include "TonemapShader.h"
+#include <unordered_map>
+#include "SaveToFileThread.hpp"
+
 
 
 namespace ofxMarkSynth {
 
 
-struct SaveToFileThread : public ofThread {
-  void save(const std::string& filepath_, ofFloatPixels&& pixels_);
-  void threadedFunction();
-  std::string filepath;
-  ofFloatPixels pixels;
-  static uint activeThreadCount;
-};
 
+const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
 
 struct FboConfig {
   std::string name;
@@ -36,38 +32,33 @@ struct FboConfig {
 };
 
 using FboConfigPtr = std::shared_ptr<FboConfig>;
-using FboConfigPtrs = std::vector<FboConfigPtr>;
+using FboConfigPtrMap = std::map<std::string, FboConfigPtr>;
+using ModMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 
-// Enable setting the GL wrap mode easily
-void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap = GL_CLAMP_TO_EDGE, bool useStencil = false, int numSamples = 0); // GL_REPEAT
-void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples);
-
-
-template <typename ModT>
-ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
-  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
-  modPtrs.push_back(modPtr);
-  return modPtr;
-}
-
-template <typename ModT, typename... Args>
-ofxMarkSynth::ModPtr addMod(ofxMarkSynth::ModPtrs& modPtrs, const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
-  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
-  modPtrs.push_back(modPtr);
-  return modPtr;
-}
 
 
 class Synth : public Mod {
   
 public:
-  Synth(const std::string& name, const ModConfig&& config, bool startPaused = true);
+  Synth(const std::string& name, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_);
+  void configureGui();
   void shutdown() override;
-  void configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_);
+  
+  template <typename ModT>
+  ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
+  template <typename ModT, typename... Args>
+  ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
+  ofxMarkSynth::ModPtr getMod(const std::string& name) const { return mods.at(name); }
+  FboPtr addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples);
+  
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
   void update() override;
+  glm::vec2 getSize() const { return compositeSize; }
   void draw() override;
+
+  void audioCallback(float* buffer, int bufferSize, int nChannels);
+
   void drawGui();
   void setGuiSize(glm::vec2 size);
   bool keyPressed(int key) override;
@@ -75,13 +66,18 @@ public:
   
   static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SINK_BACKGROUND_COLOR = 100;
-
+  
 protected:
   void initParameters() override;
 
 private:
+  ModMap mods;
+  FboConfigPtrMap fboConfigPtrs;
+  
   bool paused;
-
+  
+  TonemapShader tonemapShader;
+  glm::vec2 compositeSize;
   float compositeScale;
   ofFbo imageCompositeFbo;
   void updateCompositeImage();
@@ -101,16 +97,8 @@ private:
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
 
-  TonemapShader tonemapShader;
-
-  ModPtrs modPtrs;
-  FboConfigPtrs fboConfigPtrs;
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
-  
-  ofxLabel recorderStatus;
-  ofxLabel saveStatus;
-  ofxLabel pauseStatus;
   ofParameterGroup displayParameters;
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
@@ -119,19 +107,37 @@ private:
   ofParameter<float> gammaParameter { "gamma", 2.2, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
   ofParameter<float> sideExposureParameter { "sideExposure", 0.25, 0.0, 4.0 };
+  ofxLabel recorderStatus;
+  ofxLabel saveStatus;
+  ofxLabel pauseStatus;
+  
+  bool guiVisible { true };
+  ofxPanel gui;
+  bool plusKeyPressed { false };
+  bool equalsKeyPressed { false };
 
 #ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
 #endif
   
-  bool guiVisible { true };
-  ofxPanel gui;
-  bool plusKeyPressed { false };
-  bool equalsKeyPressed { false };
-  
   std::vector<SaveToFileThread*> saveToFileThreads;
 };
+
+
+template <typename ModT>
+ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
+  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
+  mods.insert({ name, modPtr });
+  return modPtr;
+}
+
+template <typename ModT, typename... Args>
+ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
+  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
+  mods.insert({ name, modPtr });
+  return modPtr;
+}
 
 
 std::string saveFilePath(const std::string& filename);

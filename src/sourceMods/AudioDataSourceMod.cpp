@@ -30,6 +30,10 @@ AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&
     audioDataPlotsPtr = std::make_shared<ofxAudioData::Plots>(audioDataProcessorPtr);
 }
 
+void AudioDataSourceMod::registerAudioCallback(ofxAudioAnalysisClient::LocalGistClient::AudioFrameCallback audioFrameCallback) {
+  audioAnalysisClientPtr->setAudioFrameCallback(audioFrameCallback);
+}
+
 void AudioDataSourceMod::initParameters() {
   parameters.add(minPitchParameter);
   parameters.add(maxPitchParameter);

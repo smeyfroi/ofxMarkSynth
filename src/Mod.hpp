@@ -41,8 +41,6 @@ using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 using FboPtr = std::shared_ptr<PingPongFbo>;
 using FboPtrs = std::vector<FboPtr>;
 
-ModPtr findModPtrByName(const std::vector<ModPtr>& mods, const std::string& name);
-
 class Mod {
   
 public:

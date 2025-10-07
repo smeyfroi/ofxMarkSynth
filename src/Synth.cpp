@@ -7,74 +7,12 @@
 
 #include "Synth.hpp"
 #include "ofxTimeMeasurements.h"
-#include "ofxTinyEXR.h"
 #include "ofConstants.h"
+#include "GuiUtil.hpp"
+
+
 
 namespace ofxMarkSynth {
-
-
-
-void minimizeAllGuiGroupsRecursive(ofxGuiGroup& guiGroup) {
-  for (int i = 0; i < guiGroup.getNumControls(); ++i) {
-    auto control = guiGroup.getControl(i);
-    if (auto childGuiGroup = dynamic_cast<ofxGuiGroup*>(control)) {
-      childGuiGroup->minimize();
-      minimizeAllGuiGroupsRecursive(*childGuiGroup);
-    }
-  }
-}
-
-
-
-uint SaveToFileThread::activeThreadCount = 0;
-
-void SaveToFileThread::save(const std::string& filepath_, ofFloatPixels&& pixels_)
-{
-  pixels = pixels_;
-  filepath = filepath_;
-  startThread();
-  activeThreadCount++;
-}
-
-void SaveToFileThread::threadedFunction() {
-  ofLogNotice() << "Saving drawing to " << filepath;
-  
-  ofxTinyEXR exrIO;
-  bool saved = exrIO.savePixels(pixels, filepath);
-  activeThreadCount--;
-  if (!saved) ofLogWarning() << "Failed to save EXR image";
-  
-  ofLogNotice() << "Done saving drawing to " << filepath;
-}
-
-
-
-// See ofFbo.cpp #allocate
-void allocateFbo(FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool useStencil, int numSamples) {
-  ofFboSettings settings { nullptr };
-  settings.wrapModeVertical = wrap;
-  settings.wrapModeHorizontal = wrap;
-  
-  settings.width = size.x;
-  settings.height = size.y;
-  settings.internalformat = internalFormat;
-  settings.numSamples = numSamples;
-  
-  settings.useDepth = false;
-  settings.useStencil = useStencil;
-  settings.textureTarget = GL_TEXTURE_2D;
-
-  fboPtr->allocate(settings);
-}
-
-const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
-void addFboConfigPtr(FboConfigPtrs& fboConfigPtrs, std::string name, FboPtr fboPtr, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples) {
-  allocateFbo(fboPtr, size, internalFormat, wrap, useStencil, numSamples);
-  fboPtr->getSource().begin();
-  fboPtr->getSource().clearColorBuffer(DEFAULT_CLEAR_COLOR);
-  fboPtr->getSource().end();
-  fboConfigPtrs.emplace_back(std::make_shared<FboConfig>(name, fboPtr, clearOnUpdate, blendMode));
-}
 
 
 
@@ -88,10 +26,23 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 
 
 
-Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused) :
+Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_) :
 Mod(name_, std::move(config)),
-paused { startPaused }
+paused { startPaused },
+compositeSize { compositeSize_ }
 {
+  imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
+  compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
+  
+  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
+  if (sidePanelWidth > 0.0) {
+    sidePanelHeight = ofGetWindowHeight();
+    leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+    leftPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+    rightPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+    rightPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
+  }
+
   tonemapShader.load();
   
 #ifdef TARGET_MAC
@@ -110,10 +61,22 @@ paused { startPaused }
 #endif
 }
 
+// FIXME: this has to be called after all Mods are added to build the GUI from the child GUIs
+void Synth::configureGui() {
+  parameters = getParameterGroup();
+  gui.setup(parameters);
+  minimizeAllGuiGroupsRecursive(gui);
+
+  gui.add(pauseStatus.setup("Paused", ""));
+  gui.add(recorderStatus.setup("Recording", ""));
+  gui.add(saveStatus.setup("# Image Saves", ""));
+}
+
 void Synth::shutdown() {
   ofLogNotice() << "Synth::shutdown " << name << std::endl;
   
-  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
+  std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
+    const auto& [name, modPtr] = pair;
     modPtr->shutdown();
   });
   
@@ -132,29 +95,13 @@ void Synth::shutdown() {
   });
 }
 
-void Synth::configure(FboConfigPtrs&& fboConfigPtrs_, ModPtrs&& modPtrs_, glm::vec2 compositeSize_) {
-  fboConfigPtrs = std::move(fboConfigPtrs_);
-  modPtrs = std::move(modPtrs_);
-  
-  imageCompositeFbo.allocate(compositeSize_.x, compositeSize_.y, GL_RGB16F);
-  compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
-  
-  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
-  if (sidePanelWidth > 0.0) {
-    sidePanelHeight = ofGetWindowHeight();
-    leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-    leftPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-    rightPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-    rightPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-  }
-
-  parameters = getParameterGroup();
-  gui.setup(parameters);
-  minimizeAllGuiGroupsRecursive(gui);
-
-  gui.add(pauseStatus.setup("Paused", ""));
-  gui.add(recorderStatus.setup("Recording", ""));
-  gui.add(saveStatus.setup("# Image Saves", ""));
+FboPtr Synth::addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples) {
+  auto fboPtr = std::make_shared<PingPongFbo>();
+  fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
+  fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
+  FboConfigPtr fboConfigPtr = std::make_shared<FboConfig>(name, fboPtr, clearOnUpdate, blendMode);
+  fboConfigPtrs.insert({ name, fboConfigPtr });
+  return fboPtr;
 }
 
 void Synth::receive(int sinkId, const glm::vec4& v) {
@@ -174,7 +121,8 @@ void Synth::receive(int sinkId, const float& v) {
       {
         // make a map of ModPtr to "bid" for this change then find the highest bid and action that Mod
         std::map<ModPtr, float> modBids;
-        std::for_each(modPtrs.cbegin(), modPtrs.cend(), [sinkId, &modBids](auto& modPtr) {
+        std::for_each(mods.cbegin(), mods.cend(), [sinkId, &modBids](const auto& pair) {
+          const auto& [name, modPtr] = pair;
           modBids[modPtr] = modPtr->bidToReceive(sinkId);
         });
         auto winningModIt = std::max_element(modBids.cbegin(), modBids.cend(), [](const auto& a, const auto& b) {
@@ -198,7 +146,8 @@ void Synth::update() {
   
   if (paused) return;
   
-  std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
+  std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this](const auto& pair) {
+    const auto& [name, fcptr] = pair;
     if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();
       ofClear(DEFAULT_CLEAR_COLOR);
@@ -206,12 +155,13 @@ void Synth::update() {
     }
   });
   
-  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
-    TSGL_START(modPtr->name);
-    TS_START(modPtr->name);
+  std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
+    const auto& [name, modPtr] = pair;
+    TSGL_START(name);
+    TS_START(name);
     modPtr->update();
-    TS_STOP(modPtr->name);
-    TSGL_STOP(modPtr->name);
+    TS_STOP(name);
+    TSGL_STOP(name);
   });
   
   TSGL_START("Synth-updateComposites");
@@ -262,7 +212,8 @@ void Synth::updateCompositeImage() {
     ofClear(backgroundColor);
     
     size_t i = 0;
-    std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this, &i](const auto& fcptr) {
+    std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this, &i](const auto& pair) {
+      const auto& [name, fcptr] = pair;
       ofEnableBlendMode(fcptr->blendMode);
       float layerAlpha = fboParameters.getFloat(i);
       ++i;
@@ -344,7 +295,8 @@ void Synth::drawDebugViews() {
     // For Mods that draw directly and not on an FBO,
     // for example audio data plots and other debug views
     ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // everything needs to draw in [0,1]x[0,1]
-    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](auto& modPtr) {
+    std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
+      const auto& [name, modPtr] = pair;
       modPtr->draw();
     });
   }
@@ -453,7 +405,8 @@ bool Synth::keyPressed(int key) {
   }
 #endif
 
-  bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&key](auto& modPtr) {
+  bool handled = std::any_of(mods.cbegin(), mods.cend(), [&key](const auto& pair) {
+    const auto& [name, modPtr] = pair;
     return modPtr->keyPressed(key);
   });
   return handled;
@@ -462,7 +415,8 @@ bool Synth::keyPressed(int key) {
 ofParameterGroup& Synth::getFboParameterGroup() {
   if (fboParameters.size() == 0) {
     fboParameters.setName("Layers");
-    std::for_each(fboConfigPtrs.begin(), fboConfigPtrs.end(), [this](const auto& fcptr) {
+    std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this](const auto& pair) {
+      const auto& [name, fcptr] = pair;
       auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, 1.0, 0.0, 1.0);
       fboParamPtrs.push_back(fboParam);
       fboParameters.add(*fboParam);
@@ -482,7 +436,8 @@ void Synth::initParameters() {
   displayParameters.add(sideExposureParameter);
   parameters.add(displayParameters);
   parameters.add(getFboParameterGroup());
-  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
+  std::for_each(mods.cbegin(), mods.cend(), [this](const auto& pair) {
+    const auto& [name, modPtr] = pair;
     ofParameterGroup& pg = modPtr->getParameterGroup();
     if (pg.size() != 0) parameters.add(pg);
   });
