@@ -62,16 +62,9 @@ public:
   virtual void receive(int sinkId, const ofPath& path);
   virtual void receive(int sinkId, const ofFbo& fbo);
 
-  static constexpr int SOURCE_FBOPTR_BEGIN = -100;
-  static constexpr int SOURCE_FBOPTR = SOURCE_FBOPTR_BEGIN;
-  static constexpr int SOURCE_FBOPTR_2 = SOURCE_FBOPTR + 1;
-  static constexpr int SOURCE_FBOPTR_3 = SOURCE_FBOPTR_2 + 1;
-  static constexpr int SOURCE_FBOPTR_4 = SOURCE_FBOPTR_3 + 1;
-  static constexpr int SOURCE_FBOPTR_END = SOURCE_FBOPTR_4;
-  
   static constexpr int SINK_FBOPTR_BEGIN = -200;
-  static constexpr int SINK_FBOPTR = SINK_FBOPTR_BEGIN;
-  static constexpr int SINK_FBOPTR_2 = SINK_FBOPTR + 1;
+  static constexpr int SINK_FBOPTR_1 = SINK_FBOPTR_BEGIN;
+  static constexpr int SINK_FBOPTR_2 = SINK_FBOPTR_1 + 1;
   static constexpr int SINK_FBOPTR_3 = SINK_FBOPTR_2 + 1;
   static constexpr int SINK_FBOPTR_4 = SINK_FBOPTR_3 + 1;
   static constexpr int SINK_FBOPTR_END = SINK_FBOPTR_4;
