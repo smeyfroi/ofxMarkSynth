@@ -29,6 +29,7 @@ struct FboConfig {
   std::shared_ptr<PingPongFbo> fboPtr;
   bool clearOnUpdate;
   ofBlendMode blendMode;
+  bool isDrawn;
 };
 
 using FboConfigPtr = std::shared_ptr<FboConfig>;
@@ -49,7 +50,7 @@ public:
   template <typename ModT, typename... Args>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return mods.at(name); }
-  FboPtr addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples);
+  FboPtr addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;

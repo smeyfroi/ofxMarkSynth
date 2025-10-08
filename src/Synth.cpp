@@ -95,11 +95,11 @@ void Synth::shutdown() {
   });
 }
 
-FboPtr Synth::addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples) {
+FboPtr Synth::addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
   auto fboPtr = std::make_shared<PingPongFbo>();
   fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
-  FboConfigPtr fboConfigPtr = std::make_shared<FboConfig>(name, fboPtr, clearOnUpdate, blendMode);
+  FboConfigPtr fboConfigPtr = std::make_shared<FboConfig>(name, fboPtr, clearOnUpdate, blendMode, isDrawn);
   fboConfigPtrs.insert({ name, fboConfigPtr });
   return fboPtr;
 }
@@ -148,6 +148,7 @@ void Synth::update() {
   
   std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
+    if (!fcptr->isDrawn) return;
     if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();
       ofClear(DEFAULT_CLEAR_COLOR);
