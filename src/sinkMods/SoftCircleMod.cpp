@@ -28,9 +28,10 @@ void SoftCircleMod::initParameters() {
 }
 
 void SoftCircleMod::update() {
-  auto fboPtr = fboPtrs[0];
-  if (fboPtr == nullptr) return;
-  
+  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt) return;
+  auto fboPtr = fboPtrOpt.value();
+
   float radius = radiusParameter;
   float radiusVariance = radiusVarianceParameter;
   float radiusVarianceScale = radiusVarianceScaleParameter;

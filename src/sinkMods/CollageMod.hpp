@@ -24,6 +24,8 @@ public:
   void receive(int sinkId, const ofFbo& value) override;
   void receive(int sinkId, const glm::vec4& v) override;
   
+  static constexpr std::string OUTLINE_FBOPTR_NAME { "outlines" };
+
   static constexpr int SINK_PATH = 1;
   static constexpr int SINK_SNAPSHOT_FBO = 11;
   static constexpr int SINK_COLOR = 20;

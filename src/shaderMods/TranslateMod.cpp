@@ -22,8 +22,10 @@ void TranslateMod::initParameters() {
 }
 
 void TranslateMod::update() {
-  auto fboPtr = fboPtrs[0];
-  if (fboPtr == nullptr) return;
+  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt) return;
+  auto fboPtr = fboPtrOpt.value();
+
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   translateShader.render(*fboPtr, translation);
 }

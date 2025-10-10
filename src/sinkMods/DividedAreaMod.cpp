@@ -85,8 +85,10 @@ void DividedAreaMod::update() {
   const float minLineWidth = 110.0;
 
   // draw unconstrained
-  auto fboPtr0 = fboPtrs[0]; // MajorLines
-  if (fboPtr0 != nullptr && backgroundFbo.isAllocated()) {
+  auto fboPtrOpt0 = getNamedFboPtr(MAJOR_LINES_FBOPTR_NAME);
+  if (!fboPtrOpt0) return;
+  auto fboPtr0 = fboPtrOpt0.value();
+  if (backgroundFbo.isAllocated()) { // for the refraction effect
     fboPtr0->getSource().begin();
     const ofFloatColor majorDividerColor = majorLineColorParameter;
 //    dividedArea.draw({},
@@ -98,14 +100,14 @@ void DividedAreaMod::update() {
   }
 
   // draw constrained
-  auto fboPtr1 = fboPtrs[1]; // Minor Lines
-  if (fboPtr1 != nullptr) {
-    fboPtr1->getSource().begin();
-    dividedArea.drawInstanced(fboPtr1->getWidth());
+  auto fboPtrOpt1 = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt1) return;
+  auto fboPtr1 = fboPtrOpt1.value();
+  fboPtr1->getSource().begin();
+  dividedArea.drawInstanced(fboPtr1->getWidth());
 //    ofSetColor(minorDividerColor);
 //    dividedArea.draw(0.0, 0.0, 10.0, fboPtr1->getWidth());
-    fboPtr1->getSource().end();
-  }
+  fboPtr1->getSource().end();
 }
 
 void DividedAreaMod::receive(int sinkId, const glm::vec2& point) {

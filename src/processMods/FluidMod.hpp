@@ -20,8 +20,7 @@ public:
   void update() override;
   void setup();
 
-  static constexpr int SINK_VALUES_FBOPTR = SINK_FBOPTR_1;
-  static constexpr int SINK_VELOCITIES_FBOPTR = SINK_FBOPTR_2;
+  static constexpr std::string VELOCITIES_FBOPTR_NAME { "velocities" };
   
 protected:
   void initParameters() override;

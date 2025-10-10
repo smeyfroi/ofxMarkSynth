@@ -23,9 +23,10 @@ void FluidRadialImpulseMod::initParameters() {
 }
 
 void FluidRadialImpulseMod::update() {
-  auto fboPtr = fboPtrs[0]; // this needs to be the fluid velocities fbo
-  if (fboPtr == nullptr) return;
-  
+  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt) return;
+  auto fboPtr = fboPtrOpt.value();
+
   fboPtr->getSource().begin();
   ofEnableBlendMode(OF_BLENDMODE_ADD);
   std::for_each(newPoints.begin(), newPoints.end(), [this, fboPtr](const auto& p) {

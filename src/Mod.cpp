@@ -11,10 +11,17 @@ namespace ofxMarkSynth {
 
 
 
+void assignFboPtrToMods(FboPtr fboPtr, std::initializer_list<ModFboNamePair> modFboNamePairs) {
+  for (const auto& [modPtr, name] : modFboNamePairs) {
+      modPtr->receiveNamedFboPtr(name, fboPtr);
+  }
+}
+
+
+
 Mod::Mod(const std::string& name_, const ModConfig&& config_)
 : name { name_ },
-config { std::move(config_) },
-fboPtrs(SINK_FBOPTR_END - SINK_FBOPTR_BEGIN)
+config { std::move(config_) }
 {}
 
 bool trySetParameterFromString(ofParameterGroup& group, const std::string& name, const std::string& stringValue) {
@@ -86,14 +93,6 @@ void Mod::receive(int sinkId, const float& value) {
   ofLogError() << "bad receive of float in " << typeid(*this).name();
 }
 
-void Mod::receive(int sinkId, const FboPtr& fboPtr_) {
-  if (sinkId >= SINK_FBOPTR_BEGIN && sinkId <= SINK_FBOPTR_END) {
-    fboPtrs[sinkId - SINK_FBOPTR_BEGIN] = fboPtr_;
-  } else {
-    ofLogError() << "FboPtr receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
-
 void Mod::receive(int sinkId, const ofFloatPixels& pixels) {
   ofLogError() << "bad receive of ofFloatPixels in " << typeid(*this).name();
 }
@@ -104,6 +103,18 @@ void Mod::receive(int sinkId, const ofPath& path) {
 
 void Mod::receive(int sinkId, const ofFbo& fbo) {
   ofLogError() << "bad receive of ofFbo in " << typeid(*this).name();
+}
+
+void Mod::receiveNamedFboPtr(const std::string& name, const FboPtr fboPtr) {
+  FboPtrs& fboPtrs = namedFboPtrs[name];
+  fboPtrs.push_back(fboPtr);
+}
+
+std::optional<FboPtr> Mod::getNamedFboPtr(const std::string& name, size_t index) {
+  if (!namedFboPtrs.contains(name)) return std::nullopt;
+  auto& fboPtrs = namedFboPtrs[name];
+  if (index >= fboPtrs.size()) return std::nullopt;
+  return fboPtrs[index];
 }
 
 

@@ -22,9 +22,10 @@ void ParticleFieldMod::initParameters() {
 }
 
 void ParticleFieldMod::update() {
-  auto fboPtr = fboPtrs[0];
-  if (!fboPtr) return;
-  
+  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt) return;
+  auto fboPtr = fboPtrOpt.value();
+
   particleField.update();
   particleField.draw(fboPtr->getSource());
 }

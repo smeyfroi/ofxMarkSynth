@@ -14,11 +14,8 @@
 #include "PathMod.hpp"
 #include "FluidMod.hpp"
 
-#include "MultiplyMod.hpp"
 #include "TranslateMod.hpp"
 #include "AddTextureMod.hpp"
-#include "LogisticFnMod.hpp"
-#include "ClampMod.hpp"
 #include "SmearMod.hpp"
 
 #include "IntrospectorMod.hpp"

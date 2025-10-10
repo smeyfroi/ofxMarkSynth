@@ -14,6 +14,7 @@
 namespace ofxMarkSynth {
 
 
+
 // See ofGLUtils ofGetGLInternalFormat
 #ifdef TARGET_MAC
 constexpr GLint FLOAT_A_MODE = GL_RGBA32F;
@@ -40,6 +41,18 @@ using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 
 using FboPtr = std::shared_ptr<PingPongFbo>;
 using FboPtrs = std::vector<FboPtr>;
+using NamedFboPtrs = std::unordered_map<std::string, FboPtrs>;
+
+
+
+static constexpr std::string DEFAULT_FBOPTR_NAME { "default" };
+struct ModFboNamePair {
+  ModPtr modPtr;
+  std::string name { DEFAULT_FBOPTR_NAME };
+};
+void assignFboPtrToMods(FboPtr fboPtr, std::initializer_list<ModFboNamePair> modFboNamePairs);
+
+
 
 class Mod {
   
@@ -57,18 +70,13 @@ public:
   virtual void receive(int sinkId, const glm::vec3& point);
   virtual void receive(int sinkId, const glm::vec4& point);
   virtual void receive(int sinkId, const float& value);
-  virtual void receive(int sinkId, const FboPtr& fboPtr);
   virtual void receive(int sinkId, const ofFloatPixels& pixels);
   virtual void receive(int sinkId, const ofPath& path);
   virtual void receive(int sinkId, const ofFbo& fbo);
-
-  static constexpr int SINK_FBOPTR_BEGIN = -200;
-  static constexpr int SINK_FBOPTR_1 = SINK_FBOPTR_BEGIN;
-  static constexpr int SINK_FBOPTR_2 = SINK_FBOPTR_1 + 1;
-  static constexpr int SINK_FBOPTR_3 = SINK_FBOPTR_2 + 1;
-  static constexpr int SINK_FBOPTR_4 = SINK_FBOPTR_3 + 1;
-  static constexpr int SINK_FBOPTR_END = SINK_FBOPTR_4;
-
+  
+  void receiveNamedFboPtr(const std::string& name, const FboPtr fboPtr);
+  std::optional<FboPtr> getNamedFboPtr(const std::string& name, size_t index=0);
+  
   static constexpr int SINK_AUDIO_ONSET = -300;
   static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
 
@@ -80,7 +88,7 @@ protected:
   virtual void initParameters() = 0;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
-  FboPtrs fboPtrs;
+  NamedFboPtrs namedFboPtrs; // named FBOs provided by the Synth that can be drawn on
 };
 
 

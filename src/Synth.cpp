@@ -148,12 +148,10 @@ void Synth::update() {
   
   std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
-    if (!fcptr->isDrawn) return;
-    if (fcptr->clearOnUpdate) {
-      fcptr->fboPtr->getSource().begin();
-      ofClear(DEFAULT_CLEAR_COLOR);
-      fcptr->fboPtr->getSource().end();
-    }
+    if (!fcptr->clearOnUpdate) return;
+    fcptr->fboPtr->getSource().begin();
+    ofClear(DEFAULT_CLEAR_COLOR);
+    fcptr->fboPtr->getSource().end();
   });
   
   std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
@@ -215,6 +213,7 @@ void Synth::updateCompositeImage() {
     size_t i = 0;
     std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this, &i](const auto& pair) {
       const auto& [name, fcptr] = pair;
+      if (!fcptr->isDrawn) return;
       ofEnableBlendMode(fcptr->blendMode);
       float layerAlpha = fboParameters.getFloat(i);
       ++i;

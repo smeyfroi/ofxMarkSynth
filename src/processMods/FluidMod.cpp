@@ -21,8 +21,10 @@ void FluidMod::initParameters() {
 
 void FluidMod::setup() {
   if (!fluidSimulation.isSetup()) {
-    if (fboPtrs[0] && fboPtrs[1]) {
-      fluidSimulation.setup(fboPtrs[0], fboPtrs[1]);
+    auto valuesFboPtr = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+    auto velocitiesFboPtr = getNamedFboPtr(VELOCITIES_FBOPTR_NAME);
+    if (valuesFboPtr && velocitiesFboPtr) {
+      fluidSimulation.setup(valuesFboPtr.value(), velocitiesFboPtr.value());
     } else {
       return;
     }
@@ -30,9 +32,7 @@ void FluidMod::setup() {
 }
 
 void FluidMod::update() {
-  setup();
-  assert(fboPtrs[0]->getSource().isAllocated() && fboPtrs[1]->getSource().isAllocated());
-  
+  setup();  
   fluidSimulation.update();
 }
 

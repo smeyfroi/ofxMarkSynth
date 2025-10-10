@@ -28,20 +28,23 @@ void CollageMod::update() {
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter == 1 && !snapshotFbo.isAllocated()) return;
 
-  auto fboPtr = fboPtrs[0];
-  if (!fboPtr) return;
-  
-  auto fbo2Ptr = fboPtrs[1];
-  if (outlineParameter && fbo2Ptr) {
+  auto fboPtrOpt0 = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt0) return;
+  auto fboPtr0 = fboPtrOpt0.value();
+
+  auto fboPtrOpt1 = getNamedFboPtr(OUTLINE_FBOPTR_NAME);
+  if (outlineParameter && fboPtrOpt1) {
+    auto fboPtr1 = fboPtrOpt1.value();
+
     // punch hole through existing outlines
-    fbo2Ptr->getSource().begin();
-    ofScale(fbo2Ptr->getWidth(), fbo2Ptr->getHeight());
+    fboPtr1->getSource().begin();
+    ofScale(fboPtr1->getWidth(), fboPtr1->getHeight());
     path.setFilled(true);
     ofEnableBlendMode(OF_BLENDMODE_DISABLED);
     path.setColor(ofFloatColor { 0.0, 0.0, 0.0, 0.0 });
     path.draw();
 
-    const float width = 0.002; // TODO: parameterise
+    const float width = 12.0 / fboPtr1->getWidth(); // TODO: parameterise
     const auto& vertices = path.getOutline()[0].getVertices();
     int count = vertices.size();
     std::vector<ofFloatColor> colors(count, ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
@@ -55,11 +58,11 @@ void CollageMod::update() {
     
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);
     fatline.draw();
-    fbo2Ptr->getSource().end();
+    fboPtr1->getSource().end();
   }
 
-  fboPtr->getSource().begin();
-  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
+  fboPtr0->getSource().begin();
+  ofScale(fboPtr0->getWidth(), fboPtr0->getHeight());
 
   // Close the path for drawing the fill
   path.close();
@@ -121,7 +124,7 @@ void CollageMod::update() {
     glDisable(GL_STENCIL_TEST);
   }
 
-  fboPtr->getSource().end();
+  fboPtr0->getSource().end();
   path.clear();
 }
 

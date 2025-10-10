@@ -28,8 +28,10 @@ void SmearMod::initParameters() {
 }
 
 void SmearMod::update() {
-  auto fboPtr = fboPtrs[0];
-  if (fboPtr == nullptr) return;
+  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt) return;
+  auto fboPtr = fboPtrOpt.value();
+
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   float mixNew = mixNewParameter;
   float alphaMultiplier = alphaMultiplierParameter;

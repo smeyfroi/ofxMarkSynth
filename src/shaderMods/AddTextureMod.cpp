@@ -22,10 +22,11 @@ void AddTextureMod::initParameters() {
 }
 
 void AddTextureMod::update() {
-  if (!addTexture.isAllocated()) return;
-  auto fboPtr = fboPtrs[0];
-  if (fboPtr == nullptr) return;
-  addTextureShader.render(*fboPtr, addTexture, scaleParameter);
+  assert(false); // not implemented yet
+//  if (!addTexture.isAllocated()) return;
+//  auto fboPtr = fboPtrs[0];
+//  if (fboPtr == nullptr) return;
+//  addTextureShader.render(*fboPtr, addTexture, scaleParameter);
 }
 
 void AddTextureMod::receive(int sinkId, const float& v) {

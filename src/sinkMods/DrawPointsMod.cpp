@@ -24,9 +24,10 @@ void DrawPointsMod::initParameters() {
 }
 
 void DrawPointsMod::update() {
-  auto fboPtr = fboPtrs[0];
-  if (fboPtr == nullptr) return;
-  
+  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
+  if (!fboPtrOpt) return;
+  auto fboPtr = fboPtrOpt.value();
+
   fboPtr->getSource().begin();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofFill();
