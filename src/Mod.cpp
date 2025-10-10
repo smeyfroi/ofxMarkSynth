@@ -17,6 +17,16 @@ void assignFboPtrToMods(FboPtr fboPtr, std::initializer_list<ModFboNamePair> mod
   }
 }
 
+void connectSourceToSinks(ModPtr sourceModPtr, std::initializer_list<ConnectionsSpec> connectionsSpec) {
+  for (const auto& connectionSpec : connectionsSpec) {
+    const auto& [sourceId, sinkSpecs] = connectionSpec;
+    for (const auto& sinkSpec : sinkSpecs) {
+      const auto& [sinkModPtr, sinkId] = sinkSpec;
+      sourceModPtr->connect(sourceId, sinkModPtr, sinkId);
+    }
+  }
+}
+
 
 
 Mod::Mod(const std::string& name_, const ModConfig&& config_)

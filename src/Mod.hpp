@@ -52,6 +52,17 @@ struct ModFboNamePair {
 };
 void assignFboPtrToMods(FboPtr fboPtr, std::initializer_list<ModFboNamePair> modFboNamePairs);
 
+struct SinkSpec {
+  ModPtr sinkModPtr;
+  int sinkId;
+};
+struct ConnectionsSpec {
+  int sourceId;
+  std::initializer_list<SinkSpec> sinkModFboNamePairs;
+};
+void connectSourceToSinks(ModPtr sourceModPtr,
+                          std::initializer_list<ConnectionsSpec> connectionsSpec);
+
 
 
 class Mod {
