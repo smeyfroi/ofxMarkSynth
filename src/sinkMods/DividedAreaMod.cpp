@@ -85,12 +85,15 @@ void DividedAreaMod::update() {
   const float minLineWidth = 110.0;
 
   // draw unconstrained
-  auto fboPtrOpt0 = getNamedFboPtr(MAJOR_LINES_FBOPTR_NAME);
-  if (!fboPtrOpt0) return;
-  auto fboPtr0 = fboPtrOpt0.value();
-  if (backgroundFbo.isAllocated()) { // for the refraction effect
+  auto drawingLayerPtrOpt0 = getNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
+  if (!drawingLayerPtrOpt0) return;
+  auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
+
+  // need a background for the refraction effect
+  if (backgroundFbo.isAllocated()) {
     fboPtr0->getSource().begin();
     const ofFloatColor majorDividerColor = majorLineColorParameter;
+    // TODO: bring back the flat coloured major lines?
 //    dividedArea.draw({},
 //                     { minLineWidth, maxLineWidth, majorDividerColor },
 //                     fboPtr0->getWidth());
@@ -100,9 +103,9 @@ void DividedAreaMod::update() {
   }
 
   // draw constrained
-  auto fboPtrOpt1 = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-  if (!fboPtrOpt1) return;
-  auto fboPtr1 = fboPtrOpt1.value();
+  auto drawingLayerPtrOpt1 = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt1) return;
+  auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
   fboPtr1->getSource().begin();
   dividedArea.drawInstanced(fboPtr1->getWidth());
 //    ofSetColor(minorDividerColor);

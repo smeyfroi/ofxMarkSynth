@@ -20,7 +20,7 @@ public:
   void update() override;
   void setup();
 
-  static constexpr std::string VELOCITIES_FBOPTR_NAME { "velocities" };
+  static constexpr std::string VELOCITIES_LAYERPTR_NAME { "velocities" };
   
 protected:
   void initParameters() override;

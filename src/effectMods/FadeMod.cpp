@@ -25,9 +25,9 @@ void FadeMod::initParameters() {
 }
 
 void FadeMod::update() {
-  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-  if (!fboPtrOpt) return;
-  auto fboPtr = fboPtrOpt.value();
+  auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt) return;
+  auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
   
 //  glm::vec2 translation { translationParameter->x, translationParameter->y };
 //  float alpha = alphaParameter;

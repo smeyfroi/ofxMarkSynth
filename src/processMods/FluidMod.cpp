@@ -21,10 +21,10 @@ void FluidMod::initParameters() {
 
 void FluidMod::setup() {
   if (!fluidSimulation.isSetup()) {
-    auto valuesFboPtr = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-    auto velocitiesFboPtr = getNamedFboPtr(VELOCITIES_FBOPTR_NAME);
-    if (valuesFboPtr && velocitiesFboPtr) {
-      fluidSimulation.setup(valuesFboPtr.value(), velocitiesFboPtr.value());
+    auto valuesDrawingLayerPtr = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+    auto velocitiesDrawingLayerPtr = getNamedDrawingLayerPtr(VELOCITIES_LAYERPTR_NAME);
+    if (valuesDrawingLayerPtr && velocitiesDrawingLayerPtr) {
+      fluidSimulation.setup(valuesDrawingLayerPtr.value()->fboPtr, velocitiesDrawingLayerPtr.value()->fboPtr);
     } else {
       return;
     }

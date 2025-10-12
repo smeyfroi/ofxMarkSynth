@@ -28,9 +28,9 @@ void SoftCircleMod::initParameters() {
 }
 
 void SoftCircleMod::update() {
-  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-  if (!fboPtrOpt) return;
-  auto fboPtr = fboPtrOpt.value();
+  auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt) return;
+  auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   float radius = radiusParameter;
   float radiusVariance = radiusVarianceParameter;

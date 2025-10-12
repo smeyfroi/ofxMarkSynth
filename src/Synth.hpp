@@ -24,17 +24,9 @@ namespace ofxMarkSynth {
 
 const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
 
-struct FboConfig {
-  std::string name;
-  std::shared_ptr<PingPongFbo> fboPtr;
-  bool clearOnUpdate;
-  ofBlendMode blendMode;
-  bool isDrawn;
-};
+using DrawingLayerPtrMap = std::map<std::string, DrawingLayerPtr>;
 
-using FboConfigPtr = std::shared_ptr<FboConfig>;
-using FboConfigPtrMap = std::map<std::string, FboConfigPtr>;
-using ModMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
+using ModPtrMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 
 
 
@@ -49,8 +41,8 @@ public:
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
   template <typename ModT, typename... Args>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
-  ofxMarkSynth::ModPtr getMod(const std::string& name) const { return mods.at(name); }
-  FboPtr addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
+  ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
+  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
@@ -72,8 +64,8 @@ protected:
   void initParameters() override;
 
 private:
-  ModMap mods;
-  FboConfigPtrMap fboConfigPtrs;
+  ModPtrMap modPtrs;
+  DrawingLayerPtrMap drawingLayerPtrs;
   
   bool paused;
   
@@ -129,14 +121,14 @@ private:
 template <typename ModT>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
   auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
-  mods.insert({ name, modPtr });
+  modPtrs.insert({ name, modPtr });
   return modPtr;
 }
 
 template <typename ModT, typename... Args>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
   auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
-  mods.insert({ name, modPtr });
+  modPtrs.insert({ name, modPtr });
   return modPtr;
 }
 

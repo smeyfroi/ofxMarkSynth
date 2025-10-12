@@ -22,11 +22,18 @@ void ParticleFieldMod::initParameters() {
 }
 
 void ParticleFieldMod::update() {
-  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-  if (!fboPtrOpt) return;
-  auto fboPtr = fboPtrOpt.value();
-
+  auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt) return;
+  auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
+  
   particleField.update();
+  
+  // TODO: When the FboPtr config clears on update, particles ADD else ALPHA and pass in a reduced alpha multipler to the drawshader
+  fboPtr->getSource().begin();
+  ofClear(0, 0);
+  ofEnableBlendMode(OF_BLENDMODE_ADD);
+  fboPtr->getSource().end();
+//  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   particleField.draw(fboPtr->getSource());
 }
 

@@ -22,9 +22,9 @@ void TranslateMod::initParameters() {
 }
 
 void TranslateMod::update() {
-  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-  if (!fboPtrOpt) return;
-  auto fboPtr = fboPtrOpt.value();
+  auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt) return;
+  auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   translateShader.render(*fboPtr, translation);

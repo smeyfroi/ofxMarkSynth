@@ -75,7 +75,7 @@ void Synth::configureGui() {
 void Synth::shutdown() {
   ofLogNotice() << "Synth::shutdown " << name << std::endl;
   
-  std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
     const auto& [name, modPtr] = pair;
     modPtr->shutdown();
   });
@@ -95,13 +95,13 @@ void Synth::shutdown() {
   });
 }
 
-FboPtr Synth::addFboConfig(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
+DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
   auto fboPtr = std::make_shared<PingPongFbo>();
   fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
-  FboConfigPtr fboConfigPtr = std::make_shared<FboConfig>(name, fboPtr, clearOnUpdate, blendMode, isDrawn);
-  fboConfigPtrs.insert({ name, fboConfigPtr });
-  return fboPtr;
+  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn);
+  drawingLayerPtrs.insert({ name, drawingLayerPtr });
+  return drawingLayerPtr;
 }
 
 void Synth::receive(int sinkId, const glm::vec4& v) {
@@ -121,7 +121,7 @@ void Synth::receive(int sinkId, const float& v) {
       {
         // make a map of ModPtr to "bid" for this change then find the highest bid and action that Mod
         std::map<ModPtr, float> modBids;
-        std::for_each(mods.cbegin(), mods.cend(), [sinkId, &modBids](const auto& pair) {
+        std::for_each(modPtrs.cbegin(), modPtrs.cend(), [sinkId, &modBids](const auto& pair) {
           const auto& [name, modPtr] = pair;
           modBids[modPtr] = modPtr->bidToReceive(sinkId);
         });
@@ -146,7 +146,7 @@ void Synth::update() {
   
   if (paused) return;
   
-  std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this](const auto& pair) {
+  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
     if (!fcptr->clearOnUpdate) return;
     fcptr->fboPtr->getSource().begin();
@@ -154,7 +154,7 @@ void Synth::update() {
     fcptr->fboPtr->getSource().end();
   });
   
-  std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
     const auto& [name, modPtr] = pair;
     TSGL_START(name);
     TS_START(name);
@@ -211,15 +211,15 @@ void Synth::updateCompositeImage() {
     ofClear(backgroundColor);
     
     size_t i = 0;
-    std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this, &i](const auto& pair) {
-      const auto& [name, fcptr] = pair;
-      if (!fcptr->isDrawn) return;
-      ofEnableBlendMode(fcptr->blendMode);
+    std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this, &i](const auto& pair) {
+      const auto& [name, dlptr] = pair;
+      if (!dlptr->isDrawn) return;
+      ofEnableBlendMode(dlptr->blendMode);
       float layerAlpha = fboParameters.getFloat(i);
       ++i;
       if (layerAlpha == 0.0) return;
       ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, layerAlpha });
-      fcptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+      dlptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
     });
   }
   imageCompositeFbo.end();
@@ -295,7 +295,7 @@ void Synth::drawDebugViews() {
     // For Mods that draw directly and not on an FBO,
     // for example audio data plots and other debug views
     ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // everything needs to draw in [0,1]x[0,1]
-    std::for_each(mods.cbegin(), mods.cend(), [](const auto& pair) {
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
       const auto& [name, modPtr] = pair;
       modPtr->draw();
     });
@@ -405,7 +405,7 @@ bool Synth::keyPressed(int key) {
   }
 #endif
 
-  bool handled = std::any_of(mods.cbegin(), mods.cend(), [&key](const auto& pair) {
+  bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&key](const auto& pair) {
     const auto& [name, modPtr] = pair;
     return modPtr->keyPressed(key);
   });
@@ -415,8 +415,9 @@ bool Synth::keyPressed(int key) {
 ofParameterGroup& Synth::getFboParameterGroup() {
   if (fboParameters.size() == 0) {
     fboParameters.setName("Layers");
-    std::for_each(fboConfigPtrs.cbegin(), fboConfigPtrs.cend(), [this](const auto& pair) {
+    std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
       const auto& [name, fcptr] = pair;
+      if (!fcptr->isDrawn) return;
       auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, 1.0, 0.0, 1.0);
       fboParamPtrs.push_back(fboParam);
       fboParameters.add(*fboParam);
@@ -436,7 +437,7 @@ void Synth::initParameters() {
   displayParameters.add(sideExposureParameter);
   parameters.add(displayParameters);
   parameters.add(getFboParameterGroup());
-  std::for_each(mods.cbegin(), mods.cend(), [this](const auto& pair) {
+  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
     const auto& [name, modPtr] = pair;
     ofParameterGroup& pg = modPtr->getParameterGroup();
     if (pg.size() != 0) parameters.add(pg);

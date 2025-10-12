@@ -11,9 +11,9 @@ namespace ofxMarkSynth {
 
 
 
-void assignFboPtrToMods(FboPtr fboPtr, std::initializer_list<ModFboNamePair> modFboNamePairs) {
+void assignDrawingLayerPtrToMods(DrawingLayerPtr drawingLayerPtr, std::initializer_list<ModDrawingLayerNamePair> modFboNamePairs) {
   for (const auto& [modPtr, name] : modFboNamePairs) {
-      modPtr->receiveNamedFboPtr(name, fboPtr);
+      modPtr->receiveDrawingLayerPtr(name, drawingLayerPtr);
   }
 }
 
@@ -115,16 +115,16 @@ void Mod::receive(int sinkId, const ofFbo& fbo) {
   ofLogError() << "bad receive of ofFbo in " << typeid(*this).name();
 }
 
-void Mod::receiveNamedFboPtr(const std::string& name, const FboPtr fboPtr) {
-  FboPtrs& fboPtrs = namedFboPtrs[name];
-  fboPtrs.push_back(fboPtr);
+void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
+  auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
+  drawingLayerPtrs.push_back(drawingLayerPtr);
 }
 
-std::optional<FboPtr> Mod::getNamedFboPtr(const std::string& name, size_t index) {
-  if (!namedFboPtrs.contains(name)) return std::nullopt;
-  auto& fboPtrs = namedFboPtrs[name];
-  if (index >= fboPtrs.size()) return std::nullopt;
-  return fboPtrs[index];
+std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, size_t index) {
+  if (!namedDrawingLayerPtrs.contains(name)) return std::nullopt;
+  auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
+  if (index >= drawingLayerPtrs.size()) return std::nullopt;
+  return drawingLayerPtrs[index];
 }
 
 

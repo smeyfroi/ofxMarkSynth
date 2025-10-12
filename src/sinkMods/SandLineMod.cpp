@@ -55,9 +55,9 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
 }
 
 void SandLineMod::update() {
-  auto fboPtrOpt = getNamedFboPtr(DEFAULT_FBOPTR_NAME);
-  if (!fboPtrOpt) return;
-  auto fboPtr = fboPtrOpt.value();
+  auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt) return;
+  auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   float drawScale = fboPtr->getWidth();
   fboPtr->getSource().begin();

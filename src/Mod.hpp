@@ -11,6 +11,9 @@
 #include "PingPongFbo.h"
 
 
+// NOTE: This feels like it should be built on `ofEvent` not the custom emit/receive impl here
+
+
 namespace ofxMarkSynth {
 
 
@@ -29,6 +32,21 @@ constexpr GLint INT_MODE = GL_RGB;
 #endif
 
 
+
+using FboPtr = std::shared_ptr<PingPongFbo>;
+struct DrawingLayer {
+  std::string name;
+  FboPtr fboPtr;
+  bool clearOnUpdate;
+  ofBlendMode blendMode;
+  bool isDrawn;
+};
+using DrawingLayerPtr = std::shared_ptr<DrawingLayer>;
+using DrawingLayerPtrs = std::deque<DrawingLayerPtr>;
+using NamedDrawingLayerPtrs = std::unordered_map<std::string, DrawingLayerPtrs>;
+
+
+
 class Mod;
 using ModConfig = std::unordered_map<std::string, std::string>;
 using ModPtr = std::shared_ptr<Mod>;
@@ -39,18 +57,14 @@ using Sinks = std::vector<std::pair<ModPtr, SinkId>>;
 using SourceId = int;
 using Connections = std::unordered_map<SourceId, std::unique_ptr<Sinks>>;
 
-using FboPtr = std::shared_ptr<PingPongFbo>;
-using FboPtrs = std::deque<FboPtr>;
-using NamedFboPtrs = std::unordered_map<std::string, FboPtrs>;
 
 
-
-static constexpr std::string DEFAULT_FBOPTR_NAME { "default" };
-struct ModFboNamePair {
+static constexpr std::string DEFAULT_DRAWING_LAYER_PTR_NAME { "default" };
+struct ModDrawingLayerNamePair {
   ModPtr modPtr;
-  std::string name { DEFAULT_FBOPTR_NAME };
+  std::string name { DEFAULT_DRAWING_LAYER_PTR_NAME };
 };
-void assignFboPtrToMods(FboPtr fboPtr, std::initializer_list<ModFboNamePair> modFboNamePairs);
+void assignDrawingLayerPtrToMods(DrawingLayerPtr drawingLayerPtr, std::initializer_list<ModDrawingLayerNamePair> modFboNamePairs);
 
 struct SinkSpec {
   ModPtr sinkModPtr;
@@ -85,8 +99,8 @@ public:
   virtual void receive(int sinkId, const ofPath& path);
   virtual void receive(int sinkId, const ofFbo& fbo);
   
-  void receiveNamedFboPtr(const std::string& name, const FboPtr fboPtr);
-  std::optional<FboPtr> getNamedFboPtr(const std::string& name, size_t index=0);
+  void receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr);
+  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, size_t index=0);
   
   static constexpr int SINK_AUDIO_ONSET = -300;
   static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
@@ -99,7 +113,7 @@ protected:
   virtual void initParameters() = 0;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
-  NamedFboPtrs namedFboPtrs; // named FBOs provided by the Synth that can be drawn on
+  NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
 };
 
 

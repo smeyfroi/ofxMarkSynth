@@ -36,8 +36,8 @@ public:
   static constexpr int SINK_MAJOR_LINES_COLOR = 31;
   static constexpr int SINK_BACKGROUND_SOURCE = 100; // for refraction on major lines
 
-  // DEFAULT_FBOPTR_NAME is for drawing unconstrained lines
-  static constexpr std::string MAJOR_LINES_FBOPTR_NAME { "major-lines" };
+  // DEFAULT_LAYERPTR_NAME is for drawing unconstrained lines
+  static constexpr std::string MAJOR_LINES_LAYERPTR_NAME { "major-lines" };
   
 protected:
   void initParameters() override;
