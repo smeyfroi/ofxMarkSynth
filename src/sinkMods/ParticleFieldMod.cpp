@@ -6,15 +6,16 @@
 //
 
 #include "ParticleFieldMod.hpp"
+#include "cmath"
 
 
 namespace ofxMarkSynth {
 
 
-ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float field1ValueOffset_, float field2ValueOffset_, int particleCount_)
+ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float field1ValueOffset_, float field2ValueOffset_)
 : Mod { name, std::move(config) }
 {
-  particleField.setup(particleCount_, ofFloatColor(1.0, 1.0, 1.0, 0.3), field1ValueOffset_, field2ValueOffset_);
+  particleField.setup(ofFloatColor(1.0, 1.0, 1.0, 0.3), field1ValueOffset_, field2ValueOffset_);
 }
 
 void ParticleFieldMod::initParameters() {
@@ -24,16 +25,15 @@ void ParticleFieldMod::initParameters() {
 void ParticleFieldMod::update() {
   auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
-  auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
+  auto drawingLayerPtr = drawingLayerPtrOpt.value();
+  auto fboPtr = drawingLayerPtr->fboPtr;
   
   particleField.update();
   
-  // TODO: When the FboPtr config clears on update, particles ADD else ALPHA and pass in a reduced alpha multipler to the drawshader
-  fboPtr->getSource().begin();
-  ofClear(0, 0);
-  ofEnableBlendMode(OF_BLENDMODE_ADD);
-  fboPtr->getSource().end();
-//  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  // Use ADD for layers that clear on update, else ALPHA
+  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_ADD);
+  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+
   particleField.draw(fboPtr->getSource());
 }
 
