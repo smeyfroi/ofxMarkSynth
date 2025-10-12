@@ -35,6 +35,7 @@ void SmearMod::update() {
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   float mixNew = mixNewParameter;
   float alphaMultiplier = alphaMultiplierParameter;
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   // TODO: make this more forgiving
   if (field2Fbo.isAllocated() && field1Fbo.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,

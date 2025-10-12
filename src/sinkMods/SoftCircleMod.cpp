@@ -44,8 +44,8 @@ void SoftCircleMod::update() {
   
   float softness = softnessParameter;
 
-  fboPtr->getSource().begin();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  fboPtr->getSource().begin();
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [this, fboPtr, radius, c, softness](const auto& p) {
