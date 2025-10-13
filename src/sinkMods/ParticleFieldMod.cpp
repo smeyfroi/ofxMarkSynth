@@ -30,8 +30,8 @@ void ParticleFieldMod::update() {
   
   particleField.update();
   
-  // Use ADD for layers that clear on update, else ALPHA
-  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_ADD);
+  // Use ALPHA for layers that clear on update
+  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN); //ADD);
   else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
   particleField.draw(fboPtr->getSource());
@@ -47,6 +47,20 @@ void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
       break;
     default:
       ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
+  switch (sinkId) {
+    case SINK_POINT_COLOR: {
+      const auto color = ofFloatColor { v.r, v.g, v.b, v.a };
+      particleField.updateRandomColorBlocks(50, 64, [&color](size_t idx) {
+        return color;
+      });
+      break;
+    }
+    default:
+      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
