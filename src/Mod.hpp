@@ -42,7 +42,7 @@ struct DrawingLayer {
   bool isDrawn;
 };
 using DrawingLayerPtr = std::shared_ptr<DrawingLayer>;
-using DrawingLayerPtrs = std::deque<DrawingLayerPtr>;
+using DrawingLayerPtrs = std::vector<DrawingLayerPtr>;
 using NamedDrawingLayerPtrs = std::unordered_map<std::string, DrawingLayerPtrs>;
 
 
