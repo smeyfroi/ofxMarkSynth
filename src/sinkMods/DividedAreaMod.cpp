@@ -85,7 +85,7 @@ void DividedAreaMod::update() {
   const float minLineWidth = 110.0;
 
   // draw unconstrained
-  auto drawingLayerPtrOpt0 = getNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
+  auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
   if (!drawingLayerPtrOpt0) return;
   auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
 
@@ -103,7 +103,7 @@ void DividedAreaMod::update() {
   }
 
   // draw constrained
-  auto drawingLayerPtrOpt1 = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt1) return;
   auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
   fboPtr1->getSource().begin();

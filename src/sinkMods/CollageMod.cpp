@@ -28,11 +28,11 @@ void CollageMod::update() {
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter == 1 && !snapshotFbo.isAllocated()) return;
 
-  auto drawingLayerPtrOpt0 = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt0) return;
   auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
 
-  auto drawingLayerPtrOpt1 = getNamedDrawingLayerPtr(OUTLINE_LAYERPTR_NAME);
+  auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(OUTLINE_LAYERPTR_NAME);
   if (outlineParameter && drawingLayerPtrOpt1) {
     auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
 

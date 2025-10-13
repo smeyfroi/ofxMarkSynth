@@ -100,7 +100,7 @@ public:
   virtual void receive(int sinkId, const ofFbo& fbo);
   
   void receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr);
-  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, size_t index=0);
+  std::optional<DrawingLayerPtr> getCurrentNamedDrawingLayerPtr(const std::string& name);
   
   static constexpr int SINK_AUDIO_ONSET = -300;
   static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
@@ -113,7 +113,11 @@ protected:
   virtual void initParameters() = 0;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
+
+private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
+  std::unordered_map<std::string, size_t> currentDrawingLayerIndices;
+  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, size_t index);
 };
 
 

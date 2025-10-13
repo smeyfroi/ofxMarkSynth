@@ -23,18 +23,18 @@ void ParticleFieldMod::initParameters() {
 }
 
 void ParticleFieldMod::update() {
-  auto drawingLayerPtrOpt = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto drawingLayerPtr = drawingLayerPtrOpt.value();
   auto fboPtr = drawingLayerPtr->fboPtr;
   
   particleField.update();
   
-  // Use ALPHA for layers that clear on update
-  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN); //ADD);
+  // Use ALPHA with normal sized particles for layers that clear on update
+  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
   else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
-  particleField.draw(fboPtr->getSource());
+  particleField.draw(fboPtr->getSource(), !drawingLayerPtr->clearOnUpdate);
 }
 
 void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {

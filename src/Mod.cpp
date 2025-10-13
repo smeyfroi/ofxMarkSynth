@@ -118,6 +118,7 @@ void Mod::receive(int sinkId, const ofFbo& fbo) {
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
   auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
   drawingLayerPtrs.push_back(drawingLayerPtr);
+  currentDrawingLayerIndices[name] = 0;
 }
 
 std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, size_t index) {
@@ -125,6 +126,11 @@ std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& n
   auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
   if (index >= drawingLayerPtrs.size()) return std::nullopt;
   return drawingLayerPtrs[index];
+}
+
+std::optional<DrawingLayerPtr> Mod::getCurrentNamedDrawingLayerPtr(const std::string& name) {
+  auto index = currentDrawingLayerIndices[name];
+  return getNamedDrawingLayerPtr(name, index);
 }
 
 
