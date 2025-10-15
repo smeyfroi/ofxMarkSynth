@@ -54,7 +54,9 @@ void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_POINT_COLOR: {
       const auto color = ofFloatColor { v.r, v.g, v.b, v.a };
-      particleField.updateRandomColorBlocks(50, 64, [&color](size_t idx) {
+      auto particleBlocks = particleField.getParticleCount() / 64;
+      auto updateBlocks = std::max(1, std::min(particleBlocks / 100, 64)); // update 1% of particles up to 64 blocks, min 1 block
+      particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
         return color;
       });
       break;
