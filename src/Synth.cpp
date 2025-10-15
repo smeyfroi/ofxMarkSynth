@@ -114,23 +114,36 @@ void Synth::receive(int sinkId, const glm::vec4& v) {
   }
 }
 
+ModPtr Synth::selectWinnerByWeightedRandom(int sinkId) {
+  std::vector<std::pair<ModPtr, float>> bidders;
+  for (const auto& pair : modPtrs) {
+    const auto& [name, modPtr] = pair;
+    float bid = modPtr->bidToReceive(sinkId);
+    if (bid > 0.0f) {
+      // Add randomness: multiply bid by random value [0.5, 1.5]: wider range is less deterministic
+      float randomFactor = ofRandom(0.5f, 1.5f);
+      bid *= randomFactor;
+      bidders.push_back({modPtr, bid});
+    }
+  }
+  
+  if (bidders.empty()) return nullptr;
+  
+  auto winner = std::max_element(bidders.begin(), bidders.end(), [](const auto& a, const auto& b) {
+    return a.second < b.second;
+  });
+  return winner->first;
+}
+
 void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_AUDIO_ONSET:
     case SINK_AUDIO_TIMBRE_CHANGE:
       {
-        // make a map of ModPtr to "bid" for this change then find the highest bid and action that Mod
-        std::map<ModPtr, float> modBids;
-        std::for_each(modPtrs.cbegin(), modPtrs.cend(), [sinkId, &modBids](const auto& pair) {
-          const auto& [name, modPtr] = pair;
-          modBids[modPtr] = modPtr->bidToReceive(sinkId);
-        });
-        auto winningModIt = std::max_element(modBids.cbegin(), modBids.cend(), [](const auto& a, const auto& b) {
-          return a.second < b.second;
-        });
-        if (winningModIt != modBids.cend() && winningModIt->second > 0.0) {
-          ofLogNotice() << "Synth " << name << " awarding " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " to Mod " << winningModIt->first->name << " with bid " << winningModIt->second;
-          winningModIt->first->receive(sinkId, v);
+        ModPtr winningModPtr = selectWinnerByWeightedRandom(sinkId);
+        if (winningModPtr) {
+          ofLogNotice() << "Synth " << name << " awarding " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " to Mod " << winningModPtr->name;
+          winningModPtr->receive(sinkId, v);
         }
       }
       break;

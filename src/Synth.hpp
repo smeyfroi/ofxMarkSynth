@@ -66,7 +66,8 @@ protected:
 private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
-  
+  ModPtr selectWinnerByWeightedRandom(int sinkId);
+
   bool paused;
   
   TonemapShader tonemapShader;

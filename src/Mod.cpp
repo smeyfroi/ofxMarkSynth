@@ -99,10 +99,6 @@ void Mod::receive(int sinkId, const glm::vec4& point) {
   ofLogError() << "bad receive of glm::vec4 in " << typeid(*this).name();
 }
 
-void Mod::receive(int sinkId, const float& value) {
-  ofLogError() << "bad receive of float in " << typeid(*this).name();
-}
-
 void Mod::receive(int sinkId, const ofFloatPixels& pixels) {
   ofLogError() << "bad receive of ofFloatPixels in " << typeid(*this).name();
 }
@@ -113,6 +109,29 @@ void Mod::receive(int sinkId, const ofPath& path) {
 
 void Mod::receive(int sinkId, const ofFbo& fbo) {
   ofLogError() << "bad receive of ofFbo in " << typeid(*this).name();
+}
+
+// A default impl; SINK_AUDIO_ONSET and SINK_AUDIO_TIMBRE_CHANGE select a new drawing layer
+void Mod::receive(int sinkId, const float& v) {
+  switch (sinkId) {
+    case SINK_AUDIO_ONSET:
+    case SINK_AUDIO_TIMBRE_CHANGE:
+      {
+        if (namedDrawingLayerPtrs.empty()) return;
+        auto it = namedDrawingLayerPtrs.begin();
+        std::advance(it, (size_t)ofRandom(0, namedDrawingLayerPtrs.size()));
+        const auto& name = it->first;
+        if (currentDrawingLayerIndices[name] == 0) {
+          currentDrawingLayerIndices[name] = ofRandom(1, namedDrawingLayerPtrs[name].size());
+        } else {
+          currentDrawingLayerIndices[name] = 0;
+        }
+        ofLogNotice() << "Mod::receive SINK_AUDIO_TIMBRE_CHANGE; changing current drawing layer '" << name << "' to index " << currentDrawingLayerIndices[name] << " : " << namedDrawingLayerPtrs[name][currentDrawingLayerIndices[name]]->name;
+      }
+      break;
+    default:
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
 }
 
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
