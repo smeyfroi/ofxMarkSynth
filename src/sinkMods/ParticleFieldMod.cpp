@@ -30,7 +30,7 @@ void ParticleFieldMod::update() {
   
   particleField.update();
   
-  // Use ALPHA with normal sized particles for layers that clear on update
+  // Use ALPHA for layers that clear on update, else SCREEN
   if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
   else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 

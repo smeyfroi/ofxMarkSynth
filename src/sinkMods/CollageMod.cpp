@@ -30,7 +30,12 @@ void CollageMod::update() {
 
   auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt0) return;
-  auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
+  auto drawingLayerPtr0 = drawingLayerPtrOpt0.value();
+  auto fboPtr0 = drawingLayerPtr0->fboPtr;
+  if (fboPtr0->getSource().getStencilBuffer() == 0) {
+    ofLogError() << "CollageMod needs stencil buffer in drawing layer: " << DEFAULT_DRAWING_LAYER_PTR_NAME;
+    return;
+  }
 
   auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(OUTLINE_LAYERPTR_NAME);
   if (outlineParameter && drawingLayerPtrOpt1) {
@@ -67,12 +72,12 @@ void CollageMod::update() {
   // Close the path for drawing the fill
   path.close();
   
+  // Use ALPHA for layers that clear on update, else SCREEN
+  if (drawingLayerPtr0->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+
   if (strategyParameter == 0) {
     // tint
-    ofEnableBlendMode(OF_BLENDMODE_DISABLED); // reset first
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     ofFloatColor c = colorParameter;
     c *= strengthParameter; c.a *= strengthParameter;
     
@@ -88,7 +93,11 @@ void CollageMod::update() {
       c = ofFloatColor(1.0, 1.0, 1.0, 1.0);
     }
     c *= strengthParameter; c.a *= strengthParameter;
-    
+    c.r = std::clamp(c.r, 0.0f, 1.0f);
+    c.g = std::clamp(c.g, 0.0f, 1.0f);
+    c.b = std::clamp(c.b, 0.0f, 1.0f);
+    c.a = std::clamp(c.a, 0.0f, 1.0f);
+
     glEnable(GL_STENCIL_TEST);
     glClear(GL_STENCIL_BUFFER_BIT);
     
@@ -104,11 +113,6 @@ void CollageMod::update() {
     glStencilFunc(GL_EQUAL, 1, 1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glColorMask(true, true, true, true);
-    
-    ofEnableBlendMode(OF_BLENDMODE_DISABLED); // reset first
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     
     ofSetColor(c);
     ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
