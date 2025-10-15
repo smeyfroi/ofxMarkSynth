@@ -99,6 +99,10 @@ private:
   ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
   ofParameter<float> gammaParameter { "gamma", 2.2, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
+  ofParameter<float> contrastParameter { "contrast", 1.0, 0.8, 1.2 };
+  ofParameter<float> saturationParameter { "saturation", 1.0, 0.0, 2.0 };
+  ofParameter<float> brightnessParameter { "brightness", 0.0, -1.0, 1.0 };
+  ofParameter<float> hueShiftParameter { "hueShift", 0.0, -1.0, 1.0 };
   ofParameter<float> sideExposureParameter { "sideExposure", 0.25, 0.0, 4.0 };
   ofxLabel recorderStatus;
   ofxLabel saveStatus;

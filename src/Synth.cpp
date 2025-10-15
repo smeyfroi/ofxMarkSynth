@@ -263,7 +263,7 @@ void Synth::updateCompositeSideImages() {
 void Synth::drawSidePanels(float xleft, float xright, float w, float h) {
   ofSetColor(255);
   ofSetColor(ofFloatColor { 1.0, 0.0, 0.0, 0.3f });
-  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter);
+  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
   leftPanelCompositeFbo.draw(xleft, 0.0, w, h);
   rightPanelCompositeFbo.draw(xright, 0.0, w, h);
   tonemapShader.end();
@@ -278,7 +278,7 @@ void Synth::drawMiddlePanel(float w, float h, float scale) {
     {
       ofScale(scale, scale);
       ofSetColor(255);
-      tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter);
+      tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
       imageCompositeFbo.draw(0.0, 0.0);
       tonemapShader.end();
     }
@@ -434,6 +434,10 @@ void Synth::initParameters() {
   displayParameters.add(exposureParameter);
   displayParameters.add(gammaParameter);
   displayParameters.add(whitePointParameter);
+  displayParameters.add(contrastParameter);
+  displayParameters.add(saturationParameter);
+  displayParameters.add(brightnessParameter);
+  displayParameters.add(hueShiftParameter);
   displayParameters.add(sideExposureParameter);
   parameters.add(displayParameters);
   parameters.add(getFboParameterGroup());
