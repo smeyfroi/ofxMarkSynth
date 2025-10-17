@@ -30,11 +30,12 @@ void ParticleFieldMod::update() {
   
   particleField.update();
   
-  // Use ALPHA for layers that clear on update, else SCREEN
-  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
-  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-
-  particleField.draw(fboPtr->getSource(), !drawingLayerPtr->clearOnUpdate);
+//  // Use ALPHA for layers that clear on update, else SCREEN
+//  if (drawingLayerPtr->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+//  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+  
+  particleField.draw(fboPtr->getSource(), drawingLayerPtr->fadeBy < 0.8f);
 }
 
 void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
@@ -65,6 +66,35 @@ void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
+
+void ParticleFieldMod::receive(int sinkId, const float& value) {
+  switch (sinkId) {
+    case SINK_AUDIO_TIMBRE_CHANGE:
+      Mod::receive(sinkId, value);
+      break;
+    case SINK_AUDIO_ONSET:
+      {
+//        float newRadiusVarianceScale = ofRandom(0.0, 100 * radiusParameter);
+//        ofLogNotice() << "SoftCircleMod::receive audio timbre change; new radius variance scale " << newRadiusVarianceScale;
+//        radiusVarianceScaleParameter = newRadiusVarianceScale;
+      }
+    break;
+    default:
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  }
+}
+
+float ParticleFieldMod::bidToReceive(int sinkId) {
+  switch (sinkId) {
+    case SINK_AUDIO_TIMBRE_CHANGE:
+      return 0.2;
+    case SINK_AUDIO_ONSET:
+      return 0.1;
+    default:
+      return 0.0;
+  }
+}
+
 
 
 } // ofxMarkSynth

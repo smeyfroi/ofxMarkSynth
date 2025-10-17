@@ -37,7 +37,7 @@ protected:
   ofFbo snapshotFbo;
 
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ofParameter<float> strengthParameter { "Strength", 1.0, 0.0, 4.0 };
+  ofParameter<float> saturationParameter { "Saturation", 1.5, 0.0, 4.0 };
   ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
   ofParameter<bool> outlineParameter { "Outline", true };
 };

@@ -15,6 +15,7 @@
 #include "TonemapShader.h"
 #include <unordered_map>
 #include "SaveToFileThread.hpp"
+#include "UnitQuadMesh.h"
 
 
 
@@ -42,7 +43,7 @@ public:
   template <typename ModT, typename... Args>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
-  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
+  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
@@ -66,6 +67,7 @@ protected:
 private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
+  UnitQuadMesh unitQuadMesh;
   ModPtr selectWinnerByWeightedRandom(int sinkId);
 
   bool paused;
@@ -97,14 +99,14 @@ private:
   ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
   ofParameter<int> toneMapTypeParameter { "tone map type", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
-  ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
+  ofParameter<float> exposureParameter { "exposure", 1.5, 0.0, 4.0 };
   ofParameter<float> gammaParameter { "gamma", 2.2, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
-  ofParameter<float> contrastParameter { "contrast", 1.0, 0.8, 1.2 };
+  ofParameter<float> contrastParameter { "contrast", 1.05, 0.9, 1.1 };
   ofParameter<float> saturationParameter { "saturation", 1.0, 0.0, 2.0 };
-  ofParameter<float> brightnessParameter { "brightness", 0.0, -1.0, 1.0 };
+  ofParameter<float> brightnessParameter { "brightness", 0.0, -0.1, 0.1 };
   ofParameter<float> hueShiftParameter { "hueShift", 0.0, -1.0, 1.0 };
-  ofParameter<float> sideExposureParameter { "sideExposure", 0.25, 0.0, 4.0 };
+  ofParameter<float> sideExposureParameter { "sideExposure", 0.60, 0.0, 4.0 };
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
   ofxLabel pauseStatus;

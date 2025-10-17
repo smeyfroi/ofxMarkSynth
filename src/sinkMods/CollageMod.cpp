@@ -20,7 +20,7 @@ CollageMod::CollageMod(const std::string& name, const ModConfig&& config)
 void CollageMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(colorParameter);
-  parameters.add(strengthParameter);
+  parameters.add(saturationParameter);
   parameters.add(outlineParameter);
 }
 
@@ -42,6 +42,7 @@ void CollageMod::update() {
     auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
 
     // punch hole through existing outlines
+    // TODO: punch hole on fatline as well to avoid the middle seam when the outlines fade. Or add the fatline into the stencil to draw the snapshot only within the fatline interior
     fboPtr1->getSource().begin();
     ofScale(fboPtr1->getWidth(), fboPtr1->getHeight());
     path.setFilled(true);
@@ -72,56 +73,48 @@ void CollageMod::update() {
   // Close the path for drawing the fill
   path.close();
   
-  // Use ALPHA for layers that clear on update, else SCREEN
-  if (drawingLayerPtr0->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
-  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+//  // Use ALPHA for layers that clear on update, else SCREEN
+//  if (drawingLayerPtr0->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+//  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
+  ofFloatColor tintColor = ofFloatColor(1.0, 1.0, 1.0, 1.0);
+  if (strategyParameter != 2) { // 2 == draw an untinted snapshot
+    tintColor = colorParameter; // comes from a connected palette or manually
+    float currentSaturation = tintColor.getSaturation();
+    tintColor.setSaturation(std::clamp(currentSaturation * saturationParameter.get(), 0.0f, 1.0f));
+  }
+  
+  ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+  
   if (strategyParameter == 0) {
-    // tint
-    ofFloatColor c = colorParameter;
-    c *= strengthParameter; c.a *= strengthParameter;
-    
     path.setFilled(true);
-    path.setColor(c);
+    path.setColor(tintColor);
     path.draw();
-    
   } else {
-    ofFloatColor c;
-    if (strategyParameter == 1) {
-      c = colorParameter;
-    } else {
-      c = ofFloatColor(1.0, 1.0, 1.0, 1.0);
-    }
-    c *= strengthParameter; c.a *= strengthParameter;
-    c.r = std::clamp(c.r, 0.0f, 1.0f);
-    c.g = std::clamp(c.g, 0.0f, 1.0f);
-    c.b = std::clamp(c.b, 0.0f, 1.0f);
-    c.a = std::clamp(c.a, 0.0f, 1.0f);
-
     glEnable(GL_STENCIL_TEST);
-    glClear(GL_STENCIL_BUFFER_BIT);
     
-    // Setup stencil: write 1s where path is drawn
+    // draw stencil as mask (1s inside path)
+    glClear(GL_STENCIL_BUFFER_BIT);
     glStencilFunc(GL_ALWAYS, 1, 1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glColorMask(false, false, false, false);
-    
     path.setFilled(true);
     path.draw();
     
-    // Now only draw where stencil is 1
+    // Now only draw snapshot where stencil is 1
     glStencilFunc(GL_EQUAL, 1, 1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glColorMask(true, true, true, true);
     
-    ofSetColor(c);
+    ofSetColor(tintColor);
+
     ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
     float x = normalisedPathBounds.x;
     float y = normalisedPathBounds.y;
     float w = normalisedPathBounds.width;
     float h = normalisedPathBounds.height;
     
-    // TODO: limit the scaling to some limit, and optionally crop
+    // Could also limit the scaling to some limit, and optionally crop here?
     
     snapshotFbo.draw(x, y, w, h);
     

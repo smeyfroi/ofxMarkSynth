@@ -18,7 +18,8 @@ class AudioDataSourceMod : public Mod {
 public:
   AudioDataSourceMod(const std::string& name, const ModConfig&& config,
                      const std::string& micDeviceName,
-                     bool recordAudio, const std::filesystem::path& recordingPath);
+                     bool recordAudio, const std::filesystem::path& recordingPath,
+                     const std::filesystem::path& rootSourceMaterialPath);
   void shutdown() override;
   void update() override;
   void draw() override;

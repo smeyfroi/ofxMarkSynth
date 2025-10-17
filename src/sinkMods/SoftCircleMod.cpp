@@ -71,12 +71,15 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
       softnessParameter = value;
       break;
     case SINK_AUDIO_TIMBRE_CHANGE:
+      Mod::receive(sinkId, value);
+      break;
+    case SINK_AUDIO_ONSET:
       {
         float newRadiusVarianceScale = ofRandom(0.0, 100 * radiusParameter);
         ofLogNotice() << "SoftCircleMod::receive audio timbre change; new radius variance scale " << newRadiusVarianceScale;
         radiusVarianceScaleParameter = newRadiusVarianceScale;
       }
-      break;
+    break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
@@ -85,6 +88,8 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
 float SoftCircleMod::bidToReceive(int sinkId) {
   switch (sinkId) {
     case SINK_AUDIO_TIMBRE_CHANGE:
+      return 0.2;
+    case SINK_AUDIO_ONSET:
       return 0.2;
     default:
       return 0.0;
