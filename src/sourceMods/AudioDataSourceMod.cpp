@@ -19,10 +19,10 @@ AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&
 
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(micDeviceName, recordAudio, recordingPath);
   
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav");
+//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav");
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Bell Plates.wav");
 //        audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Sound Bath.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-trombone-melody.wav");
+  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-trombone-melody.wav");
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/nightsong.wav");
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/treganna.wav");
 
@@ -147,8 +147,10 @@ void AudioDataSourceMod::update() {
     }
   }
   
-  if (audioDataProcessorPtr->detectOnset1()) emit(SOURCE_ONSET1, 1.0f);
-  if (audioDataProcessorPtr->detectTimbreChange1()) emit(SOURCE_TIMBRE_CHANGE, 1.0f);
+  float onsetMagnitude = audioDataProcessorPtr->detectOnset1();
+  if (onsetMagnitude > 0.0f) emit(SOURCE_ONSET1, onsetMagnitude);
+  float timbreChangeMagnitude = audioDataProcessorPtr->detectTimbreChange1();
+  if (timbreChangeMagnitude > 0.0f) emit(SOURCE_TIMBRE_CHANGE, timbreChangeMagnitude);
 }
 
 bool AudioDataSourceMod::keyPressed(int key) {

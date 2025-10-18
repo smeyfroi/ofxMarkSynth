@@ -139,16 +139,17 @@ void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_AUDIO_ONSET:
     case SINK_AUDIO_TIMBRE_CHANGE:
+      ofLogNotice() << "Synth received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " value: " << v;
       {
         ModPtr winningModPtr = selectWinnerByWeightedRandom(sinkId);
         if (winningModPtr) {
-          ofLogNotice() << "Synth " << name << " awarding " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " to Mod " << winningModPtr->name;
+//          ofLogNotice() << "Awarding " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " to Mod " << winningModPtr->name;
           winningModPtr->receive(sinkId, v);
         }
       }
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
