@@ -46,6 +46,7 @@ void AudioDataSourceMod::initParameters() {
   parameters.add(maxSpectralCrestParameter);
   parameters.add(minZeroCrossingRateParameter);
   parameters.add(maxZeroCrossingRateParameter);
+  parameters.add(audioDataProcessorPtr->getParameterGroup());
 }
 
 float AudioDataSourceMod::getNormalisedAnalysisScalar(float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
