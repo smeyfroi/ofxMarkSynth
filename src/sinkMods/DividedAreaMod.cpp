@@ -166,8 +166,12 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
         angleParameter = newAngle;
       }
       break;
+//    case SINK_AUDIO_PITCH_CHANGE:
+//      changeDrawingLayer();
+//      break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      Mod::receive(sinkId, v);
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
@@ -201,8 +205,10 @@ float DividedAreaMod::bidToReceive(int sinkId) {
       return 0.3;
     case SINK_AUDIO_TIMBRE_CHANGE:
       if (strategyParameter == 1) return 0.4; // angle strategy
+//    case SINK_AUDIO_PITCH_CHANGE:
+//      return 0.1;
     default:
-      return 0.0;
+      return Mod::bidToReceive(sinkId);
   }
 }
 

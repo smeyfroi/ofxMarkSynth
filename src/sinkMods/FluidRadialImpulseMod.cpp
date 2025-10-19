@@ -48,7 +48,10 @@ void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
       impulseStrengthParameter = value;
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      Mod::receive(sinkId, value);
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+//    default:
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
@@ -61,6 +64,7 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
       ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
+
 
 
 } // ofxMarkSynth

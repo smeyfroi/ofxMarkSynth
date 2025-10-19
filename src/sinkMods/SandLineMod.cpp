@@ -87,7 +87,8 @@ void SandLineMod::receive(int sinkId, const float& value) {
       pointRadiusParameter = value;
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      Mod::receive(sinkId, value);
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

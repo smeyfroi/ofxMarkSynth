@@ -70,8 +70,8 @@ void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
 void ParticleFieldMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_AUDIO_TIMBRE_CHANGE:
-      Mod::receive(sinkId, value);
-      break;
+//      Mod::receive(sinkId, value);
+//      break;
     case SINK_AUDIO_ONSET:
       {
 //        float newRadiusVarianceScale = ofRandom(0.0, 100 * radiusParameter);
@@ -79,19 +79,25 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
 //        radiusVarianceScaleParameter = newRadiusVarianceScale;
       }
     break;
+//    case SINK_AUDIO_PITCH_CHANGE:
+//      changeDrawingLayer();
+//      break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      Mod::receive(sinkId, value);
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
 float ParticleFieldMod::bidToReceive(int sinkId) {
   switch (sinkId) {
     case SINK_AUDIO_TIMBRE_CHANGE:
-      return 0.2;
+      return 0.1;
     case SINK_AUDIO_ONSET:
       return 0.1;
     default:
-      return 0.0;
+      return Mod::bidToReceive(sinkId);
+//    default:
+//      return 0.0;
   }
 }
 

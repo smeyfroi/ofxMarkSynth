@@ -90,7 +90,7 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
-  virtual float bidToReceive(int sinkId) { return 0.0; };
+  virtual float bidToReceive(int sinkId); // { return 0.0; };
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
   virtual void receive(int sinkId, const glm::vec4& point);
@@ -115,10 +115,13 @@ protected:
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
 
+  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, int index);
+  void changeDrawingLayer();
+  void changeDrawingLayer(const std::string& layerName);
+
 private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
-  std::unordered_map<std::string, size_t> currentDrawingLayerIndices;
-  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, size_t index);
+  std::unordered_map<std::string, int> currentDrawingLayerIndices; // index < 0 means don't draw
 };
 
 

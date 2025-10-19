@@ -54,7 +54,8 @@ void SmearMod::receive(int sinkId, const float& v) {
       mixNewParameter = v;
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      Mod::receive(sinkId, v);
+//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
