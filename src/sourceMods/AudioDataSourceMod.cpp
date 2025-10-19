@@ -22,10 +22,12 @@ AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav");
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Bell Plates.wav");
 //        audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Sound Bath.wav");
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-trombone-melody.wav");
+//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-trombone-melody.wav");
+//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"cork/audio-2025-06-16-11-16-14-782.wav");
+  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"cork/audio-2025-06-16-11-25-03-931.wav");
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/nightsong.wav");
 //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/treganna.wav");
-
+  
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
   audioDataProcessorPtr->setDefaultValiditySpecs();
   audioDataPlotsPtr = std::make_shared<ofxAudioData::Plots>(audioDataProcessorPtr);
@@ -152,6 +154,8 @@ void AudioDataSourceMod::update() {
   if (onsetMagnitude > 0.0f) emit(SOURCE_ONSET1, onsetMagnitude);
   float timbreChangeMagnitude = audioDataProcessorPtr->detectTimbreChange1();
   if (timbreChangeMagnitude > 0.0f) emit(SOURCE_TIMBRE_CHANGE, timbreChangeMagnitude);
+  float pitchChangeMagnitude = audioDataProcessorPtr->detectPitchChange1();
+  if (pitchChangeMagnitude > 0.0f) emit(SOURCE_PITCH_CHANGE, pitchChangeMagnitude);
 }
 
 bool AudioDataSourceMod::keyPressed(int key) {

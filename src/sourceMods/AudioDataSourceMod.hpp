@@ -36,6 +36,7 @@ public:
   static constexpr int SOURCE_ZERO_CROSSING_RATE_SCALAR = 14;
   static constexpr int SOURCE_ONSET1 = 20;
   static constexpr int SOURCE_TIMBRE_CHANGE = 21;
+  static constexpr int SOURCE_PITCH_CHANGE = 22;
 
 protected:
   void initParameters() override;

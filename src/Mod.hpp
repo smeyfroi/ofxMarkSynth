@@ -104,6 +104,7 @@ public:
   
   static constexpr int SINK_AUDIO_ONSET = -300;
   static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
+  static constexpr int SINK_AUDIO_PITCH_CHANGE = -302;
 
   std::string name;
   

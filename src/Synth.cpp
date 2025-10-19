@@ -139,7 +139,8 @@ void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_AUDIO_ONSET:
     case SINK_AUDIO_TIMBRE_CHANGE:
-      ofLogNotice() << "Synth received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " value: " << v;
+    case SINK_AUDIO_PITCH_CHANGE:
+      ofLogNotice() << "Synth received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : sinkId == SINK_AUDIO_TIMBRE_CHANGE ? "timbre change" : "pitch change") << " value: " << v;
       {
         ModPtr winningModPtr = selectWinnerByWeightedRandom(sinkId);
         if (winningModPtr) {
