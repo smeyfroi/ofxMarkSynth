@@ -59,6 +59,8 @@ compositeSize { compositeSize_ }
   recorder.setInputPixelFormat(OF_IMAGE_COLOR);
 //  recorder.setVideoCodec("libx264"); // doesn't work, nor h265
 #endif
+  
+  of::random::seed(0);
 }
 
 // FIXME: this has to be called after all Mods are added to build the GUI from the child GUIs
@@ -138,7 +140,14 @@ ModPtr Synth::selectWinnerByWeightedRandom(int sinkId) {
 void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_AUDIO_ONSET:
-    case SINK_AUDIO_TIMBRE_CHANGE:
+    {
+      // Use bucketed onset value as seed for repeatability
+      int seed = static_cast<int>(v * 10.0f); // Adjust multiplier for desired granularity
+      of::random::seed(seed);
+      ofLogNotice() << "Reset seed: " << seed;
+    }
+    // and fall through
+    case SINK_AUDIO_TIMBRE_CHANGE: // this is quite twitchy so make it for small changes
     case SINK_AUDIO_PITCH_CHANGE:
       ofLogNotice() << "Synth received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : sinkId == SINK_AUDIO_TIMBRE_CHANGE ? "timbre change" : "pitch change") << " value: " << v;
       {
