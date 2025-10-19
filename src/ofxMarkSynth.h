@@ -28,6 +28,4 @@
 #include "SoftCircleMod.hpp"
 #include "ParticleFieldMod.hpp"
 
-#include "FadeMod.hpp"
-
 #include "Synth.hpp"
