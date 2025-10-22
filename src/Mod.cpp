@@ -99,15 +99,8 @@ void Mod::receive(int sinkId, const glm::vec4& point) {
   ofLogError() << "bad receive of glm::vec4 in " << typeid(*this).name();
 }
 
-// FIXME: temp default impl does drawing layer changes on pitch change
 void Mod::receive(int sinkId, const float& value) {
-  switch (sinkId) {
-    case SINK_AUDIO_PITCH_CHANGE:
-      changeDrawingLayer();
-      break;
-    default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
+  ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
 }
 
 void Mod::receive(int sinkId, const ofFloatPixels& pixels) {
@@ -120,15 +113,6 @@ void Mod::receive(int sinkId, const ofPath& path) {
 
 void Mod::receive(int sinkId, const ofFbo& fbo) {
   ofLogError() << "bad receive of ofFbo in " << typeid(*this).name();
-}
-
-float Mod::bidToReceive(int sinkId) {
-  switch (sinkId) {
-    case SINK_AUDIO_PITCH_CHANGE:
-      return 0.1f;
-    default:
-      return 0.0f;
-  }
 }
 
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
@@ -150,12 +134,15 @@ std::optional<DrawingLayerPtr> Mod::getCurrentNamedDrawingLayerPtr(const std::st
   return getNamedDrawingLayerPtr(name, index);
 }
 
-void Mod::changeDrawingLayer() {
-  if (namedDrawingLayerPtrs.empty()) return;
+std::optional<std::string> Mod::getRandomLayerName() {
+  if (namedDrawingLayerPtrs.empty()) return std::nullopt;
   auto it = namedDrawingLayerPtrs.begin();
   std::advance(it, (size_t)ofRandom(0, namedDrawingLayerPtrs.size()));
-  const auto& layerName = it->first;
-  changeDrawingLayer(layerName);
+  return it->first;
+}
+
+void Mod::changeDrawingLayer() {
+  if (const auto& layerNameOpt = getRandomLayerName()) changeDrawingLayer(*layerNameOpt);
 }
 
 // Return to the default layer 0 between drawing on other layers
@@ -168,6 +155,26 @@ void Mod::changeDrawingLayer(const std::string& layerName) {
     currentDrawingLayerIndices[layerName] = 0;
   }
   ofLogNotice() << "'" << name << "' changing current drawing layer '" << layerName << "' to index " << currentDrawingLayerIndices[layerName] << " : " << ((currentDrawingLayerIndices[layerName] >= 0) ? namedDrawingLayerPtrs[layerName][currentDrawingLayerIndices[layerName]]->name : "NONE");
+}
+
+// Return to the default layer 0
+void Mod::resetDrawingLayer() {
+  if (const auto& layerNameOpt = getRandomLayerName()) resetDrawingLayer(*layerNameOpt);
+}
+
+void Mod::resetDrawingLayer(const std::string& layerName) {
+  currentDrawingLayerIndices[layerName] = 0;
+  ofLogNotice() << "'" << name << "' reset current drawing layer '" << layerName << "'";
+}
+
+// Disable drawing for a lyer
+void Mod::disableDrawingLayer() {
+  if (const auto& layerNameOpt = getRandomLayerName()) disableDrawingLayer(*layerNameOpt);
+}
+
+void Mod::disableDrawingLayer(const std::string& layerName) {
+  currentDrawingLayerIndices[layerName] = -1;
+  ofLogNotice() << "'" << name << "' disable current drawing layer '" << layerName << "'";
 }
 
 

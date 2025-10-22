@@ -48,14 +48,26 @@ void SmearMod::update() {
   }
 }
 
-void SmearMod::receive(int sinkId, const float& v) {
+void SmearMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_FLOAT:
-      mixNewParameter = v;
+      mixNewParameter = value;
+      break;
+    case SINK_CHANGE_LAYER:
+      if (value > 0.9) {
+        ofLogNotice() << "SmearMod::SINK_CHANGE_LAYER: disable layer";
+        disableDrawingLayer();
+      } else if (value > 0.6) { // FIXME: temp until connections have weights
+        ofLogNotice() << "SmearMod::SINK_CHANGE_LAYER: changing layer";
+        changeDrawingLayer();
+      } else if (value > 0.3) {
+        // higher chance to return to default layer
+        ofLogNotice() << "SmearMod::SINK_CHANGE_LAYER: default layer";
+        resetDrawingLayer();
+      }
       break;
     default:
-      Mod::receive(sinkId, v);
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

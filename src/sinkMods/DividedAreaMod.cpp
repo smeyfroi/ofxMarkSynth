@@ -151,27 +151,32 @@ void DividedAreaMod::receive(int sinkId, const ofPath& path) {
 
 void DividedAreaMod::receive(int sinkId, const float& v) {
   switch (sinkId) {
-    case SINK_AUDIO_ONSET:
-      {
-        int newStrategy = (strategyParameter + 1) % 3;
-        ofLogNotice() << "DividedAreaMod::receive audio onset; changing strategy to " << newStrategy;
-        strategyParameter = newStrategy;
-        strategyChangeInvalidUntilTimestamp = ofGetElapsedTimef() + 5.0; // 5s
+    case SINK_CHANGE_LAYER:
+      if (v > 0.6) { // FIXME: temp until connections have weights
+        ofLogNotice() << "DividedAreaMod::SINK_CHANGE_LAYER: changing layer";
+        changeDrawingLayer();
       }
       break;
-    case SINK_AUDIO_TIMBRE_CHANGE:
+    case SINK_CHANGE_ANGLE:
       {
-        float newAngle = ofRandom(0.0, 0.5);
-        ofLogNotice() << "DividedAreaMod::receive audio timbre change; changing angle to " << newAngle;
-        angleParameter = newAngle;
+        if (v > 0.4) { // FIXME: temp until connections have weights
+          float newAngle = v;
+          ofLogNotice() << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
+          angleParameter = newAngle;
+        }
       }
       break;
-//    case SINK_AUDIO_PITCH_CHANGE:
-//      changeDrawingLayer();
-//      break;
+    case SINK_CHANGE_STRATEGY:
+    {
+      if (ofGetElapsedTimef() < strategyChangeInvalidUntilTimestamp) break;
+      int newStrategy = (strategyParameter + 1) % 3;
+      ofLogNotice() << "DividedAreaMod::SINK_CHANGE_STRATEGY: changing strategy to " << newStrategy;
+      strategyParameter = newStrategy;
+      strategyChangeInvalidUntilTimestamp = ofGetElapsedTimef() + 5.0; // 5s. FIXME: should be a parameter
+    }
+      break;
     default:
-      Mod::receive(sinkId, v);
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 
@@ -195,20 +200,6 @@ void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
       break;
     default:
       ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
-
-float DividedAreaMod::bidToReceive(int sinkId) {
-  switch (sinkId) {
-    case SINK_AUDIO_ONSET:
-      if (ofGetElapsedTimef() < strategyChangeInvalidUntilTimestamp) return 0.0;
-      return 0.3;
-    case SINK_AUDIO_TIMBRE_CHANGE:
-      if (strategyParameter == 1) return 0.4; // angle strategy
-//    case SINK_AUDIO_PITCH_CHANGE:
-//      return 0.1;
-    default:
-      return Mod::bidToReceive(sinkId);
   }
 }
 

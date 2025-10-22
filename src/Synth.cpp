@@ -116,46 +116,14 @@ void Synth::receive(int sinkId, const glm::vec4& v) {
   }
 }
 
-ModPtr Synth::selectWinnerByWeightedRandom(int sinkId) {
-  std::vector<std::pair<ModPtr, float>> bidders;
-  for (const auto& pair : modPtrs) {
-    const auto& [name, modPtr] = pair;
-    float bid = modPtr->bidToReceive(sinkId);
-    if (bid > 0.0f) {
-      // Add randomness: multiply bid by random value [0.5, 1.5]: wider range is less deterministic
-      float randomFactor = ofRandom(0.5f, 1.5f);
-      bid *= randomFactor;
-      bidders.push_back({modPtr, bid});
-    }
-  }
-  
-  if (bidders.empty()) return nullptr;
-  
-  auto winner = std::max_element(bidders.begin(), bidders.end(), [](const auto& a, const auto& b) {
-    return a.second < b.second;
-  });
-  return winner->first;
-}
-
 void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
-    case SINK_AUDIO_ONSET:
-    {
-      // Use bucketed onset value as seed for repeatability
-      int seed = static_cast<int>(v * 10.0f); // Adjust multiplier for desired granularity
-      of::random::seed(seed);
-      ofLogNotice() << "Reset seed: " << seed;
-    }
-    // and fall through
-    case SINK_AUDIO_TIMBRE_CHANGE: // this is quite twitchy so make it for small changes
-    case SINK_AUDIO_PITCH_CHANGE:
-      ofLogNotice() << "Synth received " << (sinkId == SINK_AUDIO_ONSET ? "onset" : sinkId == SINK_AUDIO_TIMBRE_CHANGE ? "timbre change" : "pitch change") << " value: " << v;
+    case SINK_RESET_RANDOMNESS:
       {
-        ModPtr winningModPtr = selectWinnerByWeightedRandom(sinkId);
-        if (winningModPtr) {
-//          ofLogNotice() << "Awarding " << (sinkId == SINK_AUDIO_ONSET ? "onset" : "timbre change") << " to Mod " << winningModPtr->name;
-          winningModPtr->receive(sinkId, v);
-        }
+        // Use bucketed onset value as seed for repeatability
+        int seed = static_cast<int>(v * 10.0f); // Adjust multiplier for desired granularity
+        of::random::seed(seed);
+        ofLogNotice() << "Reset seed: " << seed;
       }
       break;
     default:

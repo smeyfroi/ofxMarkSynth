@@ -22,9 +22,9 @@ public:
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const float& v) override;
-  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_VEC2 = 1;
+  static constexpr int SINK_CHANGE_CLUSTER_NUM = 10;
   static constexpr int SOURCE_VEC2 = 2;
 
 protected:

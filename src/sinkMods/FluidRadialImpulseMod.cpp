@@ -48,10 +48,7 @@ void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
       impulseStrengthParameter = value;
       break;
     default:
-      Mod::receive(sinkId, value);
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-//    default:
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

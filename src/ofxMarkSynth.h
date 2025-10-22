@@ -19,7 +19,6 @@
 #include "SmearMod.hpp"
 
 #include "IntrospectorMod.hpp"
-#include "DrawPointsMod.hpp"
 #include "ParticleSetMod.hpp"
 #include "DividedAreaMod.hpp"
 #include "SandLineMod.hpp"

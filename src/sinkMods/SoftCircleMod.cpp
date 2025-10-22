@@ -70,39 +70,21 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
     case SINK_POINT_SOFTNESS:
       softnessParameter = value;
       break;
-//    case SINK_AUDIO_TIMBRE_CHANGE:
-//      Mod::receive(sinkId, value);
-//      break;
-    case SINK_AUDIO_ONSET:
+    case SINK_RADIUS_VARIANCE_SCALE:
       {
         float newRadiusVarianceScale = ofRandom(0.0, 100 * radiusParameter);
         ofLogNotice() << "SoftCircleMod::receive audio timbre change; new radius variance scale " << newRadiusVarianceScale;
         radiusVarianceScaleParameter = newRadiusVarianceScale;
       }
       break;
+    case SINK_CHANGE_LAYER:
+      if (value > 0.5) { // FIXME: temp until connections have weights
+        ofLogNotice() << "SoftCircleMod::SINK_CHANGE_LAYER: changing layer";
+        changeDrawingLayer();
+      }
+      break;
     default:
-      Mod::receive(sinkId, value);
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-//    case SINK_AUDIO_PITCH_CHANGE:
-//      changeDrawingLayer();
-//      break;
-//    default:
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
-
-float SoftCircleMod::bidToReceive(int sinkId) {
-  switch (sinkId) {
-//    case SINK_AUDIO_TIMBRE_CHANGE:
-//      return 0.2;
-    case SINK_AUDIO_ONSET:
-      return 0.2;
-    default:
-      return Mod::bidToReceive(sinkId);
-//    case SINK_AUDIO_PITCH_CHANGE:
-//      return 0.1;
-//    default:
-//      return 0.0;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

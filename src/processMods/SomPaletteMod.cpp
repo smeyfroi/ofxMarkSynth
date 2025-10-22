@@ -131,21 +131,14 @@ void SomPaletteMod::receive(int sinkId, const glm::vec3& v) {
 
 void SomPaletteMod::receive(int sinkId, const float& v) {
   switch (sinkId) {
-    case SINK_AUDIO_TIMBRE_CHANGE:
-      ofLogNotice() << "SomPaletteMod::receive audio timbre change; switching palette";
-      somPalette.switchPalette();
+    case SINK_SWITCH_PALETTE:
+      if (somPalette.nextPaletteIsReady() && v > 0.5f) { // TODO: Convert to a parameter *****************
+        ofLogNotice() << "SomPaletteMod switching palette";
+        somPalette.switchPalette();
+      }
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
-
-float SomPaletteMod::bidToReceive(int sinkId) {
-  switch (sinkId) {
-    case SINK_AUDIO_TIMBRE_CHANGE:
-      if (somPalette.nextPaletteIsReady()) return 0.8;
-    default:
-      return 0.0;
   }
 }
   

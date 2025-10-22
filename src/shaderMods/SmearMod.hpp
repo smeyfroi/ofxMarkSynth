@@ -22,7 +22,7 @@ public:
   SmearMod(const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
-  void receive(int sinkId, const float& v) override;
+  void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const ofFbo& value) override;
 
   static constexpr int SINK_VEC2 = 10;
@@ -48,6 +48,7 @@ private:
   SmearShader smearShader;
   
   ofFbo field1Fbo, field2Fbo;
+  bool useField2;
 };
 
 

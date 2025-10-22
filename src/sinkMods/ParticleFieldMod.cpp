@@ -69,35 +69,17 @@ void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
 
 void ParticleFieldMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
-    case SINK_AUDIO_TIMBRE_CHANGE:
-//      Mod::receive(sinkId, value);
-//      break;
-    case SINK_AUDIO_ONSET:
-      {
-//        float newRadiusVarianceScale = ofRandom(0.0, 100 * radiusParameter);
-//        ofLogNotice() << "SoftCircleMod::receive audio timbre change; new radius variance scale " << newRadiusVarianceScale;
-//        radiusVarianceScaleParameter = newRadiusVarianceScale;
+    case SINK_CHANGE_LAYER:
+      if (value > 0.8) { // FIXME: temp until connections have weights
+        ofLogNotice() << "ParticleFieldMod::SINK_CHANGE_LAYER: changing layer";
+        changeDrawingLayer();
+      } else if (value > 0.2) {
+        ofLogNotice() << "ParticleFieldMod::SINK_CHANGE_LAYER: resetting layer";
+        resetDrawingLayer();
       }
-    break;
-//    case SINK_AUDIO_PITCH_CHANGE:
-//      changeDrawingLayer();
-//      break;
+      break;
     default:
-      Mod::receive(sinkId, value);
-//      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
-  }
-}
-
-float ParticleFieldMod::bidToReceive(int sinkId) {
-  switch (sinkId) {
-    case SINK_AUDIO_TIMBRE_CHANGE:
-      return 0.1;
-    case SINK_AUDIO_ONSET:
-      return 0.1;
-    default:
-      return Mod::bidToReceive(sinkId);
-//    default:
-//      return 0.0;
+      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
 

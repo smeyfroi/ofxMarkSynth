@@ -25,9 +25,9 @@ public:
   bool keyPressed(int key) override;
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const float& v) override;
-  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_VEC3 = 1;
+  static constexpr int SINK_SWITCH_PALETTE = 100;
   static constexpr int SOURCE_RANDOM_VEC4 = 2; // RGBA float color
   static constexpr int SOURCE_RANDOM_DARK_VEC4 = 3; // RGBA float color
   static constexpr int SOURCE_RANDOM_LIGHT_VEC4 = 4; // RGBA float color

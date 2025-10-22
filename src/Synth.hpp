@@ -60,6 +60,7 @@ public:
   
   static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SINK_BACKGROUND_COLOR = 100;
+  static constexpr int SINK_RESET_RANDOMNESS = 200;
   
 protected:
   void initParameters() override;
@@ -68,7 +69,6 @@ private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
   UnitQuadMesh unitQuadMesh;
-  ModPtr selectWinnerByWeightedRandom(int sinkId);
 
   bool paused;
   

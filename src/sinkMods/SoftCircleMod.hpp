@@ -22,7 +22,6 @@ public:
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
   void receive(int sinkId, const glm::vec4& v) override;
-  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_POINT_RADIUS = 10;
@@ -31,6 +30,7 @@ public:
   static constexpr int SINK_POINT_COLOR = 20;
   static constexpr int SINK_POINT_COLOR_MULTIPLIER = 21;
   static constexpr int SINK_POINT_SOFTNESS = 30;
+  static constexpr int SINK_RADIUS_VARIANCE_SCALE = 100;
 
 protected:
   void initParameters() override;

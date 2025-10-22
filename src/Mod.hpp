@@ -90,7 +90,6 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
-  virtual float bidToReceive(int sinkId); // { return 0.0; };
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
   virtual void receive(int sinkId, const glm::vec4& point);
@@ -102,9 +101,7 @@ public:
   void receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr);
   std::optional<DrawingLayerPtr> getCurrentNamedDrawingLayerPtr(const std::string& name);
   
-  static constexpr int SINK_AUDIO_ONSET = -300;
-  static constexpr int SINK_AUDIO_TIMBRE_CHANGE = -301;
-  static constexpr int SINK_AUDIO_PITCH_CHANGE = -302;
+  static constexpr int SINK_CHANGE_LAYER = -300;
 
   std::string name;
   
@@ -116,8 +113,13 @@ protected:
   template<typename T> void emit(int sourceId, const T& value);
 
   std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, int index);
+  std::optional<std::string> getRandomLayerName();
   void changeDrawingLayer();
   void changeDrawingLayer(const std::string& layerName);
+  void resetDrawingLayer();
+  void resetDrawingLayer(const std::string& layerName);
+  void disableDrawingLayer();
+  void disableDrawingLayer(const std::string& layerName);
 
 private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on

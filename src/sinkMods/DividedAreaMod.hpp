@@ -27,7 +27,6 @@ public:
   void receive(int sinkId, const float& point) override;
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const ofFbo& v) override;
-  float bidToReceive(int sinkId) override;
 
   static constexpr int SINK_MAJOR_ANCHORS = 1;
   static constexpr int SINK_MINOR_ANCHORS = 10;
@@ -35,6 +34,9 @@ public:
   static constexpr int SINK_MINOR_LINES_COLOR = 30;
   static constexpr int SINK_MAJOR_LINES_COLOR = 31;
   static constexpr int SINK_BACKGROUND_SOURCE = 100; // for refraction on major lines
+  static constexpr int SINK_CHANGE_ANGLE = 200;
+  static constexpr int SINK_CHANGE_STRATEGY = 201;
+  static constexpr int SINK_CHANGE_LAYER = 202;
 
   // DEFAULT_LAYERPTR_NAME is for drawing unconstrained lines
   static constexpr std::string MAJOR_LINES_LAYERPTR_NAME { "major-lines" };
