@@ -25,7 +25,7 @@ public:
 
   static constexpr int SINK_VEC2 = 1;
   static constexpr int SINK_CHANGE_CLUSTER_NUM = 10;
-  static constexpr int SOURCE_VEC2 = 2;
+  static constexpr int SOURCE_CLUSTER_CENTRE_VEC2 = 2;
 
 protected:
   void initParameters() override;

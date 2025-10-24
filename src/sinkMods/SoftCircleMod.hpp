@@ -24,21 +24,19 @@ public:
   void receive(int sinkId, const glm::vec4& v) override;
 
   static constexpr int SINK_POINTS = 1;
-  static constexpr int SINK_POINT_RADIUS = 10;
+  static constexpr int SINK_POINT_RADIUS_MEAN = 10;
   static constexpr int SINK_POINT_RADIUS_VARIANCE = 11;
-  static constexpr int SINK_POINT_RADIUS_VARIANCE_SCALE = 12;
+  static constexpr int SINK_POINT_RADIUS_MIN = 12;
+  static constexpr int SINK_POINT_RADIUS_MAX = 13;
   static constexpr int SINK_POINT_COLOR = 20;
   static constexpr int SINK_POINT_COLOR_MULTIPLIER = 21;
   static constexpr int SINK_POINT_SOFTNESS = 30;
-  static constexpr int SINK_RADIUS_VARIANCE_SCALE = 100;
 
 protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> radiusParameter { "Radius", 0.001, 0.0, 0.4 };
-  ofParameter<float> radiusVarianceParameter { "RadiusVariance", 0.0, 0.0, 1.0 };
-  ofParameter<float> radiusVarianceScaleParameter { "RadiusVarianceScale", 0.001, 0.0, 1.0 };
+  VariableParameter<float> variableRadiusParameter { "Radius", 0.01, 0.5, 0.0, 0.25 };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 }; // RGB
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A

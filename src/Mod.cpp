@@ -41,7 +41,7 @@ bool trySetParameterFromString(ofParameterGroup& group, const std::string& name,
       return true;
     }
     if (paramPtr->type() == typeid(ofParameterGroup).name()) {
-      return trySetParameterFromString(paramPtr->castGroup(), name, stringValue);
+      if (trySetParameterFromString(paramPtr->castGroup(), name, stringValue)) return true;
     }
   }
   return false;
@@ -118,7 +118,6 @@ void Mod::receive(int sinkId, const ofFbo& fbo) {
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
   auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
   drawingLayerPtrs.push_back(drawingLayerPtr);
-  currentDrawingLayerIndices[name] = -1; // start by not drawing to any layer
 }
 
 std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, int index) {

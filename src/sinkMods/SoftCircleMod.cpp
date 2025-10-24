@@ -18,9 +18,7 @@ SoftCircleMod::SoftCircleMod(const std::string& name, const ModConfig&& config)
 }
 
 void SoftCircleMod::initParameters() {
-  parameters.add(radiusParameter);
-  parameters.add(radiusVarianceParameter);
-  parameters.add(radiusVarianceScaleParameter);
+  parameters.add(variableRadiusParameter.parameters);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
   parameters.add(alphaMultiplierParameter);
@@ -32,10 +30,7 @@ void SoftCircleMod::update() {
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  float radius = radiusParameter;
-  float radiusVariance = radiusVarianceParameter;
-  float radiusVarianceScale = radiusVarianceScaleParameter;
-  radius += radiusVariance * radiusVarianceScale;
+  float radius = variableRadiusParameter.getValue();
 
   float multiplier = colorMultiplierParameter;
   ofFloatColor c = colorParameter;
@@ -58,24 +53,20 @@ void SoftCircleMod::update() {
 
 void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
-    case SINK_POINT_RADIUS:
-      radiusParameter = value;
+    case SINK_POINT_RADIUS_MEAN:
+      variableRadiusParameter.meanValue = value;
       break;
     case SINK_POINT_RADIUS_VARIANCE:
-      radiusVarianceParameter = value;
+      variableRadiusParameter.variance = value;
+      break;
+    case SINK_POINT_RADIUS_MIN:
+    case SINK_POINT_RADIUS_MAX:
       break;
     case SINK_POINT_COLOR_MULTIPLIER:
       colorMultiplierParameter = value;
       break;
     case SINK_POINT_SOFTNESS:
       softnessParameter = value;
-      break;
-    case SINK_RADIUS_VARIANCE_SCALE:
-      {
-        float newRadiusVarianceScale = ofRandom(0.0, 100 * radiusParameter);
-        ofLogNotice() << "SoftCircleMod::receive audio timbre change; new radius variance scale " << newRadiusVarianceScale;
-        radiusVarianceScaleParameter = newRadiusVarianceScale;
-      }
       break;
     case SINK_CHANGE_LAYER:
       if (value > 0.5) { // FIXME: temp until connections have weights
