@@ -55,6 +55,8 @@ public:
 
   void drawGui();
   void setGuiSize(glm::vec2 size);
+  void toggleRecording();
+  void saveImage();
   bool keyPressed(int key) override;
   ofParameterGroup& getFboParameterGroup();
   

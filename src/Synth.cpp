@@ -375,6 +375,30 @@ void Synth::setGuiSize(glm::vec2 size) {
   gui.setSize(size.x, size.y);
 }
 
+void Synth::toggleRecording() {
+#ifdef TARGET_MAC
+  if (recorder.isRecording()) {
+    recorder.stop();
+    ofSetWindowTitle("");
+  } else {
+    recorder.setOutputPath(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".mp4"));
+    recorder.startCustomRecord();
+    ofSetWindowTitle("[Recording]");
+  }
+#endif
+}
+
+void Synth::saveImage() {
+  SaveToFileThread* threadPtr = new SaveToFileThread();
+  std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
+  ofLogNotice() << "Fetch drawing to save to " << filepath;
+  ofFloatPixels pixels;
+  pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);
+  imageCompositeFbo.readToPixels(pixels);
+  threadPtr->save(filepath, std::move(pixels));
+  saveToFileThreads.push_back(threadPtr);
+}
+
 bool Synth::keyPressed(int key) {
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
   
@@ -415,29 +439,14 @@ bool Synth::keyPressed(int key) {
   // <<<
   
   if (key == 'S') {
-    SaveToFileThread* threadPtr = new SaveToFileThread();
-    std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
-    ofLogNotice() << "Fetch drawing to save to " << filepath;
-    ofFloatPixels pixels;
-    pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);
-    imageCompositeFbo.readToPixels(pixels);
-    threadPtr->save(filepath, std::move(pixels));
-    saveToFileThreads.push_back(threadPtr);
+    saveImage();
     return true;
   }
 
-#ifdef TARGET_MAC
   if (key == 'R') {
-    if (recorder.isRecording()) {
-      recorder.stop();
-      ofSetWindowTitle("");
-    } else {
-      recorder.setOutputPath(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".mp4"));
-      recorder.startCustomRecord();
-      ofSetWindowTitle("[Recording]");
-    }
+    toggleRecording();
+    return true;
   }
-#endif
 
   bool handled = std::any_of(modPtrs.cbegin(), modPtrs.cend(), [&key](const auto& pair) {
     const auto& [name, modPtr] = pair;

@@ -34,15 +34,28 @@ Mod::Mod(const std::string& name_, const ModConfig&& config_)
 config { std::move(config_) }
 {}
 
-bool trySetParameterFromString(ofParameterGroup& group, const std::string& name, const std::string& stringValue) {
+std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(ofParameterGroup& group, const std::string& namePrefix) {
   for (const auto& paramPtr : group) {
-    if (paramPtr->getName() == name) {
-      paramPtr->fromString(stringValue);
-      return true;
+    if (paramPtr->getName().rfind(namePrefix, 0) == 0) {
+      return std::ref(*paramPtr);
     }
     if (paramPtr->type() == typeid(ofParameterGroup).name()) {
-      if (trySetParameterFromString(paramPtr->castGroup(), name, stringValue)) return true;
+      if (auto found = findParameterByNamePrefix(paramPtr->castGroup(), namePrefix)) {
+        return found;
+      }
     }
+  }
+  return std::nullopt;
+}
+
+std::optional<std::reference_wrapper<ofAbstractParameter>> Mod::findParameterByNamePrefix(const std::string& name) {
+  return ::ofxMarkSynth::findParameterByNamePrefix(getParameterGroup(), name);
+}
+
+bool trySetParameterFromString(ofParameterGroup& group, const std::string& name, const std::string& stringValue) {
+  if (auto paramOpt = findParameterByNamePrefix(group, name)) {
+    paramOpt->get().fromString(stringValue);
+    return true;
   }
   return false;
 }

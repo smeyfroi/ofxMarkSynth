@@ -127,6 +127,8 @@ public:
   virtual void draw() {};
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
+  std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
+
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
