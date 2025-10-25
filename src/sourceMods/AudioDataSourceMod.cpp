@@ -13,7 +13,8 @@ namespace ofxMarkSynth {
 
 
 AudioDataSourceMod::AudioDataSourceMod(const std::string& name, const ModConfig&& config, const std::string& micDeviceName, bool recordAudio, const std::filesystem::path& recordingPath, const std::filesystem::path& rootSourceMaterialPath)
-: Mod { name, std::move(config) }
+: Mod { name, std::move(config) },
+tuningVisible(false)
 {
   std::filesystem::create_directory(recordingPath);
 
@@ -67,27 +68,56 @@ void AudioDataSourceMod::emitPitchRmsPoints() {
   emit(SOURCE_PITCH_RMS_POINTS, glm::vec2 { x, y });
 }
 
-void AudioDataSourceMod::emitPolarPitchRmsPoints() {
-  // Note that pitch is wrapped around within the min/max range
-//  float pitch = audioDataProcessorPtr->getScalarValue(ofxAudioAnalysisClient::AnalysisScalar::pitch);
-  float pitch = getNormalisedAnalysisScalar(minPitchParameter, maxPitchParameter,
-                                            ofxAudioAnalysisClient::AnalysisScalar::pitch);
-  // 0.7 to get into the corners
-  float rms = 0.7 * getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
-                                          ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
-  // map pitch to two circumferences to avoid bunching
-  float angle = std::fmod(2 * pitch * glm::two_pi<float>(), glm::two_pi<float>());
-  float x = rms * std::cos(angle);
-  float y = rms * std::sin(angle);
+glm::vec2 normalisedAngleLengthToPolar(float angle, float length) {
+  length *= 0.7f; // get into the corners
+  angle = std::fmod(angle * glm::two_pi<float>() * 2.0f, glm::two_pi<float>()); // map to two circumferences to avoid bunching and wrap
+  float x = length * std::cos(angle);
+  float y = length * std::sin(angle);
   x += 0.5; y += 0.5;
   if (x < 0.0) x += 1.0;
   if (x > 1.0) x -= 1.0;
   if (y < 0.0) y += 1.0;
   if (y > 1.0) y -= 1.0;
-  emit(SOURCE_POLAR_PITCH_RMS_POINTS, glm::vec2 { x, y });
+  return { x, y };
 }
 
-void AudioDataSourceMod::emitSpectralPoints() {
+void AudioDataSourceMod::emitPolarPitchRmsPoints() {
+  float pitch = getNormalisedAnalysisScalar(minPitchParameter, maxPitchParameter,
+                                            ofxAudioAnalysisClient::AnalysisScalar::pitch);
+  float rms = getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
+                                          ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+  emit(SOURCE_POLAR_PITCH_RMS_POINTS, normalisedAngleLengthToPolar(pitch, rms));
+}
+
+void AudioDataSourceMod::emitSpectral2DPoints() {
+//  float csd = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
+//                              maxComplexSpectralDifferenceParameter,
+//                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+  float sc = getNormalisedAnalysisScalar(minSpectralCrestParameter,
+                              maxSpectralCrestParameter,
+                              ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+  float zcr = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
+                              maxZeroCrossingRateParameter,
+                              ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
+//  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { csd, sc });
+  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { sc, zcr });
+}
+
+void AudioDataSourceMod::emitPolarSpectral2DPoints() {
+//  float csd = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
+//                              maxComplexSpectralDifferenceParameter,
+//                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+  float sc = getNormalisedAnalysisScalar(minSpectralCrestParameter,
+                              maxSpectralCrestParameter,
+                              ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+  float zcr = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
+                              maxZeroCrossingRateParameter,
+                              ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
+//  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { csd, sc });
+  emit(SOURCE_SPECTRAL_2D_POINTS, normalisedAngleLengthToPolar(sc, zcr));
+}
+
+void AudioDataSourceMod::emitSpectral3DPoints() {
   float x = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
                               maxComplexSpectralDifferenceParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
@@ -97,7 +127,7 @@ void AudioDataSourceMod::emitSpectralPoints() {
   float z = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
                               maxZeroCrossingRateParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
-  emit(SOURCE_SPECTRAL_POINTS, glm::vec3 { x, y, z });
+  emit(SOURCE_SPECTRAL_3D_POINTS, glm::vec3 { x, y, z });
 }
 
 void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
@@ -121,8 +151,14 @@ void AudioDataSourceMod::update() {
       case SOURCE_POLAR_PITCH_RMS_POINTS:
         emitPolarPitchRmsPoints();
         break;
-      case SOURCE_SPECTRAL_POINTS:
-        emitSpectralPoints();
+      case SOURCE_SPECTRAL_3D_POINTS:
+        emitSpectral3DPoints();
+        break;
+      case SOURCE_SPECTRAL_2D_POINTS:
+        emitSpectral2DPoints();
+        break;
+      case SOURCE_POLAR_SPECTRAL_2D_POINTS:
+        emitPolarSpectral2DPoints();
         break;
       case SOURCE_PITCH_SCALAR:
         emitScalar(SOURCE_PITCH_SCALAR, minPitchParameter, maxPitchParameter,
@@ -161,6 +197,10 @@ void AudioDataSourceMod::update() {
 bool AudioDataSourceMod::keyPressed(int key) {
   if (audioAnalysisClientPtr->keyPressed(key)) return true;
   if (audioDataPlotsPtr->keyPressed(key)) return true;
+  if (key == 'T') {
+    tuningVisible = !tuningVisible;
+    return true;
+  }
   return false;
 }
 
@@ -168,6 +208,30 @@ void AudioDataSourceMod::draw() {
   ofPushMatrix();
   audioDataPlotsPtr->drawPlots();
   ofPopMatrix();
+  
+  if (tuningVisible) {
+    float pitch = getNormalisedAnalysisScalar(minPitchParameter, maxPitchParameter,
+                                              ofxAudioAnalysisClient::AnalysisScalar::pitch);
+    float rms = getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
+                                            ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+    ofSetColor(ofColor::blue);
+    ofFill();
+    ofDrawRectangle(pitch, rms, 1.0f/100.0f, 1.0f/100.0f);
+    
+    //  float csd = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
+    //                              maxComplexSpectralDifferenceParameter,
+    //                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+    float sc = getNormalisedAnalysisScalar(minSpectralCrestParameter,
+                                maxSpectralCrestParameter,
+                                ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+    float zcr = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
+                                maxZeroCrossingRateParameter,
+                                ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
+    ofSetColor(ofColor::purple);
+    ofFill();
+//      ofDrawRectangle(csd, sc, 1.0f/100.0f, 1.0f/100.0f);
+    ofDrawRectangle(sc, zcr, 1.0f/100.0f, 1.0f/100.0f);
+  }
 }
 
 void AudioDataSourceMod::shutdown() {
