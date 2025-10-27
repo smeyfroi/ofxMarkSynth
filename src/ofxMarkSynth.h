@@ -13,6 +13,7 @@
 #include "PixelSnapshotMod.hpp"
 #include "PathMod.hpp"
 #include "FluidMod.hpp"
+#include "VaryingValueMod.hpp"
 
 #include "TranslateMod.hpp"
 #include "AddTextureMod.hpp"

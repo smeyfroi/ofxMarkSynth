@@ -79,44 +79,6 @@ void connectSourceToSinks(ModPtr sourceModPtr,
 
 
 
-template <typename T>
-struct VariableParameter {
-public:
-  ofParameter<T> meanValue;
-  ofParameter<T> variance;
-  ofParameter<T> min;
-  ofParameter<T> max;
-  ofParameterGroup parameters;
-
-  void minMaxChanged(float& value) {
-    meanValue.setMin(min.get());
-    meanValue.setMax(max.get());
-    max.setMax(std::fminf(10.0f, max.get() * 4.0));
-  }
-  
-  VariableParameter(const std::string& name, const T& meanValue_, const T& variance_, const T& min_, const T& max_) {
-    meanValue.set(name + " Mean", meanValue_, min_, max_);
-    variance.set(name + " Variance", variance_, static_cast<T>(0), static_cast<T>(4.0)); // 1 is 1 std dev
-    min.set(name + " Min", min_, static_cast<T>(0), max_);
-    max.set(name + " Max", max_, min_, max_ * 4.0);
-    parameters.setName(name);
-    parameters.add(meanValue);
-    parameters.add(variance);
-    parameters.add(min);
-    parameters.add(max);
-    min.addListener(this, &VariableParameter::minMaxChanged);
-    max.addListener(this, &VariableParameter::minMaxChanged);
-  }
-  
-  T getValue() {
-    T stdDev = variance.get() * static_cast<T>(max - min);
-    T sampledValue = of::random::normal<T>(meanValue.get(), stdDev);
-    return ofClamp(sampledValue, min.get(), max.get());
-  }
-};
-
-
-
 class Mod {
   
 public:

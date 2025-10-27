@@ -18,7 +18,7 @@ SoftCircleMod::SoftCircleMod(const std::string& name, const ModConfig&& config)
 }
 
 void SoftCircleMod::initParameters() {
-  parameters.add(variableRadiusParameter.parameters);
+  parameters.add(radiusParameter);
   parameters.add(colorParameter);
   parameters.add(colorMultiplierParameter);
   parameters.add(alphaMultiplierParameter);
@@ -30,7 +30,7 @@ void SoftCircleMod::update() {
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  float radius = variableRadiusParameter.getValue();
+  float radius = radiusParameter.get();
 
   float multiplier = colorMultiplierParameter;
   ofFloatColor c = colorParameter;
@@ -53,14 +53,8 @@ void SoftCircleMod::update() {
 
 void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
-    case SINK_POINT_RADIUS_MEAN:
-      variableRadiusParameter.meanValue = value;
-      break;
-    case SINK_POINT_RADIUS_VARIANCE:
-      variableRadiusParameter.variance = value;
-      break;
-    case SINK_POINT_RADIUS_MIN:
-    case SINK_POINT_RADIUS_MAX:
+    case SINK_POINT_RADIUS:
+      radiusParameter = value;
       break;
     case SINK_POINT_COLOR_MULTIPLIER:
       colorMultiplierParameter = value;
