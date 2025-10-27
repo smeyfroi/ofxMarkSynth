@@ -59,7 +59,7 @@ private:
   ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 20.0, 0.0, 500.0 };
   ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 100.0, 0.0, 500.0 };
   ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 5.0, 0.0, 15.0 };
-  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 15.0, 8.0, 80.0 };
+  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 15.0, 2.0, 80.0 };
   
   float getNormalisedAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();

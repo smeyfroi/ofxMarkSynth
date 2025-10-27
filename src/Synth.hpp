@@ -108,7 +108,7 @@ private:
   ofParameter<float> saturationParameter { "saturation", 1.0, 0.0, 2.0 };
   ofParameter<float> brightnessParameter { "brightness", 0.0, -0.1, 0.1 };
   ofParameter<float> hueShiftParameter { "hueShift", 0.0, -1.0, 1.0 };
-  ofParameter<float> sideExposureParameter { "sideExposure", 0.7, 0.0, 4.0 };
+  ofParameter<float> sideExposureParameter { "sideExposure", 0.6, 0.0, 4.0 };
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
   ofxLabel pauseStatus;

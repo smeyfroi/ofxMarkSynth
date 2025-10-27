@@ -268,8 +268,8 @@ void Synth::updateCompositeSideImages() {
   // old panels fade out; new panels fade in
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
-  // Easing helpers (clamped to [0,1])
-  auto easeIn = [&](float x){ return x * x * x; };
+  // Easing helper
+  auto easeIn = [](float x){ return x * x * x; };
 
   // Left panel
   leftPanelCompositeFbo.begin();
@@ -295,8 +295,7 @@ void Synth::updateCompositeSideImages() {
 }
 
 void Synth::drawSidePanels(float xleft, float xright, float w, float h) {
-  ofSetColor(255);
-  ofSetColor(ofFloatColor { 1.0, 0.0, 0.0, 0.3f });
+  ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f });
   tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
   leftPanelCompositeFbo.draw(xleft, 0.0, w, h);
   rightPanelCompositeFbo.draw(xright, 0.0, w, h);
