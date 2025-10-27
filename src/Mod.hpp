@@ -129,4 +129,43 @@ private:
 };
 
 
+
+struct ParamController {
+  ofParameter<float> manualValueParameter;
+  float value;
+  float lastTimeUpdated;
+  float smoothingTauSecs = 0.15f;
+  float rateLimitPerSec = 1.0f; // max change per second
+  
+  ParamController(ofParameter<float>& manualValueParameter_) :
+  manualValueParameter(manualValueParameter_)
+  {
+    update(manualValueParameter.get(), 0.0f);
+  }
+  
+  void update(float newValue, float agency) { // agency 0.0 = full manual, 1.0 = full parameter
+    float timestamp = ofGetElapsedTimef();
+    float dt = timestamp - lastTimeUpdated;
+    
+    // Blend manual and parameter values
+    float target = ofLerp(manualValueParameter.get(), newValue, agency);
+    
+    // Avoid large jumps
+    float maxStep = rateLimitPerSec * dt;
+    target = ofClamp(target, value - maxStep, value + maxStep);
+    
+    // One-pole smooth
+    float alpha = 1.0f - expf(-dt / std::max(1e-4f, smoothingTauSecs));
+    value = ofLerp(value, target, alpha);
+    
+    lastTimeUpdated = timestamp;
+  }
+  
+  void update(float agency) {
+    update(value, agency);
+  }
+};
+
+
+
 } // ofxMarkSynth

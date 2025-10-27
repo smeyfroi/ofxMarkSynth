@@ -34,6 +34,7 @@ protected:
 
 private:
   ofParameter<float> radiusParameter { "Radius", 0.01, 0.0, 0.25 };
+  ParamController radiusParamController { radiusParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 }; // RGB
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A

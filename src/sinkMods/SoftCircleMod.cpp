@@ -25,12 +25,15 @@ void SoftCircleMod::initParameters() {
   parameters.add(softnessParameter);
 }
 
+constexpr float AGENCY = 0.1f;
+
 void SoftCircleMod::update() {
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  float radius = radiusParameter.get();
+  radiusParamController.update(AGENCY); // FIXME: hardcoded agency
+  float radius = radiusParamController.value;
 
   float multiplier = colorMultiplierParameter;
   ofFloatColor c = colorParameter;
@@ -54,7 +57,7 @@ void SoftCircleMod::update() {
 void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
-      radiusParameter = value;
+      radiusParamController.update(value, AGENCY); // FIXME: hardcoded agency
       break;
     case SINK_POINT_COLOR_MULTIPLIER:
       colorMultiplierParameter = value;
