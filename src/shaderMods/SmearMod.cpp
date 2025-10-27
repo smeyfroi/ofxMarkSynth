@@ -25,6 +25,14 @@ void SmearMod::initParameters() {
   parameters.add(field1BiasParameter);
   parameters.add(field2MultiplierParameter);
   parameters.add(field2BiasParameter);
+  
+  parameters.add(gridSizeParameter);
+  parameters.add(strategyParameter);
+  parameters.add(jumpAmountParameter);
+  parameters.add(borderWidthParameter);
+  parameters.add(gridLevelsParameter);
+  parameters.add(ghostBlendParameter);
+  parameters.add(foldPeriodParameter);
 }
 
 void SmearMod::update() {
@@ -35,12 +43,22 @@ void SmearMod::update() {
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   float mixNew = mixNewParameter;
   float alphaMultiplier = alphaMultiplierParameter;
+  SmearShader::GridParameters gridParameters = {
+    .gridSize = glm::vec2 { gridSizeParameter->x, gridSizeParameter->y },
+    .strategy = strategyParameter,
+    .jumpAmount = jumpAmountParameter,
+    .borderWidth = borderWidthParameter,
+    .gridLevels = gridLevelsParameter,
+    .ghostBlend = ghostBlendParameter,
+    .foldPeriod = glm::vec2 { foldPeriodParameter->x, foldPeriodParameter->y }
+  };
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   // TODO: make this more forgiving
   if (field2Fbo.isAllocated() && field1Fbo.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,
                        field1Fbo.getTexture(), field1MultiplierParameter, field1BiasParameter,
-                       field2Fbo.getTexture(), field2MultiplierParameter, field2BiasParameter);
+                       field2Fbo.getTexture(), field2MultiplierParameter, field2BiasParameter,
+                       gridParameters);
   } else if (field1Fbo.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Fbo.getTexture(), field1MultiplierParameter, field1BiasParameter);
   } else {
