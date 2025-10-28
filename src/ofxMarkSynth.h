@@ -14,6 +14,7 @@
 #include "PathMod.hpp"
 #include "FluidMod.hpp"
 #include "VaryingValueMod.hpp"
+#include "MultiplyAddMod.hpp"
 
 #include "TranslateMod.hpp"
 #include "AddTextureMod.hpp"
