@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-SmearMod::SmearMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+SmearMod::SmearMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {
   smearShader.load();
 }

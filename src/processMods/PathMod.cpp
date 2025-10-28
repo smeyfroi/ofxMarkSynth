@@ -12,8 +12,8 @@
 namespace ofxMarkSynth {
 
 
-PathMod::PathMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+PathMod::PathMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {}
 
 void PathMod::initParameters() {

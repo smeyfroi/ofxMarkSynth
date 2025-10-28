@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-RandomVecSourceMod::RandomVecSourceMod(const std::string& name, const ModConfig&& config, short vecDimensions_)
-: Mod { name, std::move(config) },
+RandomVecSourceMod::RandomVecSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, short vecDimensions_)
+: Mod { synthPtr, name, std::move(config) },
 vecDimensions { vecDimensions_ }
 {}
 

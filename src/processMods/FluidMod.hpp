@@ -16,7 +16,7 @@ namespace ofxMarkSynth {
 class FluidMod : public Mod {
 
 public:
-  FluidMod(const std::string& name, const ModConfig&& config);
+  FluidMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void setup();
 

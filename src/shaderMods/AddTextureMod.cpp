@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-AddTextureMod::AddTextureMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+AddTextureMod::AddTextureMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {
   addTextureShader.load();
 }

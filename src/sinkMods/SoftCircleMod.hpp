@@ -8,16 +8,19 @@
 #pragma once
 
 #include "Mod.hpp"
+#include "ParamController.h"
 #include "SoftCircleShader.h"
 
 
 namespace ofxMarkSynth {
 
 
+
 class SoftCircleMod : public Mod {
 
 public:
-  SoftCircleMod(const std::string& name, const ModConfig&& config);
+  SoftCircleMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
@@ -34,15 +37,17 @@ protected:
 
 private:
   ofParameter<float> radiusParameter { "Radius", 0.01, 0.0, 0.25 };
-  ParamController radiusParamController { radiusParameter };
+  ParamController<float> radiusParamController { radiusParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 }; // RGB
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A
   ofParameter<float> softnessParameter { "Softness", 0.3, 0.0, 1.0 };
+  ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
   std::vector<glm::vec2> newPoints;
   SoftCircleShader softCircleShader;
 };
+
 
 
 } // ofxMarkSynth

@@ -18,7 +18,7 @@ namespace ofxMarkSynth {
 class SandLineMod : public Mod {
 
 public:
-  SandLineMod(const std::string& name, const ModConfig&& config);
+  SandLineMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;

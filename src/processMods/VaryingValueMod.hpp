@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 class VaryingValueMod : public Mod {
 public:
-  VaryingValueMod(const std::string& name, const ModConfig&& config);
+  VaryingValueMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const float& value) override;
 

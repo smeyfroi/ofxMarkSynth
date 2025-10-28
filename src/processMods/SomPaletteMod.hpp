@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class SomPaletteMod : public Mod {
 
 public:
-  SomPaletteMod(const std::string& name, const ModConfig&& config);
+  SomPaletteMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;

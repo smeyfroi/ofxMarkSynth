@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 class RandomVecSourceMod : public Mod {
 
 public:
-  RandomVecSourceMod(const std::string& name, const ModConfig&& config, short vecDimensions);
+  RandomVecSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, short vecDimensions);
   void update() override;
   
   static constexpr int SOURCE_VEC2 = 2;

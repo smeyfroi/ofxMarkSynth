@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 class RandomHslColorMod : public Mod {
 
 public:
-  RandomHslColorMod(const std::string& name, const ModConfig&& config);
+  RandomHslColorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   
   static constexpr int SOURCE_VEC4 = 1;

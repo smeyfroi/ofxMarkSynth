@@ -6,6 +6,9 @@
 //
 
 #include "Mod.hpp"
+#include "Synth.hpp"
+
+
 
 namespace ofxMarkSynth {
 
@@ -29,8 +32,9 @@ void connectSourceToSinks(ModPtr sourceModPtr, std::initializer_list<Connections
 
 
 
-Mod::Mod(const std::string& name_, const ModConfig&& config_)
-: name { name_ },
+Mod::Mod(Synth* synthPtr_, const std::string& name_, const ModConfig&& config_)
+: synthPtr { synthPtr_ },
+name { name_ },
 config { std::move(config_) }
 {}
 
@@ -79,6 +83,10 @@ void Mod::connect(int sourceId, ModPtr sinkModPtr, int sinkId) {
   } else {
     connections[sourceId]->push_back(std::pair {sinkModPtr, sinkId});
   }
+}
+
+float Mod::getAgency() const {
+  return synthPtr->getAgency();
 }
 
 template<typename T>

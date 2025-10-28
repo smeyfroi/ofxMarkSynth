@@ -11,16 +11,16 @@
 namespace ofxMarkSynth {
 
 
-VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording_, std::string recordingDir_)
-: Mod { name, std::move(config) },
+VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording_, std::string recordingDir_)
+: Mod { synthPtr, name, std::move(config) },
 saveRecording { saveRecording_ },
 recordingDir { recordingDir_ }
 {
   motionFromVideo.initialiseCamera(deviceID, size);
 }
 
-VideoFlowSourceMod::VideoFlowSourceMod(const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute)
-: Mod { name, std::move(config) }
+VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute)
+: Mod { synthPtr, name, std::move(config) }
 {
   motionFromVideo.load(videoFilePath, mute);
 }

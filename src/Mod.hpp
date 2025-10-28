@@ -79,10 +79,14 @@ void connectSourceToSinks(ModPtr sourceModPtr,
 
 
 
+class Synth; // forward declaration
+
+
+
 class Mod {
   
 public:
-  Mod(const std::string& name, const ModConfig&& config);
+  Mod(Synth* synth, const std::string& name, const ModConfig&& config);
   virtual ~Mod() = default;
   virtual void shutdown() {};
   virtual void update() {};
@@ -90,6 +94,8 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
+  
+  virtual float getAgency() const;
 
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec2& point);
@@ -108,6 +114,7 @@ public:
   std::string name;
   
 protected:
+  Synth* synthPtr; // parent Synth
   ModConfig config;
   ofParameterGroup parameters;
   virtual void initParameters() = 0;
@@ -126,44 +133,6 @@ protected:
 private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
   std::unordered_map<std::string, int> currentDrawingLayerIndices; // index < 0 means don't draw
-};
-
-
-
-struct ParamController {
-  ofParameter<float> manualValueParameter;
-  float value;
-  float lastTimeUpdated;
-  float smoothingTauSecs = 0.15f;
-  float rateLimitPerSec = 1.0f; // max change per second
-  
-  ParamController(ofParameter<float>& manualValueParameter_) :
-  manualValueParameter(manualValueParameter_)
-  {
-    update(manualValueParameter.get(), 0.0f);
-  }
-  
-  void update(float newValue, float agency) { // agency 0.0 = full manual, 1.0 = full parameter
-    float timestamp = ofGetElapsedTimef();
-    float dt = timestamp - lastTimeUpdated;
-    
-    // Blend manual and parameter values
-    float target = ofLerp(manualValueParameter.get(), newValue, agency);
-    
-    // Avoid large jumps
-    float maxStep = rateLimitPerSec * dt;
-    target = ofClamp(target, value - maxStep, value + maxStep);
-    
-    // One-pole smooth
-    float alpha = 1.0f - expf(-dt / std::max(1e-4f, smoothingTauSecs));
-    value = ofLerp(value, target, alpha);
-    
-    lastTimeUpdated = timestamp;
-  }
-  
-  void update(float agency) {
-    update(value, agency);
-  }
 };
 
 

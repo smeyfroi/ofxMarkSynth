@@ -45,6 +45,8 @@ public:
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   
+  float getAgency() const override { return agencyParameter; }
+
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
   void update() override;
@@ -95,6 +97,7 @@ private:
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
 
+  ofParameter<float> agencyParameter { "Global Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
@@ -129,14 +132,14 @@ private:
 
 template <typename ModT>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
-  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
+  auto modPtr = std::make_shared<ModT>(this, name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
   modPtrs.insert({ name, modPtr });
   return modPtr;
 }
 
 template <typename ModT, typename... Args>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
-  auto modPtr = std::make_shared<ModT>(name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
+  auto modPtr = std::make_shared<ModT>(this, name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
   modPtrs.insert({ name, modPtr });
   return modPtr;
 }

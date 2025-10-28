@@ -12,8 +12,8 @@
 namespace ofxMarkSynth {
 
 
-ParticleFieldMod::ParticleFieldMod(const std::string& name, const ModConfig&& config, float field1ValueOffset_, float field2ValueOffset_)
-: Mod { name, std::move(config) }
+ParticleFieldMod::ParticleFieldMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, float field1ValueOffset_, float field2ValueOffset_)
+: Mod { synthPtr, name, std::move(config) }
 {
   particleField.setup(ofFloatColor(1.0, 1.0, 1.0, 0.3), field1ValueOffset_, field2ValueOffset_);
 }

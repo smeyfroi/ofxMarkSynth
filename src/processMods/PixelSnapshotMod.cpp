@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-PixelSnapshotMod::PixelSnapshotMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {}
 
 void PixelSnapshotMod::initParameters() {

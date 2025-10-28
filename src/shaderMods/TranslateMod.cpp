@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-TranslateMod::TranslateMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+TranslateMod::TranslateMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {
   translateShader.load();
 }

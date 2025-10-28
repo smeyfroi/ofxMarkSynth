@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class TranslateMod : public Mod {
 
 public:
-  TranslateMod(const std::string& name, const ModConfig&& config);
+  TranslateMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
 

@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-SoftCircleMod::SoftCircleMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {
   softCircleShader.load();
 }
@@ -23,16 +23,19 @@ void SoftCircleMod::initParameters() {
   parameters.add(colorMultiplierParameter);
   parameters.add(alphaMultiplierParameter);
   parameters.add(softnessParameter);
+  parameters.add(agencyFactorParameter);
 }
 
-constexpr float AGENCY = 0.1f;
+float SoftCircleMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
+}
 
 void SoftCircleMod::update() {
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  radiusParamController.update(AGENCY); // FIXME: hardcoded agency
+  radiusParamController.update(getAgency());
   float radius = radiusParamController.value;
 
   float multiplier = colorMultiplierParameter;
@@ -57,7 +60,7 @@ void SoftCircleMod::update() {
 void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
-      radiusParamController.update(value, AGENCY); // FIXME: hardcoded agency
+      radiusParamController.update(value, getAgency());
       break;
     case SINK_POINT_COLOR_MULTIPLIER:
       colorMultiplierParameter = value;

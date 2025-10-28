@@ -27,7 +27,7 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
 
 
 Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_) :
-Mod(name_, std::move(config)),
+Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
 compositeSize { compositeSize_ }
 {
@@ -469,6 +469,7 @@ ofParameterGroup& Synth::getFboParameterGroup() {
 }
 
 void Synth::initParameters() {
+  parameters.add(agencyParameter);
   displayParameters.setName("Display");
   displayParameters.add(backgroundColorParameter);
   displayParameters.add(backgroundMultiplierParameter);

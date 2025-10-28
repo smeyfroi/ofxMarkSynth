@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 class PathMod : public Mod {
 
 public:
-  PathMod(const std::string& name, const ModConfig&& config);
+  PathMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;

@@ -11,8 +11,8 @@ namespace ofxMarkSynth {
 
 
 
-VaryingValueMod::VaryingValueMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+VaryingValueMod::VaryingValueMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {
 }
 

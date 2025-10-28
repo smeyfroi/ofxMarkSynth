@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 class PixelSnapshotMod : public Mod {
 
 public:
-  PixelSnapshotMod(const std::string& name, const ModConfig&& config);
+  PixelSnapshotMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;

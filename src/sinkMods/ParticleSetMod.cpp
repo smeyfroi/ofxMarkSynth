@@ -11,8 +11,8 @@
 namespace ofxMarkSynth {
 
 
-ParticleSetMod::ParticleSetMod(const std::string& name, const ModConfig&& config)
-: Mod { name, std::move(config) }
+ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {}
 
 void ParticleSetMod::initParameters() {
