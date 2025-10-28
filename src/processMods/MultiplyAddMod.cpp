@@ -33,6 +33,7 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
       break;
     case SINK_FLOAT:
       emit(SOURCE_FLOAT, value * multiplierParameter + adderParameter);
+      break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
