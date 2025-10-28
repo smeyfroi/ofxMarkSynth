@@ -37,7 +37,7 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> radiusParameter { "Radius", 0.01, 0.0, 0.25 };
+  ofParameter<float> radiusParameter { "Radius", 0.005, 0.0, 0.25 };
   ParamController<float> radiusParamController { radiusParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 0.5f, 0.5f, 0.5f, 0.0f }, ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f }, ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f } };
   ParamController<ofFloatColor> colorParamController { colorParameter };

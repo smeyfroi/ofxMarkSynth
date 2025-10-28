@@ -52,8 +52,8 @@ private:
   // https://en.wikipedia.org/wiki/Template:Vocal_and_instrumental_pitch_ranges
   ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 100.0 };
   ofParameter<float> maxPitchParameter { "MaxPitch", 800.0, 500.0, 3000.0 }; // C8 is ~4400.0 Hz
-  ofParameter<float> minRmsParameter { "MinRms", 0.0, 0.0, 0.1 };
-  ofParameter<float> maxRmsParameter { "MaxRms", 0.02, 0.05, 0.2 };
+  ofParameter<float> minRmsParameter { "MinRms", 0.0, 0.0, 0.05 };
+  ofParameter<float> maxRmsParameter { "MaxRms", 0.02, 0.005, 0.2 };
   ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 20.0, 0.0, 2000.0 };
   ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 70.0, 0.0, 2000.0 };
   ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 20.0, 0.0, 500.0 };
