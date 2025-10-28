@@ -65,8 +65,8 @@ public:
   float lastTimeUpdated;
   float smoothingTauSecsColor = 0.00001f; // smaller => snappier
   float rateLimitPerSecColor = 1000.0f; // higher => larger allowed step
-  float smoothingTauSecs = 0.15f;
-  float rateLimitPerSec = 1.0f;
+  float smoothingTauSecs = 0.01f; // smaller => snappier
+  float rateLimitPerSec = 10.0f; // higher => larger allowed step
 };
 
 
