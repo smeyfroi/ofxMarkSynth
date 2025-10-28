@@ -113,8 +113,8 @@ void AudioDataSourceMod::emitPolarSpectral2DPoints() {
   float zcr = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
                               maxZeroCrossingRateParameter,
                               ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
-//  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { csd, sc });
-  emit(SOURCE_SPECTRAL_2D_POINTS, normalisedAngleLengthToPolar(sc, zcr));
+//  emit(SOURCE_POLAR_SPECTRAL_2D_POINTS, glm::vec2 { csd, sc });
+  emit(SOURCE_POLAR_SPECTRAL_2D_POINTS, normalisedAngleLengthToPolar(sc, zcr));
 }
 
 void AudioDataSourceMod::emitSpectral3DPoints() {

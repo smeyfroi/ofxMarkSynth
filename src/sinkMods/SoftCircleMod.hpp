@@ -30,6 +30,7 @@ public:
   static constexpr int SINK_POINT_RADIUS = 10;
   static constexpr int SINK_POINT_COLOR = 20;
   static constexpr int SINK_POINT_COLOR_MULTIPLIER = 21;
+  static constexpr int SINK_POINT_ALPHA_MULTIPLIER = 22;
   static constexpr int SINK_POINT_SOFTNESS = 30;
 
 protected:
@@ -38,10 +39,14 @@ protected:
 private:
   ofParameter<float> radiusParameter { "Radius", 0.01, 0.0, 0.25 };
   ParamController<float> radiusParamController { radiusParameter };
-  ofParameter<ofFloatColor> colorParameter { "Color", ofColor::darkRed, ofColor(0, 255), ofColor(255, 255) };
-  ofParameter<float> colorMultiplierParameter { "ColorMultiplier", 0.01, 0.0, 1.0 }; // RGB
-  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A
+  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 0.5f, 0.5f, 0.5f, 0.0f }, ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f }, ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f } };
+  ParamController<ofFloatColor> colorParamController { colorParameter };
+  ofParameter<float> colorMultiplierParameter { "Color Multiplier", 0.5, 0.0, 1.0 }; // RGB
+  ParamController<float> colorMultiplierParamController { colorMultiplierParameter };
+  ofParameter<float> alphaMultiplierParameter { "Alpha Multiplier", 0.2, 0.0, 1.0 }; // A
+  ParamController<float> alphaMultiplierParamController { alphaMultiplierParameter };
   ofParameter<float> softnessParameter { "Softness", 0.3, 0.0, 1.0 };
+  ParamController<float> softnessParamController { softnessParameter };
   ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
   std::vector<glm::vec2> newPoints;
