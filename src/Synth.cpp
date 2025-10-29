@@ -109,7 +109,7 @@ DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint i
 void Synth::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_BACKGROUND_COLOR:
-      backgroundColorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
+      backgroundColorController.update(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -137,6 +137,8 @@ void Synth::update() {
   saveStatus = ofToString(SaveToFileThread::activeThreadCount);
   
   if (paused) return;
+  
+  backgroundColorController.update(getAgency());
   
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
@@ -199,7 +201,7 @@ void Synth::updateSidePanels() {
 void Synth::updateCompositeImage() {
   imageCompositeFbo.begin();
   {
-    ofFloatColor backgroundColor = backgroundColorParameter;
+    ofFloatColor backgroundColor = backgroundColorController.value;
     backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0;
     ofClear(backgroundColor);
     

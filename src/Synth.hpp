@@ -15,6 +15,7 @@
 #include "TonemapShader.h"
 #include <unordered_map>
 #include "SaveToFileThread.hpp"
+#include "ParamController.h"
 
 
 
@@ -99,7 +100,8 @@ private:
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
-  ofParameter<ofFloatColor> backgroundColorParameter { "background color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> backgroundColorParameter { "Background Color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
   ofParameter<int> toneMapTypeParameter { "tone map type", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
   ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
