@@ -37,7 +37,7 @@ using FboPtr = std::shared_ptr<PingPongFbo>;
 struct DrawingLayer {
   std::string name;
   FboPtr fboPtr;
-  float fadeBy; // 0.0 no fade, 1.0 full clear
+  bool clearOnUpdate;
   ofBlendMode blendMode;
   bool isDrawn;
 };

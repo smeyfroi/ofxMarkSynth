@@ -15,7 +15,6 @@
 #include "TonemapShader.h"
 #include <unordered_map>
 #include "SaveToFileThread.hpp"
-#include "UnitQuadMesh.h"
 
 
 
@@ -72,7 +71,6 @@ protected:
 private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
-  UnitQuadMesh unitQuadMesh;
 
   bool paused;
   

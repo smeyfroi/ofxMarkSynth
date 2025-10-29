@@ -12,13 +12,15 @@
 #include "ClusterMod.hpp"
 #include "PixelSnapshotMod.hpp"
 #include "PathMod.hpp"
-#include "FluidMod.hpp"
 #include "VaryingValueMod.hpp"
 #include "MultiplyAddMod.hpp"
 
 #include "TranslateMod.hpp"
 #include "AddTextureMod.hpp"
+
 #include "SmearMod.hpp"
+#include "FluidMod.hpp"
+#include "FadeMod.hpp"
 
 #include "IntrospectorMod.hpp"
 #include "ParticleSetMod.hpp"

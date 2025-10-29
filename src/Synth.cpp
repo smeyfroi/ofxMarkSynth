@@ -140,52 +140,11 @@ void Synth::update() {
   
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
-    if (fcptr->fadeBy == 0.0) return;
-    
-    ofFloatColor c = DEFAULT_CLEAR_COLOR;
-    
-    // Special case for clear
-    if (fcptr->fadeBy >= 1.0) {
+    if (fcptr->clearOnUpdate) {
       fcptr->fboPtr->getSource().begin();
-      ofClear(c);
+      ofClear(DEFAULT_CLEAR_COLOR);
       fcptr->fboPtr->getSource().end();
-      return;
     }
-
-    // TODO: if we have 8 bit pixels, implement gradual fades to avoid visible remnants that never fully clear
-    /**
-     void main() {
-       vec4 color = texture(tex, texCoordVarying);
-       float noise = rand(texCoordVarying + time);
-       
-       // Convert to 8-bit integer representation
-       vec3 color255 = floor(color.rgb * 255.0 + 0.5);
-       
-       // Apply probabilistic fade: chance to reduce by 1/255
-       float fadeChance = fadeAmount * 255.0; // Scale fadeAmount to [0,255]
-       if (noise < fadeChance && any(greaterThan(color255, vec3(0.0)))) {
-         color255 = max(color255 - 1.0, vec3(0.0)); // Decrement, clamped to 0
-       }
-       
-       fragColor = vec4(color255 / 255.0, color.a);
-     }
-     */
-    constexpr float min8BitFadeAmount = 1.0f / 255.0f;
-    auto format = fcptr->fboPtr->getSource().getTexture().getTextureData().glInternalFormat;
-    if ((format == GL_RGBA8 || format == GL_RGBA) && fcptr->fadeBy < min8BitFadeAmount) {
-      // FIXME: this doesn't work:
-      // Add dithered noise to alpha to ensure gradual fade completes
-      float dither = ofRandom(0.0f, min8BitFadeAmount);
-      c.a = fcptr->fadeBy + dither;
-    } else {
-      c.a = fcptr->fadeBy;
-    }
-
-    fcptr->fboPtr->getSource().begin();
-    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-    ofSetColor(c);
-    unitQuadMesh.draw({0.0f, 0.0f}, fcptr->fboPtr->getSource().getSize());
-    fcptr->fboPtr->getSource().end();
   });
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {

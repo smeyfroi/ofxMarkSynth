@@ -35,7 +35,7 @@ void ParticleFieldMod::update() {
 //  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofEnableBlendMode(OF_BLENDMODE_SCREEN);
   
-  particleField.draw(fboPtr->getSource(), drawingLayerPtr->fadeBy < 0.8f);
+  particleField.draw(fboPtr->getSource(), !drawingLayerPtr->clearOnUpdate);
 }
 
 void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
