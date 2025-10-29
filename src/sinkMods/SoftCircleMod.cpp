@@ -15,6 +15,15 @@ SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, const Mod
 : Mod { synthPtr, name, std::move(config) }
 {
   softCircleShader.load();
+
+  sinkNameIdMap = {
+    { "points", SINK_POINTS },
+    { "radius", SINK_RADIUS },
+    { "color", SINK_COLOR },
+    { "colorMultiplier", SINK_COLOR_MULTIPLIER },
+    { "alphaMultiplier", SINK_ALPHA_MULTIPLIER },
+    { "softness", SINK_SOFTNESS }
+  };
 }
 
 void SoftCircleMod::initParameters() {
@@ -66,16 +75,16 @@ void SoftCircleMod::update() {
 
 void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
-    case SINK_POINT_RADIUS:
+    case SINK_RADIUS:
       radiusParamController.update(value, getAgency());
       break;
-    case SINK_POINT_COLOR_MULTIPLIER:
+    case SINK_COLOR_MULTIPLIER:
       colorMultiplierParamController.update(value, getAgency());
       break;
-    case SINK_POINT_ALPHA_MULTIPLIER:
+    case SINK_ALPHA_MULTIPLIER:
       alphaMultiplierParamController.update(value, getAgency());
       break;
-    case SINK_POINT_SOFTNESS:
+    case SINK_SOFTNESS:
       softnessParamController.update(value, getAgency());
       break;
     case SINK_CHANGE_LAYER:
@@ -101,7 +110,7 @@ void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
 
 void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
-    case SINK_POINT_COLOR:
+    case SINK_COLOR:
       colorParamController.update(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:

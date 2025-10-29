@@ -16,6 +16,18 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, const Mod
 {
   somPalette.numIterations = iterationsParameter;
   somPalette.setVisible(false);
+  
+  sinkNameIdMap = {
+    { "vec3", SINK_VEC3 },
+    { "switchPalette", SINK_SWITCH_PALETTE }
+  };
+  sourceNameIdMap = {
+    { "random", SOURCE_RANDOM },
+    { "randomLight", SOURCE_RANDOM_LIGHT },
+    { "randomDark", SOURCE_RANDOM_DARK },
+    { "darkest", SOURCE_DARKEST },
+    { "field", SOURCE_FIELD }
+  };
 }
 
 void SomPaletteMod::initParameters() {
@@ -84,10 +96,10 @@ void SomPaletteMod::update() {
   newVecs.clear();
   somPalette.update();
   
-  emit(SOURCE_RANDOM_VEC4, createVec4(randomDistrib(randomGen)));
-  emit(SOURCE_RANDOM_LIGHT_VEC4, createRandomLightVec4(randomDistrib(randomGen)));
-  emit(SOURCE_RANDOM_DARK_VEC4, createRandomDarkVec4(randomDistrib(randomGen)));
-  emit(SOURCE_DARKEST_VEC4, createVec4(0));
+  emit(SOURCE_RANDOM, createVec4(randomDistrib(randomGen)));
+  emit(SOURCE_RANDOM_LIGHT, createRandomLightVec4(randomDistrib(randomGen)));
+  emit(SOURCE_RANDOM_DARK, createRandomDarkVec4(randomDistrib(randomGen)));
+  emit(SOURCE_DARKEST, createVec4(0));
   
   // convert RGB -> RG (float2), upload into FBO texture, emit FBO
   const ofPixels& pixelsRef = somPalette.getPixelsRef();

@@ -106,6 +106,55 @@ DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint i
   return drawingLayerPtr;
 }
 
+void Synth::addConnections(const std::string& dsl) {
+  std::istringstream stream(dsl);
+  std::string line;
+  
+  while (std::getline(stream, line)) {
+    line = ofTrim(line);
+    if (line.empty() || line[0] == '#') continue;
+    
+    // Parse "sourceMod.sourcePort -> sinkMod.sinkPort"
+    auto arrowPos = line.find("->");
+    if (arrowPos == std::string::npos) continue;
+    
+    std::string sourceStr = ofTrim(line.substr(0, arrowPos));
+    std::string sinkStr = ofTrim(line.substr(arrowPos + 2));
+    
+    auto sourceDot = sourceStr.find('.');
+    auto sinkDot = sinkStr.find('.');
+    
+    if (sourceDot == std::string::npos || sinkDot == std::string::npos) continue;
+    
+    std::string sourceModName = sourceStr.substr(0, sourceDot);
+    std::string sourcePortName = sourceStr.substr(sourceDot + 1);
+    std::string sinkModName = sinkStr.substr(0, sinkDot);
+    std::string sinkPortName = sinkStr.substr(sinkDot + 1);
+    
+    // Look up mods
+    if (!modPtrs.contains(sourceModName)) {
+      ofLogError() << "Synth::addConnections: Unknown source mod name: " << sourceModName;
+      continue;
+    }
+    auto sourceModPtr = modPtrs.at(sourceModName);
+    if(!modPtrs.contains(sinkModName)) {
+      ofLogError() << "Synth::addConnections: Unknown sink mod name: " << sinkModName;
+      continue;
+    }
+    auto sinkModPtr = modPtrs.at(sinkModName);
+    
+    // Convert port names to IDs
+    int sourcePort = sourceModPtr->getSourceId(sourcePortName);
+    int sinkPort = sinkModPtr->getSinkId(sinkPortName);
+    
+    // Create connection
+    connectSourceToSinks(sourceModPtr, {
+      { sourcePort, {{ sinkModPtr, sinkPort }} }
+    });
+  }
+}
+
+
 void Synth::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_BACKGROUND_COLOR:

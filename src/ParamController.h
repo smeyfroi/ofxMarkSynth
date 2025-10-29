@@ -47,7 +47,7 @@ public:
   ofParameter<T>& manualValueParameter;
   T value;
   T autoValue;
-  float smoothTime{0.15f};
+  float smoothTime { 0.2f };
 };
 
 

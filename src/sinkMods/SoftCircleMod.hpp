@@ -27,11 +27,11 @@ public:
   void receive(int sinkId, const glm::vec4& v) override;
 
   static constexpr int SINK_POINTS = 1;
-  static constexpr int SINK_POINT_RADIUS = 10;
-  static constexpr int SINK_POINT_COLOR = 20;
-  static constexpr int SINK_POINT_COLOR_MULTIPLIER = 21;
-  static constexpr int SINK_POINT_ALPHA_MULTIPLIER = 22;
-  static constexpr int SINK_POINT_SOFTNESS = 30;
+  static constexpr int SINK_RADIUS = 10;
+  static constexpr int SINK_COLOR = 20;
+  static constexpr int SINK_COLOR_MULTIPLIER = 21;
+  static constexpr int SINK_ALPHA_MULTIPLIER = 22;
+  static constexpr int SINK_SOFTNESS = 30;
 
 protected:
   void initParameters() override;

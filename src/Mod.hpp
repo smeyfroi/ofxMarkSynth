@@ -97,6 +97,8 @@ public:
   
   virtual float getAgency() const;
 
+  int getSourceId(const std::string& sourceName);
+  int getSinkId(const std::string& sinkName);
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec2& point);
   virtual void receive(int sinkId, const glm::vec3& point);
@@ -115,9 +117,13 @@ public:
   
 protected:
   Synth* synthPtr; // parent Synth
+
   ModConfig config;
   ofParameterGroup parameters;
   virtual void initParameters() = 0;
+
+  std::map<std::string, int> sourceNameIdMap;
+  std::map<std::string, int> sinkNameIdMap;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
 

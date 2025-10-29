@@ -89,6 +89,20 @@ float Mod::getAgency() const {
   return synthPtr->getAgency();
 }
 
+int Mod::getSourceId(const std::string& sourceName) {
+  if (!sourceNameIdMap.contains(sourceName)) {
+    ofLogError() << "bad source name in " << typeid(*this).name() << " with name " << sourceName;
+  }
+  return sourceNameIdMap.at(sourceName);
+}
+
+int Mod::getSinkId(const std::string& sinkName) {
+  if (!sinkNameIdMap.contains(sinkName)) {
+    ofLogError() << "bad sink name in " << typeid(*this).name() << " with name " << sinkName;
+  }
+  return sinkNameIdMap.at(sinkName);
+}
+
 template<typename T>
 void Mod::emit(int sourceId, const T& value) {
   if (connections[sourceId] == nullptr) return;

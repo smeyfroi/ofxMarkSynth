@@ -44,6 +44,7 @@ public:
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
+  void addConnections(const std::string& dsl);
   
   float getAgency() const override { return agencyParameter; }
 
@@ -96,7 +97,7 @@ private:
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
 
-  ofParameter<float> agencyParameter { "Global Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
+  ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
