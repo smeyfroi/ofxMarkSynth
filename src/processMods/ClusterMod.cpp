@@ -13,7 +13,15 @@ namespace ofxMarkSynth {
 
 ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sinkNameIdMap = {
+    { "vec2", SINK_VEC2 },
+    { "changeClusterNum", SINK_CHANGE_CLUSTER_NUM }
+  };
+  sourceNameIdMap = {
+    { "clusterCentreVec2", SOURCE_CLUSTER_CENTRE_VEC2 }
+  };
+}
 
 void ClusterMod::initParameters() {
   parameters.add(pointClusters.getParameterGroup());

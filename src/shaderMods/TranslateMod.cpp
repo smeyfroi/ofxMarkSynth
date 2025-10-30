@@ -15,6 +15,10 @@ TranslateMod::TranslateMod(Synth* synthPtr, const std::string& name, const ModCo
 : Mod { synthPtr, name, std::move(config) }
 {
   translateShader.load();
+  
+  sinkNameIdMap = {
+    { "vec2", SINK_VEC2 }
+  };
 }
 
 void TranslateMod::initParameters() {

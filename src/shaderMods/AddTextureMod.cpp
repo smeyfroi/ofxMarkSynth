@@ -15,6 +15,11 @@ AddTextureMod::AddTextureMod(Synth* synthPtr, const std::string& name, const Mod
 : Mod { synthPtr, name, std::move(config) }
 {
   addTextureShader.load();
+  
+  sinkNameIdMap = {
+    { "scale", SINK_SCALE },
+    { "addPixels", SINK_ADD_PIXELS }
+  };
 }
 
 void AddTextureMod::initParameters() {

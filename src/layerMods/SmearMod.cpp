@@ -15,6 +15,13 @@ SmearMod::SmearMod(Synth* synthPtr, const std::string& name, const ModConfig&& c
 : Mod { synthPtr, name, std::move(config) }
 {
   smearShader.load();
+  
+  sinkNameIdMap = {
+    { "vec2", SINK_VEC2 },
+    { "float", SINK_FLOAT },
+    { "field1Fbo", SINK_FIELD_1_FBO },
+    { "field2Fbo", SINK_FIELD_2_FBO }
+  };
 }
 
 void SmearMod::initParameters() {

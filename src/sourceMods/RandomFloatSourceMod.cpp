@@ -19,6 +19,10 @@ RandomFloatSourceMod::RandomFloatSourceMod(Synth* synthPtr, const std::string& n
   minParameter.setMax(minRange.second);
   maxParameter.setMin(maxRange.first);
   maxParameter.setMax(maxRange.second);
+  
+  sourceNameIdMap = {
+    { "float", SOURCE_FLOAT }
+  };
 }
 
 void RandomFloatSourceMod::initParameters() {

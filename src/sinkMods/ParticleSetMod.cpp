@@ -13,7 +13,14 @@ namespace ofxMarkSynth {
 
 ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sinkNameIdMap = {
+    { "points", SINK_POINTS },
+    { "pointVelocities", SINK_POINT_VELOCITIES },
+    { "spin", SINK_SPIN },
+    { "color", SINK_COLOR }
+  };
+}
 
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);

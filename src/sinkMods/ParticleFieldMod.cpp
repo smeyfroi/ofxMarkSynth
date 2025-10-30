@@ -16,6 +16,13 @@ ParticleFieldMod::ParticleFieldMod(Synth* synthPtr, const std::string& name, con
 : Mod { synthPtr, name, std::move(config) }
 {
   particleField.setup(ofFloatColor(1.0, 1.0, 1.0, 0.3), field1ValueOffset_, field2ValueOffset_);
+  
+  sinkNameIdMap = {
+    { "field1Fbo", SINK_FIELD_1_FBO },
+    { "field2Fbo", SINK_FIELD_2_FBO },
+    { "colorFieldFbo", SINK_COLOR_FIELD_FBO },
+    { "pointColor", SINK_POINT_COLOR }
+  };
 }
 
 void ParticleFieldMod::initParameters() {

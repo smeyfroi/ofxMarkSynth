@@ -61,6 +61,14 @@ compositeSize { compositeSize_ }
 #endif
   
   of::random::seed(0);
+  
+  sourceNameIdMap = {
+    { "compositeFbo", SOURCE_COMPOSITE_FBO }
+  };
+  sinkNameIdMap = {
+    { "backgroundColor", SINK_BACKGROUND_COLOR },
+    { "resetRandomness", SINK_RESET_RANDOMNESS }
+  };
 }
 
 // FIXME: this has to be called after all Mods are added to build the GUI from the child GUIs
@@ -132,16 +140,17 @@ void Synth::addConnections(const std::string& dsl) {
     std::string sinkPortName = sinkStr.substr(sinkDot + 1);
     
     // Look up mods
-    if (!modPtrs.contains(sourceModName)) {
+    if (!sourceModName.empty() && !modPtrs.contains(sourceModName)) {
       ofLogError() << "Synth::addConnections: Unknown source mod name: " << sourceModName;
       continue;
     }
-    auto sourceModPtr = modPtrs.at(sourceModName);
-    if(!modPtrs.contains(sinkModName)) {
+    auto sourceModPtr = sourceModName.empty() ? shared_from_this() : modPtrs.at(sourceModName);
+    
+    if(!sinkModName.empty() && !modPtrs.contains(sinkModName)) {
       ofLogError() << "Synth::addConnections: Unknown sink mod name: " << sinkModName;
       continue;
     }
-    auto sinkModPtr = modPtrs.at(sinkModName);
+    auto sinkModPtr = sinkModName.empty() ? shared_from_this() : modPtrs.at(sinkModName);
     
     // Convert port names to IDs
     int sourcePort = sourceModPtr->getSourceId(sourcePortName);

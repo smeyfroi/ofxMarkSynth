@@ -14,7 +14,14 @@ namespace ofxMarkSynth {
 IntrospectorMod::IntrospectorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::shared_ptr<Introspector> introspectorPtr_)
 : Mod { synthPtr, name, std::move(config) },
   introspectorPtr { introspectorPtr_ }
-{}
+{
+  sinkNameIdMap = {
+    { "points", SINK_POINTS },
+    { "horizontalLines1", SINK_HORIZONTAL_LINES_1 },
+    { "horizontalLines2", SINK_HORIZONTAL_LINES_2 },
+    { "horizontalLines3", SINK_HORIZONTAL_LINES_3 }
+  };
+}
 
 void IntrospectorMod::initParameters() {
   parameters.add(pointSizeParameter);

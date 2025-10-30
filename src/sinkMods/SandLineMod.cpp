@@ -13,7 +13,13 @@ namespace ofxMarkSynth {
 
 SandLineMod::SandLineMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sinkNameIdMap = {
+    { "points", SINK_POINTS },
+    { "pointRadius", SINK_POINT_RADIUS },
+    { "pointColor", SINK_POINT_COLOR }
+  };
+}
 
 void SandLineMod::initParameters() {
   parameters.add(densityParameter);

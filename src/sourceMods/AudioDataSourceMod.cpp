@@ -32,6 +32,22 @@ tuningVisible(false)
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
   audioDataProcessorPtr->setDefaultValiditySpecs();
   audioDataPlotsPtr = std::make_shared<ofxAudioData::Plots>(audioDataProcessorPtr);
+  
+  sourceNameIdMap = {
+    { "pitchRmsPoints", SOURCE_PITCH_RMS_POINTS },
+    { "polarPitchRmsPoints", SOURCE_POLAR_PITCH_RMS_POINTS },
+    { "spectral3dPoints", SOURCE_SPECTRAL_3D_POINTS },
+    { "spectral2dPoints", SOURCE_SPECTRAL_2D_POINTS },
+    { "polarSpectral2dPoints", SOURCE_POLAR_SPECTRAL_2D_POINTS },
+    { "pitchScalar", SOURCE_PITCH_SCALAR },
+    { "rmsScalar", SOURCE_RMS_SCALAR },
+    { "complexSpectralDifferenceScalar", SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR },
+    { "spectralCrestScalar", SOURCE_SPECTRAL_CREST_SCALAR },
+    { "zeroCrossingRateScalar", SOURCE_ZERO_CROSSING_RATE_SCALAR },
+    { "onset1", SOURCE_ONSET1 },
+    { "timbreChange", SOURCE_TIMBRE_CHANGE },
+    { "pitchChange", SOURCE_PITCH_CHANGE }
+  };
 }
 
 void AudioDataSourceMod::registerAudioCallback(ofxAudioAnalysisClient::LocalGistClient::AudioFrameCallback audioFrameCallback) {

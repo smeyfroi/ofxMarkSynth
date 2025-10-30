@@ -13,7 +13,11 @@ namespace ofxMarkSynth {
 
 RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sourceNameIdMap = {
+    { "vec4", SOURCE_VEC4 }
+  };
+}
 
 void RandomHslColorMod::initParameters() {
   parameters.add(colorsPerUpdateParameter);

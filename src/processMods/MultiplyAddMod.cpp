@@ -16,6 +16,14 @@ namespace ofxMarkSynth {
 MultiplyAddMod::MultiplyAddMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
 {
+  sinkNameIdMap = {
+    { "multiplier", SINK_MULTIPLIER },
+    { "adder", SINK_ADDER },
+    { "float", SINK_FLOAT }
+  };
+  sourceNameIdMap = {
+    { "float", SOURCE_FLOAT }
+  };
 }
 
 void MultiplyAddMod::initParameters() {

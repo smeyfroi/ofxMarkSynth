@@ -14,7 +14,13 @@ namespace ofxMarkSynth {
 RandomVecSourceMod::RandomVecSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, short vecDimensions_)
 : Mod { synthPtr, name, std::move(config) },
 vecDimensions { vecDimensions_ }
-{}
+{
+  sourceNameIdMap = {
+    { "vec2", SOURCE_VEC2 },
+    { "vec3", SOURCE_VEC3 },
+    { "vec4", SOURCE_VEC4 }
+  };
+}
 
 void RandomVecSourceMod::initParameters() {
   parameters.add(vecsPerUpdateParameter);

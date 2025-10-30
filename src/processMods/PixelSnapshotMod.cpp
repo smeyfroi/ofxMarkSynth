@@ -13,7 +13,14 @@ namespace ofxMarkSynth {
 
 PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sinkNameIdMap = {
+    { "snapshotSource", SINK_SNAPSHOT_SOURCE }
+  };
+  sourceNameIdMap = {
+    { "snapshot", SOURCE_SNAPSHOT }
+  };
+}
 
 void PixelSnapshotMod::initParameters() {
   parameters.add(snapshotsPerUpdateParameter);

@@ -14,6 +14,13 @@ namespace ofxMarkSynth {
 VaryingValueMod::VaryingValueMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
 {
+  sinkNameIdMap = {
+    { "mean", SINK_MEAN },
+    { "variance", SINK_VARIANCE }
+  };
+  sourceNameIdMap = {
+    { "float", SOURCE_FLOAT }
+  };
 }
 
 void VaryingValueMod::initParameters() {

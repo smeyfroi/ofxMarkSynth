@@ -15,7 +15,13 @@ namespace ofxMarkSynth {
 
 CollageMod::CollageMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sinkNameIdMap = {
+    { "path", SINK_PATH },
+    { "snapshotFbo", SINK_SNAPSHOT_FBO },
+    { "color", SINK_COLOR }
+  };
+}
 
 void CollageMod::initParameters() {
   parameters.add(strategyParameter);

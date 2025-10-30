@@ -17,12 +17,20 @@ saveRecording { saveRecording_ },
 recordingDir { recordingDir_ }
 {
   motionFromVideo.initialiseCamera(deviceID, size);
+  
+  sourceNameIdMap = {
+    { "flowFbo", SOURCE_FLOW_FBO }
+  };
 }
 
 VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute)
 : Mod { synthPtr, name, std::move(config) }
 {
   motionFromVideo.load(videoFilePath, mute);
+  
+  sourceNameIdMap = {
+    { "flowFbo", SOURCE_FLOW_FBO }
+  };
 }
 
 VideoFlowSourceMod::~VideoFlowSourceMod() {

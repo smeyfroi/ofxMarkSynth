@@ -15,7 +15,19 @@ namespace ofxMarkSynth {
 DividedAreaMod::DividedAreaMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) },
 dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
-{}
+{
+  sinkNameIdMap = {
+    { "majorAnchors", SINK_MAJOR_ANCHORS },
+    { "minorAnchors", SINK_MINOR_ANCHORS },
+    { "minorPath", SINK_MINOR_PATH },
+    { "minorLinesColor", SINK_MINOR_LINES_COLOR },
+    { "majorLinesColor", SINK_MAJOR_LINES_COLOR },
+    { "backgroundSource", SINK_BACKGROUND_SOURCE },
+    { "changeAngle", SINK_CHANGE_ANGLE },
+    { "changeStrategy", SINK_CHANGE_STRATEGY },
+    { "changeLayer", SINK_CHANGE_LAYER }
+  };
+}
 
 void DividedAreaMod::initParameters() {
   parameters.add(strategyParameter);

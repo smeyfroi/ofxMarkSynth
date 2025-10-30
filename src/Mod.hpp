@@ -83,7 +83,7 @@ class Synth; // forward declaration
 
 
 
-class Mod {
+class Mod : public std::enable_shared_from_this<Mod> {
   
 public:
   Mod(Synth* synth, const std::string& name, const ModConfig&& config);

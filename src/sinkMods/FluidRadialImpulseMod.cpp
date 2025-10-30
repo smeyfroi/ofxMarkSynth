@@ -15,6 +15,12 @@ FluidRadialImpulseMod::FluidRadialImpulseMod(Synth* synthPtr, const std::string&
 : Mod { synthPtr, name, std::move(config) }
 {
   addRadialImpulseShader.load();
+  
+  sinkNameIdMap = {
+    { "points", SINK_POINTS },
+    { "impulseRadius", SINK_IMPULSE_RADIUS },
+    { "impulseStrength", SINK_IMPULSE_STRENGTH }
+  };
 }
 
 void FluidRadialImpulseMod::initParameters() {
