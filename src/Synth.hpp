@@ -15,7 +15,6 @@
 #include "TonemapShader.h"
 #include <unordered_map>
 #include "SaveToFileThread.hpp"
-#include "ParamController.h"
 #include "Intent.hpp"
 #include "IntentParamController.h"
 

@@ -16,7 +16,7 @@ using IntentPtr = std::shared_ptr<Intent>;
 
 class Intent {
 public:
-  Intent(const std::string& name, 
+  Intent(const std::string& name,
          float energy, float density, float structure, float chaos);
   
   static IntentPtr createPreset(const std::string& name,

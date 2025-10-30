@@ -84,8 +84,8 @@ void Synth::configureGui() {
   gui.setup(parameters);
   minimizeAllGuiGroupsRecursive(gui);
 
-  gui.add(activeIntentInfoLabel1.setup("", ""));
-  gui.add(activeIntentInfoLabel2.setup("", ""));
+  gui.add(activeIntentInfoLabel1.setup("I1", ""));
+  gui.add(activeIntentInfoLabel2.setup("I2", ""));
   gui.add(pauseStatus.setup("Paused", ""));
   gui.add(recorderStatus.setup("Recording", ""));
   gui.add(saveStatus.setup("# Image Saves", ""));
@@ -574,20 +574,27 @@ void Synth::updateIntentActivations() {
 }
 
 void Synth::computeActiveIntent() {
-  std::vector<std::pair<IntentPtr, float>> weighted;
-  weighted.reserve(intentActivations.size());
-  for (auto& ia : intentActivations) {
-    weighted.emplace_back(ia.intentPtr, ia.activation);
+  static std::vector<std::pair<IntentPtr, float>> weighted;
+  if (weighted.size() != intentActivations.size()) {
+    weighted.clear();
+    weighted.resize(intentActivations.size());
+  }
+  for (size_t i = 0; i < intentActivations.size(); ++i) {
+    auto& ia = intentActivations[i];
+    weighted[i].first = ia.intentPtr;
+    weighted[i].second = ia.activation;
   }
   activeIntent = Intent::weightedBlend(weighted);
 }
 
 void Synth::applyIntentToAllMods() {
-  // Apply to synth first (background mapping), then to children
+  // Apply to Synth first, then to Mods
   applyIntent(activeIntent, intentStrengthParameter);
   for (auto& kv : modPtrs) {
     kv.second->applyIntent(activeIntent, intentStrengthParameter);
   }
 }
+
+
 
 } // ofxMarkSynth

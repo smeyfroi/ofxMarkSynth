@@ -8,7 +8,6 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "ParamController.h"
 #include "IntentParamController.h"
 #include "IntentMapping.hpp"
 #include "SoftCircleShader.h"
