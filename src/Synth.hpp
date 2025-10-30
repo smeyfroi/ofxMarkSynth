@@ -102,7 +102,7 @@ private:
   IntentActivations intentActivations;
   Intent activeIntent { "Active", 0.5f, 0.5f, 0.5f, 0.5f };
   ofParameterGroup intentParameters;
-  ofParameter<float> intentStrengthParameter { "Intent Strength", 1.0, 0.0, 1.0 };
+  ofParameter<float> intentStrengthParameter { "Intent Strength", 0.0, 0.0, 1.0 };
   std::vector<std::shared_ptr<ofParameter<float>>> intentActivationParameters;
   ofxLabel activeIntentInfoLabel1, activeIntentInfoLabel2;
   const Intent& getActiveIntent() const { return activeIntent; }

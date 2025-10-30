@@ -541,7 +541,7 @@ void Synth::initParameters() {
 }
 
 void Synth::initIntentPresets() {
-  // Create 8 presets and corresponding activation parameters
+  // Remember fader 0 is a master control, and there are another 7 faders available
   std::vector<IntentPtr> presets = {
     Intent::createPreset("Calm", 0.2f, 0.3f, 0.7f, 0.1f),
     Intent::createPreset("Energetic", 0.9f, 0.7f, 0.4f, 0.5f),
@@ -550,7 +550,6 @@ void Synth::initIntentPresets() {
     Intent::createPreset("Structured", 0.4f, 0.5f, 0.95f, 0.2f),
     Intent::createPreset("Minimal", 0.1f, 0.1f, 0.8f, 0.05f),
     Intent::createPreset("Maximum", 0.95f, 0.95f, 0.5f, 0.8f),
-    Intent::createPreset("Organic", 0.5f, 0.6f, 0.3f, 0.6f)
   };
   intentActivations.clear();
   intentActivationParameters.clear();
