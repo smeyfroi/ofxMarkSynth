@@ -8,6 +8,8 @@
 #pragma once
 
 #include "Mod.hpp"
+#include "IntentParamController.h"
+#include "IntentMapping.hpp"
 
 
 
@@ -19,8 +21,11 @@ class MultiplyAddMod : public Mod {
   
 public:
   MultiplyAddMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+//  float getAgency() const override;
+  void update() override;
   void receive(int sinkId, const float& value) override;
-  
+  void applyIntent(const Intent& intent, float strength) override;
+
   static constexpr int SINK_MULTIPLIER = 10;
   static constexpr int SINK_ADDER = 11;
   static constexpr int SINK_FLOAT = 20;
@@ -31,7 +36,9 @@ protected:
   
 private:
   ofParameter<float> multiplierParameter { "Multiplier", 1.0, -4.0, 4.0 };
+  IntentParamController<float> multiplierController { multiplierParameter };
   ofParameter<float> adderParameter { "Adder", 0.0, -1.0, 1.0 };
+  IntentParamController<float> adderController { adderParameter };
 };
 
 

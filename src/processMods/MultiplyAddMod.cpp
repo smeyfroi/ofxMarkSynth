@@ -31,20 +31,36 @@ void MultiplyAddMod::initParameters() {
   parameters.add(adderParameter);
 }
 
+//float MultiplyAddMod::getAgency() const {
+//  return Mod::getAgency() * agencyFactorParameter;
+//}
+
+void MultiplyAddMod::update() {
+  multiplierController.update();
+  adderController.update();
+}
+
 void MultiplyAddMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_MULTIPLIER:
-      multiplierParameter = value;
+      multiplierController.updateAuto(value, getAgency());
       break;
     case SINK_ADDER:
-      adderParameter = value;
+      adderController.updateAuto(value, getAgency());
       break;
     case SINK_FLOAT:
-      emit(SOURCE_FLOAT, value * multiplierParameter + adderParameter);
+      emit(SOURCE_FLOAT, value * multiplierController.value + adderController.value);
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void MultiplyAddMod::applyIntent(const Intent& intent, float strength) {
+  float multI = linearMap(intent.getEnergy(), 0.7f, 1.6f);
+  float addI = linearMap(intent.getDensity(), -0.05f, 0.15f);
+  multiplierController.updateIntent(multI, strength);
+  adderController.updateIntent(addI, strength);
 }
 
 

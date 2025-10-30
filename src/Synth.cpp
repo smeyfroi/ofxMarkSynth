@@ -74,9 +74,18 @@ compositeSize { compositeSize_ }
 // FIXME: this has to be called after all Mods are added to build the GUI from the child GUIs
 void Synth::configureGui() {
   parameters = getParameterGroup();
+
+  intentParameters.setName("Intent");
+  intentParameters.add(intentStrengthParameter);
+  initIntentPresets();
+  for (auto& p : intentActivationParameters) intentParameters.add(*p);
+  parameters.add(intentParameters);
+
   gui.setup(parameters);
   minimizeAllGuiGroupsRecursive(gui);
 
+  gui.add(activeIntentInfoLabel1.setup("", ""));
+  gui.add(activeIntentInfoLabel2.setup("", ""));
   gui.add(pauseStatus.setup("Paused", ""));
   gui.add(recorderStatus.setup("Recording", ""));
   gui.add(saveStatus.setup("# Image Saves", ""));
@@ -163,11 +172,10 @@ void Synth::addConnections(const std::string& dsl) {
   }
 }
 
-
 void Synth::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_BACKGROUND_COLOR:
-      backgroundColorController.update(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
+      backgroundColorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -189,6 +197,15 @@ void Synth::receive(int sinkId, const float& v) {
   }
 }
 
+void Synth::applyIntent(const Intent& intent, float intentStrength) {
+  // Structure + Chaos -> background brightness
+  float structure = intent.getStructure();
+  float chaos = intent.getChaos();
+  float brightness = ofLerp(0.0f, 0.15f, structure) * (1.0f - chaos * 0.5f);
+  ofFloatColor target = ofFloatColor(brightness, brightness, brightness, 1.0f);
+  backgroundColorController.updateIntent(target, intentStrength);
+}
+
 void Synth::update() {
   pauseStatus = paused ? "Yes" : "No";
   recorderStatus = recorder.isRecording() ? "Yes" : "No";
@@ -196,7 +213,20 @@ void Synth::update() {
   
   if (paused) return;
   
-  backgroundColorController.update(getAgency());
+  // Intent pipeline
+  updateIntentActivations();
+  computeActiveIntent();
+  applyIntentToAllMods();
+  activeIntentInfoLabel1 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
+                          " D" + ofToString(activeIntent.getDensity(), 2) +
+                          " S" + ofToString(activeIntent.getStructure(), 2) +
+                          " C" + ofToString(activeIntent.getChaos(), 2);
+  activeIntentInfoLabel2 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
+                          " D" + ofToString(activeIntent.getDensity(), 2) +
+                          " S" + ofToString(activeIntent.getStructure(), 2) +
+                          " C" + ofToString(activeIntent.getChaos(), 2);
+
+  backgroundColorController.update();
   
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
@@ -510,6 +540,54 @@ void Synth::initParameters() {
   });
 }
 
+void Synth::initIntentPresets() {
+  // Create 8 presets and corresponding activation parameters
+  std::vector<IntentPtr> presets = {
+    Intent::createPreset("Calm", 0.2f, 0.3f, 0.7f, 0.1f),
+    Intent::createPreset("Energetic", 0.9f, 0.7f, 0.4f, 0.5f),
+    Intent::createPreset("Chaotic", 0.6f, 0.2f, 0.1f, 0.95f),
+    Intent::createPreset("Dense", 0.5f, 0.95f, 0.6f, 0.3f),
+    Intent::createPreset("Structured", 0.4f, 0.5f, 0.95f, 0.2f),
+    Intent::createPreset("Minimal", 0.1f, 0.1f, 0.8f, 0.05f),
+    Intent::createPreset("Maximum", 0.95f, 0.95f, 0.5f, 0.8f),
+    Intent::createPreset("Organic", 0.5f, 0.6f, 0.3f, 0.6f)
+  };
+  intentActivations.clear();
+  intentActivationParameters.clear();
+  for (auto& ip : presets) {
+    intentActivations.emplace_back(ip);
+    auto p = std::make_shared<ofParameter<float>>(ip->getName() + " Activation", 0.0f, 0.0f, 1.0f);
+    intentActivationParameters.push_back(p);
+  }
+}
 
+void Synth::updateIntentActivations() {
+  float dt = ofGetLastFrameTime();
+  for (size_t i = 0; i < intentActivations.size(); ++i) {
+    auto& ia = intentActivations[i];
+    float target = intentActivationParameters[i]->get();
+    ia.targetActivation = target;
+    float speed = ia.transitionSpeed;
+    float alpha = 1.0f - expf(-dt * std::max(0.001f, speed) * 4.0f);
+    ia.activation = ofLerp(ia.activation, ia.targetActivation, alpha);
+  }
+}
+
+void Synth::computeActiveIntent() {
+  std::vector<std::pair<IntentPtr, float>> weighted;
+  weighted.reserve(intentActivations.size());
+  for (auto& ia : intentActivations) {
+    weighted.emplace_back(ia.intentPtr, ia.activation);
+  }
+  activeIntent = Intent::weightedBlend(weighted);
+}
+
+void Synth::applyIntentToAllMods() {
+  // Apply to synth first (background mapping), then to children
+  applyIntent(activeIntent, intentStrengthParameter);
+  for (auto& kv : modPtrs) {
+    kv.second->applyIntent(activeIntent, intentStrengthParameter);
+  }
+}
 
 } // ofxMarkSynth

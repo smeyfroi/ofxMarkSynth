@@ -16,6 +16,8 @@
 #include <unordered_map>
 #include "SaveToFileThread.hpp"
 #include "ParamController.h"
+#include "Intent.hpp"
+#include "IntentParamController.h"
 
 
 
@@ -97,12 +99,27 @@ private:
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
 
+  // Intent system
+  IntentActivations intentActivations;
+  Intent activeIntent { "Active", 0.5f, 0.5f, 0.5f, 0.5f };
+  ofParameterGroup intentParameters;
+  ofParameter<float> intentStrengthParameter { "Intent Strength", 1.0, 0.0, 1.0 };
+  std::vector<std::shared_ptr<ofParameter<float>>> intentActivationParameters;
+  ofxLabel activeIntentInfoLabel1, activeIntentInfoLabel2;
+  const Intent& getActiveIntent() const { return activeIntent; }
+  float getIntentStrength() const { return intentStrengthParameter; }
+  void applyIntent(const Intent& intent, float intentStrength) override;
+  void initIntentPresets();
+  void updateIntentActivations();
+  void computeActiveIntent();
+  void applyIntentToAllMods();
+  
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
   ofParameter<ofFloatColor> backgroundColorParameter { "Background Color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
-  ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
+  IntentParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
   ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
   ofParameter<int> toneMapTypeParameter { "tone map type", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
   ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
@@ -121,7 +138,7 @@ private:
   ofxPanel gui;
   bool plusKeyPressed { false };
   bool equalsKeyPressed { false };
-
+  
 #ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;

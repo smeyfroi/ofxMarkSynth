@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Mod.hpp"
+#include "Intent.hpp"
+#include "IntentParamController.h"
+#include "IntentMapping.hpp"
 
 #include "RandomVecSourceMod.hpp"
 #include "RandomHslColorMod.hpp"

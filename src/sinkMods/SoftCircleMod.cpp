@@ -44,22 +44,22 @@ void SoftCircleMod::update() {
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  radiusParamController.update(getAgency());
-  float radius = radiusParamController.value;
+  radiusController.update();
+  float radius = radiusController.value;
 
-  colorParamController.update(getAgency());
-  ofFloatColor color = colorParamController.value;
+  colorController.update();
+  ofFloatColor color = colorController.value;
 
-  colorMultiplierParamController.update(getAgency());
-  float multiplier = colorMultiplierParamController.value;
+  colorMultiplierController.update();
+  float multiplier = colorMultiplierController.value;
   color *= multiplier;
   
-  alphaMultiplierParamController.update(getAgency());
-  float alphaMultiplier = alphaMultiplierParamController.value;
+  alphaMultiplierController.update();
+  float alphaMultiplier = alphaMultiplierController.value;
   color.a *= alphaMultiplierParameter;
   
-  softnessParamController.update(getAgency());
-  float softness = softnessParamController.value;
+  softnessController.update();
+  float softness = softnessController.value;
 
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   fboPtr->getSource().begin();
@@ -76,16 +76,16 @@ void SoftCircleMod::update() {
 void SoftCircleMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_RADIUS:
-      radiusParamController.update(value, getAgency());
+      radiusController.updateAuto(value, getAgency());
       break;
     case SINK_COLOR_MULTIPLIER:
-      colorMultiplierParamController.update(value, getAgency());
+      colorMultiplierController.updateAuto(value, getAgency());
       break;
     case SINK_ALPHA_MULTIPLIER:
-      alphaMultiplierParamController.update(value, getAgency());
+      alphaMultiplierController.updateAuto(value, getAgency());
       break;
     case SINK_SOFTNESS:
-      softnessParamController.update(value, getAgency());
+      softnessController.updateAuto(value, getAgency());
       break;
     case SINK_CHANGE_LAYER:
       if (value > 0.5) { // FIXME: temp until connections have weights
@@ -111,11 +111,26 @@ void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
 void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_COLOR:
-      colorParamController.update(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
+      colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
+  // Energy → Radius
+  float radiusI = linearMap(intent.getEnergy(), 0.002f, 0.032f);
+  radiusController.updateIntent(radiusI, strength);
+
+  // Energy → Color; Density → Alpha
+  ofFloatColor colorI = energyToColor(intent);
+  colorI.a = linearMap(intent.getDensity(), 0.02f, 0.3f);
+  colorController.updateIntent(colorI, strength);
+
+  // Density → Alpha Multiplier
+  float alphaI = linearMap(intent.getDensity(), 0.02f, 0.3f);
+  alphaMultiplierController.updateIntent(alphaI, strength);
 }
 
 

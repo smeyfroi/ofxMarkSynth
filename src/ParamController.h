@@ -9,8 +9,8 @@ namespace ofxMarkSynth {
 
 
 
-inline float lerp(const float& a, const float& b, float t) { return ofLerp(a, b, t); }
-inline ofFloatColor lerp(const ofFloatColor& a, const ofFloatColor& b, float t) { return a.getLerped(b, t); }
+inline float lerpx(const float& a, const float& b, float t) { return ofLerp(a, b, t); }
+inline ofFloatColor lerpx(const ofFloatColor& a, const ofFloatColor& b, float t) { return a.getLerped(b, t); }
 
 
 
@@ -24,8 +24,8 @@ public:
   {
   }
 
-  void update(T newValue, float autoManualMix) {
-    autoValue = newValue;
+  void update(T newAutoValue, float autoManualMix) {
+    autoValue = newAutoValue;
     tick(autoManualMix);
   }
 
@@ -35,12 +35,12 @@ public:
 
 private:
   void tick(float autoManualMix) {
-    T targetMixed = lerp(manualValueParameter.get(), autoValue, autoManualMix);
+    T targetMixed = lerpx(manualValueParameter.get(), autoValue, autoManualMix);
 
     float dt = ofGetLastFrameTime();
     float alpha = 1.0f - expf(-dt / smoothTime);
 
-    value = lerp(value, targetMixed, alpha);
+    value = lerpx(value, targetMixed, alpha);
   }
 
 public:

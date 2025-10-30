@@ -79,7 +79,8 @@ void connectSourceToSinks(ModPtr sourceModPtr,
 
 
 
-class Synth; // forward declaration
+class Synth;
+class Intent;
 
 
 
@@ -96,6 +97,7 @@ public:
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   
   virtual float getAgency() const;
+  virtual void applyIntent(const Intent& intent, float intentStrength) {};
 
   int getSourceId(const std::string& sourceName);
   int getSinkId(const std::string& sinkName);
