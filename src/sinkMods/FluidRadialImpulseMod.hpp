@@ -9,6 +9,7 @@
 
 #include "Mod.hpp"
 #include "AddRadialImpulseShader.h"
+#include "IntentParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -21,6 +22,7 @@ public:
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_IMPULSE_RADIUS = 10;
@@ -31,7 +33,9 @@ protected:
 
 private:
   ofParameter<float> impulseRadiusParameter { "ImpulseRadius", 0.001, 0.0, 0.3 };
+  IntentParamController<float> impulseRadiusController { impulseRadiusParameter };
   ofParameter<float> impulseStrengthParameter { "ImpulseStrength", 0.01, 0.0, 0.3 };
+  IntentParamController<float> impulseStrengthController { impulseStrengthParameter };
 
   std::vector<glm::vec2> newPoints;
   

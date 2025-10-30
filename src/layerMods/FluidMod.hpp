@@ -19,6 +19,7 @@ public:
   FluidMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void setup();
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr std::string VELOCITIES_LAYERPTR_NAME { "velocities" };
   

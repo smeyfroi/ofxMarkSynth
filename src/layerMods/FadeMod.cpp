@@ -26,6 +26,7 @@ void FadeMod::initParameters() {
 }
 
 void FadeMod::update() {
+  alphaMultiplierController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -69,11 +70,16 @@ void FadeMod::update() {
 void FadeMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_ALPHA_MULTIPLIER:
-      alphaMultiplierParameter = value;
+      alphaMultiplierController.updateAuto(value, getAgency());
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void FadeMod::applyIntent(const Intent& intent, float strength) {
+  float alphaMultI = inverseMap(intent.getDensity(), 0.5f, 1.7f);
+  alphaMultiplierController.updateIntent(alphaMultI, strength);
 }
 
 

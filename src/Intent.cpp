@@ -3,7 +3,7 @@
 namespace ofxMarkSynth {
 
 Intent::Intent(const std::string& name_,
-               float energy, float density, float structure, float chaos)
+               float energy, float density, float structure, float chaos, float granularity)
 : name(name_)
 {
   parameters.setName(name);
@@ -11,12 +11,14 @@ Intent::Intent(const std::string& name_,
   parameters.add(densityParameter.set("Density", density, 0.0, 1.0));
   parameters.add(structureParameter.set("Structure", structure, 0.0, 1.0));
   parameters.add(chaosParameter.set("Chaos", chaos, 0.0, 1.0));
+  parameters.add(granularityParameter.set("Granularity", granularity, 0.0, 1.0));
 }
 
 IntentPtr Intent::createPreset(const std::string& name,
                                float energy, float density,
-                               float structure, float chaos) {
-  return std::make_shared<Intent>(name, energy, density, structure, chaos);
+                               float structure, float chaos,
+                               float granularity) {
+  return std::make_shared<Intent>(name, energy, density, structure, chaos, granularity);
 }
 
 Intent Intent::weightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents) {
@@ -25,6 +27,7 @@ Intent Intent::weightedBlend(const std::vector<std::pair<IntentPtr, float>>& wei
   float blendedDensity = 0.0f;
   float blendedStructure = 0.0f;
   float blendedChaos = 0.0f;
+  float blendedGranularity = 0.0f;
   
   for (const auto& pair : weightedIntents) {
     const auto& intent = pair.first;
@@ -35,6 +38,7 @@ Intent Intent::weightedBlend(const std::vector<std::pair<IntentPtr, float>>& wei
       blendedDensity += intent->getDensity() * weight;
       blendedStructure += intent->getStructure() * weight;
       blendedChaos += intent->getChaos() * weight;
+      blendedGranularity += intent->getGranularity() * weight;
     }
   }
   
@@ -43,9 +47,10 @@ Intent Intent::weightedBlend(const std::vector<std::pair<IntentPtr, float>>& wei
     blendedDensity /= totalWeight;
     blendedStructure /= totalWeight;
     blendedChaos /= totalWeight;
+    blendedGranularity /= totalWeight;
   }
   
-  return Intent("Blended", blendedEnergy, blendedDensity, blendedStructure, blendedChaos);
+  return Intent("Blended", blendedEnergy, blendedDensity, blendedStructure, blendedChaos, blendedGranularity);
 }
 
 } // namespace ofxMarkSynth

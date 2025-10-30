@@ -6,6 +6,7 @@
 //
 
 #include "RandomVecSourceMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -27,7 +28,8 @@ void RandomVecSourceMod::initParameters() {
 }
 
 void RandomVecSourceMod::update() {
-  vecCount += vecsPerUpdateParameter;
+  vecsPerUpdateController.update();
+  vecCount += vecsPerUpdateController.value;
   int vecsToCreate = std::floor(vecCount);
   vecCount -= vecsToCreate;
   if (vecsToCreate == 0) return;
@@ -60,6 +62,10 @@ const glm::vec3 RandomVecSourceMod::createRandomVec3() const {
 
 const glm::vec4 RandomVecSourceMod::createRandomVec4() const {
   return glm::vec4 { ofRandom(), ofRandom(), ofRandom(), ofRandom() };
+}
+
+void RandomVecSourceMod::applyIntent(const Intent& intent, float strength) {
+  vecsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), 0.5f, 10.0f, 2.0f), strength);
 }
 
 

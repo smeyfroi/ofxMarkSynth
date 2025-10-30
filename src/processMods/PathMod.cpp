@@ -7,6 +7,7 @@
 
 #include "PathMod.hpp"
 #include "ofxConvexHull.h"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -34,8 +35,8 @@ std::vector<glm::vec2> PathMod::findCloseNewPoints() const {
   std::vector<glm::vec2> result;
   glm::vec2 previousVec { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
   std::for_each(newVecs.crbegin(), newVecs.crend(), [&](const auto& v) { // start from the back, which is the newest points
-    if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > maxVertexProximityParameter) return;
-    if (glm::distance2(previousVec, v) < minVertexProximityParameter) return;
+    if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > maxVertexProximityController.value) return;
+    if (glm::distance2(previousVec, v) < minVertexProximityController.value) return;
     result.push_back(v);
     previousVec = v;
   });
@@ -102,6 +103,8 @@ ofPath makeHorizontalStripesPath(const std::vector<glm::vec2>& points) {
 }
 
 void PathMod::update() {
+  maxVertexProximityController.update();
+  minVertexProximityController.update();
   auto points = findCloseNewPoints();
   if (points.size() < 4) {
     if (newVecs.size() > maxVerticesParameter * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
@@ -142,6 +145,21 @@ bool PathMod::keyPressed(int key) {
     return true;
   }
   return false;
+}
+
+void PathMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  minVertexProximityController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), 0.0001f, 0.01f), strength);
+  maxVertexProximityController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), 0.01f, 0.1f), strength);
+  if (intent.getChaos() > 0.6 && intent.getStructure() < 0.4) {
+    strategyParameter = 2;
+  } else if (intent.getStructure() > 0.7) {
+    strategyParameter = 3;
+  } else if (intent.getStructure() < 0.3) {
+    strategyParameter = 0;
+  } else {
+    strategyParameter = 1;
+  }
 }
 
 void PathMod::receive(int sinkId, const glm::vec2& v) {

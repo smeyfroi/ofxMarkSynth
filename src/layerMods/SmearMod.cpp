@@ -6,6 +6,7 @@
 //
 
 #include "SmearMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -43,31 +44,38 @@ void SmearMod::initParameters() {
 }
 
 void SmearMod::update() {
+  mixNewController.update();
+  alphaMultiplierController.update();
+  field1MultiplierController.update();
+  field2MultiplierController.update();
+  jumpAmountController.update();
+  borderWidthController.update();
+  ghostBlendController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
-  float mixNew = mixNewParameter;
-  float alphaMultiplier = alphaMultiplierParameter;
+  float mixNew = mixNewController.value;
+  float alphaMultiplier = alphaMultiplierController.value;
   SmearShader::GridParameters gridParameters = {
     .gridSize = glm::vec2 { gridSizeParameter->x, gridSizeParameter->y },
     .strategy = strategyParameter,
-    .jumpAmount = jumpAmountParameter,
-    .borderWidth = borderWidthParameter,
+    .jumpAmount = jumpAmountController.value,
+    .borderWidth = borderWidthController.value,
     .gridLevels = gridLevelsParameter,
-    .ghostBlend = ghostBlendParameter,
+    .ghostBlend = ghostBlendController.value,
     .foldPeriod = glm::vec2 { foldPeriodParameter->x, foldPeriodParameter->y }
   };
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   // TODO: make this more forgiving
   if (field2Fbo.isAllocated() && field1Fbo.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,
-                       field1Fbo.getTexture(), field1MultiplierParameter, field1BiasParameter,
-                       field2Fbo.getTexture(), field2MultiplierParameter, field2BiasParameter,
+                       field1Fbo.getTexture(), field1MultiplierController.value, field1BiasParameter,
+                       field2Fbo.getTexture(), field2MultiplierController.value, field2BiasParameter,
                        gridParameters);
   } else if (field1Fbo.isAllocated()) {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Fbo.getTexture(), field1MultiplierParameter, field1BiasParameter);
+    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Fbo.getTexture(), field1MultiplierController.value, field1BiasParameter);
   } else {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier);
   }
@@ -76,7 +84,7 @@ void SmearMod::update() {
 void SmearMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_FLOAT:
-      mixNewParameter = value;
+      mixNewController.updateAuto(value, getAgency());
       break;
     case SINK_CHANGE_LAYER:
       if (value > 0.9) {
@@ -119,5 +127,28 @@ void SmearMod::receive(int sinkId, const ofFbo& value) {
   }
 }
 
+
+void SmearMod::applyIntent(const Intent& intent, float strength) {
+  float e = intent.getEnergy();
+  float d = intent.getDensity();
+  float s = intent.getStructure();
+  float c = intent.getChaos();
+  float g = intent.getGranularity();
+
+  mixNewController.updateIntent(inverseMap(d, 0.6f, 0.95f), strength);
+  alphaMultiplierController.updateIntent(inverseMap(e, 0.996f, 0.9992f), strength);
+  field1MultiplierController.updateIntent(linearMap(e, 0.0002f, 0.01f), strength);
+  field2MultiplierController.updateIntent(exponentialMap(c, 0.0002f, 0.02f, 2.0f), strength);
+  jumpAmountController.updateIntent(exponentialMap(c, 0.0f, 1.0f, 2.0f), strength);
+  borderWidthController.updateIntent(linearMap(s, 0.02f, 0.2f), strength);
+  ghostBlendController.updateIntent(linearMap(d, 0.1f, 0.9f), strength);
+
+  if (strength > 0.01f) {
+    int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
+    gridLevelsParameter.set(levels);
+    float p = linearMap(g, 4.0f, 32.0f);
+    foldPeriodParameter.set(glm::vec2 { p, p });
+  }
+}
 
 } // ofxMarkSynth

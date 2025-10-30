@@ -10,6 +10,8 @@
 #include "Mod.hpp"
 #include "ofxGui.h"
 #include "UnitQuadMesh.h"
+#include "IntentParamController.h"
+#include "IntentMapping.hpp"
 
 
 
@@ -22,7 +24,8 @@ public:
   FadeMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const float& value) override;
-  
+  void applyIntent(const Intent& intent, float strength) override;
+
   static constexpr int SINK_ALPHA_MULTIPLIER = 11;
   
 protected:
@@ -32,6 +35,7 @@ private:
   UnitQuadMesh unitQuadMesh;
 
   ofParameter<float> alphaMultiplierParameter { "Alpha", 0.01, 0.0, 0.05 };
+  IntentParamController<float> alphaMultiplierController { alphaMultiplierParameter };
 };
 
 

@@ -6,6 +6,7 @@
 //
 
 #include "SandLineMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -39,11 +40,11 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
   glm::vec2 unitDirection = glm::normalize(lineVector);
   glm::vec2 perpendicular { -unitDirection.y, unitDirection.x };
   
-  std::normal_distribution<float> alongDist(0.0f, stdDevAlongParameter * lineLength);
-  std::normal_distribution<float> perpDist(0.0f, stdDevPerpendicularParameter * lineLength);
+  std::normal_distribution<float> alongDist(0.0f, stdDevAlongController.value * lineLength);
+  std::normal_distribution<float> perpDist(0.0f, stdDevPerpendicularController.value * lineLength);
 
-  auto grains = static_cast<int>(lineLength * densityParameter * drawScale);
-  float maxRadius = pointRadiusParameter / drawScale;
+  auto grains = static_cast<int>(lineLength * densityController.value * drawScale);
+  float maxRadius = pointRadiusController.value / drawScale;
 
   for (int i = 0; i < grains; i++) {
     float offsetAlong = alongDist(generator);
@@ -61,6 +62,12 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
 }
 
 void SandLineMod::update() {
+  densityController.update();
+  pointRadiusController.update();
+  colorController.update();
+  alphaMultiplierController.update();
+  stdDevAlongController.update();
+  stdDevPerpendicularController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -70,8 +77,8 @@ void SandLineMod::update() {
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
-  ofFloatColor c = colorParameter;
-  c.a *= alphaMultiplierParameter;
+  ofFloatColor c = colorController.value;
+  c.a *= alphaMultiplierController.value;
   ofSetColor(c);
 
   ofFill();
@@ -90,7 +97,7 @@ void SandLineMod::update() {
 void SandLineMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_POINT_RADIUS:
-      pointRadiusParameter = value;
+      pointRadiusController.updateAuto(value, getAgency());
       break;
     default:
       Mod::receive(sinkId, value);
@@ -111,11 +118,25 @@ void SandLineMod::receive(int sinkId, const glm::vec2& point) {
 void SandLineMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_POINT_COLOR:
-      colorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
+      colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void SandLineMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  densityController.updateIntent(ofxMarkSynth::linearMap(intent.getDensity() * intent.getGranularity(), 0.0f, 0.5f), strength);
+  pointRadiusController.updateIntent(ofxMarkSynth::linearMap(intent.getGranularity(), 0.5f, 16.0f), strength);
+  ofFloatColor color = ofxMarkSynth::energyToColor(intent);
+  color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
+  color.setSaturation(intent.getEnergy() * (1.0f - intent.getStructure()));
+  color.a = 1.0f;
+  colorController.updateIntent(color, strength);
+  alphaMultiplierController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), 0.0f, 0.2f), strength);
+  stdDevAlongController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), 0.1f, 1.0f), strength);
+  stdDevPerpendicularController.updateIntent(ofxMarkSynth::linearMap(intent.getChaos(), 0.001f, 0.1f), strength);
 }
 
 

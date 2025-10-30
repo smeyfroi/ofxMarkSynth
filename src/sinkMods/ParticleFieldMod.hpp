@@ -21,6 +21,7 @@ public:
   void receive(int sinkId, const ofFbo& value) override;
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_FIELD_1_FBO = 20;
   static constexpr int SINK_FIELD_2_FBO = 21;

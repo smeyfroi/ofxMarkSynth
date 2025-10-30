@@ -6,6 +6,7 @@
 //
 
 #include "VaryingValueMod.hpp"
+#include "IntentMapping.hpp"
 
 namespace ofxMarkSynth {
 
@@ -34,7 +35,12 @@ void VaryingValueMod::initParameters() {
 }
 
 void VaryingValueMod::update() {
-  float stdDev = varianceParameter.get() * (maxParameter - minParameter);
+  sinkScaleController.update();
+  meanValueController.update();
+  varianceController.update();
+  minController.update();
+  maxController.update();
+  float stdDev = varianceParameter.get() * (maxController.value - minController.value);
   float sampledValue = of::random::normal<float>(meanValueParameter.get(), stdDev);
   float value = ofClamp(sampledValue, minParameter.get(), maxParameter.get());
   emit(SOURCE_FLOAT, value);
@@ -59,6 +65,12 @@ void VaryingValueMod::receive(int sinkId, const float& v) {
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void VaryingValueMod::applyIntent(const Intent& intent, float strength) {
+  varianceController.updateIntent(exponentialMap(intent.getChaos(), 0.2f, 1.0f, 2.0f), strength);
+  float range = maxController.value - minController.value;
+  meanValueController.updateIntent(minController.value + linearMap(intent.getDensity(), 0.3f, 0.7f) * range, strength);
 }
 
 

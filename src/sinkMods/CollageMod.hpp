@@ -10,6 +10,7 @@
 #include "PingPongFbo.h"
 #include "MaskShader.h"
 #include "AddTextureThresholded.h"
+#include "IntentParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -23,7 +24,8 @@ public:
   void receive(int sinkId, const ofPath& path) override;
   void receive(int sinkId, const ofFbo& value) override;
   void receive(int sinkId, const glm::vec4& v) override;
-  
+  void applyIntent(const Intent& intent, float strength) override;
+
   static constexpr std::string OUTLINE_LAYERPTR_NAME { "outlines" };
 
   static constexpr int SINK_PATH = 1;
@@ -37,7 +39,9 @@ protected:
   ofFbo snapshotFbo;
 
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  IntentParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> saturationParameter { "Saturation", 1.5, 0.0, 4.0 };
+  IntentParamController<float> saturationController { saturationParameter };
   ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
   ofParameter<bool> outlineParameter { "Outline", true };
 };

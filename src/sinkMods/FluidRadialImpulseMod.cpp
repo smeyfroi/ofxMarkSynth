@@ -6,6 +6,7 @@
 //
 
 #include "FluidRadialImpulseMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -29,6 +30,8 @@ void FluidRadialImpulseMod::initParameters() {
 }
 
 void FluidRadialImpulseMod::update() {
+  impulseRadiusController.update();
+  impulseStrengthController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -37,8 +40,8 @@ void FluidRadialImpulseMod::update() {
   ofEnableBlendMode(OF_BLENDMODE_ADD);
   std::for_each(newPoints.begin(), newPoints.end(), [this, fboPtr](const auto& p) {
     addRadialImpulseShader.render(p * fboPtr->getWidth(),
-                                  impulseRadiusParameter * fboPtr->getWidth(),
-                                  impulseStrengthParameter);
+                                  impulseRadiusController.value * fboPtr->getWidth(),
+                                  impulseStrengthController.value);
   });
   fboPtr->getSource().end();
   
@@ -48,10 +51,10 @@ void FluidRadialImpulseMod::update() {
 void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_IMPULSE_RADIUS:
-      impulseRadiusParameter = value;
+      impulseRadiusController.updateAuto(value, getAgency());
       break;
     case SINK_IMPULSE_STRENGTH:
-      impulseStrengthParameter = value;
+      impulseStrengthController.updateAuto(value, getAgency());
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -66,6 +69,11 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
     default:
       ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
+  impulseRadiusController.updateIntent(exponentialMap(intent.getGranularity(), 0.001f, 0.05f, 2.0f), strength);
+  impulseStrengthController.updateIntent(linearMap(intent.getEnergy(), 0.005f, 0.1f), strength);
 }
 
 

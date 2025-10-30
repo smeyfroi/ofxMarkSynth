@@ -7,6 +7,7 @@
 
 #include "DividedAreaMod.hpp"
 #include "LineGeom.h"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -39,7 +40,7 @@ void DividedAreaMod::initParameters() {
 }
 
 void DividedAreaMod::addConstrainedLinesThroughPointPairs(float width) {
-  const ofFloatColor minorDividerColor = minorLineColorParameter;
+  const ofFloatColor minorDividerColor = minorLineColorController.value;
   int pairs = newMinorAnchors.size() / 2;
   for (int i = 0; i < pairs; i++) {
     auto p1 = newMinorAnchors.back();
@@ -51,10 +52,10 @@ void DividedAreaMod::addConstrainedLinesThroughPointPairs(float width) {
 }
 
 void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
-  const ofFloatColor minorDividerColor = minorLineColorParameter;
-  float angle = angleParameter;
+  const ofFloatColor minorDividerColor = minorLineColorController.value;
+  float angle = angleController.value;
   std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [&](const auto& p) {
-    auto endPoint = endPointForSegment(p, angleParameter * glm::pi<float>(), 0.01);
+    auto endPoint = endPointForSegment(p, angleController.value * glm::pi<float>(), 0.01);
     if (endPoint.x > 0.0 && endPoint.x < 1.0 && endPoint.y > 0.0 && endPoint.y < 1.0) {
       // must stay inside normalised coords
       dividedArea.addConstrainedDividerLine(p, endPoint, minorDividerColor);
@@ -65,7 +66,7 @@ void DividedAreaMod::addConstrainedLinesThroughPointAngles() {
 
 void DividedAreaMod::addConstrainedLinesRadiating() {
   if (newMinorAnchors.size() < 7) return;
-  const ofFloatColor minorDividerColor = minorLineColorParameter;
+  const ofFloatColor minorDividerColor = minorLineColorController.value;
   glm::vec2 centrePoint = newMinorAnchors.back(); newMinorAnchors.pop_back();
   std::for_each(newMinorAnchors.begin(), newMinorAnchors.end(), [&](const auto& p) {
     dividedArea.addConstrainedDividerLine(centrePoint, p, minorDividerColor);
@@ -74,6 +75,10 @@ void DividedAreaMod::addConstrainedLinesRadiating() {
 }
 
 void DividedAreaMod::update() {
+  angleController.update();
+  minorLineColorController.update();
+  majorLineColorController.update();
+  pathWidthController.update();
   dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
   newMajorAnchors.clear();
   
@@ -104,7 +109,7 @@ void DividedAreaMod::update() {
   // need a background for the refraction effect
   if (backgroundFbo.isAllocated()) {
     fboPtr0->getSource().begin();
-    const ofFloatColor majorDividerColor = majorLineColorParameter;
+    const ofFloatColor majorDividerColor = majorLineColorController.value;
     // TODO: bring back the flat coloured major lines?
 //    dividedArea.draw({},
 //                     { minLineWidth, maxLineWidth, majorDividerColor },
@@ -154,7 +159,7 @@ void DividedAreaMod::receive(int sinkId, const ofPath& path) {
           }
         }
       }
-      addConstrainedLinesThroughPointPairs(pathWidthParameter); // add lines for a path immediately
+      addConstrainedLinesThroughPointPairs(pathWidthController.value); // add lines for a path immediately
       break;
     default:
       ofLogError() << "ofPath receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -213,6 +218,22 @@ void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
     default:
       ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  angleController.updateIntent(ofxMarkSynth::linearMap(intent.getChaos(), 0.0f, 0.5f), strength);
+  pathWidthController.updateIntent(ofxMarkSynth::linearMap(intent.getGranularity(), 0.0f, 0.01f), strength);
+  ofFloatColor minorColor = ofxMarkSynth::energyToColor(intent);
+  minorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent));
+  minorColor.setSaturation(intent.getEnergy() * (1.0f - intent.getStructure()));
+  minorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.0f, 1.0f);
+  minorLineColorController.updateIntent(minorColor, strength);
+  ofFloatColor majorColor = ofxMarkSynth::energyToColor(intent) * 0.7f;
+  majorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.8f);
+  majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
+  majorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.0f, 1.0f);
+  majorLineColorController.updateIntent(majorColor, strength);
 }
 
 

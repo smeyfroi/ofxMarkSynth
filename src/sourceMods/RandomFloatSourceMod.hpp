@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
+#include "IntentParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -17,6 +18,7 @@ class RandomFloatSourceMod : public Mod {
 public:
   RandomFloatSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::pair<float, float> minRange = {0.0, 1.0}, std::pair<float, float> maxRange = {0.0, 1.0}, unsigned long randomSeed = 0);
   void update() override;
+  void applyIntent(const Intent& intent, float strength) override;
   
   static constexpr int SOURCE_FLOAT = 1;
 
@@ -26,8 +28,11 @@ protected:
 private:
   float floatCount;
   ofParameter<float> floatsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
-  ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 }; // modified in ctor
-  ofParameter<float> maxParameter { "Max", 1.0, 0.0, 1.0 }; // modified in ctor
+  IntentParamController<float> floatsPerUpdateController { floatsPerUpdateParameter };
+  ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 };
+  IntentParamController<float> minController { minParameter }; // modified in ctor
+  ofParameter<float> maxParameter { "Max", 1.0, 0.0, 1.0 };
+  IntentParamController<float> maxController { maxParameter }; // modified in ctor
   
   const float createRandomFloat() const;
 };

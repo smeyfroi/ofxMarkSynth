@@ -10,6 +10,7 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxParticleSet.h"
+#include "IntentParamController.h"
 //#include "AddTextureThresholded.h"
 
 
@@ -17,6 +18,9 @@ namespace ofxMarkSynth {
 
 
 class ParticleSetMod : public Mod {
+public:
+  void applyIntent(const Intent& intent, float strength) override;
+private:
 
 public:
   ParticleSetMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
@@ -35,7 +39,9 @@ protected:
 
 private:
   ofParameter<float> spinParameter { "Spin", 0.03, -0.05, 0.05 };
+  IntentParamController<float> spinController { spinParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  IntentParamController<ofFloatColor> colorController { colorParameter };
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;

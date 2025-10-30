@@ -10,7 +10,7 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxPointClusters.h"
-
+#include "Intent.hpp"
 
 namespace ofxMarkSynth {
 
@@ -22,6 +22,7 @@ public:
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const float& v) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_VEC2 = 1;
   static constexpr int SINK_CHANGE_CLUSTER_NUM = 10;

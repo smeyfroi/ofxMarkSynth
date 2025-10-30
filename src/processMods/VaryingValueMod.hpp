@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
+#include "IntentParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -18,6 +19,7 @@ public:
   VaryingValueMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
   void receive(int sinkId, const float& value) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_MEAN = 10;
   static constexpr int SINK_VARIANCE = 11;
@@ -28,10 +30,15 @@ protected:
   
 private:
   ofParameter<float> sinkScaleParameter { "Scale", 1.0, 0.0, 10.0 };
+  IntentParamController<float> sinkScaleController { sinkScaleParameter };
   ofParameter<float> meanValueParameter { "Mean", 0.5, 0.0, 1.0 };
+  IntentParamController<float> meanValueController { meanValueParameter };
   ofParameter<float> varianceParameter { "Variance", 1.0, 0.0, 1.0 };
+  IntentParamController<float> varianceController { varianceParameter };
   ofParameter<float> minParameter { "Min", 0.2, 0.0, 1.0 };
+  IntentParamController<float> minController { minParameter };
   ofParameter<float> maxParameter { "Max", 0.2, 0.0, 1.0 };
+  IntentParamController<float> maxController { maxParameter };
   
   void minMaxChanged(float& value);
 

@@ -10,12 +10,15 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "PingPongFbo.h"
+#include "IntentParamController.h"
 
 
 namespace ofxMarkSynth {
 
 
 class SandLineMod : public Mod {
+public:
+  void applyIntent(const Intent& intent, float strength) override;
 
 public:
   SandLineMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
@@ -35,11 +38,17 @@ private:
   void drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale);
 
   ofParameter<float> densityParameter { "Density", 0.05, 0.0, 0.5 };
+  IntentParamController<float> densityController { densityParameter };
   ofParameter<float> pointRadiusParameter { "PointRadius", 1.0, 0.0, 32.0 };
+  IntentParamController<float> pointRadiusController { pointRadiusParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  IntentParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.05, 0.0, 1.0 };
+  IntentParamController<float> alphaMultiplierController { alphaMultiplierParameter };
   ofParameter<float> stdDevAlongParameter { "StdDevAlong", 0.5, 0.0, 1.0 };
+  IntentParamController<float> stdDevAlongController { stdDevAlongParameter };
   ofParameter<float> stdDevPerpendicularParameter { "StdDevPerpendicular", 0.01, 0.0, 0.1 };
+  IntentParamController<float> stdDevPerpendicularController { stdDevPerpendicularParameter };
 
   std::vector<glm::vec2> newPoints;
 };

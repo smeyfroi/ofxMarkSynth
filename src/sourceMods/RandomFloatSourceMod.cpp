@@ -6,6 +6,7 @@
 //
 
 #include "RandomFloatSourceMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -32,7 +33,10 @@ void RandomFloatSourceMod::initParameters() {
 }
 
 void RandomFloatSourceMod::update() {
-  floatCount += floatsPerUpdateParameter;
+  floatsPerUpdateController.update();
+  minController.update();
+  maxController.update();
+  floatCount += floatsPerUpdateController.value;
   int floatsToCreate = std::floor(floatCount);
   floatCount -= floatsToCreate;
   if (floatsToCreate == 0) return;
@@ -43,7 +47,11 @@ void RandomFloatSourceMod::update() {
 }
 
 const float RandomFloatSourceMod::createRandomFloat() const {
-  return ofRandom(minParameter, maxParameter);
+  return ofRandom(minController.value, maxController.value);
+}
+
+void RandomFloatSourceMod::applyIntent(const Intent& intent, float strength) {
+  floatsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), 0.5f, 10.0f, 2.0f), strength);
 }
 
 

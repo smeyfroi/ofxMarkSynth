@@ -11,6 +11,7 @@
 #include "Mod.hpp"
 #include "ofxContinuousSomPalette.hpp"
 #include <random>
+//#include "IntentParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -25,6 +26,7 @@ public:
   bool keyPressed(int key) override;
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const float& v) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SINK_SWITCH_PALETTE = 100;
@@ -39,7 +41,9 @@ protected:
 
 private:
 //  ofParameter<float> learningRateParameter { "LearningRate", 0.01, 0.0, 1.0 };
+//  IntentParamController<float> learningRateController { learningRateParameter };
   ofParameter<float> iterationsParameter { "Iterations", 3000.0, 1000.0, 100000.0 };
+//  IntentParamController<float> iterationsController { iterationsParameter };
 
   ContinuousSomPalette somPalette { 16, 16, 0.02 };
 

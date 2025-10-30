@@ -8,9 +8,11 @@
 
 #include "CollageMod.hpp"
 #include "ofxFatline.h"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
+
 
 
 CollageMod::CollageMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -31,6 +33,8 @@ void CollageMod::initParameters() {
 }
 
 void CollageMod::update() {
+  colorController.update();
+  saturationController.update();
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter == 1 && !snapshotFbo.isAllocated()) return;
 
@@ -85,7 +89,7 @@ void CollageMod::update() {
 
   ofFloatColor tintColor = ofFloatColor(1.0, 1.0, 1.0, 1.0);
   if (strategyParameter != 2) { // 2 == draw an untinted snapshot
-    tintColor = colorParameter; // comes from a connected palette or manually
+    tintColor = colorController.value; // comes from a connected palette or manually
     float currentSaturation = tintColor.getSaturation();
     tintColor.setSaturation(std::clamp(currentSaturation * saturationParameter.get(), 0.0f, 1.0f));
   }
@@ -156,12 +160,34 @@ void CollageMod::receive(int sinkId, const ofPath& path_) {
 void CollageMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_COLOR:
-      colorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
+      colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
+
+void CollageMod::applyIntent(const Intent& intent, float intentStrength) {
+  ofFloatColor energetic = energyToColor(intent);
+  ofFloatColor structured = structureToBrightness(intent);
+  ofFloatColor mixed = energetic.getLerped(structured, 0.25f);
+  ofFloatColor finalColor = densityToAlpha(intent, mixed);
+  colorController.updateIntent(finalColor, intentStrength);
+
+  float satEnergy = linearMap(intent.getEnergy(), 0.8f, 2.2f);
+  float satChaos = exponentialMap(intent.getChaos(), 0.9f, 2.8f, 2.0f);
+  float satStructure = inverseMap(intent.getStructure(), 0.8f, 1.6f);
+  float targetSaturation = std::clamp(satEnergy * satChaos * satStructure, 0.0f, 4.0f);
+  saturationController.updateIntent(targetSaturation, intentStrength);
+
+  if (intentStrength > 0.01f) {
+    int strategy = (intent.getStructure() > 0.55f || intent.getGranularity() > 0.6f) ? 1 : 0;
+    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
+    bool outlineOn = intent.getChaos() < 0.7f;
+    if (outlineParameter.get() != outlineOn) outlineParameter.set(outlineOn);
+  }
+}
+
 
 
 } // ofxMarkSynth

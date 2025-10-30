@@ -6,6 +6,7 @@
 //
 
 #include "ParticleSetMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -29,6 +30,8 @@ void ParticleSetMod::initParameters() {
 }
 
 void ParticleSetMod::update() {
+  spinController.update();
+  colorController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -38,7 +41,7 @@ void ParticleSetMod::update() {
   std::for_each(newPoints.begin(), newPoints.end(), [this](const auto& vec) {
     glm::vec2 p { vec.x, vec.y };
     glm::vec2 v { vec.z, vec.w };
-    particleSet.add(p, v, colorParameter, spinParameter);
+    particleSet.add(p, v, colorController.value, spinController.value);
   });
   newPoints.clear();
   
@@ -52,7 +55,7 @@ void ParticleSetMod::update() {
 void ParticleSetMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_SPIN:
-      spinParameter = value;
+      spinController.updateAuto(value, getAgency());
       break;
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -75,11 +78,21 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
       newPoints.push_back(v);
       break;
     case SINK_COLOR:
-      colorParameter = ofFloatColor { v.r, v.g, v.b, v.a };
+      colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  spinController.updateIntent(ofxMarkSynth::linearMap(intent.getEnergy() * intent.getChaos(), -0.05f, 0.05f), strength);
+  ofFloatColor color = ofxMarkSynth::energyToColor(intent);
+  color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
+  color.setSaturation(intent.getEnergy() * intent.getChaos() * (1.0f - intent.getStructure()));
+  color.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.0f, 1.0f);
+  colorController.updateIntent(color, strength);
 }
 
 

@@ -65,5 +65,12 @@ void ClusterMod::receive(int sinkId, const float& v) {
   }
 }
 
+void ClusterMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01f) return;
+  int targetClusters = pointClusters.getMinClusters() + 
+    static_cast<int>(intent.getDensity() * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters()));
+  pointClusters.clustersParameter.set(targetClusters);
+}
+
 
 } // ofxMarkSynth

@@ -7,6 +7,7 @@
 
 #include "ParticleFieldMod.hpp"
 #include "cmath"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -88,6 +89,19 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  ofFloatColor color = ofxMarkSynth::energyToColor(intent);
+  color.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.5f);
+  color.setSaturation(intent.getEnergy() * intent.getChaos());
+  color.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.1f, 0.5f);
+  auto particleBlocks = particleField.getParticleCount() / 64;
+  auto updateBlocks = std::max(1, static_cast<int>(particleBlocks * strength * 0.02f));
+  particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
+    return color;
+  });
 }
 
 

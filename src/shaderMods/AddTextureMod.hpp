@@ -12,6 +12,7 @@
 #include "Mod.hpp"
 #include "PingPongFbo.h"
 #include "AddTextureShader.h"
+#include "IntentParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -24,6 +25,7 @@ public:
   void update() override;
   void receive(int sinkId, const float& v) override;
   void receive(int sinkId, const ofFloatPixels& pixels) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_SCALE = 10;
 //  static constexpr int SINK_TARGET_FBO = SINK_FBOPTR_BEGIN;
@@ -34,6 +36,7 @@ protected:
 
 private:
   ofParameter<float> scaleParameter { "Scale", 0.05, 0.0, 1.0 };
+  IntentParamController<float> scaleController { scaleParameter };
 
   ofTexture addTexture;
   AddTextureShader addTextureShader;

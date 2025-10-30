@@ -36,5 +36,10 @@ void FluidMod::update() {
   fluidSimulation.update();
 }
 
+void FluidMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  if (!fluidSimulation.isSetup()) return;
+}
+
 
 } // ofxMarkSynth

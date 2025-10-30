@@ -6,6 +6,7 @@
 //
 
 #include "SomPaletteMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
@@ -15,6 +16,7 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, const Mod
 : Mod { synthPtr, name, std::move(config) }
 {
   somPalette.numIterations = iterationsParameter;
+//  somPalette.numIterations = iterationsController.value;
   somPalette.setVisible(false);
   
   sinkNameIdMap = {
@@ -87,6 +89,8 @@ void SomPaletteMod::ensureFieldFbo(int w, int h) {
 }
 
 void SomPaletteMod::update() {
+//  learningRateController.update();
+//  iterationsController.update();
   if (newVecs.empty()) return;
   
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v){
@@ -152,6 +156,12 @@ void SomPaletteMod::receive(int sinkId, const float& v) {
     default:
       ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
+}
+
+void SomPaletteMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  float targetIterations = linearMap(intent.getStructure() * intent.getDensity(), 1000.0f, 20000.0f);
+  iterationsParameter = static_cast<int>(ofLerp(iterationsParameter.get(), targetIterations, strength * 0.1f));
 }
   
 
