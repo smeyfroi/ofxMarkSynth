@@ -10,7 +10,7 @@
 #include "Mod.hpp"
 #include "ofxGui.h"
 #include "UnitQuadMesh.h"
-#include "IntentParamController.h"
+#include "ParamController.h"
 #include "IntentMapping.hpp"
 
 
@@ -35,7 +35,7 @@ private:
   UnitQuadMesh unitQuadMesh;
 
   ofParameter<float> alphaMultiplierParameter { "Alpha", 0.01, 0.0, 0.05 };
-  IntentParamController<float> alphaMultiplierController { alphaMultiplierParameter };
+  ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
 };
 
 

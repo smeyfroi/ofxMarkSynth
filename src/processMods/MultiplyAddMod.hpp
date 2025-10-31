@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 #include "IntentMapping.hpp"
 
 
@@ -36,9 +36,9 @@ protected:
   
 private:
   ofParameter<float> multiplierParameter { "Multiplier", 1.0, -4.0, 4.0 };
-  IntentParamController<float> multiplierController { multiplierParameter };
+  ParamController<float> multiplierController { multiplierParameter };
   ofParameter<float> adderParameter { "Adder", 0.0, -1.0, 1.0 };
-  IntentParamController<float> adderController { adderParameter };
+  ParamController<float> adderController { adderParameter };
 };
 
 

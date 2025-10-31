@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -32,7 +32,7 @@ private:
   
   float vecCount;
   ofParameter<float> vecsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
-  IntentParamController<float> vecsPerUpdateController { vecsPerUpdateParameter };
+  ParamController<float> vecsPerUpdateController { vecsPerUpdateParameter };
   
   const glm::vec2 createRandomVec2() const;
   const glm::vec3 createRandomVec3() const;

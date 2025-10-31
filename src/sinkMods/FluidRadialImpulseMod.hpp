@@ -9,7 +9,7 @@
 
 #include "Mod.hpp"
 #include "AddRadialImpulseShader.h"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -33,9 +33,9 @@ protected:
 
 private:
   ofParameter<float> impulseRadiusParameter { "ImpulseRadius", 0.001, 0.0, 0.3 };
-  IntentParamController<float> impulseRadiusController { impulseRadiusParameter };
+  ParamController<float> impulseRadiusController { impulseRadiusParameter };
   ofParameter<float> impulseStrengthParameter { "ImpulseStrength", 0.01, 0.0, 0.3 };
-  IntentParamController<float> impulseStrengthController { impulseStrengthParameter };
+  ParamController<float> impulseStrengthController { impulseStrengthParameter };
 
   std::vector<glm::vec2> newPoints;
   

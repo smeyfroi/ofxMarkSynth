@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -30,15 +30,15 @@ protected:
   
 private:
   ofParameter<float> sinkScaleParameter { "Scale", 1.0, 0.0, 10.0 };
-  IntentParamController<float> sinkScaleController { sinkScaleParameter };
+  ParamController<float> sinkScaleController { sinkScaleParameter };
   ofParameter<float> meanValueParameter { "Mean", 0.5, 0.0, 1.0 };
-  IntentParamController<float> meanValueController { meanValueParameter };
+  ParamController<float> meanValueController { meanValueParameter };
   ofParameter<float> varianceParameter { "Variance", 1.0, 0.0, 1.0 };
-  IntentParamController<float> varianceController { varianceParameter };
+  ParamController<float> varianceController { varianceParameter };
   ofParameter<float> minParameter { "Min", 0.2, 0.0, 1.0 };
-  IntentParamController<float> minController { minParameter };
+  ParamController<float> minController { minParameter };
   ofParameter<float> maxParameter { "Max", 0.2, 0.0, 1.0 };
-  IntentParamController<float> maxController { maxParameter };
+  ParamController<float> maxController { maxParameter };
   
   void minMaxChanged(float& value);
 

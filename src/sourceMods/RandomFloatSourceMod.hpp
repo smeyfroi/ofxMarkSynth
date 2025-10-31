@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -28,11 +28,11 @@ protected:
 private:
   float floatCount;
   ofParameter<float> floatsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
-  IntentParamController<float> floatsPerUpdateController { floatsPerUpdateParameter };
+  ParamController<float> floatsPerUpdateController { floatsPerUpdateParameter };
   ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 };
-  IntentParamController<float> minController { minParameter }; // modified in ctor
+  ParamController<float> minController { minParameter }; // modified in ctor
   ofParameter<float> maxParameter { "Max", 1.0, 0.0, 1.0 };
-  IntentParamController<float> maxController { maxParameter }; // modified in ctor
+  ParamController<float> maxController { maxParameter }; // modified in ctor
   
   const float createRandomFloat() const;
 };

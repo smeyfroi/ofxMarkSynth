@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -29,19 +29,19 @@ private:
   float colorCount;
   const ofFloatColor createRandomColor() const;
   ofParameter<float> colorsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
-  IntentParamController<float> colorsPerUpdateController { colorsPerUpdateParameter };
+  ParamController<float> colorsPerUpdateController { colorsPerUpdateParameter };
   ofParameter<float> minSaturationParameter { "MinSaturation", 0.0, 0.0, 1.0 };
-  IntentParamController<float> minSaturationController { minSaturationParameter };
+  ParamController<float> minSaturationController { minSaturationParameter };
   ofParameter<float> maxSaturationParameter { "MaxSaturation", 1.0, 0.0, 1.0 };
-  IntentParamController<float> maxSaturationController { maxSaturationParameter };
+  ParamController<float> maxSaturationController { maxSaturationParameter };
   ofParameter<float> minLightnessParameter { "MinLightness", 0.0, 0.0, 1.0 };
-  IntentParamController<float> minLightnessController { minLightnessParameter };
+  ParamController<float> minLightnessController { minLightnessParameter };
   ofParameter<float> maxLightnessParameter { "MaxLightness", 1.0, 0.0, 1.0 };
-  IntentParamController<float> maxLightnessController { maxLightnessParameter };
+  ParamController<float> maxLightnessController { maxLightnessParameter };
   ofParameter<float> minAlphaParameter { "MinAlpha", 0.0, 0.0, 1.0 };
-  IntentParamController<float> minAlphaController { minAlphaParameter };
+  ParamController<float> minAlphaController { minAlphaParameter };
   ofParameter<float> maxAlphaParameter { "MaxAlpha", 1.0, 0.0, 1.0 };
-  IntentParamController<float> maxAlphaController { maxAlphaParameter };
+  ParamController<float> maxAlphaController { maxAlphaParameter };
 };
 
 

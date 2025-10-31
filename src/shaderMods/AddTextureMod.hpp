@@ -12,7 +12,7 @@
 #include "Mod.hpp"
 #include "PingPongFbo.h"
 #include "AddTextureShader.h"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -36,7 +36,7 @@ protected:
 
 private:
   ofParameter<float> scaleParameter { "Scale", 0.05, 0.0, 1.0 };
-  IntentParamController<float> scaleController { scaleParameter };
+  ParamController<float> scaleController { scaleParameter };
 
   ofTexture addTexture;
   AddTextureShader addTextureShader;

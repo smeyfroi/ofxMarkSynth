@@ -8,7 +8,7 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 #include "IntentMapping.hpp"
 #include "SoftCircleShader.h"
 
@@ -40,15 +40,15 @@ protected:
 
 private:
   ofParameter<float> radiusParameter { "Radius", 0.005, 0.0, 0.25 };
-  IntentParamController<float> radiusController { radiusParameter };
+  ParamController<float> radiusController { radiusParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 0.5f, 0.5f, 0.5f, 0.5f }, ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f }, ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f } };
-  IntentParamController<ofFloatColor> colorController { colorParameter };
+  ParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> colorMultiplierParameter { "Color Multiplier", 0.5, 0.0, 1.0 }; // RGB
-  IntentParamController<float> colorMultiplierController { colorMultiplierParameter };
+  ParamController<float> colorMultiplierController { colorMultiplierParameter };
   ofParameter<float> alphaMultiplierParameter { "Alpha Multiplier", 0.2, 0.0, 1.0 }; // A
-  IntentParamController<float> alphaMultiplierController { alphaMultiplierParameter };
+  ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
   ofParameter<float> softnessParameter { "Softness", 0.3, 0.0, 1.0 };
-  IntentParamController<float> softnessController { softnessParameter };
+  ParamController<float> softnessController { softnessParameter };
   ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
   std::vector<glm::vec2> newPoints;

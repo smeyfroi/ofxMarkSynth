@@ -2,7 +2,7 @@
 
 #include "Mod.hpp"
 #include "Intent.hpp"
-#include "IntentParamController.h"
+#include "ParamController.h"
 #include "IntentMapping.hpp"
 
 #include "RandomVecSourceMod.hpp"

@@ -13,9 +13,9 @@ inline ofFloatColor lerp(const ofFloatColor& a, const ofFloatColor& b, float t) 
 }
 
 template<typename T>
-class IntentParamController {
+class ParamController {
 public:
-  IntentParamController(ofParameter<T>& manualValueParameter_)
+  ParamController(ofParameter<T>& manualValueParameter_)
   : manualValueParameter(manualValueParameter_),
   value(manualValueParameter_.get()),
   intentValue(manualValueParameter_.get()),
@@ -47,7 +47,6 @@ public:
   }
   
   void update() {
-    // TODO: is the blend the right way round? Think about precedence in a performance situation
     T manualValue = manualValueParameter.get();
     T intentBlended = lerp(manualValue, intentValue, intentStrength);
     T targetValue = lerp(intentBlended, autoValue, agency);

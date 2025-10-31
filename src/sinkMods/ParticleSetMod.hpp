@@ -10,7 +10,7 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxParticleSet.h"
-#include "IntentParamController.h"
+#include "ParamController.h"
 //#include "AddTextureThresholded.h"
 
 
@@ -39,9 +39,9 @@ protected:
 
 private:
   ofParameter<float> spinParameter { "Spin", 0.03, -0.05, 0.05 };
-  IntentParamController<float> spinController { spinParameter };
+  ParamController<float> spinController { spinParameter };
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
-  IntentParamController<ofFloatColor> colorController { colorParameter };
+  ParamController<ofFloatColor> colorController { colorParameter };
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }
   ParticleSet particleSet;

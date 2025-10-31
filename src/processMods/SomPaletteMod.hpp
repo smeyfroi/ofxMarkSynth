@@ -11,7 +11,7 @@
 #include "Mod.hpp"
 #include "ofxContinuousSomPalette.hpp"
 #include <random>
-//#include "IntentParamController.h"
+//#include "ParamController.h"
 
 
 namespace ofxMarkSynth {

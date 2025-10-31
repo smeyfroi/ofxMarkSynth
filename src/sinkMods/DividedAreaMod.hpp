@@ -10,7 +10,7 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxDividedArea.h"
-#include "IntentParamController.h"
+#include "ParamController.h"
 
 
 namespace ofxMarkSynth {
@@ -49,13 +49,13 @@ protected:
 private:
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 2 }; // 0 = point pairs, 1 = point angles, 2 = radiating
   ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
-  IntentParamController<float> angleController { angleParameter };
+  ParamController<float> angleController { angleParameter };
   ofParameter<ofFloatColor> minorLineColorParameter { "MinorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
-  IntentParamController<ofFloatColor> minorLineColorController { minorLineColorParameter };
+  ParamController<ofFloatColor> minorLineColorController { minorLineColorParameter };
   ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
-  IntentParamController<ofFloatColor> majorLineColorController { majorLineColorParameter };
+  ParamController<ofFloatColor> majorLineColorController { majorLineColorParameter };
   ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.01 };
-  IntentParamController<float> pathWidthController { pathWidthParameter };
+  ParamController<float> pathWidthController { pathWidthParameter };
   float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;
