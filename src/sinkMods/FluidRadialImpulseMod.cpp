@@ -9,7 +9,9 @@
 #include "IntentMapping.hpp"
 
 
+
 namespace ofxMarkSynth {
+
 
 
 FluidRadialImpulseMod::FluidRadialImpulseMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -72,8 +74,14 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
-  impulseRadiusController.updateIntent(exponentialMap(intent.getGranularity(), 0.001f, 0.05f, 2.0f), strength);
-  impulseStrengthController.updateIntent(linearMap(intent.getEnergy(), 0.005f, 0.1f), strength);
+  // Granularity → Impulse Radius
+  float impulseRadiusI = linearMap(intent.getGranularity(), impulseRadiusController);
+  impulseRadiusController.updateIntent(impulseRadiusI, strength);
+  
+  // Energy and Chaos (secondary) → Impulse Strength
+  float impulseStrengthI = linearMap(intent.getEnergy(), impulseStrengthController.getManualMin(), impulseStrengthController.getManualMax() * 0.8f) +
+      linearMap(intent.getChaos(), 0.0f, impulseStrengthController.getManualMax() * 0.2f);
+  impulseStrengthController.updateIntent(impulseStrengthI, strength);
 }
 
 

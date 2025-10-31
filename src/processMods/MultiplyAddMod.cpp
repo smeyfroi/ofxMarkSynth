@@ -57,10 +57,17 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
 }
 
 void MultiplyAddMod::applyIntent(const Intent& intent, float strength) {
-  float multI = linearMap(intent.getEnergy(), 0.7f, 1.6f);
-  float addI = linearMap(intent.getDensity(), -0.05f, 0.15f);
+  // Energy -> multiply
+  float multI = exponentialMap(intent.getEnergy(), multiplierController);
   multiplierController.updateIntent(multI, strength);
-  adderController.updateIntent(addI, strength);
+
+  // Density -> add
+  float addI = exponentialMap(intent.getDensity(), adderController);
+  adderController.updateIntent(addI, strength * 0.5);
+
+  // Granularity -> add
+  float granularityI = exponentialMap(intent.getGranularity(), adderController);
+  adderController.updateIntent(granularityI, strength * 0.5);
 }
 
 

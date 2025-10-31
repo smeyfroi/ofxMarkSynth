@@ -219,12 +219,9 @@ void Synth::update() {
   applyIntentToAllMods();
   activeIntentInfoLabel1 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
                           " D" + ofToString(activeIntent.getDensity(), 2) +
-                          " S" + ofToString(activeIntent.getStructure(), 2) +
                           " C" + ofToString(activeIntent.getChaos(), 2);
-  activeIntentInfoLabel2 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
-                          " D" + ofToString(activeIntent.getDensity(), 2) +
-                          " S" + ofToString(activeIntent.getStructure(), 2) +
-                          " C" + ofToString(activeIntent.getChaos(), 2);
+  activeIntentInfoLabel2 = ofToString("S") + ofToString(activeIntent.getStructure(), 2) +
+                          " G" + ofToString(activeIntent.getGranularity(), 2);
   TS_STOP("Synth-updateIntents");
 
   backgroundColorController.update();

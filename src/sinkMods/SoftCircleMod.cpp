@@ -120,16 +120,16 @@ void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
 
 void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
   // Energy → Radius
-  float radiusI = linearMap(intent.getEnergy(), 0.002f, 0.032f);
+  float radiusI = exponentialMap(intent.getEnergy(), radiusController);
   radiusController.updateIntent(radiusI, strength);
 
-  // Energy → Color; Density → Alpha
+  // Energy → Color
   ofFloatColor colorI = energyToColor(intent);
   colorI.a = linearMap(intent.getDensity(), 0.02f, 0.3f);
   colorController.updateIntent(colorI, strength);
 
   // Density → Alpha Multiplier
-  float alphaI = linearMap(intent.getDensity(), 0.02f, 0.3f);
+  float alphaI = linearMap(intent.getDensity(), alphaMultiplierParameter);
   alphaMultiplierController.updateIntent(alphaI, strength);
 }
 

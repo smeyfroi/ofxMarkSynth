@@ -9,7 +9,9 @@
 #include "IntentMapping.hpp"
 
 
+
 namespace ofxMarkSynth {
+
 
 
 SmearMod::SmearMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -135,14 +137,15 @@ void SmearMod::applyIntent(const Intent& intent, float strength) {
   float c = intent.getChaos();
   float g = intent.getGranularity();
 
-  mixNewController.updateIntent(inverseMap(d, 0.6f, 0.95f), strength);
-  alphaMultiplierController.updateIntent(inverseMap(e, 0.996f, 0.9992f), strength);
-  field1MultiplierController.updateIntent(linearMap(e, 0.0002f, 0.01f), strength);
-  field2MultiplierController.updateIntent(exponentialMap(c, 0.0002f, 0.02f, 2.0f), strength);
-  jumpAmountController.updateIntent(exponentialMap(c, 0.0f, 1.0f, 2.0f), strength);
-  borderWidthController.updateIntent(linearMap(s, 0.02f, 0.2f), strength);
-  ghostBlendController.updateIntent(linearMap(d, 0.1f, 0.9f), strength);
+  mixNewController.updateIntent(inverseMap(e, mixNewController), strength);
+  alphaMultiplierController.updateIntent(exponentialMap(d, alphaMultiplierController), strength);
+  field1MultiplierController.updateIntent(linearMap(e, field1MultiplierController), strength);
+  field2MultiplierController.updateIntent(exponentialMap(c, field2MultiplierController, 2.0f), strength);
+  jumpAmountController.updateIntent(exponentialMap(c, jumpAmountController, 2.0f), strength);
+  borderWidthController.updateIntent(linearMap(s, borderWidthController), strength);
+  ghostBlendController.updateIntent(linearMap(d, ghostBlendController), strength);
 
+  // TODO: what's this doing? need linearMap<int>?
   if (strength > 0.01f) {
     int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
     gridLevelsParameter.set(levels);
@@ -150,5 +153,7 @@ void SmearMod::applyIntent(const Intent& intent, float strength) {
     foldPeriodParameter.set(glm::vec2 { p, p });
   }
 }
+
+
 
 } // ofxMarkSynth

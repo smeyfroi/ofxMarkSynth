@@ -25,9 +25,17 @@ ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig
 
 void ClusterMod::initParameters() {
   parameters.add(pointClusters.getParameterGroup());
+  parameters.add(agencyFactorParameter);
+  clustersControllerPtr = std::make_unique<ParamController<float>>(pointClusters.clustersParameter);
+}
+
+float ClusterMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void ClusterMod::update() {
+  clustersControllerPtr->update();
+  
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v) {
     pointClusters.add(v);
   });
@@ -57,6 +65,7 @@ void ClusterMod::receive(int sinkId, const float& v) {
       {
         int newSize = pointClusters.getMinClusters() + v * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
         ofLogNotice() << "ClusterMod::SINK_CHANGE_CLUSTER_NUM: changing size to " << newSize;
+        clustersControllerPtr->updateAuto(static_cast<float>(newSize), getAgency());
         pointClusters.clustersParameter.set(newSize);
       }
       break;
@@ -67,9 +76,9 @@ void ClusterMod::receive(int sinkId, const float& v) {
 
 void ClusterMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01f) return;
-  int targetClusters = pointClusters.getMinClusters() + 
-    static_cast<int>(intent.getDensity() * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters()));
-  pointClusters.clustersParameter.set(targetClusters);
+  float targetClusters = static_cast<float>(pointClusters.getMinClusters()) +
+    intent.getDensity() * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
+  clustersControllerPtr->updateIntent(static_cast<float>(targetClusters), strength);
 }
 
 

@@ -78,7 +78,7 @@ void FadeMod::receive(int sinkId, const float& value) {
 }
 
 void FadeMod::applyIntent(const Intent& intent, float strength) {
-  float alphaMultI = inverseMap(intent.getDensity(), 0.5f, 1.7f);
+  float alphaMultI = linearMap(intent.getDensity(), alphaMultiplierController);
   alphaMultiplierController.updateIntent(alphaMultI, strength);
 }
 

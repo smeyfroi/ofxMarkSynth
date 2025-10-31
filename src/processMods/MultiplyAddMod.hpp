@@ -35,7 +35,7 @@ protected:
   void initParameters() override;
   
 private:
-  ofParameter<float> multiplierParameter { "Multiplier", 1.0, -4.0, 4.0 };
+  ofParameter<float> multiplierParameter { "Multiplier", 1.0, -2.0, 2.0 };
   ParamController<float> multiplierController { multiplierParameter };
   ofParameter<float> adderParameter { "Adder", 0.0, -1.0, 1.0 };
   ParamController<float> adderController { adderParameter };

@@ -11,14 +11,17 @@
 #include "Mod.hpp"
 #include "ofxPointClusters.h"
 #include "Intent.hpp"
+#include "ParamController.h"
 
 namespace ofxMarkSynth {
+
 
 
 class ClusterMod : public Mod {
 
 public:
   ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const float& v) override;
@@ -32,10 +35,14 @@ protected:
   void initParameters() override;
 
 private:
+  std::unique_ptr<ParamController<float>> clustersControllerPtr;
+  ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
+
   PointClusters pointClusters;
 
   std::vector<glm::vec2> newVecs;
 };
+
 
 
 } // ofxMarkSynth

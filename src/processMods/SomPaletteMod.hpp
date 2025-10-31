@@ -42,7 +42,7 @@ protected:
 private:
 //  ofParameter<float> learningRateParameter { "LearningRate", 0.01, 0.0, 1.0 };
 //  IntentParamController<float> learningRateController { learningRateParameter };
-  ofParameter<float> iterationsParameter { "Iterations", 3000.0, 1000.0, 100000.0 };
+  ofParameter<float> iterationsParameter { "Iterations", 2000.0, 1000.0, 100000.0 };
 //  IntentParamController<float> iterationsController { iterationsParameter };
 
   ContinuousSomPalette somPalette { 16, 16, 0.02 };

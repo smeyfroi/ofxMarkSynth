@@ -25,6 +25,14 @@ public:
     });
   }
   
+  T getManualMin() const {
+    return manualValueParameter.getMin();
+  }
+  
+  T getManualMax() const {
+    return manualValueParameter.getMax();
+  }
+  
   float getTimeSinceLastManualUpdate() const {
     return ofGetElapsedTimef() - lastManualUpdateTime;
   }

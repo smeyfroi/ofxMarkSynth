@@ -1,20 +1,33 @@
 #pragma once
 
 #include "Intent.hpp"
+#include "ParamController.h"
+
+// TODO: use util lerps
 
 namespace ofxMarkSynth {
 
 inline float linearMap(float intentValue, float minOut, float maxOut) {
   return ofLerp(minOut, maxOut, intentValue);
 }
+inline float linearMap(float intentValue, const ParamController<float>& paramController) {
+  return ofLerp(paramController.getManualMin(), paramController.getManualMax(), intentValue);
+}
 
 inline float exponentialMap(float intentValue, float minOut, float maxOut, float exponent = 2.0) {
   float curved = powf(ofClamp(intentValue, 0.0, 1.0), exponent);
   return ofLerp(minOut, maxOut, curved);
 }
+inline float exponentialMap(float intentValue, const ParamController<float>& paramController, float exponent = 2.0) {
+  float curved = powf(ofClamp(intentValue, 0.0, 1.0), exponent);
+  return ofLerp(paramController.getManualMin(), paramController.getManualMax(), curved);
+}
 
 inline float inverseMap(float intentValue, float minOut, float maxOut) {
   return ofLerp(maxOut, minOut, intentValue);
+}
+inline float inverseMap(float intentValue, const ParamController<float>& paramController) {
+  return ofLerp(paramController.getManualMax(), paramController.getManualMin(), intentValue);
 }
 
 inline ofFloatColor energyToColor(const Intent& intent) {
