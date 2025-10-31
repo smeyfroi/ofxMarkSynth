@@ -46,7 +46,7 @@ public:
   
   ofParameterGroup& getParameterGroup() { return parameters; }
   
-  static Intent weightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents);
+  void setWeightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents);
   
 private:
   std::string name;

@@ -25,15 +25,6 @@ public:
   {
   }
   
-  void updateIntentAuto(T newIntentValue, T newAutoValue,
-                        float newIntentStrength, float newAgency) {
-    intentValue = newIntentValue;
-    autoValue = newAutoValue;
-    intentStrength = newIntentStrength;
-    agency = newAgency;
-    update();
-  }
-  
   void updateIntent(T newIntentValue, float newIntentStrength) {
     intentValue = newIntentValue;
     intentStrength = newIntentStrength;

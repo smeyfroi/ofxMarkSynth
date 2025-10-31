@@ -21,19 +21,18 @@ IntentPtr Intent::createPreset(const std::string& name,
   return std::make_shared<Intent>(name, energy, density, structure, chaos, granularity);
 }
 
-Intent Intent::weightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents) {
-  float totalWeight = 0.0f;
+void Intent::setWeightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents) {
   float blendedEnergy = 0.0f;
   float blendedDensity = 0.0f;
   float blendedStructure = 0.0f;
   float blendedChaos = 0.0f;
   float blendedGranularity = 0.0f;
-  
+
   for (const auto& pair : weightedIntents) {
     const auto& intent = pair.first;
-    const auto& weight = pair.second;
-    if (weight > 0.0f && intent) {
-      totalWeight += weight;
+    float weight = pair.second;
+
+    if (weight > 0.0001f && intent) {
       blendedEnergy += intent->getEnergy() * weight;
       blendedDensity += intent->getDensity() * weight;
       blendedStructure += intent->getStructure() * weight;
@@ -41,16 +40,14 @@ Intent Intent::weightedBlend(const std::vector<std::pair<IntentPtr, float>>& wei
       blendedGranularity += intent->getGranularity() * weight;
     }
   }
-  
-  if (totalWeight > 0.0f) {
-    blendedEnergy /= totalWeight;
-    blendedDensity /= totalWeight;
-    blendedStructure /= totalWeight;
-    blendedChaos /= totalWeight;
-    blendedGranularity /= totalWeight;
-  }
-  
-  return Intent("Blended", blendedEnergy, blendedDensity, blendedStructure, blendedChaos, blendedGranularity);
+
+  energyParameter = blendedEnergy;
+  densityParameter = blendedDensity;
+  structureParameter = blendedStructure;
+  chaosParameter = blendedChaos;
+  granularityParameter = blendedGranularity;
 }
+
+
 
 } // namespace ofxMarkSynth

@@ -198,7 +198,7 @@ void Synth::receive(int sinkId, const float& v) {
 }
 
 void Synth::applyIntent(const Intent& intent, float intentStrength) {
-  // Structure + Chaos -> background brightness
+  // Structure & Inverse Chaos -> background brightness
   float structure = intent.getStructure();
   float chaos = intent.getChaos();
   float brightness = ofLerp(0.0f, 0.15f, structure) * (1.0f - chaos * 0.5f);
@@ -213,7 +213,7 @@ void Synth::update() {
   
   if (paused) return;
   
-  // Intent pipeline
+  TS_START("Synth-updateIntents");
   updateIntentActivations();
   computeActiveIntent();
   applyIntentToAllMods();
@@ -225,6 +225,7 @@ void Synth::update() {
                           " D" + ofToString(activeIntent.getDensity(), 2) +
                           " S" + ofToString(activeIntent.getStructure(), 2) +
                           " C" + ofToString(activeIntent.getChaos(), 2);
+  TS_STOP("Synth-updateIntents");
 
   backgroundColorController.update();
   
@@ -583,7 +584,7 @@ void Synth::computeActiveIntent() {
     weighted[i].first = ia.intentPtr;
     weighted[i].second = ia.activation;
   }
-  activeIntent = Intent::weightedBlend(weighted);
+  activeIntent.setWeightedBlend(weighted);
 }
 
 void Synth::applyIntentToAllMods() {
