@@ -79,6 +79,7 @@ void DividedAreaMod::update() {
   minorLineColorController.update();
   majorLineColorController.update();
   pathWidthController.update();
+  
   dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
   newMajorAnchors.clear();
   
@@ -179,6 +180,7 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
         if (v > 0.4) { // FIXME: temp until connections have weights
           float newAngle = v;
           ofLogNotice() << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
+          angleController.updateAuto(newAngle, getAgency());
           angleParameter = newAngle;
         }
       }
@@ -200,10 +202,10 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
 void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_MINOR_LINES_COLOR:
-      minorLineColorParameter = ofFloatColor(v.x, v.y, v.z, v.w);
+      minorLineColorController.updateAuto(ofFloatColor { v.x, v.y, v.z, v.w }, getAgency());
       break;
     case SINK_MAJOR_LINES_COLOR:
-      majorLineColorParameter = ofFloatColor(v.x, v.y, v.z, v.w);
+      majorLineColorController.updateAuto(ofFloatColor { v.x, v.y, v.z, v.w }, getAgency());
       break;
     default:
       ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
@@ -222,21 +224,24 @@ void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
 
 void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
-  angleController.updateIntent(ofxMarkSynth::linearMap(intent.getChaos(), 0.0f, 0.5f), strength);
-  pathWidthController.updateIntent(ofxMarkSynth::linearMap(intent.getGranularity(), 0.0f, 0.01f), strength);
+  
+//  angleController.updateIntent(ofxMarkSynth::exponentialMap(intent.getChaos(), 0.0f, 0.5f), strength);
+  
+  // Granularity → pathWidth
+  float pathWidthI = exponentialMap(intent.getGranularity(), pathWidthController, 0.7f);
+  pathWidthController.updateIntent(pathWidthI, strength);
+  
   ofFloatColor minorColor = ofxMarkSynth::energyToColor(intent);
-  minorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent));
-  minorColor.setSaturation(intent.getEnergy() * (1.0f - intent.getStructure()));
-  minorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.0f, 1.0f);
+  minorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.7f, 1.0f);
   minorLineColorController.updateIntent(minorColor, strength);
+  
   ofFloatColor majorColor = ofxMarkSynth::energyToColor(intent) * 0.7f;
   majorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.8f);
   majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
-  majorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.0f, 1.0f);
+  majorColor.a = ofxMarkSynth::exponentialMap(intent.getDensity(), 0.0f, 1.0f, 0.5f);
   majorLineColorController.updateIntent(majorColor, strength);
 }
 
 
 
 } // ofxMarkSynth
-

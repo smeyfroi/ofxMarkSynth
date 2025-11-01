@@ -29,10 +29,10 @@ private:
   float floatCount;
   ofParameter<float> floatsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
   ParamController<float> floatsPerUpdateController { floatsPerUpdateParameter };
-  ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 };
-  ParamController<float> minController { minParameter }; // modified in ctor
-  ofParameter<float> maxParameter { "Max", 1.0, 0.0, 1.0 };
-  ParamController<float> maxController { maxParameter }; // modified in ctor
+  ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 }; // modified in ctor
+  ParamController<float> minController { minParameter };
+  ofParameter<float> maxParameter { "Max", 1.0, 0.0, 1.0 }; // modified in ctor
+  ParamController<float> maxController { maxParameter };
   
   const float createRandomFloat() const;
 };

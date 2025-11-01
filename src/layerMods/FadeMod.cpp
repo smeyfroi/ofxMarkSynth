@@ -78,7 +78,12 @@ void FadeMod::receive(int sinkId, const float& value) {
 }
 
 void FadeMod::applyIntent(const Intent& intent, float strength) {
-  float alphaMultI = linearMap(intent.getDensity(), alphaMultiplierController);
+  if (strength < 0.01) return;
+
+  // Density and Granularity (secondary) -> alpha multiplier
+  float alphaMultI = exponentialMap(intent.getDensity() * 0.8f +
+                                    intent.getGranularity() * 0.2f,
+                                    alphaMultiplierController);
   alphaMultiplierController.updateIntent(alphaMultI, strength);
 }
 

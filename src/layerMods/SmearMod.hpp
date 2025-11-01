@@ -37,17 +37,17 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> mixNewParameter { "MixNew", 0.9, 0.0, 1.0 };
+  ofParameter<float> mixNewParameter { "MixNew", 0.9, 0.3, 1.0 };
   ParamController<float> mixNewController { mixNewParameter };
-  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.998, 0.9, 1.0 };
+  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.998, 0.994, 0.999 };
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
 //  ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
   ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
-  ofParameter<float> field1MultiplierParameter { "Field1Multiplier", 0.001, 0.0, 0.1 };
+  ofParameter<float> field1MultiplierParameter { "Field1Multiplier", 0.001, 0.0, 0.05 };
   ParamController<float> field1MultiplierController { field1MultiplierParameter };
 //  ofParameter<glm::vec2> field1BiasParameter { "Field1Bias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
   ofParameter<glm::vec2> field1BiasParameter { "Field1Bias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
-  ofParameter<float> field2MultiplierParameter { "Field2Multiplier", 0.005, 0.0, 0.1 };
+  ofParameter<float> field2MultiplierParameter { "Field2Multiplier", 0.005, 0.0, 0.05 };
   ParamController<float> field2MultiplierController { field2MultiplierParameter };
 //  ofParameter<glm::vec2> field2BiasParameter { "Field2Bias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
   ofParameter<glm::vec2> field2BiasParameter { "Field2Bias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };

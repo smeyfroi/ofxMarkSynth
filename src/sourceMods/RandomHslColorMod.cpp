@@ -38,6 +38,7 @@ void RandomHslColorMod::update() {
   maxLightnessController.update();
   minAlphaController.update();
   maxAlphaController.update();
+  
   colorCount += colorsPerUpdateController.value;
   int colorsToCreate = std::floor(colorCount);
   colorCount -= colorsToCreate;
@@ -58,13 +59,16 @@ const ofFloatColor RandomHslColorMod::createRandomColor() const {
 }
 
 void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
-  colorsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), 0.5f, 10.0f, 2.0f), strength);
-  minSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.3f, 0.8f), strength);
-  maxSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.6f, 1.0f), strength);
-  minLightnessController.updateIntent(inverseMap(intent.getStructure(), 0.6f, 0.2f), strength);
-  maxLightnessController.updateIntent(inverseMap(intent.getStructure(), 1.0f, 0.7f), strength);
-  minAlphaController.updateIntent(linearMap(intent.getDensity(), 0.3f, 0.7f), strength);
-  maxAlphaController.updateIntent(linearMap(intent.getDensity(), 0.6f, 1.0f), strength);
+  if (strength < 0.01) return;
+
+  // TODO: fix these
+//  colorsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), 0.5f, 10.0f, 2.0f), strength);
+//  minSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.3f, 0.8f), strength);
+//  maxSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.6f, 1.0f), strength);
+//  minLightnessController.updateIntent(inverseMap(intent.getStructure(), 0.6f, 0.2f), strength);
+//  maxLightnessController.updateIntent(inverseMap(intent.getStructure(), 1.0f, 0.7f), strength);
+//  minAlphaController.updateIntent(linearMap(intent.getDensity(), 0.3f, 0.7f), strength);
+//  maxAlphaController.updateIntent(linearMap(intent.getDensity(), 0.6f, 1.0f), strength);
 }
 
 

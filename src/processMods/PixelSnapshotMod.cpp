@@ -6,9 +6,12 @@
 //
 
 #include "PixelSnapshotMod.hpp"
+#include "IntentMapping.hpp"
+
 
 
 namespace ofxMarkSynth {
+
 
 
 PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -30,6 +33,8 @@ void PixelSnapshotMod::initParameters() {
 void PixelSnapshotMod::update() {
   if (!sourceFbo.isAllocated()) return;
 
+  sizeController.update();
+  
   updateCount += snapshotsPerUpdateParameter;
   if (updateCount >= 1.0) {
     emit(SOURCE_SNAPSHOT, createSnapshot(sourceFbo));
@@ -38,11 +43,11 @@ void PixelSnapshotMod::update() {
 }
 
 const ofFbo PixelSnapshotMod::createSnapshot(const ofFbo& fbo) {
-  if (snapshotFbo.getWidth() != sizeParameter || snapshotFbo.getHeight() != sizeParameter) {
-    snapshotFbo.allocate(sizeParameter, sizeParameter, GL_RGBA8);
+  int size = static_cast<int>(sizeController.value);
+  if (static_cast<int>(snapshotFbo.getWidth()) != size || static_cast<int>(snapshotFbo.getHeight()) != size) {
+    snapshotFbo.allocate(size, size, GL_RGBA8);
   }
 
-  // This is built for snapshots from a very large source
   int x = ofRandom(0, fbo.getWidth() - snapshotFbo.getWidth());
   int y = ofRandom(0, fbo.getHeight() - snapshotFbo.getHeight());
   
@@ -82,6 +87,15 @@ bool PixelSnapshotMod::keyPressed(int key) {
   }
   return false;
 }
+
+void PixelSnapshotMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  
+  // Inverse Structure → Size
+  float sizeI = inverseMap(intent.getStructure(), sizeController);
+  sizeController.updateIntent(sizeI, strength);
+}
+
 
 
 } // ofxMarkSynth

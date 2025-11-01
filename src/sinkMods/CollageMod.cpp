@@ -11,6 +11,7 @@
 #include "IntentMapping.hpp"
 
 
+
 namespace ofxMarkSynth {
 
 
@@ -35,6 +36,8 @@ void CollageMod::initParameters() {
 void CollageMod::update() {
   colorController.update();
   saturationController.update();
+  outlineController.update();
+  
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter == 1 && !snapshotFbo.isAllocated()) return;
 
@@ -48,7 +51,8 @@ void CollageMod::update() {
   }
 
   auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(OUTLINE_LAYERPTR_NAME);
-  if (outlineParameter && drawingLayerPtrOpt1) {
+  float outline = outlineController.value;
+  if (outline > 0.0f && drawingLayerPtrOpt1) {
     auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
 
     // punch hole through existing outlines
@@ -63,7 +67,7 @@ void CollageMod::update() {
     const float width = 12.0 / fboPtr1->getWidth(); // TODO: parameterise
     const auto& vertices = path.getOutline()[0].getVertices();
     int count = vertices.size();
-    std::vector<ofFloatColor> colors(count, ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
+    std::vector<ofFloatColor> colors(count, ofFloatColor { 0.0, 0.0, 0.0, outline });
     std::vector<double> widths(count, width);
     ofxFatLine fatline;
     fatline.setFeather(width/8.0); // NOTE: getting this wrong can cause weird artifacts
@@ -91,7 +95,7 @@ void CollageMod::update() {
   if (strategyParameter != 2) { // 2 == draw an untinted snapshot
     tintColor = colorController.value; // comes from a connected palette or manually
     float currentSaturation = tintColor.getSaturation();
-    tintColor.setSaturation(std::clamp(currentSaturation * saturationParameter.get(), 0.0f, 1.0f));
+    tintColor.setSaturation(std::clamp(currentSaturation * saturationController.value, 0.0f, 1.0f));
   }
   
   ofEnableBlendMode(OF_BLENDMODE_SCREEN);
@@ -167,25 +171,27 @@ void CollageMod::receive(int sinkId, const glm::vec4& v) {
   }
 }
 
-void CollageMod::applyIntent(const Intent& intent, float intentStrength) {
+void CollageMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+
   ofFloatColor energetic = energyToColor(intent);
   ofFloatColor structured = structureToBrightness(intent);
   ofFloatColor mixed = energetic.getLerped(structured, 0.25f);
   ofFloatColor finalColor = densityToAlpha(intent, mixed);
-  colorController.updateIntent(finalColor, intentStrength);
+  colorController.updateIntent(finalColor, strength);
 
   float satEnergy = linearMap(intent.getEnergy(), 0.8f, 2.2f);
   float satChaos = exponentialMap(intent.getChaos(), 0.9f, 2.8f, 2.0f);
   float satStructure = inverseMap(intent.getStructure(), 0.8f, 1.6f);
-  float targetSaturation = std::clamp(satEnergy * satChaos * satStructure, 0.0f, 4.0f);
-  saturationController.updateIntent(targetSaturation, intentStrength);
+  float targetSaturation = std::clamp(satEnergy * satChaos * satStructure, 0.0f, 3.0f);
+  saturationController.updateIntent(targetSaturation, strength);
 
-  if (intentStrength > 0.01f) {
-    int strategy = (intent.getStructure() > 0.55f || intent.getGranularity() > 0.6f) ? 1 : 0;
-    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
-    bool outlineOn = intent.getChaos() < 0.7f;
-    if (outlineParameter.get() != outlineOn) outlineParameter.set(outlineOn);
-  }
+//  if (strength > 0.01f) {
+//    int strategy = (intent.getStructure() > 0.55f || intent.getGranularity() > 0.6f) ? 1 : 0;
+//    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
+//    bool outlineOn = intent.getChaos() < 0.7f;
+//    if (outlineParameter.get() != outlineOn) outlineParameter.set(outlineOn);
+//  }
 }
 
 

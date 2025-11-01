@@ -74,6 +74,8 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+
   // Granularity → Impulse Radius
   float impulseRadiusI = linearMap(intent.getGranularity(), impulseRadiusController);
   impulseRadiusController.updateIntent(impulseRadiusI, strength);

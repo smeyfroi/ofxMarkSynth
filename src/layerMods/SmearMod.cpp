@@ -53,6 +53,7 @@ void SmearMod::update() {
   jumpAmountController.update();
   borderWidthController.update();
   ghostBlendController.update();
+  
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -131,27 +132,36 @@ void SmearMod::receive(int sinkId, const ofFbo& value) {
 
 
 void SmearMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+
   float e = intent.getEnergy();
   float d = intent.getDensity();
   float s = intent.getStructure();
   float c = intent.getChaos();
   float g = intent.getGranularity();
 
-  mixNewController.updateIntent(inverseMap(e, mixNewController), strength);
+  // Energy -> MixNew
+  mixNewController.updateIntent(exponentialMap(e, mixNewController), strength);
+  // Density -> AlphaMultiplier
   alphaMultiplierController.updateIntent(exponentialMap(d, alphaMultiplierController), strength);
-  field1MultiplierController.updateIntent(linearMap(e, field1MultiplierController), strength);
-  field2MultiplierController.updateIntent(exponentialMap(c, field2MultiplierController, 2.0f), strength);
+  // Energy -> Field multiplier 1
+  field1MultiplierController.updateIntent(exponentialMap(e, field1MultiplierController, 2.0f), strength);
+  // Chaos -> Field multiplier 2
+  field2MultiplierController.updateIntent(exponentialMap(c, field2MultiplierController, 3.0f), strength);
+  // Chaos -> JumpAmount
   jumpAmountController.updateIntent(exponentialMap(c, jumpAmountController, 2.0f), strength);
-  borderWidthController.updateIntent(linearMap(s, borderWidthController), strength);
+  // Granularity -> BorderWidth
+  borderWidthController.updateIntent(linearMap(g, borderWidthController), strength);
+  // Density -> GhostBlend
   ghostBlendController.updateIntent(linearMap(d, ghostBlendController), strength);
 
-  // TODO: what's this doing? need linearMap<int>?
-  if (strength > 0.01f) {
-    int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
-    gridLevelsParameter.set(levels);
-    float p = linearMap(g, 4.0f, 32.0f);
-    foldPeriodParameter.set(glm::vec2 { p, p });
-  }
+  // TODO: fix these
+//  if (strength > 0.01f) {
+//    int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
+//    gridLevelsParameter.set(levels);
+//    float p = linearMap(g, 4.0f, 32.0f);
+//    foldPeriodParameter.set(glm::vec2 { p, p });
+//  }
 }
 
 

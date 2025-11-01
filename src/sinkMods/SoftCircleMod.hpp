@@ -9,7 +9,6 @@
 
 #include "Mod.hpp"
 #include "ParamController.h"
-#include "IntentMapping.hpp"
 #include "SoftCircleShader.h"
 
 

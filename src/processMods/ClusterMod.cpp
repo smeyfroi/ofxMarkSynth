@@ -6,9 +6,17 @@
 //
 
 #include "ClusterMod.hpp"
+#include "IntentMapping.hpp"
 
 
 namespace ofxMarkSynth {
+
+
+
+int PointClustersAdaptor::getNumClusters() const {
+  return static_cast<int>(ownerModPtr->clustersControllerPtr->value);
+}
+
 
 
 ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -35,7 +43,7 @@ float ClusterMod::getAgency() const {
 
 void ClusterMod::update() {
   clustersControllerPtr->update();
-  
+
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v) {
     pointClusters.add(v);
   });
@@ -66,7 +74,6 @@ void ClusterMod::receive(int sinkId, const float& v) {
         int newSize = pointClusters.getMinClusters() + v * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
         ofLogNotice() << "ClusterMod::SINK_CHANGE_CLUSTER_NUM: changing size to " << newSize;
         clustersControllerPtr->updateAuto(static_cast<float>(newSize), getAgency());
-        pointClusters.clustersParameter.set(newSize);
       }
       break;
     default:
@@ -76,8 +83,9 @@ void ClusterMod::receive(int sinkId, const float& v) {
 
 void ClusterMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01f) return;
-  float targetClusters = static_cast<float>(pointClusters.getMinClusters()) +
-    intent.getDensity() * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
+  
+  // Chaos -> number of clusters
+  float targetClusters = linearMap(intent.getChaos(), *clustersControllerPtr);
   clustersControllerPtr->updateIntent(static_cast<float>(targetClusters), strength);
 }
 

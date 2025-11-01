@@ -103,11 +103,13 @@ ofPath makeHorizontalStripesPath(const std::vector<glm::vec2>& points) {
 }
 
 void PathMod::update() {
+  maxVerticesController.update();
   maxVertexProximityController.update();
   minVertexProximityController.update();
+  
   auto points = findCloseNewPoints();
   if (points.size() < 4) {
-    if (newVecs.size() > maxVerticesParameter * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
+    if (newVecs.size() > maxVerticesController.value * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
     return;
   }
 
@@ -149,17 +151,26 @@ bool PathMod::keyPressed(int key) {
 
 void PathMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
-  minVertexProximityController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), 0.0001f, 0.01f), strength);
-  maxVertexProximityController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), 0.01f, 0.1f), strength);
-  if (intent.getChaos() > 0.6 && intent.getStructure() < 0.4) {
-    strategyParameter = 2;
-  } else if (intent.getStructure() > 0.7) {
-    strategyParameter = 3;
-  } else if (intent.getStructure() < 0.3) {
-    strategyParameter = 0;
-  } else {
-    strategyParameter = 1;
-  }
+  
+  // Inverse Density → Min Vertex Proximity
+  float minVertexProximityI = inverseExponentialMap(intent.getDensity(), minVertexProximityController);
+  minVertexProximityController.updateIntent(minVertexProximityI, strength);
+  
+  // Granularity → Max Vertex Proximity
+  float maxVertexProximityI = linearMap(intent.getGranularity(), maxVertexProximityController);
+  maxVertexProximityController.updateIntent(maxVertexProximityI, strength);
+  
+  // TODO: maxVertices
+  
+//  if (intent.getChaos() > 0.6 && intent.getStructure() < 0.4) {
+//    strategyParameter = 2;
+//  } else if (intent.getStructure() > 0.7) {
+//    strategyParameter = 3;
+//  } else if (intent.getStructure() < 0.3) {
+//    strategyParameter = 0;
+//  } else {
+//    strategyParameter = 1;
+//  }
 }
 
 void PathMod::receive(int sinkId, const glm::vec2& v) {
@@ -172,6 +183,7 @@ void PathMod::receive(int sinkId, const glm::vec2& v) {
       ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
   }
 }
+
 
 
 } // ofxMarkSynth

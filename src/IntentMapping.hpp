@@ -30,6 +30,15 @@ inline float inverseMap(float intentValue, const ParamController<float>& paramCo
   return ofLerp(paramController.getManualMax(), paramController.getManualMin(), intentValue);
 }
 
+inline float inverseExponentialMap(float intentValue, float minOut, float maxOut, float exponent = 2.0) {
+  float curved = powf(1.0f - ofClamp(intentValue, 0.0f, 1.0f), exponent);
+  return ofLerp(minOut, maxOut, curved);
+}
+inline float inverseExponentialMap(float intentValue, const ParamController<float>& paramController, float exponent = 2.0) {
+  float curved = powf(1.0f - ofClamp(intentValue, 0.0f, 1.0f), exponent);
+  return ofLerp(paramController.getManualMin(), paramController.getManualMax(), curved);
+}
+
 inline ofFloatColor energyToColor(const Intent& intent) {
   float e = intent.getEnergy();
   return ofFloatColor {

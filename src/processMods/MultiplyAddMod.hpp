@@ -21,7 +21,7 @@ class MultiplyAddMod : public Mod {
   
 public:
   MultiplyAddMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
-//  float getAgency() const override;
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;
   void applyIntent(const Intent& intent, float strength) override;
@@ -39,6 +39,7 @@ private:
   ParamController<float> multiplierController { multiplierParameter };
   ofParameter<float> adderParameter { "Adder", 0.0, -1.0, 1.0 };
   ParamController<float> adderController { adderParameter };
+  ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 };
 
 

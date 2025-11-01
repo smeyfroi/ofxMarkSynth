@@ -29,11 +29,12 @@ MultiplyAddMod::MultiplyAddMod(Synth* synthPtr, const std::string& name, const M
 void MultiplyAddMod::initParameters() {
   parameters.add(multiplierParameter);
   parameters.add(adderParameter);
+  parameters.add(agencyFactorParameter);
 }
 
-//float MultiplyAddMod::getAgency() const {
-//  return Mod::getAgency() * agencyFactorParameter;
-//}
+float MultiplyAddMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
+}
 
 void MultiplyAddMod::update() {
   multiplierController.update();
@@ -59,15 +60,15 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
 void MultiplyAddMod::applyIntent(const Intent& intent, float strength) {
   // Energy -> multiply
   float multI = exponentialMap(intent.getEnergy(), multiplierController);
-  multiplierController.updateIntent(multI, strength);
+  multiplierController.updateIntent(multI, strength * 0.25);
 
   // Density -> add
   float addI = exponentialMap(intent.getDensity(), adderController);
-  adderController.updateIntent(addI, strength * 0.5);
+  adderController.updateIntent(addI, strength * 0.2);
 
   // Granularity -> add
   float granularityI = exponentialMap(intent.getGranularity(), adderController);
-  adderController.updateIntent(granularityI, strength * 0.5);
+  adderController.updateIntent(granularityI, strength * 0.1);
 }
 
 

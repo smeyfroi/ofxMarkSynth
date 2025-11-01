@@ -9,7 +9,9 @@
 #include "IntentMapping.hpp"
 
 
+
 namespace ofxMarkSynth {
+
 
 
 SandLineMod::SandLineMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -68,6 +70,7 @@ void SandLineMod::update() {
   alphaMultiplierController.update();
   stdDevAlongController.update();
   stdDevPerpendicularController.update();
+  
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -127,17 +130,31 @@ void SandLineMod::receive(int sinkId, const glm::vec4& v) {
 
 void SandLineMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
-  densityController.updateIntent(ofxMarkSynth::linearMap(intent.getDensity() * intent.getGranularity(), 0.0f, 0.5f), strength);
-  pointRadiusController.updateIntent(ofxMarkSynth::linearMap(intent.getGranularity(), 0.5f, 16.0f), strength);
+  
+  // Density + Granularity → Density
+  float densityI = exponentialMap(intent.getEnergy() * intent.getGranularity(), densityController);
+  densityController.updateIntent(densityI, strength);
+
+  // Granularity → Point Radius
+  float radiusI = exponentialMap(intent.getGranularity(), 0.5f, 16.0f, 3.0f);
+  pointRadiusController.updateIntent(radiusI, strength);
+  
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
   color.setSaturation(intent.getEnergy() * (1.0f - intent.getStructure()));
   color.a = 1.0f;
   colorController.updateIntent(color, strength);
-  alphaMultiplierController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), 0.0f, 0.2f), strength);
-  stdDevAlongController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), 0.1f, 1.0f), strength);
-  stdDevPerpendicularController.updateIntent(ofxMarkSynth::linearMap(intent.getChaos(), 0.001f, 0.1f), strength);
+  
+  // Structure → Alpha Multiplier
+  alphaMultiplierController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), alphaMultiplierController), strength);
+  
+  // Inverse Structure → Std Dev Along
+  stdDevAlongController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), stdDevAlongController), strength);
+  
+  // Chaos → Std Dev Perpendicular
+  stdDevPerpendicularController.updateIntent(ofxMarkSynth::linearMap(intent.getChaos(), stdDevPerpendicularController), strength);
 }
+
 
 
 } // ofxMarkSynth

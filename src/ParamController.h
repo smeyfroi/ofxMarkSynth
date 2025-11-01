@@ -113,7 +113,7 @@ private:
   float agency;
   float intentStrength;
   
-  float baseManualBias { 0.1f }; // minimum human control share TODO: make this configurable
+  float baseManualBias { 0.1f }; // minimum human control share TODO: make this configurable as an ofParameter on the ofApp (`ofGetAppPtr()`)
   float manualBias { 0.0f }; // 1.0 after manual interaction, decays to baseManualBias
   float manualBiasDecaySec { 0.8f }; // time constant for manualBias decay
   

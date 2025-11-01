@@ -13,7 +13,9 @@
 #include "ParamController.h"
 
 
+
 namespace ofxMarkSynth {
+
 
 
 class CollageMod : public Mod {
@@ -42,9 +44,11 @@ protected:
   ParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> saturationParameter { "Saturation", 1.5, 0.0, 4.0 };
   ParamController<float> saturationController { saturationParameter };
+  ofParameter<float> outlineParameter { "Outline", 1.0f, 0.0f, 1.0f }; // float for lerp between 0.0 and 1.0
+  ParamController<float> outlineController { outlineParameter };
   ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
-  ofParameter<bool> outlineParameter { "Outline", true };
 };
+
 
 
 } // ofxMarkSynth

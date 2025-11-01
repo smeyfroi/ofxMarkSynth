@@ -15,6 +15,21 @@ namespace ofxMarkSynth {
 
 
 
+float FluidSimulationAdaptor::getDt() const {
+  return static_cast<float>(ownerModPtr->dtControllerPtr->value);
+}
+float FluidSimulationAdaptor::getVorticity() const {
+  return static_cast<float>(ownerModPtr->vorticityControllerPtr->value);
+}
+float FluidSimulationAdaptor::getValueAdvectDissipation() const {
+  return static_cast<float>(ownerModPtr->valueDissipationControllerPtr->value);
+}
+float FluidSimulationAdaptor::getVelocityAdvectDissipation() const {
+  return static_cast<float>(ownerModPtr->velocityDissipationControllerPtr->value);
+}
+
+
+
 FluidMod::FluidMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
 : Mod { synthPtr, name, std::move(config) }
 {}
@@ -26,11 +41,12 @@ float FluidMod::getAgency() const {
 void FluidMod::initParameters() {
   auto& group = fluidSimulation.getParameterGroup();
   parameters.add(group);
+  parameters.add(agencyFactorParameter);
   
-  dtController = std::make_unique<ParamController<float>>(group.get("dt").cast<float>());
-  vorticityController = std::make_unique<ParamController<float>>(group.get("Vorticity").cast<float>());
-  valueDissipationController = std::make_unique<ParamController<float>>(group.get("Value Dissipation").cast<float>());
-  velocityDissipationController = std::make_unique<ParamController<float>>(group.get("Velocity Dissipation").cast<float>());
+  dtControllerPtr = std::make_unique<ParamController<float>>(group.get("dt").cast<float>());
+  vorticityControllerPtr = std::make_unique<ParamController<float>>(group.get("Vorticity").cast<float>());
+  valueDissipationControllerPtr = std::make_unique<ParamController<float>>(group.get("Value Dissipation").cast<float>());
+  velocityDissipationControllerPtr = std::make_unique<ParamController<float>>(group.get("Velocity Dissipation").cast<float>());
 }
 
 void FluidMod::setup() {
@@ -55,20 +71,21 @@ void FluidMod::applyIntent(const Intent& intent, float strength) {
   if (!fluidSimulation.isSetup()) return;
   
   // Energy → dt
-  float dtI = exponentialMap(intent.getEnergy(), dtController->getManualMin(), dtController->getManualMax());
-  dtController->updateIntent(dtI, strength);
+  float dtI = exponentialMap(intent.getEnergy(), *dtControllerPtr);
+  dtControllerPtr->updateIntent(dtI, strength);
   
   // Chaos → Vorticity
-  float vorticityI = linearMap(intent.getChaos(), vorticityController->getManualMin(), vorticityController->getManualMax());
-  vorticityController->updateIntent(vorticityI, strength);
+  float vorticityI = linearMap(intent.getChaos(), *vorticityControllerPtr);
+  vorticityControllerPtr->updateIntent(vorticityI, strength);
   
-  // Density → Value Dissipation
-  float valueDissipationI = inverseMap(intent.getDensity(), valueDissipationController->getManualMin(), valueDissipationController->getManualMax());
-  valueDissipationController->updateIntent(valueDissipationI, strength);
+  // Inverse Density → Value Dissipation
+  float valueDissipationI = inverseMap(intent.getDensity(), *valueDissipationControllerPtr);
+  valueDissipationControllerPtr->updateIntent(valueDissipationI, strength);
   
-  // Granularity → Velocity Dissipation
-  float velocityDissipationI = inverseMap(intent.getGranularity(), velocityDissipationController->getManualMin(), velocityDissipationController->getManualMax());
-  velocityDissipationController->updateIntent(velocityDissipationI, strength);
+  // Inverse Granularity → Velocity Dissipation
+  float velocityDissipationI = inverseExponentialMap(intent.getGranularity(),
+                                                     *velocityDissipationControllerPtr);
+  velocityDissipationControllerPtr->updateIntent(velocityDissipationI, strength);
 }
 
 

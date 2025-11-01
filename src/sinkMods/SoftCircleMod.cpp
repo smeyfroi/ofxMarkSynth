@@ -6,9 +6,12 @@
 //
 
 #include "SoftCircleMod.hpp"
+#include "IntentMapping.hpp"
+
 
 
 namespace ofxMarkSynth {
+
 
 
 SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
@@ -119,6 +122,8 @@ void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
+  if (strength < 0.01) return;
+  
   // Energy → Radius
   float radiusI = exponentialMap(intent.getEnergy(), radiusController);
   radiusController.updateIntent(radiusI, strength);
@@ -132,6 +137,7 @@ void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
   float alphaI = linearMap(intent.getDensity(), alphaMultiplierParameter);
   alphaMultiplierController.updateIntent(alphaI, strength);
 }
+
 
 
 } // ofxMarkSynth

@@ -36,6 +36,7 @@ void RandomFloatSourceMod::update() {
   floatsPerUpdateController.update();
   minController.update();
   maxController.update();
+  
   floatCount += floatsPerUpdateController.value;
   int floatsToCreate = std::floor(floatCount);
   floatCount -= floatsToCreate;
@@ -51,7 +52,12 @@ const float RandomFloatSourceMod::createRandomFloat() const {
 }
 
 void RandomFloatSourceMod::applyIntent(const Intent& intent, float strength) {
-  floatsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), 0.5f, 10.0f, 2.0f), strength);
+  if (strength < 0.01) return;
+
+  // Density -> floatsPerUpdate
+  floatsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), floatsPerUpdateController, 0.5f), strength);
+  
+  // TODO: min and max
 }
 
 

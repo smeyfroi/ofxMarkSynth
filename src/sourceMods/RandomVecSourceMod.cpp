@@ -9,7 +9,9 @@
 #include "IntentMapping.hpp"
 
 
+
 namespace ofxMarkSynth {
+
 
 
 RandomVecSourceMod::RandomVecSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, short vecDimensions_)
@@ -29,6 +31,7 @@ void RandomVecSourceMod::initParameters() {
 
 void RandomVecSourceMod::update() {
   vecsPerUpdateController.update();
+  
   vecCount += vecsPerUpdateController.value;
   int vecsToCreate = std::floor(vecCount);
   vecCount -= vecsToCreate;
@@ -65,8 +68,13 @@ const glm::vec4 RandomVecSourceMod::createRandomVec4() const {
 }
 
 void RandomVecSourceMod::applyIntent(const Intent& intent, float strength) {
-  vecsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), 0.5f, 10.0f, 2.0f), strength);
+  if (strength < 0.01) return;
+
+  // TODO: finish this
+  // Density -> vectors per update
+//  vecsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), vecsPerUpdateController, 2.0f), strength);
 }
+
 
 
 } // ofxMarkSynth

@@ -13,12 +13,12 @@
 #include "ParamController.h"
 
 
+
 namespace ofxMarkSynth {
 
 
+
 class SandLineMod : public Mod {
-public:
-  void applyIntent(const Intent& intent, float strength) override;
 
 public:
   SandLineMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
@@ -26,6 +26,7 @@ public:
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
   void receive(int sinkId, const glm::vec4& v) override;
+  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_POINT_RADIUS = 10;
@@ -52,6 +53,7 @@ private:
 
   std::vector<glm::vec2> newPoints;
 };
+
 
 
 } // ofxMarkSynth

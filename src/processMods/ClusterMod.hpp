@@ -17,7 +17,23 @@ namespace ofxMarkSynth {
 
 
 
+class ClusterMod;
+
+
+
+// Allows us to use ParamController
+class PointClustersAdaptor : public PointClusters {
+public:
+  PointClustersAdaptor(ClusterMod* ownerModPtr) : ownerModPtr{ ownerModPtr } {};
+  int getNumClusters() const override;
+private:
+  ClusterMod* ownerModPtr;
+};
+
+
+
 class ClusterMod : public Mod {
+  friend class PointClustersAdaptor;
 
 public:
   ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
@@ -38,7 +54,7 @@ private:
   std::unique_ptr<ParamController<float>> clustersControllerPtr;
   ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
-  PointClusters pointClusters;
+  PointClustersAdaptor pointClusters { this };
 
   std::vector<glm::vec2> newVecs;
 };
