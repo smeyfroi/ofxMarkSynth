@@ -102,7 +102,7 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
 //  auto updateBlocks = std::max(1, static_cast<int>(particleBlocks * strength * 0.02f));
 //  particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
 //    return color;
-  });
+//  });
 }
 
 
