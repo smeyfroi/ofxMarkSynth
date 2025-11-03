@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "ofxGui.h"
 #include "Mod.hpp"
 #ifdef TARGET_MAC
 #include "ofxFFmpegRecorder.h"
@@ -17,6 +16,7 @@
 #include "SaveToFileThread.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"
+#include "ofxImGui.h"
 
 
 
@@ -27,7 +27,6 @@ namespace ofxMarkSynth {
 const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
 
 using DrawingLayerPtrMap = std::map<std::string, DrawingLayerPtr>;
-
 using ModPtrMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 
 
@@ -133,8 +132,9 @@ private:
   ofxLabel saveStatus;
   ofxLabel pauseStatus;
   
+  ofxImGui::Gui imgui;
   bool guiVisible { true };
-  ofxPanel gui;
+
   bool plusKeyPressed { false };
   bool equalsKeyPressed { false };
   

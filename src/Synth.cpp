@@ -8,7 +8,7 @@
 #include "Synth.hpp"
 #include "ofxTimeMeasurements.h"
 #include "ofConstants.h"
-#include "GuiUtil.hpp"
+#include "ImHelpers.h"
 
 
 
@@ -69,9 +69,14 @@ compositeSize { compositeSize_ }
     { "backgroundColor", SINK_BACKGROUND_COLOR },
     { "resetRandomness", SINK_RESET_RANDOMNESS }
   };
+  
+  imgui.setup(nullptr,      // default theme
+              true,         // auto draw
+              ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable,
+              true,         // restore GUI state
+              true);        // use imgui cursor
 }
 
-// FIXME: this has to be called after all Mods are added to build the GUI from the child GUIs
 void Synth::configureGui() {
   parameters = getParameterGroup();
 
@@ -81,14 +86,14 @@ void Synth::configureGui() {
   for (auto& p : intentActivationParameters) intentParameters.add(*p);
   parameters.add(intentParameters);
 
-  gui.setup(parameters);
-  minimizeAllGuiGroupsRecursive(gui);
-
-  gui.add(activeIntentInfoLabel1.setup("I1", ""));
-  gui.add(activeIntentInfoLabel2.setup("I2", ""));
-  gui.add(pauseStatus.setup("Paused", ""));
-  gui.add(recorderStatus.setup("Recording", ""));
-  gui.add(saveStatus.setup("# Image Saves", ""));
+//  gui.setup(parameters);
+//  minimizeAllGuiGroupsRecursive(gui);
+//
+//  gui.add(activeIntentInfoLabel1.setup("I1", ""));
+//  gui.add(activeIntentInfoLabel2.setup("I2", ""));
+//  gui.add(pauseStatus.setup("Paused", ""));
+//  gui.add(recorderStatus.setup("Recording", ""));
+//  gui.add(saveStatus.setup("# Image Saves", ""));
 }
 
 void Synth::shutdown() {
@@ -98,6 +103,8 @@ void Synth::shutdown() {
     const auto& [name, modPtr] = pair;
     modPtr->shutdown();
   });
+  
+  imgui.exit();
   
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {
@@ -404,6 +411,8 @@ void Synth::draw() {
   }
 #endif
 
+  drawGui();
+  
   TSGL_STOP("Synth::draw");
 }
 
@@ -413,12 +422,36 @@ void Synth::audioCallback(float* buffer, int bufferSize, int nChannels) {
 }
 
 void Synth::drawGui() {
-  if (guiVisible) gui.draw();
+  if (!guiVisible) return;
+
+  auto mainSettings = ofxImGui::Settings();
+  imgui.begin();
+  {
+    if (ofxImGui::BeginWindow(name, mainSettings)) {
+      
+      ofxImGui::AddGroup(parameters, mainSettings);
+      
+      if (ofxImGui::BeginTree("Status", mainSettings)) {
+        ImGui::Text("Paused: %s", paused ? "Yes" : "No");
+        ImGui::Text("Recording: %s",
+#ifdef TARGET_MAC
+                    recorder.isRecording() ? "Yes" : "No"
+#else
+                    "N/A"
+#endif
+                    );
+        ImGui::Text("# Image Saves: %d", SaveToFileThread::activeThreadCount);
+        ofxImGui::EndTree(mainSettings);
+      }
+    }
+    ofxImGui::EndWindow(mainSettings);
+  }
+  imgui.end();
 }
 
 void Synth::setGuiSize(glm::vec2 size) {
-  gui.setPosition(0.0, 0.0);
-  gui.setSize(size.x, size.y);
+//  gui.setPosition(0.0, 0.0);
+//  gui.setSize(size.x, size.y);
 }
 
 void Synth::toggleRecording() {
@@ -470,11 +503,11 @@ bool Synth::keyPressed(int key) {
   }
   if (key >= '0' && key <= '9') {
     if (plusKeyPressed) {
-      gui.saveToFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
+//      gui.saveToFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
       plusKeyPressed = false;
       return true;
     } else if (equalsKeyPressed) {
-      gui.loadFromFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
+//      gui.loadFromFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
       equalsKeyPressed = false;
       return true;
     }

@@ -29,7 +29,7 @@
 - Write detailed code comments but do not simply repeat what the code says. **All comments in English**, even if the user communicates in Spanish. Use `Doxygen` (@brief) notation but only for more important funcions that helps us know how the method works.
 
 ### 3.1 Current project particularities
-- For the ImGui we will use the ofxAddon https://github.com/jvcleave/ofxImGui/tree/develop (develop branch)
+- For the ImGui we will use the ofxAddon https://github.com/Daandelange/ofxImGui (develop branch)
 
 ### Includes
 
