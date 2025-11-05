@@ -29,9 +29,14 @@ public:
   
   
 private:
+  void drawDockspace();
+  void buildInitialDockLayout(ImGuiID dockspaceId);
+  void drawLog();
+  void drawStatus();
+
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;
-
+  bool dockBuilt { false };
 };
 
 
