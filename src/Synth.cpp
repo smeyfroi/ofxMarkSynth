@@ -8,7 +8,7 @@
 #include "Synth.hpp"
 #include "ofxTimeMeasurements.h"
 #include "ofConstants.h"
-#include "ImHelpers.h"
+#include "Gui.hpp"
 
 
 
@@ -69,31 +69,18 @@ compositeSize { compositeSize_ }
     { "backgroundColor", SINK_BACKGROUND_COLOR },
     { "resetRandomness", SINK_RESET_RANDOMNESS }
   };
-  
-  imgui.setup(nullptr,      // default theme
-              true,         // auto draw
-              ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable,
-              true,         // restore GUI state
-              true);        // use imgui cursor
 }
 
-void Synth::configureGui() {
+void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   parameters = getParameterGroup();
-
+  
   intentParameters.setName("Intent");
   intentParameters.add(intentStrengthParameter);
   initIntentPresets();
   for (auto& p : intentActivationParameters) intentParameters.add(*p);
   parameters.add(intentParameters);
-
-//  gui.setup(parameters);
-//  minimizeAllGuiGroupsRecursive(gui);
-//
-//  gui.add(activeIntentInfoLabel1.setup("I1", ""));
-//  gui.add(activeIntentInfoLabel2.setup("I2", ""));
-//  gui.add(pauseStatus.setup("Paused", ""));
-//  gui.add(recorderStatus.setup("Recording", ""));
-//  gui.add(saveStatus.setup("# Image Saves", ""));
+  
+  gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
 }
 
 void Synth::shutdown() {
@@ -104,7 +91,7 @@ void Synth::shutdown() {
     modPtr->shutdown();
   });
   
-  imgui.exit();
+  gui.exit();
   
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {
@@ -390,6 +377,7 @@ void Synth::drawDebugViews() {
   ofPopMatrix();
 }
 
+// Does not draw the GUI: see drawGui()
 void Synth::draw() {
   TSGL_START("Synth::draw");
   ofBlendMode(OF_BLENDMODE_DISABLED);
@@ -409,10 +397,7 @@ void Synth::draw() {
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
   }
-#endif
-
-  drawGui();
-  
+#endif  
   TSGL_STOP("Synth::draw");
 }
 
@@ -423,35 +408,7 @@ void Synth::audioCallback(float* buffer, int bufferSize, int nChannels) {
 
 void Synth::drawGui() {
   if (!guiVisible) return;
-
-  auto mainSettings = ofxImGui::Settings();
-  imgui.begin();
-  {
-    if (ofxImGui::BeginWindow(name, mainSettings)) {
-      
-      ofxImGui::AddGroup(parameters, mainSettings);
-      
-      if (ofxImGui::BeginTree("Status", mainSettings)) {
-        ImGui::Text("Paused: %s", paused ? "Yes" : "No");
-        ImGui::Text("Recording: %s",
-#ifdef TARGET_MAC
-                    recorder.isRecording() ? "Yes" : "No"
-#else
-                    "N/A"
-#endif
-                    );
-        ImGui::Text("# Image Saves: %d", SaveToFileThread::activeThreadCount);
-        ofxImGui::EndTree(mainSettings);
-      }
-    }
-    ofxImGui::EndWindow(mainSettings);
-  }
-  imgui.end();
-}
-
-void Synth::setGuiSize(glm::vec2 size) {
-//  gui.setPosition(0.0, 0.0);
-//  gui.setSize(size.x, size.y);
+  gui.draw();
 }
 
 void Synth::toggleRecording() {

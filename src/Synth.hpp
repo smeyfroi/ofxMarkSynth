@@ -16,7 +16,7 @@
 #include "SaveToFileThread.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"
-#include "ofxImGui.h"
+#include "Gui.hpp"
 
 
 
@@ -35,7 +35,7 @@ class Synth : public Mod {
   
 public:
   Synth(const std::string& name, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_);
-  void configureGui();
+  void drawGui();
   void shutdown() override;
   
   template <typename ModT>
@@ -45,7 +45,8 @@ public:
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   void addConnections(const std::string& dsl);
-  
+  void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
+
   float getAgency() const override { return agencyParameter; }
 
   void receive(int sinkId, const glm::vec4& v) override;
@@ -56,8 +57,6 @@ public:
 
   void audioCallback(float* buffer, int bufferSize, int nChannels);
 
-  void drawGui();
-  void setGuiSize(glm::vec2 size);
   void toggleRecording();
   void saveImage();
   bool keyPressed(int key) override;
@@ -67,12 +66,15 @@ public:
   static constexpr int SINK_BACKGROUND_COLOR = 100;
   static constexpr int SINK_RESET_RANDOMNESS = 200;
   
+  friend class Gui;
+  
 protected:
   void initParameters() override;
 
 private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
+  Gui gui;
 
   bool paused;
   
@@ -132,7 +134,6 @@ private:
   ofxLabel saveStatus;
   ofxLabel pauseStatus;
   
-  ofxImGui::Gui imgui;
   bool guiVisible { true };
 
   bool plusKeyPressed { false };
