@@ -8,6 +8,7 @@
 #pragma once
 
 #include "ofxImGui.h"
+#include "ImHelpers.h"
 
 
 
@@ -33,6 +34,7 @@ private:
   void buildInitialDockLayout(ImGuiID dockspaceId);
   void drawLog();
   void drawStatus();
+  void drawModTree(ofxImGui::Settings settings);
 
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;

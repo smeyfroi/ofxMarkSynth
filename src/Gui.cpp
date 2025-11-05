@@ -7,7 +7,6 @@
 
 #include "Gui.hpp"
 #include "Synth.hpp"
-#include "ImHelpers.h"
 #include "imgui_internal.h" // for DockBuilder
 
 
@@ -47,6 +46,7 @@ void Gui::draw() {
   drawDockspace();
   drawLog();
   drawStatus();
+  drawModTree(mainSettings);
   
   imgui.end();
   imgui.draw();
@@ -91,9 +91,9 @@ void Gui::buildInitialDockLayout(ImGuiID dockspaceId) {
   ImGuiID dockMain = dockspaceId;
   ImGuiID dockLeft, dockRight, dockBottom, dockCenter;
   
-  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left,  0.20f, &dockLeft, &dockMain);
-  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down,  0.25f, &dockBottom, &dockMain);
-  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.22f, &dockRight, &dockCenter);
+  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left,  0.25f, &dockLeft, &dockMain);
+  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down,  0.15f, &dockBottom, &dockMain);
+  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.20f, &dockRight, &dockCenter);
   
   ImGui::DockBuilderDockWindow("Mods", dockLeft);
   ImGui::DockBuilderDockWindow("Status", dockRight);
@@ -118,6 +118,7 @@ auto RED_COLOR = ImVec4(0.9,0.2,0.2,1);
 auto GREEN_COLOR = ImVec4(0.2,0.6,0.3,1);
 auto YELLOW_COLOR = ImVec4(0.9,0.9,0.2,1);
 auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
+
 void Gui::drawStatus() {
   ImGui::Begin("Status");
   
@@ -145,13 +146,14 @@ void Gui::drawStatus() {
   
   ImGui::End();
 }
-  
-//    if (ofxImGui::BeginWindow(synthPtr->name, mainSettings)) {
-//      ofxImGui::AddGroup(synthPtr->parameters, mainSettings);
-//      
-//    }
-//    ofxImGui::EndWindow(mainSettings);
 
-
-
+void Gui::drawModTree(ofxImGui::Settings settings) {
+  ImGui::Begin("Mods");
+  settings.windowBlock = true;
+  ofxImGui::AddGroup(synthPtr->parameters, settings);
+  ImGui::End();
 }
+
+
+
+} // namespace ofxMarkSynth
