@@ -60,7 +60,6 @@ public:
   void toggleRecording();
   void saveImage();
   bool keyPressed(int key) override;
-  ofParameterGroup& getFboParameterGroup();
   
   static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SINK_BACKGROUND_COLOR = 100;
@@ -75,6 +74,9 @@ private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
   Gui gui;
+  void initDisplayParameterGroup();
+  void initFboParameterGroup();
+  void initIntentParameterGroup();
 
   bool paused;
   
@@ -118,18 +120,18 @@ private:
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
-  ofParameter<ofFloatColor> backgroundColorParameter { "Background Color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> backgroundColorParameter { "Back Color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
-  ofParameter<float> backgroundMultiplierParameter { "backgroundMultiplier", 0.1, 0.0, 1.0 };
-  ofParameter<int> toneMapTypeParameter { "tone map type", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
-  ofParameter<float> exposureParameter { "exposure", 1.0, 0.0, 4.0 };
-  ofParameter<float> gammaParameter { "gamma", 2.2, 0.1, 5.0 };
-  ofParameter<float> whitePointParameter { "white point", 11.2, 1.0, 20.0 }; // for Reinhard Extended
-  ofParameter<float> contrastParameter { "contrast", 1.03, 0.9, 1.1 };
-  ofParameter<float> saturationParameter { "saturation", 1.0, 0.0, 2.0 };
-  ofParameter<float> brightnessParameter { "brightness", 0.0, -0.1, 0.1 };
-  ofParameter<float> hueShiftParameter { "hueShift", 0.0, -1.0, 1.0 };
-  ofParameter<float> sideExposureParameter { "sideExposure", 0.6, 0.0, 4.0 };
+  ofParameter<float> backgroundMultiplierParameter { "Back Mult", 0.1, 0.0, 1.0 };
+  ofParameter<int> toneMapTypeParameter { "Tone map", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
+  ofParameter<float> exposureParameter { "Exposure", 1.0, 0.0, 4.0 };
+  ofParameter<float> gammaParameter { "Gamma", 2.2, 0.1, 5.0 };
+  ofParameter<float> whitePointParameter { "White Pt", 11.2, 1.0, 20.0 }; // for Reinhard Extended
+  ofParameter<float> contrastParameter { "Contrast", 1.03, 0.9, 1.1 };
+  ofParameter<float> saturationParameter { "Saturation", 1.0, 0.0, 2.0 };
+  ofParameter<float> brightnessParameter { "Brightness", 0.0, -0.1, 0.1 };
+  ofParameter<float> hueShiftParameter { "Hue Shift", 0.0, -1.0, 1.0 };
+  ofParameter<float> sideExposureParameter { "Side Exp", 0.6, 0.0, 4.0 };
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
   ofxLabel pauseStatus;

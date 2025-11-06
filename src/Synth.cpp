@@ -72,13 +72,11 @@ compositeSize { compositeSize_ }
 }
 
 void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
-  parameters = getParameterGroup();
+  initDisplayParameterGroup();
+  initFboParameterGroup();
+  initIntentParameterGroup();
   
-  intentParameters.setName("Intent");
-  intentParameters.add(intentStrengthParameter);
-  initIntentPresets();
-  for (auto& p : intentActivationParameters) intentParameters.add(*p);
-  parameters.add(intentParameters);
+  parameters = getParameterGroup();
   
   gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
 }
@@ -491,22 +489,25 @@ bool Synth::keyPressed(int key) {
   return handled;
 }
 
-ofParameterGroup& Synth::getFboParameterGroup() {
-  if (fboParameters.size() == 0) {
-    fboParameters.setName("Layers");
-    std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
-      const auto& [name, fcptr] = pair;
-      if (!fcptr->isDrawn) return;
-      auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, 1.0, 0.0, 1.0);
-      fboParamPtrs.push_back(fboParam);
-      fboParameters.add(*fboParam);
-    });
-  }
-  return fboParameters;
+void Synth::initFboParameterGroup() {
+  fboParameters.setName("Layers");
+  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
+    const auto& [name, fcptr] = pair;
+    if (!fcptr->isDrawn) return;
+    auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, 1.0, 0.0, 1.0);
+    fboParamPtrs.push_back(fboParam);
+    fboParameters.add(*fboParam);
+  });
 }
 
-void Synth::initParameters() {
-  parameters.add(agencyParameter);
+void Synth::initIntentParameterGroup() {
+  intentParameters.setName("Intent");
+  intentParameters.add(intentStrengthParameter);
+  initIntentPresets();
+  for (auto& p : intentActivationParameters) intentParameters.add(*p);
+}
+
+void Synth::initDisplayParameterGroup() {
   displayParameters.setName("Display");
   displayParameters.add(backgroundColorParameter);
   displayParameters.add(backgroundMultiplierParameter);
@@ -519,8 +520,9 @@ void Synth::initParameters() {
   displayParameters.add(brightnessParameter);
   displayParameters.add(hueShiftParameter);
   displayParameters.add(sideExposureParameter);
-  parameters.add(displayParameters);
-  parameters.add(getFboParameterGroup());
+}
+
+void Synth::initParameters() {
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
     const auto& [name, modPtr] = pair;
     ofParameterGroup& pg = modPtr->getParameterGroup();

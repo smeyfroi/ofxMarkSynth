@@ -8,6 +8,7 @@
 #include "Gui.hpp"
 #include "Synth.hpp"
 #include "imgui_internal.h" // for DockBuilder
+#include "ofxTimeMeasurements.h"
 
 
 
@@ -40,16 +41,22 @@ void Gui::exit() {
 }
 
 void Gui::draw() {
+  TS_START("Gui::draw");
+  TSGL_START("Gui::draw");
+  
   auto mainSettings = ofxImGui::Settings();
   imgui.begin();
   
   drawDockspace();
   drawLog();
-  drawStatus();
+  drawSynthControls();
   drawModTree(mainSettings);
   
   imgui.end();
   imgui.draw();
+  
+  TSGL_STOP("Gui::draw");
+  TS_STOP("Gui::draw");
 }
 
 void Gui::drawDockspace() {
@@ -93,10 +100,10 @@ void Gui::buildInitialDockLayout(ImGuiID dockspaceId) {
   
   ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left,  0.25f, &dockLeft, &dockMain);
   ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down,  0.15f, &dockBottom, &dockMain);
-  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.20f, &dockRight, &dockCenter);
+  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockCenter);
   
-  ImGui::DockBuilderDockWindow("Mods", dockLeft);
-  ImGui::DockBuilderDockWindow("Status", dockRight);
+  ImGui::DockBuilderDockWindow(synthPtr->parameters.getName().c_str(), dockLeft);
+  ImGui::DockBuilderDockWindow("Synth", dockRight);
   ImGui::DockBuilderDockWindow("Log", dockBottom);
   ImGui::DockBuilderDockWindow("Viewport", dockCenter);
   
@@ -119,9 +126,127 @@ auto GREEN_COLOR = ImVec4(0.2,0.6,0.3,1);
 auto YELLOW_COLOR = ImVec4(0.9,0.9,0.2,1);
 auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
 
-void Gui::drawStatus() {
-  ImGui::Begin("Status");
+void Gui::drawSynthControls() {
+  ImGui::Begin("Synth");
   
+  addParameterFloat(synthPtr->agencyParameter);
+  
+  ImGui::SeparatorText("Intents");
+  drawIntentControls();
+  
+  ImGui::SeparatorText("Layers");
+  drawLayerControls();
+  
+  ImGui::SeparatorText("Display");
+  drawDisplayControls();
+  
+  ImGui::SeparatorText("Status");
+  drawStatus();
+  
+  ImGui::End();
+}
+
+void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
+  const ImVec2 sliderSize(24, 140);
+  const float colW = sliderSize.x + 0.0f;   // column width (slider + padding)
+  const float colH = sliderSize.y + 28.0f;   // add room for label below
+
+  if (ImGui::BeginTable(paramGroup.getName().c_str(), paramGroup.size(),
+                        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
+    
+    for (int i = 0; i < paramGroup.size(); ++i) {
+      ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, colW);
+    }
+    ImGui::TableNextRow();
+    
+    for (int i = 0; i < paramGroup.size(); ++i) {
+      ImGui::TableSetColumnIndex(i);
+      ImGui::PushID(i);
+      
+      ImGui::BeginGroup();
+      // center slider within the fixed column
+      float xPad = (colW - sliderSize.x) * 0.5f;
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() + xPad);
+      
+      // copy current value to a local so VSliderFloat can edit it by pointer
+      float v = paramGroup[i].cast<float>().get();
+      if (ImGui::VSliderFloat("##v", sliderSize, &v, 0.0, 1.0, "%.1f")) {
+        paramGroup[i].cast<float>().set(v);
+      }
+      
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad);
+      ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + colW);
+      ImGui::TextWrapped("%s", paramGroup[i].getName().substr(0, 3).c_str());
+      ImGui::PopTextWrapPos();
+      ImGui::EndGroup();
+      
+      ImGui::PopID();
+    }
+    
+    ImGui::EndTable();
+  }
+  ImGui::PopStyleVar();
+}
+
+void Gui::addParameterFloat(ofParameter<float>& parameter) {
+  float value = parameter.get();
+  ImGui::Text("%s", parameter.getName().c_str());
+  ImGui::SameLine();
+  if (ImGui::SliderFloat(("##" + parameter.getName()).c_str(), &value, parameter.getMin(), parameter.getMax(), "%.2f")) {
+    parameter.set(value);
+  }
+}
+
+void Gui::drawIntentControls() {
+  drawVerticalSliders(synthPtr->intentParameters);
+}
+
+void Gui::drawLayerControls() {
+  drawVerticalSliders(synthPtr->fboParameters);
+}
+
+void Gui::drawDisplayControls() {
+  ofxImGui::Settings settings = ofxImGui::Settings();
+  
+  auto& bgColorParam = synthPtr->backgroundColorParameter;
+  ofFloatColor bgColor = bgColorParam.get();
+  float col[4] = { bgColor.r, bgColor.g, bgColor.b, bgColor.a };
+  ImGui::Text("%s", bgColorParam.getName().c_str());
+  if (ImGui::ColorEdit4("##bgColor", col)) {
+    bgColorParam.set(ofFloatColor(col[0], col[1], col[2], col[3]));
+  }
+  
+  addParameterFloat(synthPtr->backgroundMultiplierParameter);
+
+  const char* tonemapOptions[] = {
+    "Linear (clamp)",
+    "Reinhard",
+    "Reinhard Extended",
+    "ACES",
+    "Filmic",
+    "Exposure"
+  };
+  int currentTonemap = synthPtr->toneMapTypeParameter.get();
+  ImGui::Text("%s", synthPtr->toneMapTypeParameter.getName().c_str());
+  ImGui::SameLine();
+  ImGui::PushItemWidth(150.0f);
+  if (ImGui::Combo("##tonemap", &currentTonemap, tonemapOptions, IM_ARRAYSIZE(tonemapOptions))) {
+    synthPtr->displayParameters[2].cast<int>().set(currentTonemap);
+  }
+  ImGui::PopItemWidth();
+  
+  addParameterFloat(synthPtr->exposureParameter);
+  addParameterFloat(synthPtr->gammaParameter);
+  addParameterFloat(synthPtr->whitePointParameter);
+  addParameterFloat(synthPtr->contrastParameter);
+  addParameterFloat(synthPtr->saturationParameter);
+  addParameterFloat(synthPtr->brightnessParameter);
+  addParameterFloat(synthPtr->hueShiftParameter);
+  addParameterFloat(synthPtr->sideExposureParameter);
+}
+
+void Gui::drawStatus() {
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
   
   if (synthPtr->paused) {
@@ -143,15 +268,12 @@ void Gui::drawStatus() {
   } else {
     ImGui::TextColored(YELLOW_COLOR, ">> %d Image Saves", SaveToFileThread::activeThreadCount);
   }
-  
-  ImGui::End();
 }
 
 void Gui::drawModTree(ofxImGui::Settings settings) {
-  ImGui::Begin("Mods");
-  settings.windowBlock = true;
-  ofxImGui::AddGroup(synthPtr->parameters, settings);
-  ImGui::End();
+  TS_START("Gui::drawModTree");
+  ofxImGui::AddGroup(synthPtr->parameters, settings); // name of the param group needs to match the dock window
+  TS_STOP("Gui::drawModTree");
 }
 
 

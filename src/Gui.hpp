@@ -33,8 +33,16 @@ private:
   void drawDockspace();
   void buildInitialDockLayout(ImGuiID dockspaceId);
   void drawLog();
-  void drawStatus();
+  void drawSynthControls();
   void drawModTree(ofxImGui::Settings settings);
+  
+  void drawVerticalSliders(ofParameterGroup& paramGroup);
+  void addParameterFloat(ofParameter<float>& parameter);
+  
+  void drawIntentControls();
+  void drawLayerControls();
+  void drawDisplayControls();
+  void drawStatus();
 
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;
