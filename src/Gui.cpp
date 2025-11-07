@@ -159,6 +159,8 @@ void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
     ImGui::TableNextRow();
     
     for (int i = 0; i < paramGroup.size(); ++i) {
+      const auto& name = paramGroup[i].getName();
+      
       ImGui::TableSetColumnIndex(i);
       ImGui::PushID(i);
       
@@ -172,10 +174,11 @@ void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
       if (ImGui::VSliderFloat("##v", sliderSize, &v, 0.0, 1.0, "%.1f")) {
         paramGroup[i].cast<float>().set(v);
       }
+      ImGui::SetItemTooltip("%s", name.c_str());
       
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad);
       ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + colW);
-      ImGui::TextWrapped("%s", paramGroup[i].getName().substr(0, 3).c_str());
+      ImGui::TextWrapped("%s", name.substr(0, 3).c_str());
       ImGui::PopTextWrapPos();
       ImGui::EndGroup();
       
@@ -187,13 +190,17 @@ void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
   ImGui::PopStyleVar();
 }
 
-void Gui::addParameterFloat(ofParameter<float>& parameter) {
+void Gui::addParameter(ofParameter<float>& parameter) {
+  const auto& name = parameter.getName();
   float value = parameter.get();
-  ImGui::Text("%s", parameter.getName().c_str());
-  ImGui::SameLine();
-  if (ImGui::SliderFloat(("##" + parameter.getName()).c_str(), &value, parameter.getMin(), parameter.getMax(), "%.2f")) {
+  ImGui::PushItemWidth(150.0f);
+  if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), "%.2f")) {
     parameter.set(value);
   }
+  ImGui::SetItemTooltip("%s", name.c_str());
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  ImGui::Text("%s", parameter.getName().c_str());
 }
 
 void Gui::drawIntentControls() {
@@ -216,22 +223,22 @@ void Gui::drawDisplayControls() {
     "Exposure"
   };
   int currentTonemap = synthPtr->toneMapTypeParameter.get();
-  ImGui::Text("%s", synthPtr->toneMapTypeParameter.getName().c_str());
-  ImGui::SameLine();
   ImGui::PushItemWidth(150.0f);
   if (ImGui::Combo("##tonemap", &currentTonemap, tonemapOptions, IM_ARRAYSIZE(tonemapOptions))) {
     synthPtr->displayParameters[2].cast<int>().set(currentTonemap);
   }
   ImGui::PopItemWidth();
-  
-  addParameterFloat(synthPtr->exposureParameter);
-  addParameterFloat(synthPtr->gammaParameter);
-  addParameterFloat(synthPtr->whitePointParameter);
-  addParameterFloat(synthPtr->contrastParameter);
-  addParameterFloat(synthPtr->saturationParameter);
-  addParameterFloat(synthPtr->brightnessParameter);
-  addParameterFloat(synthPtr->hueShiftParameter);
-  addParameterFloat(synthPtr->sideExposureParameter);
+  ImGui::SameLine();
+  ImGui::Text("%s", synthPtr->toneMapTypeParameter.getName().c_str());
+
+  addParameter(synthPtr->exposureParameter);
+  addParameter(synthPtr->gammaParameter);
+  addParameter(synthPtr->whitePointParameter);
+  addParameter(synthPtr->contrastParameter);
+  addParameter(synthPtr->saturationParameter);
+  addParameter(synthPtr->brightnessParameter);
+  addParameter(synthPtr->hueShiftParameter);
+  addParameter(synthPtr->sideExposureParameter);
 }
 
 void Gui::drawStatus() {

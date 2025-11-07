@@ -37,7 +37,7 @@ private:
   void drawModTree(ofxImGui::Settings settings);
   
   void drawVerticalSliders(ofParameterGroup& paramGroup);
-  void addParameterFloat(ofParameter<float>& parameter);
+  void addParameter(ofParameter<float>& parameter);
   
   void drawIntentControls();
   void drawLayerControls();
