@@ -21,3 +21,10 @@ Also, if you have special instructions which people should see when submitting a
 This template reflects the help text found at http://ofxaddons.com/howto, and will be updated from time to time by the OF developers.
 
 Thanks for listening, and happy coding!
+
+
+<img width="1956" height="1195" alt="Screenshot 2025-08-26 at 15 18 25" src="https://github.com/user-attachments/assets/cebfb0d8-2c15-4888-b291-838900f59cdf" />
+
+<img width="1954" height="1196" alt="Screenshot 2025-09-20 at 09 31 59" src="https://github.com/user-attachments/assets/00e812d4-6144-4849-bd7e-e2a2b09937eb" />
+
+<img width="1958" height="1196" alt="Screenshot 2025-10-10 at 15 11 01" src="https://github.com/user-attachments/assets/df926036-70f4-439f-8d47-7909d05c190e" />
