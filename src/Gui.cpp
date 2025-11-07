@@ -138,6 +138,9 @@ void Gui::drawSynthControls() {
   ImGui::SeparatorText("Display");
   drawDisplayControls();
   
+  ImGui::SeparatorText("State");
+  drawInternalState();
+  
   ImGui::SeparatorText("Status");
   drawStatus();
   
@@ -240,6 +243,84 @@ void Gui::drawDisplayControls() {
   addParameter(synthPtr->hueShiftParameter);
   addParameter(synthPtr->sideExposureParameter);
 }
+
+constexpr float thumbW = 128.0f;
+constexpr ImVec2 thumbSize(thumbW, thumbW);
+
+void Gui::drawInternalState() {
+  // Calculate required height: text + image + padding
+  const float contentHeight = ImGui::GetTextLineHeightWithSpacing() + thumbW + ImGui::GetStyle().ItemSpacing.y + 20.0f;
+  
+  ImGui::BeginChild("tex_scroll", ImVec2(0, contentHeight), true, ImGuiWindowFlags_HorizontalScrollbar);
+
+  if (ImGui::BeginTable("##textures", synthPtr->liveTexturePtrFns.size(),
+                        ImGuiTableFlags_SizingFixedFit |
+                        ImGuiTableFlags_ScrollX |
+                        ImGuiTableFlags_NoHostExtendX)) {
+    
+    // Set up columns with fixed width
+    for (size_t i = 0; i < synthPtr->liveTexturePtrFns.size(); ++i) {
+      ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, thumbW + 8.0f);
+    }
+    
+    ImGui::TableNextRow();
+
+    int colIndex = 0;
+    for (const auto& tex : synthPtr->liveTexturePtrFns) {
+      ImGui::TableSetColumnIndex(colIndex++);
+      
+      ImGui::Text("%s", tex.first.c_str());
+      const ofTexture* texturePtr = tex.second();
+      if (!texturePtr || !texturePtr->isAllocated()) {
+        ImGui::Dummy(ImVec2(thumbW, thumbW));
+        continue;
+      }
+
+      const auto& textureData = texturePtr->getTextureData();
+      assert(textureData.textureTarget == GL_TEXTURE_2D);
+      ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
+
+      ImGui::PushID(tex.first.c_str());
+      ImGui::Image(imguiTexId, thumbSize);
+      ImGui::PopID();
+    }
+
+    ImGui::EndTable();
+  }
+
+  ImGui::EndChild();
+}
+
+//void Gui::drawInternalState() {
+//  ImGui::BeginChild("tex_scroll", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+//
+//  ImGui::Columns(synthPtr->liveTexturePtrFns.size(), nullptr, false);
+//
+//  for (const auto& tex : synthPtr->liveTexturePtrFns) {
+//    ImGui::Text("%s", tex.first.c_str());
+//    const ofTexture* texturePtr = tex.second();
+//    if (!texturePtr || !texturePtr->isAllocated()) {
+//      ImGui::Dummy(ImVec2(thumbW, thumbW));
+//      ImGui::NextColumn();
+//      continue;
+//    }
+//    
+//    const auto& textureData = texturePtr->getTextureData();
+//    assert(textureData.textureTarget == GL_TEXTURE_2D);
+//    ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
+//    
+//    const float w = texturePtr->getWidth();
+//    
+//    ImGui::PushID(tex.first.c_str());
+//    ImGui::Image(imguiTexId, thumbSize);
+//    ImGui::PopID();
+//    
+//    ImGui::NextColumn();
+//  }
+//  
+//  ImGui::Columns(1);
+//  ImGui::EndChild();
+//}
 
 void Gui::drawStatus() {
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());

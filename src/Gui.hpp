@@ -42,6 +42,7 @@ private:
   void drawIntentControls();
   void drawLayerControls();
   void drawDisplayControls();
+  void drawInternalState();
   void drawStatus();
 
   std::shared_ptr<Synth> synthPtr;

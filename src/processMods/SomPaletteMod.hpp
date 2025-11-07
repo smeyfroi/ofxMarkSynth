@@ -27,6 +27,8 @@ public:
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const float& v) override;
   void applyIntent(const Intent& intent, float strength) override;
+  const ofTexture* getActivePaletteTexturePtr() const;
+  const ofTexture* getNextPaletteTexturePtr() const;
 
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SINK_SWITCH_PALETTE = 100;
@@ -36,13 +38,15 @@ public:
   static constexpr int SOURCE_DARKEST = 10; // RGBA float color as vec4
   static constexpr int SOURCE_FIELD = 1; // SOM as float field in RG pixels converted from RGB
 
+  void onIterationsParameterChanged(float& value);
+  
 protected:
   void initParameters() override;
 
 private:
 //  ofParameter<float> learningRateParameter { "LearningRate", 0.01, 0.0, 1.0 };
 //  IntentParamController<float> learningRateController { learningRateParameter };
-  ofParameter<float> iterationsParameter { "Iterations", 2000.0, 1000.0, 100000.0 };
+  ofParameter<float> iterationsParameter { "Iterations", 2000.0, 100.0, 10000.0 };
 //  IntentParamController<float> iterationsController { iterationsParameter };
 
   ContinuousSomPalette somPalette { 16, 16, 0.02 };

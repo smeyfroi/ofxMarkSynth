@@ -32,8 +32,13 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, const Mod
   };
 }
 
+void SomPaletteMod::onIterationsParameterChanged(float& value) {
+  somPalette.setNumIterations(iterationsParameter);
+}
+
 void SomPaletteMod::initParameters() {
   parameters.add(iterationsParameter);
+  iterationsParameter.addListener(this, &SomPaletteMod::onIterationsParameterChanged);
 }
 
 ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
@@ -164,6 +169,14 @@ void SomPaletteMod::applyIntent(const Intent& intent, float strength) {
 //  iterationsParameter = static_cast<int>(ofLerp(iterationsParameter.get(), targetIterations, strength * 0.1f));
 }
   
+const ofTexture* SomPaletteMod::getActivePaletteTexturePtr() const {
+  return somPalette.getActiveTexturePtr();
+}
+
+const ofTexture* SomPaletteMod::getNextPaletteTexturePtr() const {
+  return somPalette.getNextTexturePtr();
+}
+
 
 
 } // ofxMarkSynth

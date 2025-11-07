@@ -47,6 +47,7 @@ public:
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
+  void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
 
   float getAgency() const override { return agencyParameter; }
 
@@ -78,6 +79,7 @@ private:
   void initDisplayParameterGroup();
   void initFboParameterGroup();
   void initIntentParameterGroup();
+  std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns; // named accessors for GUI
 
   bool paused;
   

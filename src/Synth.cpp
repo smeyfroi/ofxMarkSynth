@@ -164,6 +164,10 @@ void Synth::addConnections(const std::string& dsl) {
   }
 }
 
+void Synth::addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor) {
+  liveTexturePtrFns[name] = textureAccessor;
+}
+
 void Synth::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_BACKGROUND_COLOR:
