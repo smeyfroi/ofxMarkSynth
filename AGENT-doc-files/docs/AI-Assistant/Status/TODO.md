@@ -5,7 +5,7 @@
 
 ## DO IT NOW:
 
-- [ ] Migrate from ofxGui to imgui for all UI
+- [ ] Introduce a node editor based on imgui for Mod configuration and connection
 
 ## REMEMBER:
 
