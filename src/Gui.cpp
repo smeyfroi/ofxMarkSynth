@@ -193,10 +193,27 @@ void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
   ImGui::PopStyleVar();
 }
 
+constexpr float sliderWidth = 200.0f;
+
+void Gui::addParameter(ofParameter<int>& parameter) {
+  const auto& name = parameter.getName();
+  int value = parameter.get();
+  
+  ImGui::PushItemWidth(sliderWidth);
+  if (ImGui::SliderInt(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax())) {
+    parameter.set(value);
+  }
+  ImGui::SetItemTooltip("%s", name.c_str());
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  ImGui::Text("%s", parameter.getName().c_str());
+}
+
 void Gui::addParameter(ofParameter<float>& parameter) {
   const auto& name = parameter.getName();
   float value = parameter.get();
-  ImGui::PushItemWidth(150.0f);
+  
+  ImGui::PushItemWidth(sliderWidth);
   if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), "%.2f")) {
     parameter.set(value);
   }
@@ -204,6 +221,63 @@ void Gui::addParameter(ofParameter<float>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+}
+
+void Gui::addParameter(ofParameter<ofFloatColor>& parameter) {
+  const auto& name = parameter.getName();
+  ofFloatColor color = parameter.get();
+  float colorArray[4] = { color.r, color.g, color.b, color.a };
+  
+  ImGui::PushItemWidth(sliderWidth);
+  if (ImGui::ColorEdit4(("##" + name).c_str(), colorArray, ImGuiColorEditFlags_Float)) {
+    parameter.set(ofFloatColor(colorArray[0], colorArray[1], colorArray[2], colorArray[3]));
+  }
+  ImGui::SetItemTooltip("%s", name.c_str());
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  ImGui::Text("%s", parameter.getName().c_str());
+}
+
+void Gui::addParameter(ofParameter<glm::vec2>& parameter) {
+  const auto& name = parameter.getName();
+  glm::vec2 value = parameter.get();
+  float valueArray[2] = { value.x, value.y };
+
+  ImGui::PushItemWidth(sliderWidth);
+  if (ImGui::SliderFloat2(("##" + name).c_str(), valueArray, parameter.getMin().x, parameter.getMax().x, "%.2f")) {
+    parameter.set(glm::vec2(valueArray[0], valueArray[1]));
+  }
+  ImGui::SetItemTooltip("%s", name.c_str());
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  ImGui::Text("%s", parameter.getName().c_str());
+}
+
+void Gui::addParameterGroup(ofParameterGroup& paramGroup) {
+  for (size_t i = 0; i < paramGroup.size(); ++i) {
+    auto& param = paramGroup[i];
+    
+    if (param.type() == typeid(ofParameterGroup).name()) {
+      if (ImGui::TreeNode(param.getName().c_str())) {
+        addParameterGroup(param.castGroup());
+        ImGui::TreePop();
+      }
+    } else if (param.type() == typeid(ofParameter<int>).name()) {
+      auto& intParam = param.cast<int>();
+      addParameter(intParam);
+    } else if (param.type() == typeid(ofParameter<float>).name()) {
+      auto& floatParam = param.cast<float>();
+      addParameter(floatParam);
+    } else if (param.type() == typeid(ofParameter<ofFloatColor>).name()) {
+      auto& colorParam = param.cast<ofFloatColor>();
+      addParameter(colorParam);
+    } else if (param.type() == typeid(ofParameter<glm::vec2>).name()) {
+      auto& colorParam = param.cast<glm::vec2>();
+      addParameter(colorParam);
+    } else {
+      ImGui::Text("Unsupported parameter type: %s", param.type().c_str());
+    }
+  }
 }
 
 void Gui::drawIntentControls() {
@@ -291,37 +365,6 @@ void Gui::drawInternalState() {
   ImGui::EndChild();
 }
 
-//void Gui::drawInternalState() {
-//  ImGui::BeginChild("tex_scroll", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
-//
-//  ImGui::Columns(synthPtr->liveTexturePtrFns.size(), nullptr, false);
-//
-//  for (const auto& tex : synthPtr->liveTexturePtrFns) {
-//    ImGui::Text("%s", tex.first.c_str());
-//    const ofTexture* texturePtr = tex.second();
-//    if (!texturePtr || !texturePtr->isAllocated()) {
-//      ImGui::Dummy(ImVec2(thumbW, thumbW));
-//      ImGui::NextColumn();
-//      continue;
-//    }
-//    
-//    const auto& textureData = texturePtr->getTextureData();
-//    assert(textureData.textureTarget == GL_TEXTURE_2D);
-//    ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
-//    
-//    const float w = texturePtr->getWidth();
-//    
-//    ImGui::PushID(tex.first.c_str());
-//    ImGui::Image(imguiTexId, thumbSize);
-//    ImGui::PopID();
-//    
-//    ImGui::NextColumn();
-//  }
-//  
-//  ImGui::Columns(1);
-//  ImGui::EndChild();
-//}
-
 void Gui::drawStatus() {
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
   
@@ -348,7 +391,9 @@ void Gui::drawStatus() {
 
 void Gui::drawModTree(ofxImGui::Settings settings) {
   TS_START("Gui::drawModTree");
-  ofxImGui::AddGroup(synthPtr->parameters, settings); // name of the param group needs to match the dock window
+  ImGui::Begin(synthPtr->parameters.getName().c_str());
+  addParameterGroup(synthPtr->parameters);
+  ImGui::End();
   TS_STOP("Gui::drawModTree");
 }
 

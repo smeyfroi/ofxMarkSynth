@@ -7,6 +7,8 @@
 
 #include "ClusterMod.hpp"
 #include "IntentMapping.hpp"
+#include "Parameter.hpp"
+
 
 
 namespace ofxMarkSynth {
@@ -32,7 +34,7 @@ ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig
 }
 
 void ClusterMod::initParameters() {
-  parameters.add(pointClusters.getParameterGroup());
+  addFlattenedParameterGroup(parameters, pointClusters.getParameterGroup());
   parameters.add(agencyFactorParameter);
   clustersControllerPtr = std::make_unique<ParamController<float>>(pointClusters.clustersParameter);
 }

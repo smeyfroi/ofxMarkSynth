@@ -9,6 +9,7 @@
 
 #include "ofxImGui.h"
 #include "ImHelpers.h"
+#include "ofColor.h"
 
 
 
@@ -37,8 +38,12 @@ private:
   void drawModTree(ofxImGui::Settings settings);
   
   void drawVerticalSliders(ofParameterGroup& paramGroup);
+  void addParameter(ofParameter<int>& parameter);
   void addParameter(ofParameter<float>& parameter);
-  
+  void addParameter(ofParameter<ofFloatColor>& parameter);
+  void addParameter(ofParameter<glm::vec2>& parameter);
+  void addParameterGroup(ofParameterGroup& paramGroup);
+
   void drawIntentControls();
   void drawLayerControls();
   void drawDisplayControls();
