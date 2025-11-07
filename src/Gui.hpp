@@ -49,6 +49,7 @@ private:
   void drawDisplayControls();
   void drawInternalState();
   void drawStatus();
+  void drawNodeEditor();
 
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;

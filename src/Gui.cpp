@@ -9,6 +9,7 @@
 #include "Synth.hpp"
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
+#include "imnodes.h"
 
 
 
@@ -20,6 +21,7 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
   synthPtr = synthPtr_;
   
   imgui.setup(windowPtr);
+  ImNodes::CreateContext();
 
   ImGuiIO& io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -37,6 +39,7 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
 }
 
 void Gui::exit() {
+  ImNodes::DestroyContext();
   imgui.exit();
 }
 
@@ -51,6 +54,7 @@ void Gui::draw() {
   drawLog();
   drawSynthControls();
   drawModTree(mainSettings);
+  drawNodeEditor();
   
   imgui.end();
   imgui.draw();
@@ -105,7 +109,7 @@ void Gui::buildInitialDockLayout(ImGuiID dockspaceId) {
   ImGui::DockBuilderDockWindow(synthPtr->parameters.getName().c_str(), dockLeft);
   ImGui::DockBuilderDockWindow("Synth", dockRight);
   ImGui::DockBuilderDockWindow("Log", dockBottom);
-  ImGui::DockBuilderDockWindow("Viewport", dockCenter);
+  ImGui::DockBuilderDockWindow("NodeEditor", dockCenter);
   
   ImGui::DockBuilderFinish(dockspaceId);
 }
@@ -396,6 +400,15 @@ void Gui::drawModTree(ofxImGui::Settings settings) {
   ImGui::End();
   TS_STOP("Gui::drawModTree");
 }
+
+void Gui::drawNodeEditor() {
+  ImGui::Begin("NodeEditor");
+  ImNodes::BeginNodeEditor();
+  
+  ImNodes::EndNodeEditor();
+  ImGui::End();
+}
+
 
 
 
