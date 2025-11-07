@@ -402,8 +402,38 @@ void Gui::drawModTree(ofxImGui::Settings settings) {
 }
 
 void Gui::drawNodeEditor() {
+  if (nodeEditorDirty) {
+      nodeEditorModel.buildFromSynth(synthPtr);
+      nodeEditorDirty = false;
+  }
+
   ImGui::Begin("NodeEditor");
   ImNodes::BeginNodeEditor();
+  
+  for (const auto& node : nodeEditorModel.nodes) {
+    ImNodes::BeginNode(node.nodeId);
+    
+    ImNodes::BeginNodeTitleBar();
+    ImGui::TextUnformatted(node.modPtr->name.c_str());
+    ImNodes::EndNodeTitleBar();
+    
+//    // Input pins (sinks)
+//    for (int pinId : node.inputPinIds) {
+//      ImNodes::BeginInputAttribute(pinId);
+//      // Display sink name from Mod
+//      ImNodes::EndInputAttribute();
+//    }
+//    
+//    // Output pins (sources)
+//    for (int pinId : node.outputPinIds) {
+//      ImNodes::BeginOutputAttribute(pinId);
+//      // Display source name from Mod
+//      ImNodes::EndOutputAttribute();
+//    }
+    ImGui::Dummy(ImVec2(10.0f, 0.0f));
+
+    ImNodes::EndNode();
+  }
   
   ImNodes::EndNodeEditor();
   ImGui::End();

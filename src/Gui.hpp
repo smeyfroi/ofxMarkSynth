@@ -10,6 +10,7 @@
 #include "ofxImGui.h"
 #include "ImHelpers.h"
 #include "ofColor.h"
+#include "NodeEditorModel.hpp"
 
 
 
@@ -54,6 +55,10 @@ private:
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;
   bool dockBuilt { false };
+  
+  NodeEditorModel nodeEditorModel;
+  bool nodeEditorDirty { true }; // rebuild on next frame
+
 };
 
 

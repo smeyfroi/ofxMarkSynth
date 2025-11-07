@@ -17,6 +17,7 @@
 #include "Intent.hpp"
 #include "ParamController.h"
 #include "Gui.hpp"
+#include "NodeEditorModel.hpp"
 
 
 
@@ -68,6 +69,7 @@ public:
   static constexpr int SINK_RESET_RANDOMNESS = 200;
   
   friend class Gui;
+  friend class NodeEditorModel;
   
 protected:
   void initParameters() override;
