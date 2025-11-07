@@ -69,7 +69,9 @@ ofParameterGroup& Mod::getParameterGroup() {
     parameters.setName(name);
     initParameters();
     for (const auto& [k, v] : config) {
-      if (!trySetParameterFromString(parameters, k, v)) ofLogError() << "bad parameter in " << typeid(*this).name() << " with name " << k;
+      if (!trySetParameterFromString(parameters, k, v)) {
+        ofLogError() << "bad parameter in " << typeid(*this).name() << " with name " << k;
+      }
     }
   }
   return parameters;

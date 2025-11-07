@@ -209,16 +209,6 @@ void Gui::drawLayerControls() {
 void Gui::drawDisplayControls() {
   ofxImGui::Settings settings = ofxImGui::Settings();
   
-  auto& bgColorParam = synthPtr->backgroundColorParameter;
-  ofFloatColor bgColor = bgColorParam.get();
-  float col[4] = { bgColor.r, bgColor.g, bgColor.b, bgColor.a };
-  ImGui::Text("%s", bgColorParam.getName().c_str());
-  if (ImGui::ColorEdit4("##bgColor", col)) {
-    bgColorParam.set(ofFloatColor(col[0], col[1], col[2], col[3]));
-  }
-  
-  addParameterFloat(synthPtr->backgroundMultiplierParameter);
-
   const char* tonemapOptions[] = {
     "Linear (clamp)",
     "Reinhard",

@@ -509,8 +509,6 @@ void Synth::initIntentParameterGroup() {
 
 void Synth::initDisplayParameterGroup() {
   displayParameters.setName("Display");
-  displayParameters.add(backgroundColorParameter);
-  displayParameters.add(backgroundMultiplierParameter);
   displayParameters.add(toneMapTypeParameter);
   displayParameters.add(exposureParameter);
   displayParameters.add(gammaParameter);
@@ -523,6 +521,8 @@ void Synth::initDisplayParameterGroup() {
 }
 
 void Synth::initParameters() {
+  parameters.add(backgroundColorParameter);
+  parameters.add(backgroundMultiplierParameter);
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
     const auto& [name, modPtr] = pair;
     ofParameterGroup& pg = modPtr->getParameterGroup();
