@@ -521,6 +521,7 @@ void Synth::initDisplayParameterGroup() {
 }
 
 void Synth::initParameters() {
+  parameters.add(agencyParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {

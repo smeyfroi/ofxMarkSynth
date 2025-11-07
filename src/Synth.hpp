@@ -46,6 +46,7 @@ public:
   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
+  ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
 
   float getAgency() const override { return agencyParameter; }
 

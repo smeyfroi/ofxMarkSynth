@@ -129,8 +129,6 @@ auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
 void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
   
-  addParameterFloat(synthPtr->agencyParameter);
-  
   ImGui::SeparatorText("Intents");
   drawIntentControls();
   
