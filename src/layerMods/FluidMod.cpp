@@ -8,6 +8,7 @@
 #include "FluidMod.hpp"
 #include "Intent.hpp"
 #include "IntentMapping.hpp"
+#include "Parameter.hpp"
 
 
 
@@ -40,7 +41,7 @@ float FluidMod::getAgency() const {
 
 void FluidMod::initParameters() {
   auto& group = fluidSimulation.getParameterGroup();
-  parameters.add(group);
+  addFlattenedParameterGroup(parameters, group);
   parameters.add(agencyFactorParameter);
   
   dtControllerPtr = std::make_unique<ParamController<float>>(group.get("dt").cast<float>());
