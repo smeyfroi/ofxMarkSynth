@@ -96,6 +96,7 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
+  int getId() const;
   
   virtual float getAgency() const;
   virtual void applyIntent(const Intent& intent, float intentStrength) {};
@@ -144,6 +145,8 @@ protected:
 private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
   std::unordered_map<std::string, int> currentDrawingLayerIndices; // index < 0 means don't draw
+  int id;
+  static int nextId;
 };
 
 

@@ -14,6 +14,8 @@ namespace ofxMarkSynth {
 
 
 
+int Mod::nextId = 1000;
+
 void assignDrawingLayerPtrToMods(DrawingLayerPtr drawingLayerPtr, std::initializer_list<ModDrawingLayerNamePair> modFboNamePairs) {
   for (const auto& [modPtr, name] : modFboNamePairs) {
       modPtr->receiveDrawingLayerPtr(name, drawingLayerPtr);
@@ -35,8 +37,15 @@ void connectSourceToSinks(ModPtr sourceModPtr, std::initializer_list<Connections
 Mod::Mod(Synth* synthPtr_, const std::string& name_, const ModConfig&& config_)
 : synthPtr { synthPtr_ },
 name { name_ },
+id { nextId },
 config { std::move(config_) }
-{}
+{
+  nextId += 100;
+}
+
+int Mod::getId() const {
+  return id;
+}
 
 std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(ofParameterGroup& group, const std::string& namePrefix) {
   for (const auto& paramPtr : group) {

@@ -410,23 +410,27 @@ void Gui::drawNodeEditor() {
   ImGui::Begin("NodeEditor");
   ImNodes::BeginNodeEditor();
   
+  ImNodesIO& io = ImNodes::GetIO();
+  io.EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt; // Option-drag to pan
+
   for (const auto& node : nodeEditorModel.nodes) {
     ModPtr modPtr = node.modPtr;
+    int modId = modPtr->getId();
     
-    ImNodes::BeginNode(node.nodeId);
+    ImNodes::BeginNode(node.modPtr->getId());
     
     ImNodes::BeginNodeTitleBar();
     ImGui::TextUnformatted(modPtr->name.c_str());
     ImNodes::EndNodeTitleBar();
     
     for (const auto& [name, id] : modPtr->sinkNameIdMap) {
-      ImNodes::BeginInputAttribute(id);
+      ImNodes::BeginInputAttribute(modId + id);
       ImGui::TextUnformatted(name.c_str());
       ImNodes::EndInputAttribute();
     }
     
     for (const auto& [name, id] : modPtr->sourceNameIdMap) {
-      ImNodes::BeginOutputAttribute(id);
+      ImNodes::BeginOutputAttribute(modId + id);
       ImGui::TextUnformatted(name.c_str());
       ImNodes::EndOutputAttribute();
     }
@@ -438,15 +442,19 @@ void Gui::drawNodeEditor() {
   
   for (const auto& node : nodeEditorModel.nodes) {
     ModPtr modPtr = node.modPtr;
+    int sourceModId = modPtr->getId();
 
+    int linkId = 0; // TODO: make this stable when we make the node editor editable
     for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
       for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
-        int linkId = 0;
-        ImNodes::Link(linkId, sourceId, sinkId);
+        int sinkModId = sinkModPtr->getId();
+        ImNodes::Link(linkId++, sourceModId + sourceId, sinkModId + sinkId);
       }
     }
   }
   
+  ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
+
   ImNodes::EndNodeEditor();
   ImGui::End();
 }
