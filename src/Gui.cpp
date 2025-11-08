@@ -501,6 +501,7 @@ void Gui::drawNodeEditor() {
     
     ImNodes::BeginNodeTitleBar();
     ImGui::TextUnformatted(modPtr->name.c_str());
+    ImGui::ProgressBar(modPtr->getAgency(), ImVec2(64.0f, 4.0f), "");
     ImNodes::EndNodeTitleBar();
     
     // Input attributes (sinks)
