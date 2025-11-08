@@ -27,17 +27,82 @@ void NodeEditorLayout::initialize(const std::shared_ptr<Synth> synthPtr, glm::ve
   nodes.clear();
   currentIteration = 0;
   
-  // Create nodes with random initial positions from Synth's modPtrs
+  // Categorize nodes by type: source-only, sink-only, or both
+  std::vector<ModPtr> sourceOnlyMods;
+  std::vector<ModPtr> sinkOnlyMods;
+  std::vector<ModPtr> processMods;
+  
   for (const auto& [name, modPtr] : synthPtr->modPtrs) {
+    bool hasSources = !modPtr->sourceNameIdMap.empty();
+    bool hasSinks = !modPtr->sinkNameIdMap.empty();
+    
+    if (hasSources && !hasSinks) {
+      sourceOnlyMods.push_back(modPtr);
+    } else if (!hasSources && hasSinks) {
+      sinkOnlyMods.push_back(modPtr);
+    } else {
+      processMods.push_back(modPtr);
+    }
+  }
+  
+  // Layout parameters
+  const float leftMargin = 100.0f;
+  const float rightMargin = bounds.x - 100.0f;
+  const float middleX = bounds.x * 0.5f;
+  const float verticalSpacing = 120.0f;
+  const float randomOffset = 30.0f;  // Small random offset for variety
+  
+  // Helper to calculate Y positions with spacing
+  auto calculateYPositions = [&](int count) -> std::vector<float> {
+    std::vector<float> positions;
+    if (count == 0) return positions;
+    
+    float totalHeight = (count - 1) * verticalSpacing;
+    float startY = (bounds.y - totalHeight) * 0.5f;
+    
+    for (int i = 0; i < count; ++i) {
+      positions.push_back(startY + i * verticalSpacing);
+    }
+    return positions;
+  };
+  
+  // Position source-only mods on the left
+  auto sourceYPositions = calculateYPositions(sourceOnlyMods.size());
+  for (size_t i = 0; i < sourceOnlyMods.size(); ++i) {
     LayoutNode node;
-    node.modPtr = modPtr;
-    // Random position in central 50% of bounds
+    node.modPtr = sourceOnlyMods[i];
     node.position = glm::vec2(
-                              ofRandom(bounds.x * 0.25f, bounds.x * 0.75f),
-                              ofRandom(bounds.y * 0.25f, bounds.y * 0.75f)
-                              );
+      leftMargin + ofRandom(-randomOffset, randomOffset),
+      sourceYPositions[i] + ofRandom(-randomOffset, randomOffset)
+    );
     node.velocity = glm::vec2(0, 0);
-    nodes[modPtr] = node;
+    nodes[sourceOnlyMods[i]] = node;
+  }
+  
+  // Position sink-only mods on the right
+  auto sinkYPositions = calculateYPositions(sinkOnlyMods.size());
+  for (size_t i = 0; i < sinkOnlyMods.size(); ++i) {
+    LayoutNode node;
+    node.modPtr = sinkOnlyMods[i];
+    node.position = glm::vec2(
+      rightMargin + ofRandom(-randomOffset, randomOffset),
+      sinkYPositions[i] + ofRandom(-randomOffset, randomOffset)
+    );
+    node.velocity = glm::vec2(0, 0);
+    nodes[sinkOnlyMods[i]] = node;
+  }
+  
+  // Position process mods (both sources and sinks) in the middle
+  auto processYPositions = calculateYPositions(processMods.size());
+  for (size_t i = 0; i < processMods.size(); ++i) {
+    LayoutNode node;
+    node.modPtr = processMods[i];
+    node.position = glm::vec2(
+      middleX + ofRandom(-randomOffset * 2, randomOffset * 2),  // More horizontal spread
+      processYPositions[i] + ofRandom(-randomOffset, randomOffset)
+    );
+    node.velocity = glm::vec2(0, 0);
+    nodes[processMods[i]] = node;
   }
 }
 
