@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "ofxGui.h"
 #include "PingPongFbo.h"
+#include "Gui.h"
+#include "ofParameter.h"
 
 
 // NOTE: This feels like it should be built on `ofEvent` not the custom emit/receive impl here
@@ -115,9 +116,11 @@ public:
   
   static constexpr int SINK_CHANGE_LAYER = -300;
 
-  std::string name;
+  friend class Gui;
   
 protected:
+  std::string name;
+  
   Synth* synthPtr; // parent Synth
 
   ModConfig config;

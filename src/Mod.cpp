@@ -78,6 +78,7 @@ ofParameterGroup& Mod::getParameterGroup() {
 }
 
 void Mod::connect(int sourceId, ModPtr sinkModPtr, int sinkId) {
+  assert(sinkModPtr != nullptr);
   if (! (connections.contains(sourceId) && connections[sourceId] != nullptr)) {
     auto sinksPtr = std::make_unique<Sinks>();
     sinksPtr->emplace_back(std::pair {sinkModPtr, sinkId});
@@ -107,7 +108,7 @@ int Mod::getSinkId(const std::string& sinkName) {
 
 template<typename T>
 void Mod::emit(int sourceId, const T& value) {
-  if (connections[sourceId] == nullptr) return;
+  if (!connections.contains(sourceId)) return;
   //  if (connections[sourceId] == nullptr) { ofLogError() << "bad connection in " << typeid(*this).name() << " with sourceId " << sourceId; return; }
   std::for_each(connections[sourceId]->begin(),
                 connections[sourceId]->end(),

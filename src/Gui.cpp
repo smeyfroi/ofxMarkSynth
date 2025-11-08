@@ -411,28 +411,40 @@ void Gui::drawNodeEditor() {
   ImNodes::BeginNodeEditor();
   
   for (const auto& node : nodeEditorModel.nodes) {
+    ModPtr modPtr = node.modPtr;
+    
     ImNodes::BeginNode(node.nodeId);
     
     ImNodes::BeginNodeTitleBar();
-    ImGui::TextUnformatted(node.modPtr->name.c_str());
+    ImGui::TextUnformatted(modPtr->name.c_str());
     ImNodes::EndNodeTitleBar();
     
-//    // Input pins (sinks)
-//    for (int pinId : node.inputPinIds) {
-//      ImNodes::BeginInputAttribute(pinId);
-//      // Display sink name from Mod
-//      ImNodes::EndInputAttribute();
-//    }
-//    
-//    // Output pins (sources)
-//    for (int pinId : node.outputPinIds) {
-//      ImNodes::BeginOutputAttribute(pinId);
-//      // Display source name from Mod
-//      ImNodes::EndOutputAttribute();
-//    }
-    ImGui::Dummy(ImVec2(10.0f, 0.0f));
+    for (const auto& [name, id] : modPtr->sinkNameIdMap) {
+      ImNodes::BeginInputAttribute(id);
+      ImGui::TextUnformatted(name.c_str());
+      ImNodes::EndInputAttribute();
+    }
+    
+    for (const auto& [name, id] : modPtr->sourceNameIdMap) {
+      ImNodes::BeginOutputAttribute(id);
+      ImGui::TextUnformatted(name.c_str());
+      ImNodes::EndOutputAttribute();
+    }
+      
+    ImGui::Dummy(ImVec2(0.0f, 0.0f));
 
     ImNodes::EndNode();
+  }
+  
+  for (const auto& node : nodeEditorModel.nodes) {
+    ModPtr modPtr = node.modPtr;
+
+    for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
+      for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
+        int linkId = 0;
+        ImNodes::Link(linkId, sourceId, sinkId);
+      }
+    }
   }
   
   ImNodes::EndNodeEditor();
