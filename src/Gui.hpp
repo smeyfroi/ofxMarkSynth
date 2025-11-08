@@ -58,6 +58,8 @@ private:
   
   NodeEditorModel nodeEditorModel;
   bool nodeEditorDirty { true }; // rebuild on next frame
+  bool animateLayout { true };   // animate layout on load
+  bool layoutComputed { false }; // track if layout has been computed
 
 };
 

@@ -11,6 +11,7 @@
 #include <vector>
 #include "glm/vec2.hpp"
 #include "Mod.hpp"
+#include "NodeEditorLayout.hpp"
 
 
 
@@ -28,8 +29,19 @@ struct NodeEditorNode {
 class NodeEditorModel {
 public:
   void buildFromSynth(const std::shared_ptr<Synth> synthPtr);
+  
+  // Layout methods
+  void computeLayout();               // Compute layout instantly
+  void computeLayoutAnimated();       // Single step for animated layout
+  bool isLayoutAnimating() const;     // Check if still animating
+  void resetLayout();                 // Reset to trigger new layout
+  
   std::shared_ptr<Synth> synthPtr;
   std::vector<NodeEditorNode> nodes;
+
+private:
+    NodeEditorLayout layoutEngine;
+    bool layoutInitialized { false };
 };
 
 

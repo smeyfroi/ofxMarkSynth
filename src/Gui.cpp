@@ -402,17 +402,53 @@ void Gui::drawModTree(ofxImGui::Settings settings) {
 }
 
 void Gui::drawNodeEditor() {
+  // Rebuild node model if dirty
   if (nodeEditorDirty) {
       nodeEditorModel.buildFromSynth(synthPtr);
       nodeEditorDirty = false;
+      layoutComputed = false;
   }
 
   ImGui::Begin("NodeEditor");
+  
+  // Toolbar for layout controls
+  if (ImGui::Button("Compute Layout")) {
+    nodeEditorModel.computeLayout();
+    layoutComputed = true;
+    animateLayout = false;
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Animate Layout")) {
+    nodeEditorModel.resetLayout();
+    layoutComputed = false;
+    animateLayout = true;
+  }
+  ImGui::SameLine();
+  ImGui::Checkbox("Auto-animate", &animateLayout);
+  
+  // Status indicator
+  if (nodeEditorModel.isLayoutAnimating()) {
+    ImGui::SameLine();
+    ImGui::TextColored(GREEN_COLOR, "[Animating...]");
+  }
+  
+  ImGui::Separator();
+  
+  // Run animated layout if enabled and not yet computed
+  if (animateLayout && !layoutComputed) {
+    nodeEditorModel.computeLayoutAnimated();
+    if (!nodeEditorModel.isLayoutAnimating()) {
+      layoutComputed = true; // Animation finished
+    }
+  }
+  
+  // Draw the node editor
   ImNodes::BeginNodeEditor();
   
   ImNodesIO& io = ImNodes::GetIO();
   io.EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt; // Option-drag to pan
 
+  // Draw nodes
   for (const auto& node : nodeEditorModel.nodes) {
     ModPtr modPtr = node.modPtr;
     int modId = modPtr->getId();
@@ -423,12 +459,14 @@ void Gui::drawNodeEditor() {
     ImGui::TextUnformatted(modPtr->name.c_str());
     ImNodes::EndNodeTitleBar();
     
+    // Input attributes (sinks)
     for (const auto& [name, id] : modPtr->sinkNameIdMap) {
       ImNodes::BeginInputAttribute(modId + id);
       ImGui::TextUnformatted(name.c_str());
       ImNodes::EndInputAttribute();
     }
     
+    // Output attributes (sources)
     for (const auto& [name, id] : modPtr->sourceNameIdMap) {
       ImNodes::BeginOutputAttribute(modId + id);
       ImGui::TextUnformatted(name.c_str());
@@ -440,6 +478,7 @@ void Gui::drawNodeEditor() {
     ImNodes::EndNode();
   }
   
+  // Draw links (connections)
   for (const auto& node : nodeEditorModel.nodes) {
     ModPtr modPtr = node.modPtr;
     int sourceModId = modPtr->getId();

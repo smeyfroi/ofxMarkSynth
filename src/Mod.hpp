@@ -9,6 +9,7 @@
 
 #include "PingPongFbo.h"
 #include "Gui.h"
+#include "NodeEditorLayout.hpp"
 #include "ofParameter.h"
 
 
@@ -118,6 +119,7 @@ public:
   static constexpr int SINK_CHANGE_LAYER = -300;
 
   friend class Gui;
+  friend class NodeEditorLayout;
   
 protected:
   std::string name;

@@ -18,6 +18,7 @@
 #include "ParamController.h"
 #include "Gui.hpp"
 #include "NodeEditorModel.hpp"
+#include "NodeEditorLayout.hpp"
 
 
 
@@ -70,6 +71,7 @@ public:
   
   friend class Gui;
   friend class NodeEditorModel;
+  friend class NodeEditorLayout;
   
 protected:
   void initParameters() override;
