@@ -66,7 +66,7 @@ compositeSize { compositeSize_ }
     { "compositeFbo", SOURCE_COMPOSITE_FBO }
   };
   sinkNameIdMap = {
-    { "backgroundColor", SINK_BACKGROUND_COLOR },
+    { backgroundColorParameter.getName(), SINK_BACKGROUND_COLOR },
     { "resetRandomness", SINK_RESET_RANDOMNESS }
   };
 }

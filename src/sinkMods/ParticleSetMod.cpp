@@ -7,6 +7,7 @@
 
 #include "ParticleSetMod.hpp"
 #include "IntentMapping.hpp"
+#include "Parameter.hpp"
 
 
 namespace ofxMarkSynth {
@@ -18,15 +19,15 @@ ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, const M
   sinkNameIdMap = {
     { "points", SINK_POINTS },
     { "pointVelocities", SINK_POINT_VELOCITIES },
-    { "spin", SINK_SPIN },
-    { "color", SINK_COLOR }
+    { spinParameter.getName(), SINK_SPIN },
+    { colorParameter.getName(), SINK_COLOR }
   };
 }
 
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);
   parameters.add(colorParameter);
-  parameters.add(particleSet.getParameterGroup());
+  addFlattenedParameterGroup(parameters, particleSet.getParameterGroup());
 }
 
 void ParticleSetMod::update() {

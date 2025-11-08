@@ -8,6 +8,7 @@
 #include "ParticleFieldMod.hpp"
 #include "cmath"
 #include "IntentMapping.hpp"
+#include "Parameter.hpp"
 
 
 namespace ofxMarkSynth {
@@ -27,7 +28,7 @@ ParticleFieldMod::ParticleFieldMod(Synth* synthPtr, const std::string& name, con
 }
 
 void ParticleFieldMod::initParameters() {
-  parameters.add(particleField.getParameterGroup());
+  addFlattenedParameterGroup(parameters, particleField.getParameterGroup());
 }
 
 void ParticleFieldMod::update() {

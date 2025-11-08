@@ -22,7 +22,7 @@ CollageMod::CollageMod(Synth* synthPtr, const std::string& name, const ModConfig
   sinkNameIdMap = {
     { "path", SINK_PATH },
     { "snapshotFbo", SINK_SNAPSHOT_FBO },
-    { "color", SINK_COLOR }
+    { colorParameter.getName(), SINK_COLOR }
   };
 }
 

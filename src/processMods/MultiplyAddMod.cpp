@@ -17,8 +17,8 @@ MultiplyAddMod::MultiplyAddMod(Synth* synthPtr, const std::string& name, const M
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {
-    { "multiplier", SINK_MULTIPLIER },
-    { "adder", SINK_ADDER },
+    { multiplierParameter.getName(), SINK_MULTIPLIER },
+    { adderParameter.getName(), SINK_ADDER },
     { "float", SINK_FLOAT }
   };
   sourceNameIdMap = {

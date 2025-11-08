@@ -21,11 +21,11 @@ SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, const Mod
 
   sinkNameIdMap = {
     { "points", SINK_POINTS },
-    { "radius", SINK_RADIUS },
-    { "color", SINK_COLOR },
-    { "colorMultiplier", SINK_COLOR_MULTIPLIER },
-    { "alphaMultiplier", SINK_ALPHA_MULTIPLIER },
-    { "softness", SINK_SOFTNESS }
+    { radiusParameter.getName(), SINK_RADIUS },
+    { colorParameter.getName(), SINK_COLOR },
+    { colorMultiplierParameter.getName(), SINK_COLOR_MULTIPLIER },
+    { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
+    { softnessParameter.getName(), SINK_SOFTNESS }
   };
 }
 

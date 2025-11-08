@@ -19,8 +19,8 @@ SandLineMod::SandLineMod(Synth* synthPtr, const std::string& name, const ModConf
 {
   sinkNameIdMap = {
     { "points", SINK_POINTS },
-    { "pointRadius", SINK_POINT_RADIUS },
-    { "pointColor", SINK_POINT_COLOR }
+    { pointRadiusParameter.getName(), SINK_POINT_RADIUS },
+    { colorParameter.getName(), SINK_POINT_COLOR }
   };
 }
 
