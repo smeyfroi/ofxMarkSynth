@@ -407,9 +407,22 @@ void Gui::drawNodeEditor() {
       nodeEditorModel.buildFromSynth(synthPtr);
       nodeEditorDirty = false;
       layoutComputed = false;
+      layoutAutoLoadAttempted = false; // Reset auto-load on rebuild
   }
 
   ImGui::Begin("NodeEditor");
+  
+  // Auto-load saved layout on first draw (if it exists)
+  if (!layoutAutoLoadAttempted) {
+      layoutAutoLoadAttempted = true;
+      if (nodeEditorModel.hasStoredLayout()) {
+          if (nodeEditorModel.loadLayout()) {
+              layoutComputed = true;
+              animateLayout = false; // Don't animate if we loaded positions
+              ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
+          }
+      }
+  }
   
   // Toolbar for layout controls
   if (ImGui::Button("Compute Layout")) {
@@ -426,7 +439,38 @@ void Gui::drawNodeEditor() {
   ImGui::SameLine();
   ImGui::Checkbox("Auto-animate", &animateLayout);
   
-  // Status indicator
+  ImGui::SameLine();
+  ImGui::Text("|");
+  
+  // Save/Load buttons
+  ImGui::SameLine();
+  if (ImGui::Button("Save Layout")) {
+      // Sync current positions from imnodes before saving
+      nodeEditorModel.syncPositionsFromImNodes();
+      if (nodeEditorModel.saveLayout()) {
+          ofLogNotice("Gui") << "Saved node layout for: " << synthPtr->name;
+      } else {
+          ofLogError("Gui") << "Failed to save node layout";
+      }
+  }
+  
+  ImGui::SameLine();
+  if (ImGui::Button("Load Layout")) {
+      if (nodeEditorModel.loadLayout()) {
+          layoutComputed = true;
+          animateLayout = false;
+          ofLogNotice("Gui") << "Loaded node layout for: " << synthPtr->name;
+      } else {
+          ofLogError("Gui") << "Failed to load node layout";
+      }
+  }
+  
+  // Status indicators
+  if (nodeEditorModel.hasStoredLayout()) {
+      ImGui::SameLine();
+      ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "[Saved]");
+  }
+  
   if (nodeEditorModel.isLayoutAnimating()) {
     ImGui::SameLine();
     ImGui::TextColored(GREEN_COLOR, "[Animating...]");
@@ -495,6 +539,11 @@ void Gui::drawNodeEditor() {
   ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
 
   ImNodes::EndNodeEditor();
+  
+  // Sync positions from imnodes back to model after every frame
+  // This ensures manual dragging is captured
+  nodeEditorModel.syncPositionsFromImNodes();
+  
   ImGui::End();
 }
 

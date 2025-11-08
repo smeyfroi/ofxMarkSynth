@@ -6,6 +6,7 @@
 //
 
 #include "NodeEditorModel.hpp"
+#include "NodeEditorLayoutSerializer.hpp"
 #include "Synth.hpp"
 #include "imnodes.h"
 
@@ -72,6 +73,35 @@ bool NodeEditorModel::isLayoutAnimating() const {
 
 void NodeEditorModel::resetLayout() {
     layoutInitialized = false;
+}
+
+void NodeEditorModel::syncPositionsFromImNodes() {
+    // Read current positions from imnodes and update our model
+    for (auto& node : nodes) {
+        ImVec2 imnodesPos = ImNodes::GetNodeGridSpacePos(node.modPtr->getId());
+        node.position = glm::vec2(imnodesPos.x, imnodesPos.y);
+    }
+}
+
+bool NodeEditorModel::saveLayout() const {
+    if (!synthPtr) {
+        return false;
+    }
+    return NodeEditorLayoutSerializer::save(*this, synthPtr->name);
+}
+
+bool NodeEditorModel::loadLayout() {
+    if (!synthPtr) {
+        return false;
+    }
+    return NodeEditorLayoutSerializer::load(*this, synthPtr->name);
+}
+
+bool NodeEditorModel::hasStoredLayout() const {
+    if (!synthPtr) {
+        return false;
+    }
+    return NodeEditorLayoutSerializer::exists(synthPtr->name);
 }
 
 

@@ -57,9 +57,10 @@ private:
   bool dockBuilt { false };
   
   NodeEditorModel nodeEditorModel;
-  bool nodeEditorDirty { true }; // rebuild on next frame
-  bool animateLayout { true };   // animate layout on load
-  bool layoutComputed { false }; // track if layout has been computed
+  bool nodeEditorDirty { true };      // rebuild on next frame
+  bool animateLayout { true };        // animate layout on load
+  bool layoutComputed { false };      // track if layout has been computed
+  bool layoutAutoLoadAttempted { false }; // track if we've tried auto-load
 
 };
 

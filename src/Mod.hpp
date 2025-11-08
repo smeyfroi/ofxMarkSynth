@@ -10,6 +10,7 @@
 #include "PingPongFbo.h"
 #include "Gui.h"
 #include "NodeEditorLayout.hpp"
+#include "NodeEditorLayoutSerializer.hpp"
 #include "ofParameter.h"
 
 
@@ -120,6 +121,7 @@ public:
 
   friend class Gui;
   friend class NodeEditorLayout;
+  friend class NodeEditorLayoutSerializer;
   
 protected:
   std::string name;

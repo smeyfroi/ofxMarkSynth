@@ -36,6 +36,12 @@ public:
   bool isLayoutAnimating() const;     // Check if still animating
   void resetLayout();                 // Reset to trigger new layout
   
+  // Save/load methods
+  void syncPositionsFromImNodes();    // Sync positions from imnodes to model
+  bool saveLayout() const;            // Save layout to file
+  bool loadLayout();                  // Load layout from file
+  bool hasStoredLayout() const;       // Check if layout file exists
+  
   std::shared_ptr<Synth> synthPtr;
   std::vector<NodeEditorNode> nodes;
 

@@ -1,0 +1,49 @@
+//
+//  NodeEditorLayoutSerializer.hpp
+//  ofxMarkSynth
+//
+//  Created by AI Assistant on 08/11/2025.
+//
+
+#pragma once
+
+#include <string>
+#include "nlohmann/json.hpp"
+#include "glm/vec2.hpp"
+
+
+
+namespace ofxMarkSynth {
+
+
+
+class Synth;
+class NodeEditorModel;
+
+class NodeEditorLayoutSerializer {
+public:
+    // Save layout to file
+    static bool save(const NodeEditorModel& model, 
+                     const std::string& synthName);
+    
+    // Load layout from file
+    static bool load(NodeEditorModel& model, 
+                     const std::string& synthName);
+    
+    // Check if layout file exists
+    static bool exists(const std::string& synthName);
+    
+    // Get file path for synth
+    static std::string getLayoutFilePath(const std::string& synthName);
+    
+private:
+    // Serialize to JSON
+    static nlohmann::json toJson(const NodeEditorModel& model);
+    
+    // Deserialize from JSON
+    static void fromJson(const nlohmann::json& j, NodeEditorModel& model);
+};
+
+
+
+} // namespace ofxMarkSynth
