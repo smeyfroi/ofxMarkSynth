@@ -528,6 +528,7 @@ void Gui::drawNodeEditor() {
   
   // Draw links (connections)
   int linkId = 0; // TODO: make this stable when we make the node editor editable
+  
   for (const auto& node : nodeEditorModel.nodes) {
     ModPtr modPtr = node.modPtr;
     int sourceModId = modPtr->getId();
@@ -535,9 +536,25 @@ void Gui::drawNodeEditor() {
     for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
       for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
         int sinkModId = sinkModPtr->getId();
+        
+        // Check if this link is connected to a selected node
+        // Use IsNodeSelected which is callable during editor scope
+        bool isConnectedToSelection = 
+          ImNodes::IsNodeSelected(sourceModId) || 
+          ImNodes::IsNodeSelected(sinkModId);
+        
+        // Highlight links connected to selected nodes with bright green
+        if (isConnectedToSelection) {
+          ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(100, 255, 100, 255));
+        }
+        
         ImNodes::Link(linkId++,
                       NodeEditorModel::sourceId(sourceModId, sourceId),
                       NodeEditorModel::sinkId(sinkModId, sinkId));
+        
+        if (isConnectedToSelection) {
+          ImNodes::PopColorStyle();
+        }
       }
     }
   }
