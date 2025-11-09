@@ -27,6 +27,14 @@ SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, const Mod
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
     { softnessParameter.getName(), SINK_SOFTNESS }
   };
+  
+  sourceNameControllerPtrMap = {
+    { radiusParameter.getName(), &radiusController },
+    { colorParameter.getName(), &colorController },
+    { colorMultiplierParameter.getName(), &colorMultiplierController },
+    { alphaMultiplierParameter.getName(), &alphaMultiplierController },
+    { softnessParameter.getName(), &softnessController }
+  };
 }
 
 void SoftCircleMod::initParameters() {

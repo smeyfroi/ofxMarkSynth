@@ -10,6 +10,7 @@
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
+#include "ImGuiUtil.hpp"
 
 
 
@@ -129,7 +130,7 @@ auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
 void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
   
-  addParameterGroup(synthPtr->getParameterGroup());
+  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
   
   ImGui::SeparatorText("Intents");
   drawIntentControls();
@@ -197,7 +198,7 @@ void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
 
 constexpr float sliderWidth = 200.0f;
 
-void Gui::addParameter(ofParameter<int>& parameter) {
+void Gui::addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
   const auto& name = parameter.getName();
   int value = parameter.get();
   
@@ -209,9 +210,10 @@ void Gui::addParameter(ofParameter<int>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addContributionWeights(modPtr, parameter.getName());
 }
 
-void Gui::addParameter(ofParameter<float>& parameter) {
+void Gui::addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   const auto& name = parameter.getName();
   float value = parameter.get();
   
@@ -223,9 +225,10 @@ void Gui::addParameter(ofParameter<float>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addContributionWeights(modPtr, parameter.getName());
 }
 
-void Gui::addParameter(ofParameter<ofFloatColor>& parameter) {
+void Gui::addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter) {
   const auto& name = parameter.getName();
   ofFloatColor color = parameter.get();
   float colorArray[4] = { color.r, color.g, color.b, color.a };
@@ -238,9 +241,10 @@ void Gui::addParameter(ofParameter<ofFloatColor>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addContributionWeights(modPtr, parameter.getName());
 }
 
-void Gui::addParameter(ofParameter<glm::vec2>& parameter) {
+void Gui::addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
   const auto& name = parameter.getName();
   glm::vec2 value = parameter.get();
   float valueArray[2] = { value.x, value.y };
@@ -253,34 +257,42 @@ void Gui::addParameter(ofParameter<glm::vec2>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addContributionWeights(modPtr, parameter.getName());
 }
 
-void Gui::addParameter(ofAbstractParameter& parameter) {
+void Gui::addContributionWeights(const ModPtr& modPtr, const std::string& paramName) {
+  if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
+    auto& controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
+    ImGuiUtil::drawProportionalSegmentedLine(controllerPtr->wAuto, controllerPtr->wIntent, controllerPtr->wManual);
+  }
+}
+
+void Gui::addParameter(const ModPtr& modPtr, ofAbstractParameter& parameter) {
   if (parameter.type() == typeid(ofParameterGroup).name()) {
     if (ImGui::TreeNode(parameter.getName().c_str())) {
-      addParameterGroup(parameter.castGroup());
+      addParameterGroup(modPtr, parameter.castGroup());
       ImGui::TreePop();
     }
   } else if (parameter.type() == typeid(ofParameter<int>).name()) {
     auto& intParam = parameter.cast<int>();
-    addParameter(intParam);
+    addParameter(modPtr, intParam);
   } else if (parameter.type() == typeid(ofParameter<float>).name()) {
     auto& floatParam = parameter.cast<float>();
-    addParameter(floatParam);
+    addParameter(modPtr, floatParam);
   } else if (parameter.type() == typeid(ofParameter<ofFloatColor>).name()) {
     auto& colorParam = parameter.cast<ofFloatColor>();
-    addParameter(colorParam);
+    addParameter(modPtr, colorParam);
   } else if (parameter.type() == typeid(ofParameter<glm::vec2>).name()) {
-    auto& colorParam = parameter.cast<glm::vec2>();
-    addParameter(colorParam);
+    auto& vec2Param = parameter.cast<glm::vec2>();
+    addParameter(modPtr, vec2Param);
   } else {
     ImGui::Text("Unsupported parameter type: %s", parameter.type().c_str());
   }
 }
 
-void Gui::addParameterGroup(ofParameterGroup& paramGroup) {
+void Gui::addParameterGroup(const ModPtr& modPtr, ofParameterGroup& paramGroup) {
   for (auto& parameterPtr : paramGroup) {
-    addParameter(*parameterPtr);
+    addParameter(modPtr, *parameterPtr);
   }
 }
 
@@ -312,14 +324,14 @@ void Gui::drawDisplayControls() {
   ImGui::SameLine();
   ImGui::Text("%s", synthPtr->toneMapTypeParameter.getName().c_str());
 
-  addParameter(synthPtr->exposureParameter);
-  addParameter(synthPtr->gammaParameter);
-  addParameter(synthPtr->whitePointParameter);
-  addParameter(synthPtr->contrastParameter);
-  addParameter(synthPtr->saturationParameter);
-  addParameter(synthPtr->brightnessParameter);
-  addParameter(synthPtr->hueShiftParameter);
-  addParameter(synthPtr->sideExposureParameter);
+  addParameter(synthPtr, synthPtr->exposureParameter);
+  addParameter(synthPtr, synthPtr->gammaParameter);
+  addParameter(synthPtr, synthPtr->whitePointParameter);
+  addParameter(synthPtr, synthPtr->contrastParameter);
+  addParameter(synthPtr, synthPtr->saturationParameter);
+  addParameter(synthPtr, synthPtr->brightnessParameter);
+  addParameter(synthPtr, synthPtr->hueShiftParameter);
+  addParameter(synthPtr, synthPtr->sideExposureParameter);
 }
 
 constexpr float thumbW = 128.0f;
@@ -503,14 +515,14 @@ void Gui::drawNodeEditor() {
         ImGui::TextUnformatted(name.c_str());
       } else {
         auto& p = modPtr->parameters.get(name);
-        addParameter(p);
+        addParameter(modPtr, p);
       }
       ImNodes::EndInputAttribute();
     }
 
     for (auto& parameter : modPtr->parameters) {
       if (!modPtr->sinkNameIdMap.contains(parameter->getName())) {
-        addParameter(*parameter);
+        addParameter(modPtr, *parameter);
       }
     }
 

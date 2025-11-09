@@ -3,10 +3,23 @@
 #include "ofMain.h"
 #include "Lerp.h"
 
+
+
 namespace ofxMarkSynth {
 
+
+
+// This only exists so that we can introspect the weights for Gui without needing to templatize everything
+class BaseParamController {
+public:
+  virtual ~BaseParamController() = default;
+  float wAuto, wManual, wIntent;
+};
+
+
+
 template<typename T>
-class ParamController {
+class ParamController : public BaseParamController {
 public:
   ParamController(ofParameter<T>& manualValueParameter_)
   : manualValueParameter(manualValueParameter_),
@@ -53,16 +66,19 @@ public:
     update();
   }
 
+  // TODO: push to util/Lerp.h
   inline float oneMinusExp(float dt, float tau) {
     if (tau <= 0.0f) return 1.0f;
     return 1.0f - std::exp(-dt / tau);
   }
 
+  // TODO: push to util/Lerp.h
   inline T smoothTo(T current, T target, float dt, float tau) {
     float alpha = oneMinusExp(dt, tau);
     return lerp(value, target, alpha);
   }
 
+  // TODO: push to util/Lerp.h
   inline float smoothToFloat(float current, float target, float dt, float tau) {
     float alpha = oneMinusExp(dt, tau);
     return ofLerp(current, target, alpha);
@@ -85,9 +101,9 @@ public:
     float wManualHuman = ofLerp(1.0f - intentStrength, 1.0f, manualBias);
     float wIntentHuman = 1.0f - wManualHuman;
 
-    float wAuto   = agency;
-    float wManual = humanShare * wManualHuman;
-    float wIntent = humanShare * wIntentHuman;
+    wAuto   = agency;
+    wManual = humanShare * wManualHuman;
+    wIntent = humanShare * wIntentHuman;
 
     // Normalize
     float s = wAuto + wManual + wIntent;

@@ -12,9 +12,12 @@
 #include "NodeEditorLayout.hpp"
 #include "NodeEditorLayoutSerializer.hpp"
 #include "ofParameter.h"
+#include "ParamController.h"
+
 
 
 // NOTE: This feels like it should be built on `ofEvent` not the custom emit/receive impl here
+
 
 
 namespace ofxMarkSynth {
@@ -133,6 +136,7 @@ protected:
   virtual void initParameters() = 0;
 
   std::map<std::string, int> sourceNameIdMap;
+  std::map<std::string, BaseParamController*> sourceNameControllerPtrMap;
   std::map<std::string, int> sinkNameIdMap;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
