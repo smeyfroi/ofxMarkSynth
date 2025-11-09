@@ -44,6 +44,9 @@ public:
   
   std::shared_ptr<Synth> synthPtr;
   std::vector<NodeEditorNode> nodes;
+  
+  static int sinkId(int modId, int sinkId) { return modId + sinkId; }
+  static int sourceId(int modId, int sourceId) { return modId + sourceId + 100000; }
 
 private:
     NodeEditorLayout layoutEngine;

@@ -40,7 +40,7 @@ name { name_ },
 id { nextId },
 config { std::move(config_) }
 {
-  nextId += 100;
+  nextId += 1000;
 }
 
 int Mod::getId() const {

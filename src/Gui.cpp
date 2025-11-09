@@ -130,9 +130,6 @@ void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
   
   addParameterGroup(synthPtr->getParameterGroup());
-//  addParameter(synthPtr->agencyParameter);
-//  addParameter(synthPtr->backgroundColorParameter);
-//  addParameter(synthPtr->backgroundMultiplierParameter);
   
   ImGui::SeparatorText("Intents");
   drawIntentControls();
@@ -258,32 +255,32 @@ void Gui::addParameter(ofParameter<glm::vec2>& parameter) {
   ImGui::Text("%s", parameter.getName().c_str());
 }
 
-void Gui::addParameter(std::shared_ptr<ofAbstractParameter>& parameterPtr) {
-  if (parameterPtr->type() == typeid(ofParameterGroup).name()) {
-    if (ImGui::TreeNode(parameterPtr->getName().c_str())) {
-      addParameterGroup(parameterPtr->castGroup());
+void Gui::addParameter(ofAbstractParameter& parameter) {
+  if (parameter.type() == typeid(ofParameterGroup).name()) {
+    if (ImGui::TreeNode(parameter.getName().c_str())) {
+      addParameterGroup(parameter.castGroup());
       ImGui::TreePop();
     }
-  } else if (parameterPtr->type() == typeid(ofParameter<int>).name()) {
-    auto& intParam = parameterPtr->cast<int>();
+  } else if (parameter.type() == typeid(ofParameter<int>).name()) {
+    auto& intParam = parameter.cast<int>();
     addParameter(intParam);
-  } else if (parameterPtr->type() == typeid(ofParameter<float>).name()) {
-    auto& floatParam = parameterPtr->cast<float>();
+  } else if (parameter.type() == typeid(ofParameter<float>).name()) {
+    auto& floatParam = parameter.cast<float>();
     addParameter(floatParam);
-  } else if (parameterPtr->type() == typeid(ofParameter<ofFloatColor>).name()) {
-    auto& colorParam = parameterPtr->cast<ofFloatColor>();
+  } else if (parameter.type() == typeid(ofParameter<ofFloatColor>).name()) {
+    auto& colorParam = parameter.cast<ofFloatColor>();
     addParameter(colorParam);
-  } else if (parameterPtr->type() == typeid(ofParameter<glm::vec2>).name()) {
-    auto& colorParam = parameterPtr->cast<glm::vec2>();
+  } else if (parameter.type() == typeid(ofParameter<glm::vec2>).name()) {
+    auto& colorParam = parameter.cast<glm::vec2>();
     addParameter(colorParam);
   } else {
-    ImGui::Text("Unsupported parameter type: %s", parameterPtr->type().c_str());
+    ImGui::Text("Unsupported parameter type: %s", parameter.type().c_str());
   }
 }
 
 void Gui::addParameterGroup(ofParameterGroup& paramGroup) {
   for (auto& parameterPtr : paramGroup) {
-    addParameter(parameterPtr);
+    addParameter(*parameterPtr);
   }
 }
 
@@ -399,24 +396,24 @@ void Gui::drawStatus() {
 void Gui::drawNodeEditor() {
   // Rebuild node model if dirty
   if (nodeEditorDirty) {
-      nodeEditorModel.buildFromSynth(synthPtr);
-      nodeEditorDirty = false;
-      layoutComputed = false;
-      layoutAutoLoadAttempted = false; // Reset auto-load on rebuild
+    nodeEditorModel.buildFromSynth(synthPtr);
+    nodeEditorDirty = false;
+    layoutComputed = false;
+    layoutAutoLoadAttempted = false; // Reset auto-load on rebuild
   }
 
   ImGui::Begin("NodeEditor");
   
   // Auto-load saved layout on first draw (if it exists)
   if (!layoutAutoLoadAttempted) {
-      layoutAutoLoadAttempted = true;
-      if (nodeEditorModel.hasStoredLayout()) {
-          if (nodeEditorModel.loadLayout()) {
-              layoutComputed = true;
-              animateLayout = false; // Don't animate if we loaded positions
-              ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
-          }
+    layoutAutoLoadAttempted = true;
+    if (nodeEditorModel.hasStoredLayout()) {
+      if (nodeEditorModel.loadLayout()) {
+        layoutComputed = true;
+        animateLayout = false; // Don't animate if we loaded positions
+        ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
       }
+    }
   }
   
   // Toolbar for layout controls
@@ -501,19 +498,25 @@ void Gui::drawNodeEditor() {
     
     // Input attributes (sinks)
     for (const auto& [name, id] : modPtr->sinkNameIdMap) {
-      ImNodes::BeginInputAttribute(modId + id);
-      ImGui::TextUnformatted(name.c_str());
+      ImNodes::BeginInputAttribute(NodeEditorModel::sinkId(modId, id));
+      if (!modPtr->parameters.contains(name)) {
+        ImGui::TextUnformatted(name.c_str());
+      } else {
+        auto& p = modPtr->parameters.get(name);
+        addParameter(p);
+      }
       ImNodes::EndInputAttribute();
     }
 
     for (auto& parameter : modPtr->parameters) {
-      if (modPtr->sinkNameIdMap.contains(parameter->getName())) continue;
-      addParameter(parameter);
+      if (!modPtr->sinkNameIdMap.contains(parameter->getName())) {
+        addParameter(*parameter);
+      }
     }
 
     // Output attributes (sources)
     for (const auto& [name, id] : modPtr->sourceNameIdMap) {
-      ImNodes::BeginOutputAttribute(modId + id);
+      ImNodes::BeginOutputAttribute(NodeEditorModel::sourceId(modId, id));
       ImGui::TextUnformatted(name.c_str());
       ImNodes::EndOutputAttribute();
     }
@@ -524,15 +527,17 @@ void Gui::drawNodeEditor() {
   }
   
   // Draw links (connections)
+  int linkId = 0; // TODO: make this stable when we make the node editor editable
   for (const auto& node : nodeEditorModel.nodes) {
     ModPtr modPtr = node.modPtr;
     int sourceModId = modPtr->getId();
 
-    int linkId = 0; // TODO: make this stable when we make the node editor editable
     for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
       for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
         int sinkModId = sinkModPtr->getId();
-        ImNodes::Link(linkId++, sourceModId + sourceId, sinkModId + sinkId);
+        ImNodes::Link(linkId++,
+                      NodeEditorModel::sourceId(sourceModId, sourceId),
+                      NodeEditorModel::sinkId(sinkModId, sinkId));
       }
     }
   }

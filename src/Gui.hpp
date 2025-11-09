@@ -43,7 +43,7 @@ private:
   void addParameter(ofParameter<float>& parameter);
   void addParameter(ofParameter<ofFloatColor>& parameter);
   void addParameter(ofParameter<glm::vec2>& parameter);
-  void addParameter(std::shared_ptr<ofAbstractParameter>& parameter);
+  void addParameter(ofAbstractParameter& parameterPtr);
   void addParameterGroup(ofParameterGroup& paramGroup);
 
   void drawIntentControls();
