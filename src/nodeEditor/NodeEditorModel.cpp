@@ -21,7 +21,11 @@ void NodeEditorModel::buildFromSynth(const std::shared_ptr<Synth> synthPtr_) {
   nodes.clear();
   layoutInitialized = false;
   
-  // Build node list from Synth's modPtrs
+  // Build node list from Synth and its modPtrs
+  nodes.emplace_back(NodeEditorNode {
+    .modPtr = synthPtr,
+    .position = glm::vec2(50.0f, 100.0f),
+  });
   for (const auto& modNamePtr : synthPtr->modPtrs) {
     auto& [modName, modPtr] = modNamePtr;
     nodes.emplace_back(NodeEditorNode {
