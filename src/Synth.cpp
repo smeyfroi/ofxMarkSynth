@@ -528,10 +528,12 @@ void Synth::initParameters() {
   parameters.add(agencyParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
+  
+  // initialise Mod parameters but do not add them to Synth parameters
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
     const auto& [name, modPtr] = pair;
     ofParameterGroup& pg = modPtr->getParameterGroup();
-    if (pg.size() != 0) parameters.add(pg);
+//    if (pg.size() != 0) parameters.add(pg);
   });
 }
 

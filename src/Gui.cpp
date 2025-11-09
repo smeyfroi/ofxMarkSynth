@@ -47,13 +47,11 @@ void Gui::draw() {
   TS_START("Gui::draw");
   TSGL_START("Gui::draw");
   
-  auto mainSettings = ofxImGui::Settings();
   imgui.begin();
   
   drawDockspace();
   drawLog();
   drawSynthControls();
-  drawModTree(mainSettings);
   drawNodeEditor();
   
   imgui.end();
@@ -85,7 +83,7 @@ void Gui::drawDockspace() {
   ImGui::Begin("DockHost", nullptr, hostFlags);
   ImGui::PopStyleVar(2);
 
-  ImGuiID dockspaceId = ImGui::GetID("MyDockSpace");
+  ImGuiID dockspaceId = ImGui::GetID("DockSpace");
   ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode;
   ImGui::DockSpace(dockspaceId, ImVec2(0,0), dockFlags);
   if (!dockBuilt) {
@@ -102,11 +100,9 @@ void Gui::buildInitialDockLayout(ImGuiID dockspaceId) {
   ImGuiID dockMain = dockspaceId;
   ImGuiID dockLeft, dockRight, dockBottom, dockCenter;
   
-  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left,  0.25f, &dockLeft, &dockMain);
   ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down,  0.15f, &dockBottom, &dockMain);
   ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockCenter);
   
-  ImGui::DockBuilderDockWindow(synthPtr->parameters.getName().c_str(), dockLeft);
   ImGui::DockBuilderDockWindow("Synth", dockRight);
   ImGui::DockBuilderDockWindow("Log", dockBottom);
   ImGui::DockBuilderDockWindow("NodeEditor", dockCenter);
@@ -132,6 +128,11 @@ auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
 
 void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
+  
+  addParameterGroup(synthPtr->getParameterGroup());
+//  addParameter(synthPtr->agencyParameter);
+//  addParameter(synthPtr->backgroundColorParameter);
+//  addParameter(synthPtr->backgroundMultiplierParameter);
   
   ImGui::SeparatorText("Intents");
   drawIntentControls();
@@ -257,30 +258,32 @@ void Gui::addParameter(ofParameter<glm::vec2>& parameter) {
   ImGui::Text("%s", parameter.getName().c_str());
 }
 
-void Gui::addParameterGroup(ofParameterGroup& paramGroup) {
-  for (size_t i = 0; i < paramGroup.size(); ++i) {
-    auto& param = paramGroup[i];
-    
-    if (param.type() == typeid(ofParameterGroup).name()) {
-      if (ImGui::TreeNode(param.getName().c_str())) {
-        addParameterGroup(param.castGroup());
-        ImGui::TreePop();
-      }
-    } else if (param.type() == typeid(ofParameter<int>).name()) {
-      auto& intParam = param.cast<int>();
-      addParameter(intParam);
-    } else if (param.type() == typeid(ofParameter<float>).name()) {
-      auto& floatParam = param.cast<float>();
-      addParameter(floatParam);
-    } else if (param.type() == typeid(ofParameter<ofFloatColor>).name()) {
-      auto& colorParam = param.cast<ofFloatColor>();
-      addParameter(colorParam);
-    } else if (param.type() == typeid(ofParameter<glm::vec2>).name()) {
-      auto& colorParam = param.cast<glm::vec2>();
-      addParameter(colorParam);
-    } else {
-      ImGui::Text("Unsupported parameter type: %s", param.type().c_str());
+void Gui::addParameter(std::shared_ptr<ofAbstractParameter>& parameterPtr) {
+  if (parameterPtr->type() == typeid(ofParameterGroup).name()) {
+    if (ImGui::TreeNode(parameterPtr->getName().c_str())) {
+      addParameterGroup(parameterPtr->castGroup());
+      ImGui::TreePop();
     }
+  } else if (parameterPtr->type() == typeid(ofParameter<int>).name()) {
+    auto& intParam = parameterPtr->cast<int>();
+    addParameter(intParam);
+  } else if (parameterPtr->type() == typeid(ofParameter<float>).name()) {
+    auto& floatParam = parameterPtr->cast<float>();
+    addParameter(floatParam);
+  } else if (parameterPtr->type() == typeid(ofParameter<ofFloatColor>).name()) {
+    auto& colorParam = parameterPtr->cast<ofFloatColor>();
+    addParameter(colorParam);
+  } else if (parameterPtr->type() == typeid(ofParameter<glm::vec2>).name()) {
+    auto& colorParam = parameterPtr->cast<glm::vec2>();
+    addParameter(colorParam);
+  } else {
+    ImGui::Text("Unsupported parameter type: %s", parameterPtr->type().c_str());
+  }
+}
+
+void Gui::addParameterGroup(ofParameterGroup& paramGroup) {
+  for (auto& parameterPtr : paramGroup) {
+    addParameter(parameterPtr);
   }
 }
 
@@ -393,14 +396,6 @@ void Gui::drawStatus() {
   }
 }
 
-void Gui::drawModTree(ofxImGui::Settings settings) {
-  TS_START("Gui::drawModTree");
-  ImGui::Begin(synthPtr->parameters.getName().c_str());
-  addParameterGroup(synthPtr->parameters);
-  ImGui::End();
-  TS_STOP("Gui::drawModTree");
-}
-
 void Gui::drawNodeEditor() {
   // Rebuild node model if dirty
   if (nodeEditorDirty) {
@@ -510,7 +505,12 @@ void Gui::drawNodeEditor() {
       ImGui::TextUnformatted(name.c_str());
       ImNodes::EndInputAttribute();
     }
-    
+
+    for (auto& parameter : modPtr->parameters) {
+      if (modPtr->sinkNameIdMap.contains(parameter->getName())) continue;
+      addParameter(parameter);
+    }
+
     // Output attributes (sources)
     for (const auto& [name, id] : modPtr->sourceNameIdMap) {
       ImNodes::BeginOutputAttribute(modId + id);

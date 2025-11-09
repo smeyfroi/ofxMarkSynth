@@ -11,6 +11,7 @@
 #include "ImHelpers.h"
 #include "ofColor.h"
 #include "NodeEditorModel.hpp"
+#include <memory>
 
 
 
@@ -36,13 +37,13 @@ private:
   void buildInitialDockLayout(ImGuiID dockspaceId);
   void drawLog();
   void drawSynthControls();
-  void drawModTree(ofxImGui::Settings settings);
   
   void drawVerticalSliders(ofParameterGroup& paramGroup);
   void addParameter(ofParameter<int>& parameter);
   void addParameter(ofParameter<float>& parameter);
   void addParameter(ofParameter<ofFloatColor>& parameter);
   void addParameter(ofParameter<glm::vec2>& parameter);
+  void addParameter(std::shared_ptr<ofAbstractParameter>& parameter);
   void addParameterGroup(ofParameterGroup& paramGroup);
 
   void drawIntentControls();
