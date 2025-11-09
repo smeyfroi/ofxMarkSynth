@@ -19,6 +19,10 @@ FadeMod::FadeMod(Synth* synthPtr, const std::string& name, const ModConfig&& con
   sinkNameIdMap = {
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER }
   };
+  
+  sourceNameControllerPtrMap = {
+    { alphaMultiplierParameter.getName(), &alphaMultiplierController }
+  };
 }
 
 void FadeMod::initParameters() {

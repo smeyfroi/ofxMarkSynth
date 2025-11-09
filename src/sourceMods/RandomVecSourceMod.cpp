@@ -23,6 +23,10 @@ vecDimensions { vecDimensions_ }
     { "vec3", SOURCE_VEC3 },
     { "vec4", SOURCE_VEC4 }
   };
+  
+  sourceNameControllerPtrMap = {
+    { vecsPerUpdateParameter.getName(), &vecsPerUpdateController }
+  };
 }
 
 void RandomVecSourceMod::initParameters() {

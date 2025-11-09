@@ -22,6 +22,11 @@ ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, const M
     { spinParameter.getName(), SINK_SPIN },
     { colorParameter.getName(), SINK_COLOR }
   };
+  
+  sourceNameControllerPtrMap = {
+    { spinParameter.getName(), &spinController },
+    { colorParameter.getName(), &colorController }
+  };
 }
 
 void ParticleSetMod::initParameters() {

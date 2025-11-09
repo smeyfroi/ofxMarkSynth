@@ -48,6 +48,13 @@ void FluidMod::initParameters() {
   vorticityControllerPtr = std::make_unique<ParamController<float>>(group.get("Vorticity").cast<float>());
   valueDissipationControllerPtr = std::make_unique<ParamController<float>>(group.get("Value Dissipation").cast<float>());
   velocityDissipationControllerPtr = std::make_unique<ParamController<float>>(group.get("Velocity Dissipation").cast<float>());
+  
+  sourceNameControllerPtrMap = {
+    { group.get("dt").cast<float>().getName(), dtControllerPtr.get() },
+    { group.get("Vorticity").cast<float>().getName(), vorticityControllerPtr.get() },
+    { group.get("Value Dissipation").cast<float>().getName(), valueDissipationControllerPtr.get() },
+    { group.get("Velocity Dissipation").cast<float>().getName(), velocityDissipationControllerPtr.get() }
+  };
 }
 
 void FluidMod::setup() {

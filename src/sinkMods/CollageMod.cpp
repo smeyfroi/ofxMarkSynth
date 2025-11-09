@@ -24,6 +24,12 @@ CollageMod::CollageMod(Synth* synthPtr, const std::string& name, const ModConfig
     { "snapshotFbo", SINK_SNAPSHOT_FBO },
     { colorParameter.getName(), SINK_COLOR }
   };
+  
+  sourceNameControllerPtrMap = {
+    { colorParameter.getName(), &colorController },
+    { saturationParameter.getName(), &saturationController },
+    { outlineParameter.getName(), &outlineController }
+  };
 }
 
 void CollageMod::initParameters() {

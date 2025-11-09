@@ -25,6 +25,16 @@ SmearMod::SmearMod(Synth* synthPtr, const std::string& name, const ModConfig&& c
     { "field1Fbo", SINK_FIELD_1_FBO },
     { "field2Fbo", SINK_FIELD_2_FBO }
   };
+  
+  sourceNameControllerPtrMap = {
+    { mixNewParameter.getName(), &mixNewController },
+    { alphaMultiplierParameter.getName(), &alphaMultiplierController },
+    { field1MultiplierParameter.getName(), &field1MultiplierController },
+    { field2MultiplierParameter.getName(), &field2MultiplierController },
+    { jumpAmountParameter.getName(), &jumpAmountController },
+    { borderWidthParameter.getName(), &borderWidthController },
+    { ghostBlendParameter.getName(), &ghostBlendController }
+  };
 }
 
 void SmearMod::initParameters() {

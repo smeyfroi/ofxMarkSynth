@@ -18,6 +18,16 @@ RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, c
   sourceNameIdMap = {
     { "vec4", SOURCE_VEC4 }
   };
+  
+  sourceNameControllerPtrMap = {
+    { colorsPerUpdateParameter.getName(), &colorsPerUpdateController },
+    { minSaturationParameter.getName(), &minSaturationController },
+    { maxSaturationParameter.getName(), &maxSaturationController },
+    { minLightnessParameter.getName(), &minLightnessController },
+    { maxLightnessParameter.getName(), &maxLightnessController },
+    { minAlphaParameter.getName(), &minAlphaController },
+    { maxAlphaParameter.getName(), &maxAlphaController }
+  };
 }
 
 void RandomHslColorMod::initParameters() {

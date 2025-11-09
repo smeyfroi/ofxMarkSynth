@@ -22,6 +22,15 @@ SandLineMod::SandLineMod(Synth* synthPtr, const std::string& name, const ModConf
     { pointRadiusParameter.getName(), SINK_POINT_RADIUS },
     { colorParameter.getName(), SINK_POINT_COLOR }
   };
+  
+  sourceNameControllerPtrMap = {
+    { densityParameter.getName(), &densityController },
+    { pointRadiusParameter.getName(), &pointRadiusController },
+    { colorParameter.getName(), &colorController },
+    { alphaMultiplierParameter.getName(), &alphaMultiplierController },
+    { stdDevAlongParameter.getName(), &stdDevAlongController },
+    { stdDevPerpendicularParameter.getName(), &stdDevPerpendicularController }
+  };
 }
 
 void SandLineMod::initParameters() {

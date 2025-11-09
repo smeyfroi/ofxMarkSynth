@@ -28,6 +28,13 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
     { "changeStrategy", SINK_CHANGE_STRATEGY },
     { "changeLayer", SINK_CHANGE_LAYER }
   };
+  
+  sourceNameControllerPtrMap = {
+    { angleParameter.getName(), &angleController },
+    { minorLineColorParameter.getName(), &minorLineColorController },
+    { majorLineColorParameter.getName(), &majorLineColorController },
+    { pathWidthParameter.getName(), &pathWidthController }
+  };
 }
 
 void DividedAreaMod::initParameters() {

@@ -24,6 +24,12 @@ RandomFloatSourceMod::RandomFloatSourceMod(Synth* synthPtr, const std::string& n
   sourceNameIdMap = {
     { "float", SOURCE_FLOAT }
   };
+  
+  sourceNameControllerPtrMap = {
+    { floatsPerUpdateParameter.getName(), &floatsPerUpdateController },
+    { minParameter.getName(), &minController },
+    { maxParameter.getName(), &maxController }
+  };
 }
 
 void RandomFloatSourceMod::initParameters() {

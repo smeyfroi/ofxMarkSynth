@@ -23,6 +23,10 @@ PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, con
   sourceNameIdMap = {
     { "snapshot", SOURCE_SNAPSHOT }
   };
+  
+  sourceNameControllerPtrMap = {
+    { sizeParameter.getName(), &sizeController }
+  };
 }
 
 void PixelSnapshotMod::initParameters() {
