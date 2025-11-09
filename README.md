@@ -22,6 +22,7 @@ This template reflects the help text found at http://ofxaddons.com/howto, and wi
 
 Thanks for listening, and happy coding!
 
+<img width="1836" height="1228" alt="Screenshot 2025-11-09 at 13 18 58" src="https://github.com/user-attachments/assets/3a223d8c-8004-4451-9189-82b8d74bbb1f" />
 
 <img width="1956" height="1195" alt="Screenshot 2025-08-26 at 15 18 25" src="https://github.com/user-attachments/assets/cebfb0d8-2c15-4888-b291-838900f59cdf" />
 
