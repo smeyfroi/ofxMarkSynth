@@ -21,26 +21,47 @@ namespace ofxMarkSynth {
 
 class Synth;
 
+using NodeObjectPtr = std::variant<ModPtr, DrawingLayerPtr>;
+
 struct NodeEditorNode {
-  std::shared_ptr<Mod> modPtr;
+  NodeObjectPtr objectPtr;
   glm::vec2 position;
+  int getId() const {
+    if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
+      return (*modPtrPtr)->getId();
+    } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
+      return (*drawingLayerPtrPtr)->id;
+    } else {
+      ofLogError() << "NodeEditorNode::getId() with unknown objectPtr type";
+      return -1;
+    }
+  };
+  const std::string& getName() const {
+    if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
+      return (*modPtrPtr)->getName();
+    } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
+      return (*drawingLayerPtrPtr)->name;
+    } else {
+      ofLogError() << "NodeEditorNode::getName() with unknown objectPtr type";
+      static const std::string emptyString = "";
+      return emptyString;
+    }
+  };
 };
 
 class NodeEditorModel {
 public:
   void buildFromSynth(const std::shared_ptr<Synth> synthPtr);
   
-  // Layout methods
-  void computeLayout();               // Compute layout instantly
-  void computeLayoutAnimated();       // Single step for animated layout
-  bool isLayoutAnimating() const;     // Check if still animating
-  void resetLayout();                 // Reset to trigger new layout
+  void computeLayout();
+  void computeLayoutAnimated();
+  bool isLayoutAnimating() const;
+  void resetLayout();
   
-  // Save/load methods
-  void syncPositionsFromImNodes();    // Sync positions from imnodes to model
-  bool saveLayout() const;            // Save layout to file
-  bool loadLayout();                  // Load layout from file
-  bool hasStoredLayout() const;       // Check if layout file exists
+  void syncPositionsFromImNodes();
+  bool saveLayout() const;
+  bool loadLayout();
+  bool hasStoredLayout() const;
   
   std::shared_ptr<Synth> synthPtr;
   std::vector<NodeEditorNode> nodes;
@@ -49,8 +70,7 @@ public:
   static int sourceId(int modId, int sourceId) { return modId + sourceId + 100000; }
 
 private:
-    NodeEditorLayout layoutEngine;
-    bool layoutInitialized { false };
+  std::unique_ptr<NodeEditorLayout> layoutEnginePtr;
 };
 
 

@@ -501,7 +501,7 @@ void Gui::drawNodeEditor() {
     ModPtr modPtr = node.modPtr;
     int modId = modPtr->getId();
     
-    ImNodes::BeginNode(node.modPtr->getId());
+    ImNodes::BeginNode(modId);
     
     ImNodes::BeginNodeTitleBar();
     ImGui::TextUnformatted(modPtr->name.c_str());

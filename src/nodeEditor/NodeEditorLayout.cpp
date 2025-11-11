@@ -17,92 +17,38 @@ namespace ofxMarkSynth {
 
 
 
-NodeEditorLayout::NodeEditorLayout(const Config& config_)
-: config(config_)
-{}
-
-void NodeEditorLayout::initialize(const std::shared_ptr<Synth> synthPtr, glm::vec2 bounds_) {
-  bounds = bounds_;
-  center = bounds * 0.5f;
+NodeEditorLayout::NodeEditorLayout(const Config& config_, glm::vec2 bounds_)
+: config { config_ },
+bounds { bounds_ },
+center { bounds_ * 0.5f },
+currentIteration { 0 }
+{
   nodes.clear();
-  currentIteration = 0;
-  
-  // Categorize nodes by type: source-only, sink-only, or both
-  std::vector<ModPtr> sourceOnlyMods;
-  std::vector<ModPtr> sinkOnlyMods;
-  std::vector<ModPtr> processMods;
-  
-  for (const auto& [name, modPtr] : synthPtr->modPtrs) {
-    bool hasSources = !modPtr->sourceNameIdMap.empty();
-    bool hasSinks = !modPtr->sinkNameIdMap.empty();
-    
-    if (hasSources && !hasSinks) {
-      sourceOnlyMods.push_back(modPtr);
-    } else if (!hasSources && hasSinks) {
-      sinkOnlyMods.push_back(modPtr);
-    } else {
-      processMods.push_back(modPtr);
-    }
-  }
-  
-  // Layout parameters
-  const float leftMargin = 100.0f;
-  const float rightMargin = bounds.x - 100.0f;
-  const float middleX = bounds.x * 0.5f;
-  const float verticalSpacing = 120.0f;
-  const float randomOffset = 30.0f;  // Small random offset for variety
-  
-  // Helper to calculate Y positions with spacing
-  auto calculateYPositions = [&](int count) -> std::vector<float> {
-    std::vector<float> positions;
-    if (count == 0) return positions;
-    
-    float totalHeight = (count - 1) * verticalSpacing;
-    float startY = (bounds.y - totalHeight) * 0.5f;
-    
-    for (int i = 0; i < count; ++i) {
-      positions.push_back(startY + i * verticalSpacing);
-    }
-    return positions;
+}
+
+void NodeEditorLayout::addNode(const NodeObjectPtr& nodeObjectPtr) {
+  LayoutNode node {
+    .objectPtr = nodeObjectPtr,
+    .velocity = glm::vec2(0, 0),
   };
-  
-  // Position source-only mods on the left
-  auto sourceYPositions = calculateYPositions(sourceOnlyMods.size());
-  for (size_t i = 0; i < sourceOnlyMods.size(); ++i) {
-    LayoutNode node;
-    node.modPtr = sourceOnlyMods[i];
-    node.position = glm::vec2(
-      leftMargin + ofRandom(-randomOffset, randomOffset),
-      sourceYPositions[i] + ofRandom(-randomOffset, randomOffset)
-    );
-    node.velocity = glm::vec2(0, 0);
-    nodes[sourceOnlyMods[i]] = node;
-  }
-  
-  // Position sink-only mods on the right
-  auto sinkYPositions = calculateYPositions(sinkOnlyMods.size());
-  for (size_t i = 0; i < sinkOnlyMods.size(); ++i) {
-    LayoutNode node;
-    node.modPtr = sinkOnlyMods[i];
-    node.position = glm::vec2(
-      rightMargin + ofRandom(-randomOffset, randomOffset),
-      sinkYPositions[i] + ofRandom(-randomOffset, randomOffset)
-    );
-    node.velocity = glm::vec2(0, 0);
-    nodes[sinkOnlyMods[i]] = node;
-  }
-  
-  // Position process mods (both sources and sinks) in the middle
-  auto processYPositions = calculateYPositions(processMods.size());
-  for (size_t i = 0; i < processMods.size(); ++i) {
-    LayoutNode node;
-    node.modPtr = processMods[i];
-    node.position = glm::vec2(
-      middleX + ofRandom(-randomOffset * 2, randomOffset * 2),  // More horizontal spread
-      processYPositions[i] + ofRandom(-randomOffset, randomOffset)
-    );
-    node.velocity = glm::vec2(0, 0);
-    nodes[processMods[i]] = node;
+  if (const auto modPtrPtr = std::get_if<ModPtr>(&nodeObjectPtr)) {
+    bool hasSources = !(*modPtrPtr)->sourceNameIdMap.empty();
+    bool hasSinks = !(*modPtrPtr)->sinkNameIdMap.empty();
+    if (hasSources && !hasSinks) {
+      node.position = glm::vec2(ofRandom(bounds.x * 0.1f, bounds.x * 0.3f),
+                                ofRandom(bounds.y * 0.1f, bounds.y * 0.9f));
+    } else if (!hasSources && hasSinks) {
+      node.position = glm::vec2(ofRandom(bounds.x * 0.3f, bounds.x * 0.6f),
+                                ofRandom(bounds.y * 0.1f, bounds.y * 0.9f));
+    } else {
+      node.position = glm::vec2(ofRandom(bounds.x * 0.6f, bounds.x * 0.9f),
+                                ofRandom(bounds.y * 0.1f, bounds.y * 0.9f));
+    }
+  } else if (auto layerPtrPtr = std::get_if<DrawingLayerPtr>(&nodeObjectPtr)) {
+    node.position = glm::vec2(ofRandom(bounds.x * 0.3f, bounds.x * 0.7f),
+                              ofRandom(bounds.y * 0.8f, bounds.y * 0.9f));
+  } else {
+    ofLogError() << "NodeEditorLayout::addNode: unknown node object type: " << typeid(nodeObjectPtr).name();
   }
 }
 
@@ -125,18 +71,17 @@ bool NodeEditorLayout::step() {
 }
 
 void NodeEditorLayout::applyForces() {
-  // Reset forces (stored in velocity for this iteration)
-  for (auto& [modPtr, node] : nodes) {
+  for (auto& [objectPtr, node] : nodes) {
     if (node.isFixed) continue;
     node.velocity = glm::vec2(0, 0);
   }
   
   // 1. Repulsion between all nodes (Coulomb-like)
-  for (auto& [modPtr1, node1] : nodes) {
+  for (auto& [objectPtr1, node1] : nodes) {
     if (node1.isFixed) continue;
     
-    for (auto& [modPtr2, node2] : nodes) {
-      if (modPtr1 == modPtr2) continue;
+    for (auto& [objectPtr2, node2] : nodes) {
+      if (objectPtr1 == objectPtr2) continue;
       
       glm::vec2 delta = node1.position - node2.position;
       float distance = glm::length(delta);
@@ -151,35 +96,38 @@ void NodeEditorLayout::applyForces() {
   }
   
   // 2. Spring attraction along links (connections)
-  // Iterate through all nodes and their connections
-  for (const auto& [sourceModPtr, sourceNode] : nodes) {
-    if (!sourceNode.modPtr->connections.empty()) {
-      for (const auto& [sourceId, sinksPtr] : sourceNode.modPtr->connections) {
-        if (!sinksPtr) continue;
-        
-        for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
-          auto sinkIt = nodes.find(sinkModPtr);
-          if (sinkIt == nodes.end()) continue;
+  for (const auto& [objectPtr, sourceNode] : nodes) {
+    if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
+
+      const auto& modPtr = *modPtrPtr;
+      if (!modPtr->connections.empty()) {
+        for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
+          if (!sinksPtr) continue;
           
-          auto& sinkNode = sinkIt->second;
-          
-          glm::vec2 delta = sinkNode.position - sourceNode.position;
-          float distance = glm::length(delta);
-          
-          if (distance < 0.1f) continue;  // too close
-          
-          // Spring force: F = k * (distance - restLength)
-          float displacement = distance - config.springLength;
-          glm::vec2 force = delta * (config.springStrength * displacement / distance);
-          
-          // Apply force to both nodes (non-const access needed)
-          if (!sourceNode.isFixed) {
-            auto& mutableSourceNode = const_cast<LayoutNode&>(nodes.at(sourceModPtr));
-            mutableSourceNode.velocity += force;
-          }
-          if (!sinkNode.isFixed) {
-            auto& mutableSinkNode = const_cast<LayoutNode&>(nodes.at(sinkModPtr));
-            mutableSinkNode.velocity -= force;
+          for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
+            auto sinkIt = nodes.find(sinkModPtr);
+            if (sinkIt == nodes.end()) continue;
+            
+            auto& sinkNode = sinkIt->second;
+            
+            glm::vec2 delta = sinkNode.position - sourceNode.position;
+            float distance = glm::length(delta);
+            
+            if (distance < 0.1f) continue;  // too close
+            
+            // Spring force: F = k * (distance - restLength)
+            float displacement = distance - config.springLength;
+            glm::vec2 force = delta * (config.springStrength * displacement / distance);
+            
+            // Apply force to both nodes (non-const access needed)
+            if (!sourceNode.isFixed) {
+              auto& mutableSourceNode = const_cast<LayoutNode&>(nodes.at(modPtr));
+              mutableSourceNode.velocity += force;
+            }
+            if (!sinkNode.isFixed) {
+              auto& mutableSinkNode = const_cast<LayoutNode&>(nodes.at(sinkModPtr));
+              mutableSinkNode.velocity -= force;
+            }
           }
         }
       }
@@ -187,7 +135,7 @@ void NodeEditorLayout::applyForces() {
   }
   
   // 3. Gentle attraction to center (keeps graph from drifting)
-  for (auto& [modPtr, node] : nodes) {
+  for (auto& [objectPtr, node] : nodes) {
     if (node.isFixed) continue;
     
     glm::vec2 toCenter = center - node.position;
@@ -196,7 +144,7 @@ void NodeEditorLayout::applyForces() {
 }
 
 void NodeEditorLayout::updatePositions() {
-  for (auto& [modPtr, node] : nodes) {
+  for (auto& [objectPtr, node] : nodes) {
     if (node.isFixed) continue;
     
     // Cap velocity
@@ -236,7 +184,7 @@ bool NodeEditorLayout::isStable() const {
   float totalMovement = 0.0f;
   int movableNodes = 0;
   
-  for (const auto& [modPtr, node] : nodes) {
+  for (const auto& [objectPtr, node] : nodes) {
     if (node.isFixed) continue;
     totalMovement += glm::length(node.velocity);
     movableNodes++;
@@ -248,33 +196,23 @@ bool NodeEditorLayout::isStable() const {
   return avgMovement < config.stopThreshold;
 }
 
-glm::vec2 NodeEditorLayout::getNodePosition(const ModPtr& modPtr) const {
-  auto it = nodes.find(modPtr);
+glm::vec2 NodeEditorLayout::getNodePosition(const NodeObjectPtr& objectPtr) const {
+  auto it = nodes.find(objectPtr);
   if (it == nodes.end()) return glm::vec2(0, 0);
   return it->second.position;
 }
 
-void NodeEditorLayout::setNodePosition(const ModPtr& modPtr, glm::vec2 pos) {
-  auto it = nodes.find(modPtr);
+void NodeEditorLayout::setNodePosition(const NodeObjectPtr& objectPtr, glm::vec2 pos) {
+  auto it = nodes.find(objectPtr);
   if (it != nodes.end()) {
     it->second.position = pos;
   }
 }
 
-void NodeEditorLayout::pinNode(const ModPtr& modPtr, bool fixed) {
-  auto it = nodes.find(modPtr);
+void NodeEditorLayout::pinNode(const NodeObjectPtr& objectPtr, bool fixed) {
+  auto it = nodes.find(objectPtr);
   if (it != nodes.end()) {
     it->second.isFixed = fixed;
-  }
-}
-
-void NodeEditorLayout::randomize() {
-  currentIteration = 0;
-  for (auto& [modPtr, node] : nodes) {
-    if (node.isFixed) continue;
-    node.position = glm::vec2(ofRandom(bounds.x * 0.25f, bounds.x * 0.75f),
-                              ofRandom(bounds.y * 0.25f, bounds.y * 0.75f));
-    node.velocity = glm::vec2(0, 0);
   }
 }
 

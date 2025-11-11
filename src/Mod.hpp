@@ -40,13 +40,23 @@ constexpr GLint INT_MODE = GL_RGB;
 
 
 using FboPtr = std::shared_ptr<PingPongFbo>;
+
 struct DrawingLayer {
+  int id;
   std::string name;
   FboPtr fboPtr;
   bool clearOnUpdate;
   ofBlendMode blendMode;
   bool isDrawn;
+  DrawingLayer() : id(nextId++) {}
+  DrawingLayer(const std::string& name_, FboPtr fboPtr_, bool clearOnUpdate_,
+               ofBlendMode blendMode_, bool isDrawn_)
+    : id(nextId++), name(name_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
+      blendMode(blendMode_), isDrawn(isDrawn_) {}
+private:
+  inline static int nextId = 1;
 };
+
 using DrawingLayerPtr = std::shared_ptr<DrawingLayer>;
 using DrawingLayerPtrs = std::vector<DrawingLayerPtr>;
 using NamedDrawingLayerPtrs = std::unordered_map<std::string, DrawingLayerPtrs>;
@@ -102,6 +112,7 @@ public:
   ofParameterGroup& getParameterGroup();
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   int getId() const;
+  const std::string& getName() const;
   
   virtual float getAgency() const;
   virtual void applyIntent(const Intent& intent, float intentStrength) {};

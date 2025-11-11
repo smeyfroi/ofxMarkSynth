@@ -12,6 +12,7 @@
 #include <string>
 #include <memory>
 #include "glm/vec2.hpp"
+#include <variant>
 
 
 
@@ -19,12 +20,15 @@ namespace ofxMarkSynth {
 
 
 
-class Mod;
 class Synth;
+class Mod;
 using ModPtr = std::shared_ptr<Mod>;
+struct DrawingLayer;
+using DrawingLayerPtr = std::shared_ptr<DrawingLayer>;
+using NodeObjectPtr = std::variant<ModPtr, DrawingLayerPtr>;
 
 struct LayoutNode {
-  ModPtr modPtr;
+  NodeObjectPtr objectPtr;
   glm::vec2 position;
   glm::vec2 velocity;
   bool isFixed { false };  // for pinning nodes
@@ -77,27 +81,21 @@ public:
     {}
   };
   
-  NodeEditorLayout(const Config& config = Config());
+  NodeEditorLayout(const Config& config = Config(),
+                   glm::vec2 bounds = glm::vec2(1600, 1200));
   
   // Initialize directly from Synth
-  void initialize(const std::shared_ptr<Synth> synthPtr,
-                  glm::vec2 bounds = glm::vec2(1600, 1200));
+  void initialize(const std::shared_ptr<Synth> synthPtr);
+  void addNode(const NodeObjectPtr& objectPtr);
   
-  // Run layout algorithm
   void compute(int iterations = -1);  // -1 = use maxIterations
+    bool step();  // returns true if still moving
   
-  // Single iteration (for incremental/animated layout)
-  bool step();  // returns true if still moving
+  glm::vec2 getNodePosition(const NodeObjectPtr& objectPtr) const;
+  void setNodePosition(const NodeObjectPtr& objectPtr, glm::vec2 pos);
+  void pinNode(const NodeObjectPtr& objectPtr, bool fixed = true);
   
-  // Get results
-  glm::vec2 getNodePosition(const ModPtr& modPtr) const;
-  void setNodePosition(const ModPtr& modPtr, glm::vec2 pos);
-  void pinNode(const ModPtr& modPtr, bool fixed = true);
-  
-  // Reset to random positions
   void randomize();
-  
-  // Check if layout has converged
   bool isStable() const;
   
   Config config;
@@ -106,10 +104,10 @@ private:
   void applyForces();
   void updatePositions();
   
-  std::unordered_map<ModPtr, LayoutNode> nodes;
+  std::unordered_map<NodeObjectPtr, LayoutNode> nodes;
   glm::vec2 bounds;
   glm::vec2 center;
-  int currentIteration { 0 };
+  int currentIteration;
 };
 
 

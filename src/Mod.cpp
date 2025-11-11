@@ -47,6 +47,10 @@ int Mod::getId() const {
   return id;
 }
 
+const std::string& Mod::getName() const {
+  return name;
+}
+
 std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(ofParameterGroup& group, const std::string& namePrefix) {
   for (const auto& paramPtr : group) {
     if (paramPtr->getName().rfind(namePrefix, 0) == 0) {
