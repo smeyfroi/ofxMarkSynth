@@ -70,14 +70,14 @@ public:
     glm::vec2 centerAttraction;
     
     Config()
-      : repulsionStrength(3000.0f)
+      : repulsionStrength(6000.0f)
       , springStrength(0.001f)
-      , springLength(400.0f)
-      , damping(0.85f)
-      , maxSpeed(50.0f)
+      , springLength(800.0f)
+      , damping(0.9f)
+      , maxSpeed(100.0f)
       , stopThreshold(0.5f)
-      , maxIterations(300)
-      , centerAttraction(0.0001f)
+      , maxIterations(800)
+      , centerAttraction(0.0f)
     {}
   };
   

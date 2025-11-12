@@ -11,10 +11,16 @@
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
 #include "ImGuiUtil.hpp"
+#include "NodeRenderUtil.hpp"
+
+
+
+// TODO: FBO handling is more complicated: a Mod can have a set of layers that it can draw on
 
 
 
 namespace ofxMarkSynth {
+using namespace NodeRenderUtil;
 
 
 
@@ -111,12 +117,57 @@ void Gui::buildInitialDockLayout(ImGuiID dockspaceId) {
   ImGui::DockBuilderFinish(dockspaceId);
 }
 
-// TODO: Replace with ofxSurfingImGui log window module
 void Gui::drawLog() {
-  ImGui::Begin("Log");
-  ImGui::BeginChild("LogScrollingRegion", ImVec2(0,0), false, ImGuiWindowFlags_HorizontalScrollbar);
-  ImGui::TextUnformatted(ofToString(ofGetFrameRate()).c_str());
-  ImGui::EndChild();
+  static ImGuiTextFilter filter;
+  static bool autoScroll = true;
+  static bool scrollToBottom = false;
+  
+  if (ImGui::Begin("Log")) {
+    auto& logger = synthPtr->loggerChannelPtr;
+    
+    if (ImGui::Button("Clear") && logger) logger->clear();
+    ImGui::SameLine();
+    if (ImGui::Button("Copy")) ImGui::LogToClipboard();
+    ImGui::SameLine();
+    ImGui::Checkbox("Auto-scroll", &autoScroll);
+    filter.Draw("Filter", 180);
+    ImGui::Separator();
+    
+    ImGui::BeginChild(
+                      "LogScrollRegion",
+                      ImVec2(0, 0),
+                      true,
+                      ImGuiWindowFlags_HorizontalScrollbar
+                      );
+    
+    for (auto &l : logger->getLogs()) {
+      if (!filter.PassFilter(l.message.c_str())) continue;
+      
+      ImVec4 color;
+      switch (l.level) {
+        case OF_LOG_VERBOSE: color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f); break;
+        case OF_LOG_NOTICE:  color = ImVec4(0.8f, 0.9f, 1.0f, 1.0f); break;
+        case OF_LOG_WARNING: color = ImVec4(1.0f, 0.8f, 0.3f, 1.0f); break;
+        case OF_LOG_ERROR:   color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break;
+        case OF_LOG_FATAL_ERROR:
+          color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); break;
+        default:             color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); break;
+      }
+      
+      ImGui::PushStyleColor(ImGuiCol_Text, color);
+      ImGui::TextUnformatted(l.message.c_str());
+      ImGui::PopStyleColor();
+    }
+    
+    if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) scrollToBottom = true;
+    
+    if (scrollToBottom) {
+      ImGui::SetScrollHereY(1.0f);  // 1.0 = bottom
+      scrollToBottom = false;
+    }
+    
+    ImGui::EndChild();
+  }
   ImGui::End();
 }
 
@@ -148,152 +199,6 @@ void Gui::drawSynthControls() {
   drawStatus();
   
   ImGui::End();
-}
-
-void Gui::drawVerticalSliders(ofParameterGroup& paramGroup) {
-  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
-  const ImVec2 sliderSize(24, 140);
-  const float colW = sliderSize.x + 0.0f;   // column width (slider + padding)
-  const float colH = sliderSize.y + 28.0f;   // add room for label below
-
-  if (ImGui::BeginTable(paramGroup.getName().c_str(), paramGroup.size(),
-                        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
-    
-    for (int i = 0; i < paramGroup.size(); ++i) {
-      ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, colW);
-    }
-    ImGui::TableNextRow();
-    
-    for (int i = 0; i < paramGroup.size(); ++i) {
-      const auto& name = paramGroup[i].getName();
-      
-      ImGui::TableSetColumnIndex(i);
-      ImGui::PushID(i);
-      
-      ImGui::BeginGroup();
-      // center slider within the fixed column
-      float xPad = (colW - sliderSize.x) * 0.5f;
-      ImGui::SetCursorPosX(ImGui::GetCursorPosX() + xPad);
-      
-      // copy current value to a local so VSliderFloat can edit it by pointer
-      float v = paramGroup[i].cast<float>().get();
-      if (ImGui::VSliderFloat("##v", sliderSize, &v, 0.0, 1.0, "%.1f")) {
-        paramGroup[i].cast<float>().set(v);
-      }
-      ImGui::SetItemTooltip("%s", name.c_str());
-      
-      ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad);
-      ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + colW);
-      ImGui::TextWrapped("%s", name.substr(0, 3).c_str());
-      ImGui::PopTextWrapPos();
-      ImGui::EndGroup();
-      
-      ImGui::PopID();
-    }
-    
-    ImGui::EndTable();
-  }
-  ImGui::PopStyleVar();
-}
-
-constexpr float sliderWidth = 200.0f;
-
-void Gui::addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
-  const auto& name = parameter.getName();
-  int value = parameter.get();
-  
-  ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderInt(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax())) {
-    parameter.set(value);
-  }
-  ImGui::SetItemTooltip("%s", name.c_str());
-  ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addContributionWeights(modPtr, parameter.getName());
-}
-
-void Gui::addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
-  const auto& name = parameter.getName();
-  float value = parameter.get();
-  
-  ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), "%.2f")) {
-    parameter.set(value);
-  }
-  ImGui::SetItemTooltip("%s", name.c_str());
-  ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addContributionWeights(modPtr, parameter.getName());
-}
-
-void Gui::addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter) {
-  const auto& name = parameter.getName();
-  ofFloatColor color = parameter.get();
-  float colorArray[4] = { color.r, color.g, color.b, color.a };
-  
-  ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::ColorEdit4(("##" + name).c_str(), colorArray, ImGuiColorEditFlags_Float)) {
-    parameter.set(ofFloatColor(colorArray[0], colorArray[1], colorArray[2], colorArray[3]));
-  }
-  ImGui::SetItemTooltip("%s", name.c_str());
-  ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addContributionWeights(modPtr, parameter.getName());
-}
-
-void Gui::addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
-  const auto& name = parameter.getName();
-  glm::vec2 value = parameter.get();
-  float valueArray[2] = { value.x, value.y };
-
-  ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderFloat2(("##" + name).c_str(), valueArray, parameter.getMin().x, parameter.getMax().x, "%.2f")) {
-    parameter.set(glm::vec2(valueArray[0], valueArray[1]));
-  }
-  ImGui::SetItemTooltip("%s", name.c_str());
-  ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addContributionWeights(modPtr, parameter.getName());
-}
-
-void Gui::addContributionWeights(const ModPtr& modPtr, const std::string& paramName) {
-  if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
-    auto& controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
-    ImGuiUtil::drawProportionalSegmentedLine(controllerPtr->wAuto, controllerPtr->wIntent, controllerPtr->wManual);
-  }
-}
-
-void Gui::addParameter(const ModPtr& modPtr, ofAbstractParameter& parameter) {
-  if (parameter.type() == typeid(ofParameterGroup).name()) {
-    if (ImGui::TreeNode(parameter.getName().c_str())) {
-      addParameterGroup(modPtr, parameter.castGroup());
-      ImGui::TreePop();
-    }
-  } else if (parameter.type() == typeid(ofParameter<int>).name()) {
-    auto& intParam = parameter.cast<int>();
-    addParameter(modPtr, intParam);
-  } else if (parameter.type() == typeid(ofParameter<float>).name()) {
-    auto& floatParam = parameter.cast<float>();
-    addParameter(modPtr, floatParam);
-  } else if (parameter.type() == typeid(ofParameter<ofFloatColor>).name()) {
-    auto& colorParam = parameter.cast<ofFloatColor>();
-    addParameter(modPtr, colorParam);
-  } else if (parameter.type() == typeid(ofParameter<glm::vec2>).name()) {
-    auto& vec2Param = parameter.cast<glm::vec2>();
-    addParameter(modPtr, vec2Param);
-  } else {
-    ImGui::Text("Unsupported parameter type: %s", parameter.type().c_str());
-  }
-}
-
-void Gui::addParameterGroup(const ModPtr& modPtr, ofParameterGroup& paramGroup) {
-  for (auto& parameterPtr : paramGroup) {
-    addParameter(modPtr, *parameterPtr);
-  }
 }
 
 void Gui::drawIntentControls() {
@@ -405,6 +310,72 @@ void Gui::drawStatus() {
   }
 }
 
+constexpr int FBO_PARAMETER_ID = 0;
+void Gui::drawNode(const ModPtr& modPtr) {
+  int modId = modPtr->getId();
+  
+  ImNodes::BeginNode(modId);
+
+  ImNodes::BeginNodeTitleBar();
+  ImGui::TextUnformatted(modPtr->getName().c_str());
+  ImGui::ProgressBar(modPtr->getAgency(), ImVec2(64.0f, 4.0f), "");
+  ImNodes::EndNodeTitleBar();
+  
+  // Input attributes (sinks)
+  for (const auto& [name, id] : modPtr->sinkNameIdMap) {
+    ImNodes::BeginInputAttribute(NodeEditorModel::sinkId(modId, id));
+    if (!modPtr->parameters.contains(name)) {
+      ImGui::TextUnformatted(name.c_str());
+    } else {
+      auto& p = modPtr->parameters.get(name);
+      addParameter(modPtr, p);
+    }
+    ImNodes::EndInputAttribute();
+  }
+  ImNodes::BeginInputAttribute(NodeEditorModel::sinkId(modId, FBO_PARAMETER_ID));
+  ImGui::TextUnformatted("FBO");
+  ImNodes::EndInputAttribute();
+
+  for (auto& parameter : modPtr->parameters) {
+    if (!modPtr->sinkNameIdMap.contains(parameter->getName())) {
+      addParameter(modPtr, *parameter);
+    }
+  }
+
+  // Output attributes (sources)
+  for (const auto& [name, id] : modPtr->sourceNameIdMap) {
+    ImNodes::BeginOutputAttribute(NodeEditorModel::sourceId(modId, id));
+    ImGui::TextUnformatted(name.c_str());
+    ImNodes::EndOutputAttribute();
+  }
+  
+  ImNodes::EndNode();
+}
+
+void Gui::drawNode(const DrawingLayerPtr& layerPtr) {
+  int layerId = layerPtr->id;
+  
+  ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(128, 128, 50, 255));
+  ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(128, 128, 75, 255));
+  ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(128, 128, 100, 255));
+
+  ImNodes::BeginNode(layerId);
+
+  ImNodes::BeginNodeTitleBar();
+  ImGui::TextUnformatted(layerPtr->name.c_str());
+  ImNodes::EndNodeTitleBar();
+  
+  ImNodes::BeginOutputAttribute(NodeEditorModel::sourceId(layerId, FBO_PARAMETER_ID));
+  ImGui::TextUnformatted("FBO");
+  ImNodes::EndInputAttribute();
+  
+  ImNodes::EndNode();
+  
+  ImNodes::PopColorStyle();
+  ImNodes::PopColorStyle();
+  ImNodes::PopColorStyle();
+}
+
 void Gui::drawNodeEditor() {
   // Rebuild node model if dirty
   if (nodeEditorDirty) {
@@ -428,59 +399,35 @@ void Gui::drawNodeEditor() {
     }
   }
   
-  // Toolbar for layout controls
-  if (ImGui::Button("Compute Layout")) {
-    nodeEditorModel.computeLayout();
-    layoutComputed = true;
-    animateLayout = false;
-  }
-  ImGui::SameLine();
-  if (ImGui::Button("Animate Layout")) {
+  if (ImGui::Button("Random Layout")) {
     nodeEditorModel.resetLayout();
     layoutComputed = false;
     animateLayout = true;
   }
-  ImGui::SameLine();
-  ImGui::Checkbox("Auto-animate", &animateLayout);
-  
   ImGui::SameLine();
   ImGui::Text("|");
   
   // Save/Load buttons
   ImGui::SameLine();
   if (ImGui::Button("Save Layout")) {
-      // Sync current positions from imnodes before saving
-      nodeEditorModel.syncPositionsFromImNodes();
-      if (nodeEditorModel.saveLayout()) {
-          ofLogNotice("Gui") << "Saved node layout for: " << synthPtr->name;
-      } else {
-          ofLogError("Gui") << "Failed to save node layout";
-      }
+    // Sync current positions from imnodes before saving
+    nodeEditorModel.syncPositionsFromImNodes();
+    if (nodeEditorModel.saveLayout()) {
+      ofLogNotice("Gui") << "Saved node layout for: " << synthPtr->name;
+    } else {
+      ofLogError("Gui") << "Failed to save node layout";
+    }
   }
-  
   ImGui::SameLine();
   if (ImGui::Button("Load Layout")) {
-      if (nodeEditorModel.loadLayout()) {
-          layoutComputed = true;
-          animateLayout = false;
-          ofLogNotice("Gui") << "Loaded node layout for: " << synthPtr->name;
-      } else {
-          ofLogError("Gui") << "Failed to load node layout";
-      }
+    if (nodeEditorModel.loadLayout()) {
+      layoutComputed = true;
+      animateLayout = false;
+      ofLogNotice("Gui") << "Loaded node layout for: " << synthPtr->name;
+    } else {
+      ofLogError("Gui") << "Failed to load node layout";
+    }
   }
-  
-  // Status indicators
-  if (nodeEditorModel.hasStoredLayout()) {
-      ImGui::SameLine();
-      ImGui::TextColored(ImVec4(0.4f, 0.8f, 0.4f, 1.0f), "[Saved]");
-  }
-  
-  if (nodeEditorModel.isLayoutAnimating()) {
-    ImGui::SameLine();
-    ImGui::TextColored(GREEN_COLOR, "[Animating...]");
-  }
-  
-  ImGui::Separator();
   
   // Run animated layout if enabled and not yet computed
   if (animateLayout && !layoutComputed) {
@@ -498,73 +445,62 @@ void Gui::drawNodeEditor() {
 
   // Draw nodes
   for (const auto& node : nodeEditorModel.nodes) {
-    ModPtr modPtr = node.modPtr;
-    int modId = modPtr->getId();
-    
-    ImNodes::BeginNode(modId);
-    
-    ImNodes::BeginNodeTitleBar();
-    ImGui::TextUnformatted(modPtr->name.c_str());
-    ImGui::ProgressBar(modPtr->getAgency(), ImVec2(64.0f, 4.0f), "");
-    ImNodes::EndNodeTitleBar();
-    
-    // Input attributes (sinks)
-    for (const auto& [name, id] : modPtr->sinkNameIdMap) {
-      ImNodes::BeginInputAttribute(NodeEditorModel::sinkId(modId, id));
-      if (!modPtr->parameters.contains(name)) {
-        ImGui::TextUnformatted(name.c_str());
-      } else {
-        auto& p = modPtr->parameters.get(name);
-        addParameter(modPtr, p);
-      }
-      ImNodes::EndInputAttribute();
+    const auto& objectPtr = node.objectPtr;
+    if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
+      drawNode(*modPtrPtr);
+    } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
+      drawNode(*drawingLayerPtrPtr);
+    } else {
+      ofLogError() << "Gui draw node with unknown objectPtr type";
     }
-
-    for (auto& parameter : modPtr->parameters) {
-      if (!modPtr->sinkNameIdMap.contains(parameter->getName())) {
-        addParameter(modPtr, *parameter);
-      }
-    }
-
-    // Output attributes (sources)
-    for (const auto& [name, id] : modPtr->sourceNameIdMap) {
-      ImNodes::BeginOutputAttribute(NodeEditorModel::sourceId(modId, id));
-      ImGui::TextUnformatted(name.c_str());
-      ImNodes::EndOutputAttribute();
-    }
-      
-    ImGui::Dummy(ImVec2(0.0f, 0.0f));
-
-    ImNodes::EndNode();
   }
   
-  // Draw links (connections)
+  // Draw links
   int linkId = 0; // TODO: make this stable when we make the node editor editable
   
   for (const auto& node : nodeEditorModel.nodes) {
-    ModPtr modPtr = node.modPtr;
-    int sourceModId = modPtr->getId();
+    const auto& objectPtr = node.objectPtr;
+    if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
+      ModPtr modPtr = *modPtrPtr;
+      int sourceModId = modPtr->getId();
 
-    for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
-      for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
-        int sinkModId = sinkModPtr->getId();
-        
-        // Check if this link is connected to a selected node
-        // Use IsNodeSelected which is callable during editor scope
-        bool isConnectedToSelection = 
-          ImNodes::IsNodeSelected(sourceModId) || 
-          ImNodes::IsNodeSelected(sinkModId);
-        
-        // Highlight links connected to selected nodes with bright green
-        if (isConnectedToSelection) {
-          ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(100, 255, 100, 255));
+      for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
+        for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
+          int sinkModId = sinkModPtr->getId();
+          bool isConnectedToSelection = ImNodes::IsNodeSelected(sourceModId) || ImNodes::IsNodeSelected(sinkModId);
+
+          if (isConnectedToSelection) {
+            ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(100, 255, 100, 255));
+          }
+          
+          ImNodes::Link(linkId++,
+                        NodeEditorModel::sourceId(sourceModId, sourceId),
+                        NodeEditorModel::sinkId(sinkModId, sinkId));
+          
+          if (isConnectedToSelection) {
+            ImNodes::PopColorStyle();
+          }
         }
-        
-        ImNodes::Link(linkId++,
-                      NodeEditorModel::sourceId(sourceModId, sourceId),
-                      NodeEditorModel::sinkId(sinkModId, sinkId));
-        
-        if (isConnectedToSelection) {
+      }
+      
+      // Connect FROM the Layer to the Mod
+      for (const auto& [layerName, layerPtrs] : modPtr->namedDrawingLayerPtrs) {
+        for (const auto& layerPtr : layerPtrs) {
+          int layerNodeId = layerPtr->id;
+          int alpha = 64;
+          auto currentLayerPtr = modPtr->getCurrentNamedDrawingLayerPtr(layerName);
+          if (currentLayerPtr && currentLayerPtr->get()->id == layerPtr->id) alpha = 255;
+          bool isConnectedToSelection = ImNodes::IsNodeSelected(sourceModId) || ImNodes::IsNodeSelected(layerNodeId);
+          if (isConnectedToSelection) {
+            ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(255, 255, 100, alpha));
+          } else {
+            ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(200, 255, 50, alpha));
+          }
+          
+          ImNodes::Link(linkId++,
+                        NodeEditorModel::sourceId(layerNodeId, FBO_PARAMETER_ID),
+                        NodeEditorModel::sinkId(sourceModId, FBO_PARAMETER_ID));
+          
           ImNodes::PopColorStyle();
         }
       }
@@ -575,8 +511,7 @@ void Gui::drawNodeEditor() {
 
   ImNodes::EndNodeEditor();
   
-  // Sync positions from imnodes back to model after every frame
-  // This ensures manual dragging is captured
+  // Sync positions from imnodes back to model after every frame to capture manual dragging
   nodeEditorModel.syncPositionsFromImNodes();
   
   ImGui::End();

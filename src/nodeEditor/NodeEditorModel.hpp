@@ -23,6 +23,8 @@ class Synth;
 
 using NodeObjectPtr = std::variant<ModPtr, DrawingLayerPtr>;
 
+static constexpr std::string emptyString = "";
+
 struct NodeEditorNode {
   NodeObjectPtr objectPtr;
   glm::vec2 position;
@@ -43,7 +45,6 @@ struct NodeEditorNode {
       return (*drawingLayerPtrPtr)->name;
     } else {
       ofLogError() << "NodeEditorNode::getName() with unknown objectPtr type";
-      static const std::string emptyString = "";
       return emptyString;
     }
   };

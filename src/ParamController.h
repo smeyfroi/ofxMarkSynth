@@ -50,7 +50,7 @@ public:
     return ofGetElapsedTimef() - lastManualUpdateTime;
   }
   
-  bool isManualControlActive(float thresholdTime = 0.2) const {
+  bool isManualControlActive(float thresholdTime = 0.5) const {
     return getTimeSinceLastManualUpdate() < thresholdTime;
   }
   

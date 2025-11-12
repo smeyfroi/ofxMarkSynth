@@ -35,25 +35,28 @@ void NodeEditorLayout::addNode(const NodeObjectPtr& nodeObjectPtr) {
     bool hasSources = !(*modPtrPtr)->sourceNameIdMap.empty();
     bool hasSinks = !(*modPtrPtr)->sinkNameIdMap.empty();
     if (hasSources && !hasSinks) {
-      node.position = glm::vec2(ofRandom(bounds.x * 0.1f, bounds.x * 0.3f),
-                                ofRandom(bounds.y * 0.1f, bounds.y * 0.9f));
+      node.position = glm::vec2(ofRandom(bounds.x * 0.0f, bounds.x * 0.2f),
+                                ofRandom(bounds.y * 0.1f, bounds.y * 0.8f));
     } else if (!hasSources && hasSinks) {
-      node.position = glm::vec2(ofRandom(bounds.x * 0.3f, bounds.x * 0.6f),
-                                ofRandom(bounds.y * 0.1f, bounds.y * 0.9f));
+      node.position = glm::vec2(ofRandom(bounds.x * 0.2f, bounds.x * 0.5f),
+                                ofRandom(bounds.y * 0.1f, bounds.y * 0.8f));
     } else {
-      node.position = glm::vec2(ofRandom(bounds.x * 0.6f, bounds.x * 0.9f),
-                                ofRandom(bounds.y * 0.1f, bounds.y * 0.9f));
+      node.position = glm::vec2(ofRandom(bounds.x * 0.5f, bounds.x * 0.9f),
+                                ofRandom(bounds.y * 0.1f, bounds.y * 0.8f));
     }
   } else if (auto layerPtrPtr = std::get_if<DrawingLayerPtr>(&nodeObjectPtr)) {
-    node.position = glm::vec2(ofRandom(bounds.x * 0.3f, bounds.x * 0.7f),
-                              ofRandom(bounds.y * 0.8f, bounds.y * 0.9f));
+    node.position = glm::vec2(ofRandom(bounds.x * 0.4f, bounds.x * 0.6f),
+                              ofRandom(bounds.y * 0.9f, bounds.y * 0.95f));
   } else {
     ofLogError() << "NodeEditorLayout::addNode: unknown node object type: " << typeid(nodeObjectPtr).name();
+    return;
   }
+  nodes.emplace(nodeObjectPtr, node);
 }
 
 void NodeEditorLayout::compute(int iterations) {
   if (iterations < 0) iterations = config.maxIterations;
+  currentIteration = 0;
   
   for (int i = 0; i < iterations; ++i) {
     if (!step()) break;  // early exit if stable

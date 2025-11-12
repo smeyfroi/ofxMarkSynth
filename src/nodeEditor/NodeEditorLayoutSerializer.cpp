@@ -50,7 +50,7 @@ nlohmann::json NodeEditorLayoutSerializer::toJson(const NodeEditorModel& model) 
     nlohmann::json nodeJson;
     if (const auto modPtr = std::get_if<std::shared_ptr<Mod>>(&node.objectPtr)) {
       nodeJson["type"] = "Mod";
-    } else if (const auto layerPtr = std::get_if<std::shared_ptr<DrawingLayerPtr>>(&node.objectPtr)) {
+    } else if (const auto layerPtr = std::get_if<std::shared_ptr<DrawingLayer>>(&node.objectPtr)) {
       nodeJson["type"] = "DrawingLayer";
     }
     nodeJson["id"] = node.getId();
@@ -107,7 +107,7 @@ void NodeEditorLayoutSerializer::fromJson(const nlohmann::json& j,
   std::unordered_map<std::string, glm::vec2> savedPositions;
   
   for (const auto& nodeJson : j["nodes"]) {
-    std::string modName = nodeJson["mod_name"];
+    std::string modName = nodeJson["name"];
     glm::vec2 pos;
     pos.x = nodeJson["position"]["x"];
     pos.y = nodeJson["position"]["y"];

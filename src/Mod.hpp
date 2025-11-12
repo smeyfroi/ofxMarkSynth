@@ -54,7 +54,7 @@ struct DrawingLayer {
     : id(nextId++), name(name_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
       blendMode(blendMode_), isDrawn(isDrawn_) {}
 private:
-  inline static int nextId = 1;
+  inline static int nextId = -1000; // negative to avoid clashing with Mod ids
 };
 
 using DrawingLayerPtr = std::shared_ptr<DrawingLayer>;
@@ -133,10 +133,12 @@ public:
   
   static constexpr int SINK_CHANGE_LAYER = -300;
 
+  // TODO: clean all this up
   friend class Gui;
   friend class NodeEditorLayout;
   friend class NodeEditorLayoutSerializer;
-  
+  std::map<std::string, BaseParamController*> sourceNameControllerPtrMap; // for the GUI to access
+
 protected:
   std::string name;
   
@@ -147,7 +149,6 @@ protected:
   virtual void initParameters() = 0;
 
   std::map<std::string, int> sourceNameIdMap;
-  std::map<std::string, BaseParamController*> sourceNameControllerPtrMap;
   std::map<std::string, int> sinkNameIdMap;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);

@@ -19,6 +19,7 @@
 #include "Gui.hpp"
 #include "NodeEditorModel.hpp"
 #include "NodeEditorLayout.hpp"
+#include "LoggerChannel.hpp"
 
 
 
@@ -154,7 +155,10 @@ private:
 #endif
   
   std::vector<SaveToFileThread*> saveToFileThreads;
+  
+  std::shared_ptr<LoggerChannel> loggerChannelPtr;
 };
+
 
 
 template <typename ModT>
@@ -173,6 +177,7 @@ ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModCon
 
 
 std::string saveFilePath(const std::string& filename);
+
 
 
 } // ofxMarkSynth

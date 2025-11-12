@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 void NodeEditorModel::buildFromSynth(const std::shared_ptr<Synth> synthPtr_) {
   synthPtr = synthPtr_;
   nodes.clear();
-  layoutEnginePtr = std::make_unique<NodeEditorLayout>(synthPtr_);
+  layoutEnginePtr = std::make_unique<NodeEditorLayout>();
   
   // Build node list from Synth and its modPtrs
   nodes.emplace_back(NodeEditorNode {
@@ -48,15 +48,15 @@ int getId(NodeObjectPtr objectPtr) {
   if (const auto objectPtrPtr = std::get_if<std::shared_ptr<Mod>>(&objectPtr)) {
     return (*objectPtrPtr)->getId();
   } else if (const auto objectPtrPtr = std::get_if<std::shared_ptr<DrawingLayer>>(&objectPtr)) {
-    objectPtrPtr->get()->id;
+    return objectPtrPtr->get()->id;
   } else {
     ofLogError() << "getId called with unknown NodeObjectPtr type";
+    return 0;
   }
 }
 
 void NodeEditorModel::computeLayout() {
   if (!layoutEnginePtr) return;
-  
   for (auto& node : nodes) {
     glm::vec2 pos = layoutEnginePtr->getNodePosition(node.objectPtr);
     node.position = pos;

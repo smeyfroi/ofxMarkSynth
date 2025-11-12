@@ -31,6 +31,9 @@ Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
 compositeSize { compositeSize_ }
 {
+  loggerChannelPtr = std::make_shared<LoggerChannel>();
+  ofSetLoggerChannel(loggerChannelPtr);
+  
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   

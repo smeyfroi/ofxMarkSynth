@@ -38,20 +38,13 @@ private:
   void drawLog();
   void drawSynthControls();
   
-  void drawVerticalSliders(ofParameterGroup& paramGroup);
-  void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter);
-  void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter);
-  void addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter);
-  void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter);
-  void addParameter(const ModPtr& modPtr, ofAbstractParameter& parameterPtr);
-  void addParameterGroup(const ModPtr& modPtr, ofParameterGroup& paramGroup);
-  void addContributionWeights(const ModPtr& modPtr, const std::string& paramName);
-
   void drawIntentControls();
   void drawLayerControls();
   void drawDisplayControls();
   void drawInternalState();
   void drawStatus();
+  void drawNode(const ModPtr& modPtr);
+  void drawNode(const DrawingLayerPtr& layerPtr);
   void drawNodeEditor();
 
   std::shared_ptr<Synth> synthPtr;
