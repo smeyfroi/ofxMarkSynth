@@ -12,23 +12,26 @@
 namespace ofxMarkSynth {
 
 
-AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, const std::string& micDeviceName, bool recordAudio, const std::filesystem::path& recordingPath, const std::filesystem::path& rootSourceMaterialPath)
-: Mod { synthPtr, name, std::move(config) },
-tuningVisible(false)
+AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
+                                       const std::filesystem::path& rootSourceMaterialPath,
+                                       const std::filesystem::path& sourceMaterialPath)
+: Mod { synthPtr, name, std::move(config) }
+{
+  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/sourceMaterialPath);
+  initialise();
+}
+
+AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
+                                       const std::string& micDeviceName,
+                                       bool recordAudio, const std::filesystem::path& recordingPath)
+: Mod { synthPtr, name, std::move(config) }
 {
   std::filesystem::create_directory(recordingPath);
+  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(micDeviceName, recordAudio, recordingPath);
+  initialise();
+}
 
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(micDeviceName, recordAudio, recordingPath);
-  
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Bell Plates.wav");
-//        audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"percussion/Alex Petcu Sound Bath.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"belfast/20250208-trombone-melody.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"cork/audio-2025-06-16-11-16-14-782.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"cork/audio-2025-06-16-11-25-03-931.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/nightsong.wav");
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"misc/treganna.wav");
-  
+void AudioDataSourceMod::initialise() {
   audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
   audioDataProcessorPtr->setDefaultValiditySpecs();
   audioDataPlotsPtr = std::make_shared<ofxAudioData::Plots>(audioDataProcessorPtr);
@@ -155,7 +158,7 @@ void AudioDataSourceMod::update() {
   if (!audioDataProcessorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no audioDataProcessor"; return; }
   
   audioDataProcessorPtr->update();
-  
+
   if (!audioDataProcessorPtr->isDataUpdated(lastUpdated)) return;
   
   lastUpdated = audioDataProcessorPtr->getLastUpdateTimestamp();

@@ -1,51 +1,38 @@
 #include "ofApp.h"
-
-//--------------------------------------------------------------
-ofxMarkSynth::ModPtrs ofApp::createMods() {
-  auto mods = ofxMarkSynth::ModPtrs {};
-
-  auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
-    {"CreatedPerUpdate", "0.4"}
-  }, 2);
-  
-  auto pointIntrospectorModPtr = addMod<ofxMarkSynth::IntrospectorMod>(mods, "Introspector", {}, introspectorPtr);
-  randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
-                                 pointIntrospectorModPtr,
-                                 ofxMarkSynth::IntrospectorMod::SINK_POINTS);
-  
-  return mods;
-}
-
-ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fboConfigPtrs;
-  ofFloatColor backgroundColor { 0.3, 0.0, 0.3, 0.7 };
-  addFboConfigPtr(fboConfigPtrs, "background", fboPtr, ofGetWindowSize(), GL_RGBA, GL_CLAMP_TO_EDGE, backgroundColor, false, OF_BLENDMODE_ALPHA);
-  return fboConfigPtrs;
-}
+#include <memory>
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
+  ofSetFrameRate(30);
+    
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Simple", ofxMarkSynth::ModConfig {
+    {"Back Color", "0.0, 0.0, 0.0, 1.0"},
+  }, false, ofGetWindowSize());
+
+  auto randomVecSourceModPtr = synthPtr->addMod<ofxMarkSynth::RandomVecSourceMod>("Random Points", {
+    {"CreatedPerUpdate", "0.4"}
+  }, 2);
   
-  introspectorPtr = std::make_shared<Introspector>();
-  introspectorPtr->visible = true;
+  auto pointIntrospectorModPtr = synthPtr->addMod<ofxMarkSynth::IntrospectorMod>("Introspector", {});
+
+  ofxMarkSynth::connectSourceToSinks(randomVecSourceModPtr, {
+    { ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
+      {{ pointIntrospectorModPtr, ofxMarkSynth::IntrospectorMod::SINK_POINTS }}
+    }
+  });
   
-  synth.configure(createFboConfigs(), createMods(), ofGetWindowSize());
-  
-  parameters.add(synth.getParameterGroup("Synth"));
+  parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
-  synth.minimizeAllGuiGroupsRecursive(gui);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  synth.update();
-  introspectorPtr->update();
+  synthPtr->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
-  introspectorPtr->draw(ofGetWindowWidth());
+  synthPtr->draw();
   if (guiVisible) gui.draw();
 }
 
@@ -56,8 +43,7 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
-  if (introspectorPtr->keyPressed(key)) return;
-  if (synth.keyPressed(key)) return;
+  if (synthPtr->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

@@ -25,7 +25,7 @@ common:
 	# dependencies with other addons, a list of them separated by spaces
 	# or use += in several lines
 	ADDON_DEPENDENCIES = ofxIntrospector ofxGui ofxAudioData ofxRenderer
-	ADDON_DEPENDENCIES += ofxDividedArea ofxMotionFromVideo ofxParticleSet
+	ADDON_DEPENDENCIES += ofxDividedArea ofxMotionFromVideo ofxParticleSet ofxParticleField
 	ADDON_DEPENDENCIES += ofxPlottable ofxPointClusters ofxSomPalette
 	ADDON_DEPENDENCIES += ofxConvexHull ofxTimeMeasurements ofxTinyEXR
 	ADDON_DEPENDENCIES += ofxFFmpegRecorder ofxFatLines ofxImGui

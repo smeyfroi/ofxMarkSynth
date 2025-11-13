@@ -22,11 +22,7 @@ public:
 	void gotMessage(ofMessage msg);
 	
 private:
-	ofxMarkSynth::Synth synth;
-  ofxMarkSynth::ModPtrs createMods();
-  ofxMarkSynth::FboConfigPtrs createFboConfigs();
-  ofxMarkSynth::FboPtr fboPtr = std::make_shared<PingPongFbo>();
-  std::shared_ptr<Introspector> introspectorPtr;
+  std::shared_ptr<ofxMarkSynth::Synth> synthPtr;
 
   bool guiVisible { true };
   ofxPanel gui;

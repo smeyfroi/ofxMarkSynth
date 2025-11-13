@@ -11,10 +11,12 @@
 namespace ofxMarkSynth {
 
 
-IntrospectorMod::IntrospectorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::shared_ptr<Introspector> introspectorPtr_)
-: Mod { synthPtr, name, std::move(config) },
-  introspectorPtr { introspectorPtr_ }
+IntrospectorMod::IntrospectorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+: Mod { synthPtr, name, std::move(config) }
 {
+  introspectorPtr = std::make_shared<Introspector>();
+  introspectorPtr->visible = true;
+
   sinkNameIdMap = {
     { "points", SINK_POINTS },
     { "horizontalLines1", SINK_HORIZONTAL_LINES_1 },
@@ -35,6 +37,8 @@ void IntrospectorMod::initParameters() {
 
 void IntrospectorMod::update() {
   if (!introspectorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no introspector"; return; }
+  
+  introspectorPtr->update();
 
   std::for_each(newPoints.begin(), newPoints.end(), [&](const auto& p) {
     introspectorPtr->addCircle(p.x, p.y, pointSizeParameter/ofGetWindowWidth(), colorParameter, true, pointFadeParameter);
@@ -55,6 +59,14 @@ void IntrospectorMod::update() {
     introspectorPtr->addLine(0, v, 1.0, v, horizontalLine3ColorParameter, horizontalLineFadeParameter);
   });
   newHorizontalLines3.clear();
+}
+
+void IntrospectorMod::draw() {
+  introspectorPtr->draw(1.0);
+}
+
+bool IntrospectorMod::keyPressed(int key) {
+  return introspectorPtr->keyPressed(key);
 }
 
 void IntrospectorMod::receive(int sinkId, const float& value) {

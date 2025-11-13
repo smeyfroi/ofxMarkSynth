@@ -46,6 +46,7 @@ public:
   template <typename ModT, typename... Args>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
+  void addMod(ofxMarkSynth::ModPtr modPtr) { modPtrs.insert({ modPtr->getName(), modPtr }); }
   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);

@@ -21,11 +21,12 @@ namespace ofxMarkSynth {
 class IntrospectorMod : public Mod {
 
 public:
-  IntrospectorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::shared_ptr<Introspector> introspectorPtr_);
+  IntrospectorMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
   void update() override;
+  void draw() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
-  std::shared_ptr<Introspector> introspectorPtr;
+  bool keyPressed(int key) override;
 
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_HORIZONTAL_LINES_1 = 10;
@@ -36,6 +37,8 @@ protected:
   void initParameters() override;
 
 private:
+  std::shared_ptr<Introspector> introspectorPtr;
+
   ofParameter<float> pointSizeParameter { "PointSize", 1.0, 0.0, 4.0 };
   ofParameter<int> pointFadeParameter { "PointFade", 30, 0, 240 };
   ofParameter<ofColor> colorParameter { "Color", ofColor::yellow, ofColor(0, 255), ofColor(255, 255) };

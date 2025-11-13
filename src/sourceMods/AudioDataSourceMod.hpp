@@ -17,9 +17,13 @@ class AudioDataSourceMod : public Mod {
 
 public:
   AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
+                     const std::filesystem::path& rootSourceMaterialPath,
+                     const std::filesystem::path& sourceMaterialPath);
+  AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
                      const std::string& micDeviceName,
-                     bool recordAudio, const std::filesystem::path& recordingPath,
-                     const std::filesystem::path& rootSourceMaterialPath);
+                     bool recordAudio,
+                     const std::filesystem::path& recordingPath);
+  void initialise();
   void shutdown() override;
   void update() override;
   void draw() override;
@@ -69,7 +73,7 @@ private:
   void emitSpectral3DPoints();
   void emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar);
 
-  bool tuningVisible;
+  bool tuningVisible { false };
 };
 
 

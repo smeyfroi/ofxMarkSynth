@@ -34,4 +34,5 @@
 #include "SoftCircleMod.hpp"
 #include "ParticleFieldMod.hpp"
 
+#include "ModFactory.hpp"
 #include "Synth.hpp"
