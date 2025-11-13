@@ -50,7 +50,7 @@ int getId(NodeObjectPtr objectPtr) {
   } else if (const auto objectPtrPtr = std::get_if<std::shared_ptr<DrawingLayer>>(&objectPtr)) {
     return objectPtrPtr->get()->id;
   } else {
-    ofLogError() << "getId called with unknown NodeObjectPtr type";
+    ofLogError("NodeEditorModel") << "getId called with unknown NodeObjectPtr type";
     return 0;
   }
 }

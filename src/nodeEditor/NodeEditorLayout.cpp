@@ -48,7 +48,7 @@ void NodeEditorLayout::addNode(const NodeObjectPtr& nodeObjectPtr) {
     node.position = glm::vec2(ofRandom(bounds.x * 0.4f, bounds.x * 0.6f),
                               ofRandom(bounds.y * 0.9f, bounds.y * 0.95f));
   } else {
-    ofLogError() << "NodeEditorLayout::addNode: unknown node object type: " << typeid(nodeObjectPtr).name();
+    ofLogError("NodeEditorLayout") << "NodeEditorLayout::addNode: unknown node object type";
     return;
   }
   nodes.emplace(nodeObjectPtr, node);

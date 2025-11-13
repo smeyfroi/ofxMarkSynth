@@ -58,7 +58,7 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
       emit(SOURCE_FLOAT, value * multiplierController.value + adderController.value);
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("MultiplyAddMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 

@@ -146,7 +146,7 @@ void SomPaletteMod::receive(int sinkId, const glm::vec3& v) {
       newVecs.push_back(v);
       break;
     default:
-      ofLogError() << "glm::vec3 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SomPaletteMod") << "glm::vec3 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -154,12 +154,12 @@ void SomPaletteMod::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_SWITCH_PALETTE:
       if (somPalette.nextPaletteIsReady() && v > 0.5f) { // TODO: Convert to a parameter *****************
-        ofLogNotice() << "SomPaletteMod switching palette";
+        ofLogNotice("SomPaletteMod") << "SomPaletteMod switching palette";
         somPalette.switchPalette();
       }
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SomPaletteMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 

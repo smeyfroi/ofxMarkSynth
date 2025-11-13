@@ -64,7 +64,7 @@ void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
       impulseStrengthController.updateAuto(value, getAgency());
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("FluidRadialImpulseMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -74,7 +74,7 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
       newPoints.push_back(point);
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("FluidRadialImpulseMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 

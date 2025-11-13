@@ -186,7 +186,7 @@ void PathMod::receive(int sinkId, const glm::vec2& v) {
       newVecs.push_back(v);
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("PathMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 

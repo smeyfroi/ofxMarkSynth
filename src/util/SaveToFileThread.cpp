@@ -20,12 +20,12 @@ void SaveToFileThread::save(const std::string& filepath_, ofFloatPixels&& pixels
 }
 
 void SaveToFileThread::threadedFunction() {
-  ofLogNotice() << "Saving drawing to " << filepath;
+  ofLogNotice("SaveToFileThread") << "Saving drawing to " << filepath;
   
   ofxTinyEXR exrIO;
   bool saved = exrIO.savePixels(pixels, filepath);
   activeThreadCount--;
-  if (!saved) ofLogWarning() << "Failed to save EXR image";
+  if (!saved) ofLogError("SaveToFileThread") << "Failed to save EXR image";
   
-  ofLogNotice() << "Done saving drawing to " << filepath;
+  ofLogNotice("SaveToFileThread") << "Done saving drawing to " << filepath;
 }

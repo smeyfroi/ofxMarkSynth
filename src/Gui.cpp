@@ -451,7 +451,7 @@ void Gui::drawNodeEditor() {
     } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
       drawNode(*drawingLayerPtrPtr);
     } else {
-      ofLogError() << "Gui draw node with unknown objectPtr type";
+      ofLogError("Gui") << "Gui draw node with unknown objectPtr type";
     }
   }
   

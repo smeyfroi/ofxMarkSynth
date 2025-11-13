@@ -123,7 +123,7 @@ void SandLineMod::receive(int sinkId, const glm::vec2& point) {
       newPoints.push_back(point);
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SandLineMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -133,7 +133,7 @@ void SandLineMod::receive(int sinkId, const glm::vec4& v) {
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SandLineMod") << "glm::vec4 receive for unknown sinkId " << sinkId;
   }
 }
 

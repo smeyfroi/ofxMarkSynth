@@ -83,7 +83,7 @@ ofParameterGroup& Mod::getParameterGroup() {
     initParameters();
     for (const auto& [k, v] : config) {
       if (!trySetParameterFromString(parameters, k, v)) {
-        ofLogError() << "bad parameter in " << typeid(*this).name() << " with name " << k;
+        ofLogError("Mod") << "Bad parameter: " << k;
       }
     }
   }
@@ -107,14 +107,14 @@ float Mod::getAgency() const {
 
 int Mod::getSourceId(const std::string& sourceName) {
   if (!sourceNameIdMap.contains(sourceName)) {
-    ofLogError() << "bad source name in " << typeid(*this).name() << " with name " << sourceName;
+    ofLogError("Mod") << "Bad source name: " << sourceName;
   }
   return sourceNameIdMap.at(sourceName);
 }
 
 int Mod::getSinkId(const std::string& sinkName) {
   if (!sinkNameIdMap.contains(sinkName)) {
-    ofLogError() << "bad sink name in " << typeid(*this).name() << " with name " << sinkName;
+    ofLogError("Mod") << "Bad sink name: " << sinkName;
   }
   return sinkNameIdMap.at(sinkName);
 }
@@ -139,31 +139,31 @@ template void Mod::emit(int sourceId, const ofPath& value);
 template void Mod::emit(int sourceId, const ofFbo& value);
 
 void Mod::receive(int sinkId, const glm::vec2& point) {
-  ofLogError() << "bad receive of glm::vec2 in " << typeid(*this).name();
+  ofLogError("Mod") << "Bad receive of glm::vec2";
 }
 
 void Mod::receive(int sinkId, const glm::vec3& point) {
-  ofLogError() << "bad receive of glm::vec3 in " << typeid(*this).name();
+  ofLogError("Mod") << "Bad receive of glm::vec3";
 }
 
 void Mod::receive(int sinkId, const glm::vec4& point) {
-  ofLogError() << "bad receive of glm::vec4 in " << typeid(*this).name();
+  ofLogError("Mod") << "Bad receive of glm::vec4";
 }
 
 void Mod::receive(int sinkId, const float& value) {
-  ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+  ofLogError("Mod") << "Float receive for unknown sinkId " << sinkId;
 }
 
 void Mod::receive(int sinkId, const ofFloatPixels& pixels) {
-  ofLogError() << "bad receive of ofFloatPixels in " << typeid(*this).name();
+  ofLogError("Mod") << "Bad receive of ofFloatPixels";
 }
 
 void Mod::receive(int sinkId, const ofPath& path) {
-  ofLogError() << "bad receive of ofPath in " << typeid(*this).name();
+  ofLogError("Mod") << "Bad receive of ofPath";
 }
 
 void Mod::receive(int sinkId, const ofFbo& fbo) {
-  ofLogError() << "bad receive of ofFbo in " << typeid(*this).name();
+  ofLogError("Mod") << "Bad receive of ofFbo";
 }
 
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
@@ -204,7 +204,7 @@ void Mod::changeDrawingLayer(const std::string& layerName) {
   } else {
     currentDrawingLayerIndices[layerName] = 0;
   }
-  ofLogNotice() << "'" << name << "' changing current drawing layer '" << layerName << "' to index " << currentDrawingLayerIndices[layerName] << " : " << ((currentDrawingLayerIndices[layerName] >= 0) ? namedDrawingLayerPtrs[layerName][currentDrawingLayerIndices[layerName]]->name : "NONE");
+  ofLogNotice("Mod") << "'" << name << "' changing current drawing layer '" << layerName << "' to index " << currentDrawingLayerIndices[layerName] << " : " << ((currentDrawingLayerIndices[layerName] >= 0) ? namedDrawingLayerPtrs[layerName][currentDrawingLayerIndices[layerName]]->name : "NONE");
 }
 
 // Return to the default layer 0
@@ -214,7 +214,7 @@ void Mod::resetDrawingLayer() {
 
 void Mod::resetDrawingLayer(const std::string& layerName) {
   currentDrawingLayerIndices[layerName] = 0;
-  ofLogNotice() << "'" << name << "' reset current drawing layer '" << layerName << "'";
+  ofLogNotice("Mod") << "'" << name << "' reset current drawing layer '" << layerName << "'";
 }
 
 // Disable drawing for a lyer
@@ -224,7 +224,7 @@ void Mod::disableDrawingLayer() {
 
 void Mod::disableDrawingLayer(const std::string& layerName) {
   currentDrawingLayerIndices[layerName] = -1;
-  ofLogNotice() << "'" << name << "' disable current drawing layer '" << layerName << "'";
+  ofLogNotice("Mod") << "'" << name << "' disable current drawing layer '" << layerName << "'";
 }
 
 

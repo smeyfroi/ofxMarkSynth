@@ -64,7 +64,7 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
       spinController.updateAuto(value, getAgency());
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ParticleSetMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -74,7 +74,7 @@ void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
       newPoints.push_back(glm::vec4 { point, ofRandom(0.01)-0.005, ofRandom(0.01)-0.005 });
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ParticleSetMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -87,7 +87,7 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ParticleSetMod") << "glm::vec4 receive for unknown sinkId " << sinkId;
   }
 }
 

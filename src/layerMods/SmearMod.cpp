@@ -101,19 +101,19 @@ void SmearMod::receive(int sinkId, const float& value) {
       break;
     case SINK_CHANGE_LAYER:
       if (value > 0.9) {
-        ofLogNotice() << "SmearMod::SINK_CHANGE_LAYER: disable layer";
+        ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: disable layer";
         disableDrawingLayer();
       } else if (value > 0.6) { // FIXME: temp until connections have weights
-        ofLogNotice() << "SmearMod::SINK_CHANGE_LAYER: changing layer";
+        ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: changing layer";
         changeDrawingLayer();
       } else if (value > 0.3) {
         // higher chance to return to default layer
-        ofLogNotice() << "SmearMod::SINK_CHANGE_LAYER: default layer";
+        ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: default layer";
         resetDrawingLayer();
       }
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SmearMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -123,7 +123,7 @@ void SmearMod::receive(int sinkId, const glm::vec2& v) {
       translateByParameter = v;
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SmearMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -136,7 +136,7 @@ void SmearMod::receive(int sinkId, const ofFbo& value) {
       field2Fbo = value;
       break;
     default:
-      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("SmearMod") << "ofFbo receive for unknown sinkId " << sinkId;
   }
 }
 

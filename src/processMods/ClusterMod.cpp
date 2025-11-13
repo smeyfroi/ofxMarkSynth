@@ -69,7 +69,7 @@ void ClusterMod::receive(int sinkId, const glm::vec2& v) {
       newVecs.push_back(v);
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ClusterMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -78,12 +78,12 @@ void ClusterMod::receive(int sinkId, const float& v) {
     case SINK_CHANGE_CLUSTER_NUM:
       {
         int newSize = pointClusters.getMinClusters() + v * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
-        ofLogNotice() << "ClusterMod::SINK_CHANGE_CLUSTER_NUM: changing size to " << newSize;
+        ofLogNotice("ClusterMod") << "ClusterMod::SINK_CHANGE_CLUSTER_NUM: changing size to " << newSize;
         clustersControllerPtr->updateAuto(static_cast<float>(newSize), getAgency());
       }
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ClusterMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 

@@ -34,7 +34,7 @@ struct NodeEditorNode {
     } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
       return (*drawingLayerPtrPtr)->id;
     } else {
-      ofLogError() << "NodeEditorNode::getId() with unknown objectPtr type";
+      ofLogError("NodeEditorModel") << "NodeEditorNode::getId() with unknown objectPtr type";
       return -1;
     }
   };
@@ -44,7 +44,7 @@ struct NodeEditorNode {
     } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
       return (*drawingLayerPtrPtr)->name;
     } else {
-      ofLogError() << "NodeEditorNode::getName() with unknown objectPtr type";
+      ofLogError("NodeEditorModel") << "NodeEditorNode::getName() with unknown objectPtr type";
       return emptyString;
     }
   };

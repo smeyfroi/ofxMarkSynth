@@ -72,7 +72,7 @@ void PixelSnapshotMod::receive(int sinkId, const ofFbo& value) {
       sourceFbo = value;
       break;
     default:
-      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("PixelSnapshotMod") << "ofFbo receive for unknown sinkId " << sinkId;
   }
 }
 

@@ -52,7 +52,7 @@ void CollageMod::update() {
   auto drawingLayerPtr0 = drawingLayerPtrOpt0.value();
   auto fboPtr0 = drawingLayerPtr0->fboPtr;
   if (fboPtr0->getSource().getStencilBuffer() == 0) {
-    ofLogError() << "CollageMod needs stencil buffer in drawing layer: " << DEFAULT_DRAWING_LAYER_PTR_NAME;
+    ofLogError("CollageMod") << "CollageMod needs stencil buffer in drawing layer: " << DEFAULT_DRAWING_LAYER_PTR_NAME;
     return;
   }
 
@@ -153,7 +153,7 @@ void CollageMod::receive(int sinkId, const ofFbo& value) {
       snapshotFbo = value;
       break;
     default:
-      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("CollageMod") << "ofFbo receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -163,7 +163,7 @@ void CollageMod::receive(int sinkId, const ofPath& path_) {
       path = path_;
       break;
     default:
-      ofLogError() << "ofPath receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("CollageMod") << "ofPath receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -173,7 +173,7 @@ void CollageMod::receive(int sinkId, const glm::vec4& v) {
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("CollageMod") << "glm::vec4 receive for unknown sinkId " << sinkId;
   }
 }
 

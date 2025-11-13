@@ -56,7 +56,7 @@ void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
       particleField.setField2(value.getTexture());
       break;
     default:
-      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ParticleFieldMod") << "ofFbo receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -72,7 +72,7 @@ void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
       break;
     }
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ParticleFieldMod") << "glm::vec4 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -80,15 +80,15 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_CHANGE_LAYER:
       if (value > 0.8) { // FIXME: temp until connections have weights
-        ofLogNotice() << "ParticleFieldMod::SINK_CHANGE_LAYER: changing layer";
+        ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::SINK_CHANGE_LAYER: changing layer";
         changeDrawingLayer();
       } else if (value > 0.2) {
-        ofLogNotice() << "ParticleFieldMod::SINK_CHANGE_LAYER: resetting layer";
+        ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::SINK_CHANGE_LAYER: resetting layer";
         resetDrawingLayer();
       }
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("ParticleFieldMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 

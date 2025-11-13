@@ -36,7 +36,7 @@ void IntrospectorMod::initParameters() {
 }
 
 void IntrospectorMod::update() {
-  if (!introspectorPtr) { ofLogError() << "update in " << typeid(*this).name() << " with no introspector"; return; }
+  if (!introspectorPtr) { ofLogError("IntrospectorMod") << "Update called with no introspector"; return; }
   
   introspectorPtr->update();
 
@@ -81,7 +81,7 @@ void IntrospectorMod::receive(int sinkId, const float& value) {
       newHorizontalLines3.push_back(value);
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("IntrospectorMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -91,7 +91,7 @@ void IntrospectorMod::receive(int sinkId, const glm::vec2& point) {
       newPoints.push_back(point);
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("IntrospectorMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 

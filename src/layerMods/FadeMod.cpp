@@ -77,7 +77,7 @@ void FadeMod::receive(int sinkId, const float& value) {
       alphaMultiplierController.updateAuto(value, getAgency());
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("FadeMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 

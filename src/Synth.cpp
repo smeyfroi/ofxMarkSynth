@@ -85,7 +85,7 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
 }
 
 void Synth::shutdown() {
-  ofLogNotice() << "Synth::shutdown " << name << std::endl;
+  ofLogNotice("Synth") << "Synth::shutdown " << name;
   
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
     const auto& [name, modPtr] = pair;
@@ -96,16 +96,16 @@ void Synth::shutdown() {
   
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {
-    ofLogNotice() << "Stopping recording" << std::endl;
+    ofLogNotice("Synth") << "Stopping recording";
     recorder.stop();
-    ofLogNotice() << "Recording stopped" << std::endl;
+    ofLogNotice("Synth") << "Recording stopped";
   }
 #endif
   
   std::for_each(saveToFileThreads.begin(), saveToFileThreads.end(), [](auto& thread) {
-    ofLogNotice() << "Waiting for save thread to finish" << std::endl;
+    ofLogNotice("Synth") << "Waiting for save thread to finish";
     thread->waitForThread(false);
-    ofLogNotice() << "Done waiting for save thread to finish" << std::endl;
+    ofLogNotice("Synth") << "Done waiting for save thread to finish";
   });
 }
 
@@ -145,13 +145,13 @@ void Synth::addConnections(const std::string& dsl) {
     
     // Look up mods
     if (!sourceModName.empty() && !modPtrs.contains(sourceModName)) {
-      ofLogError() << "Synth::addConnections: Unknown source mod name: " << sourceModName;
+      ofLogError("Synth") << "Synth::addConnections: Unknown source mod name: " << sourceModName;
       continue;
     }
     auto sourceModPtr = sourceModName.empty() ? shared_from_this() : modPtrs.at(sourceModName);
     
     if(!sinkModName.empty() && !modPtrs.contains(sinkModName)) {
-      ofLogError() << "Synth::addConnections: Unknown sink mod name: " << sinkModName;
+      ofLogError("Synth") << "Synth::addConnections: Unknown sink mod name: " << sinkModName;
       continue;
     }
     auto sinkModPtr = sinkModName.empty() ? shared_from_this() : modPtrs.at(sinkModName);
@@ -177,7 +177,7 @@ void Synth::receive(int sinkId, const glm::vec4& v) {
       backgroundColorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("Synth") << "glm::vec4 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -188,11 +188,11 @@ void Synth::receive(int sinkId, const float& v) {
         // Use bucketed onset value as seed for repeatability
         int seed = static_cast<int>(v * 10.0f); // Adjust multiplier for desired granularity
         of::random::seed(seed);
-        ofLogNotice() << "Reset seed: " << seed;
+        ofLogNotice("Synth") << "Reset seed: " << seed;
       }
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("Synth") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -432,7 +432,7 @@ void Synth::toggleRecording() {
 void Synth::saveImage() {
   SaveToFileThread* threadPtr = new SaveToFileThread();
   std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
-  ofLogNotice() << "Fetch drawing to save to " << filepath;
+  ofLogNotice("Synth") << "Fetch drawing to save to " << filepath;
   ofFloatPixels pixels;
   pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);
   imageCompositeFbo.readToPixels(pixels);

@@ -147,7 +147,7 @@ void DividedAreaMod::receive(int sinkId, const glm::vec2& point) {
       if (newMinorAnchors.empty() || newMinorAnchors.back() != point) newMinorAnchors.push_back(point);
       break;
     default:
-      ofLogError() << "glm::vec2 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("DividedAreaMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -170,7 +170,7 @@ void DividedAreaMod::receive(int sinkId, const ofPath& path) {
       addConstrainedLinesThroughPointPairs(pathWidthController.value); // add lines for a path immediately
       break;
     default:
-      ofLogError() << "ofPath receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("DividedAreaMod") << "ofPath receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -178,7 +178,7 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
   switch (sinkId) {
     case SINK_CHANGE_LAYER:
       if (v > 0.6) { // FIXME: temp until connections have weights
-        ofLogNotice() << "DividedAreaMod::SINK_CHANGE_LAYER: changing layer";
+        ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_LAYER: changing layer";
         changeDrawingLayer();
       }
       break;
@@ -186,7 +186,7 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
       {
         if (v > 0.4) { // FIXME: temp until connections have weights
           float newAngle = v;
-          ofLogNotice() << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
+          ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
           angleController.updateAuto(newAngle, getAgency());
           angleParameter = newAngle;
         }
@@ -196,13 +196,13 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
     {
       if (ofGetElapsedTimef() < strategyChangeInvalidUntilTimestamp) break;
       int newStrategy = (strategyParameter + 1) % 3;
-      ofLogNotice() << "DividedAreaMod::SINK_CHANGE_STRATEGY: changing strategy to " << newStrategy;
+      ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_STRATEGY: changing strategy to " << newStrategy;
       strategyParameter = newStrategy;
       strategyChangeInvalidUntilTimestamp = ofGetElapsedTimef() + 5.0; // 5s. FIXME: should be a parameter
     }
       break;
     default:
-      ofLogError() << "float receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("DividedAreaMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -215,7 +215,7 @@ void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
       majorLineColorController.updateAuto(ofFloatColor { v.x, v.y, v.z, v.w }, getAgency());
       break;
     default:
-      ofLogError() << "glm::vec4 receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("DividedAreaMod") << "glm::vec4 receive for unknown sinkId " << sinkId;
   }
 }
 
@@ -225,7 +225,7 @@ void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
       backgroundFbo = v;
       break;
     default:
-      ofLogError() << "ofFbo receive in " << typeid(*this).name() << " for unknown sinkId " << sinkId;
+      ofLogError("DividedAreaMod") << "ofFbo receive for unknown sinkId " << sinkId;
   }
 }
 
