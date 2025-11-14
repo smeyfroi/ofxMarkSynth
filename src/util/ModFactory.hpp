@@ -53,7 +53,7 @@ public:
   }
 };
 
-using ModCreatorFn = std::function<ModPtr(Synth*, const std::string&, ModConfig&&, const ResourceManager&)>;
+using ModCreatorFn = std::function<ModPtr(std::shared_ptr<Synth>, const std::string&, ModConfig&&, const ResourceManager&)>;
 
 
 
@@ -64,7 +64,7 @@ public:
   
   // Create a Mod by type name
   static ModPtr create(const std::string& typeName,
-                      Synth* synth,
+                      std::shared_ptr<Synth> synth,
                       const std::string& name,
                       ModConfig&& config,
                       const ResourceManager& resources);

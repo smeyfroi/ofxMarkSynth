@@ -23,12 +23,12 @@ class Synth;
 class SynthConfigSerializer {
 public:
   // Load Synth configuration from JSON file
-  static bool load(Synth* synth,
-                   const std::string& filepath,
-                   const ResourceMap& resources = ResourceMap{});
+  static bool load(std::shared_ptr<Synth> synth,
+                   const std::filesystem::path& filepath,
+                   const ResourceManager& resources = ResourceManager{});
   
   // Check if config file exists
-  static bool exists(const std::string& filepath);
+  static bool exists(const std::filesystem::path& filepath);
   
   // Get default config directory path
   static std::string getConfigDirectory(const std::string& synthName);
@@ -38,13 +38,13 @@ public:
   
 private:
   // Parse JSON and populate Synth
-  static bool fromJson(const nlohmann::json& j, Synth* synth, const ResourceMap& resources);
+  static bool fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources);
   
   // Helper functions for parsing specific sections
-  static bool parseDrawingLayers(const nlohmann::json& j, Synth* synth);
-  static bool parseMods(const nlohmann::json& j, Synth* synth, const ResourceMap& resources);
-  static bool parseConnections(const nlohmann::json& j, Synth* synth);
-  static bool parseIntents(const nlohmann::json& j, Synth* synth);
+  static bool parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth);
+  static bool parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources);
+  static bool parseConnections(const nlohmann::json& j, std::shared_ptr<Synth> synth);
+  static bool parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth);
   
   // Helper to convert JSON string to GL enum
   static int glEnumFromString(const std::string& str);

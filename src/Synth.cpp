@@ -9,6 +9,7 @@
 #include "ofxTimeMeasurements.h"
 #include "ofConstants.h"
 #include "Gui.hpp"
+#include "util/SynthConfigSerializer.hpp"
 
 
 
@@ -31,8 +32,8 @@ Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
 compositeSize { compositeSize_ }
 {
-  loggerChannelPtr = std::make_shared<LoggerChannel>();
-  ofSetLoggerChannel(loggerChannelPtr);
+//  loggerChannelPtr = std::make_shared<LoggerChannel>();
+//  ofSetLoggerChannel(loggerChannelPtr);
   
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -80,8 +81,9 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initIntentParameterGroup();
   
   parameters = getParameterGroup();
-  
-  gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
+
+  // Pass a windowPtr for an imgui else handle it in the calling ofApp
+  if (windowPtr) gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
 }
 
 void Synth::shutdown() {
@@ -402,7 +404,7 @@ void Synth::draw() {
     recorderCompositeFbo.readToPixels(pixels);
     recorder.addFrame(pixels);
   }
-#endif  
+#endif
   TSGL_STOP("Synth::draw");
 }
 
@@ -497,6 +499,8 @@ bool Synth::keyPressed(int key) {
 }
 
 void Synth::initFboParameterGroup() {
+  fboParameters.clear();
+  
   fboParameters.setName("Layers");
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
@@ -508,6 +512,8 @@ void Synth::initFboParameterGroup() {
 }
 
 void Synth::initIntentParameterGroup() {
+  intentParameters.clear();
+  
   intentParameters.setName("Intent");
   intentParameters.add(intentStrengthParameter);
   initIntentPresets();
@@ -515,6 +521,8 @@ void Synth::initIntentParameterGroup() {
 }
 
 void Synth::initDisplayParameterGroup() {
+  displayParameters.clear();
+  
   displayParameters.setName("Display");
   displayParameters.add(toneMapTypeParameter);
   displayParameters.add(exposureParameter);
@@ -528,6 +536,8 @@ void Synth::initDisplayParameterGroup() {
 }
 
 void Synth::initParameters() {
+  parameters.clear();
+  
   parameters.add(agencyParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
@@ -592,6 +602,29 @@ void Synth::applyIntentToAllMods() {
   for (auto& kv : modPtrs) {
     kv.second->applyIntent(activeIntent, intentStrengthParameter);
   }
+}
+
+bool Synth::loadFromConfig(const std::string& filepath, const ResourceManager& resources) {
+  ofLogNotice("Synth") << "Loading config from: " << filepath;
+  
+  // Initialize Mod factory if not already done
+  static bool factoryInitialized = false;
+  if (!factoryInitialized) {
+    ModFactory::initializeBuiltinTypes();
+    factoryInitialized = true;
+  }
+  
+  // Load and parse the config
+  // Cast from shared_ptr<Mod> (from enable_shared_from_this<Mod>) to shared_ptr<Synth>
+  bool success = SynthConfigSerializer::load(std::static_pointer_cast<Synth>(shared_from_this()), filepath, resources);
+  
+  if (success) {
+    ofLogNotice("Synth") << "Successfully loaded config from: " << filepath;
+  } else {
+    ofLogError("Synth") << "Failed to load config from: " << filepath;
+  }
+  
+  return success;
 }
 
 

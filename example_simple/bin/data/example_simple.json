@@ -1,9 +1,7 @@
 {
   "version": "1.0",
-  "name": "example_simple",
+  "name": "Simple Synth",
   "description": "Simple example with random points visualized with Introspector",
-  "compositeSize": [1920, 1080],
-  "startPaused": false,
   
   "drawingLayers": {
     "background": {

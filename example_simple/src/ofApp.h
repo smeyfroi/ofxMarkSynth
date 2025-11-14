@@ -24,8 +24,6 @@ public:
 private:
   std::shared_ptr<ofxMarkSynth::Synth> synthPtr;
 
-  bool guiVisible { true };
-  ofxPanel gui;
   ofParameterGroup parameters; // I think we rely on this declaration coming after the synth to ensure that destructors are done in the right order
 
 };

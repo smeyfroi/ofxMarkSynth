@@ -20,6 +20,7 @@
 #include "NodeEditorModel.hpp"
 #include "NodeEditorLayout.hpp"
 #include "LoggerChannel.hpp"
+#include "util/ModFactory.hpp"
 
 
 
@@ -52,6 +53,9 @@ public:
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
+  
+  // Config system
+  bool loadFromConfig(const std::string& filepath, const ResourceManager& resources = {});
 
   float getAgency() const override { return agencyParameter; }
 

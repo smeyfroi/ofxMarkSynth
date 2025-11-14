@@ -112,6 +112,7 @@ public:
   ofParameterGroup& getParameterGroup();
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   int getId() const;
+  void setName(const std::string& name_) { name = name_; }
   const std::string& getName() const;
   
   virtual float getAgency() const;

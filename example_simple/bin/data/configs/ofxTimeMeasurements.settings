@@ -1,11 +1,11 @@
 draw()=1|1|0
 Synth-updateComposites=1|1|0
 GL_Synth-updateComposites=1|1|0
-GL_Random Points=1|1|0
 Introspector=1|1|0
 GL_Introspector=1|1|0
+GL_Synth::draw=1|1|0
+update()=1|1|0
+Random Points=1|1|0
+GL_Random Points=1|1|0
 keyPressed()=1|1|0
 Synth-updateIntents=1|1|0
-GL_Synth::draw=1|1|0
-Random Points=1|1|0
-update()=1|1|0

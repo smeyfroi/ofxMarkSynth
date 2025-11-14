@@ -1,28 +1,31 @@
 #include "ofApp.h"
 #include <memory>
+#include "ofxTimeMeasurements.h"
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofSetFrameRate(30);
-    
+  TIME_SAMPLE_SET_FRAMERATE(30);
+
   synthPtr = std::make_shared<ofxMarkSynth::Synth>("Simple", ofxMarkSynth::ModConfig {
     {"Back Color", "0.0, 0.0, 0.0, 1.0"},
   }, false, ofGetWindowSize());
-
-  auto randomVecSourceModPtr = synthPtr->addMod<ofxMarkSynth::RandomVecSourceMod>("Random Points", {
-    {"CreatedPerUpdate", "0.4"}
-  }, 2);
   
-  auto pointIntrospectorModPtr = synthPtr->addMod<ofxMarkSynth::IntrospectorMod>("Introspector", {});
+  synthPtr->loadFromConfig(ofToDataPath("example_simple.json"));
+  synthPtr->configureGui(nullptr); // nullptr == no imgui
 
-  ofxMarkSynth::connectSourceToSinks(randomVecSourceModPtr, {
-    { ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
-      {{ pointIntrospectorModPtr, ofxMarkSynth::IntrospectorMod::SINK_POINTS }}
-    }
-  });
-  
-  parameters.add(synthPtr->getParameterGroup());
-  gui.setup(parameters);
+// >>> Manual equivlent of example_simple.json <<<
+//  auto randomVecSourceModPtr = synthPtr->addMod<ofxMarkSynth::RandomVecSourceMod>("Random Points", {
+//    {"CreatedPerUpdate", "0.4"}
+//  }, 2);
+//
+//  auto pointIntrospectorModPtr = synthPtr->addMod<ofxMarkSynth::IntrospectorMod>("Introspector", {});
+//
+//  ofxMarkSynth::connectSourceToSinks(randomVecSourceModPtr, {
+//    { ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
+//      {{ pointIntrospectorModPtr, ofxMarkSynth::IntrospectorMod::SINK_POINTS }}
+//    }
+//  });
 }
 
 //--------------------------------------------------------------
@@ -33,7 +36,6 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
   synthPtr->draw();
-  if (guiVisible) gui.draw();
 }
 
 //--------------------------------------------------------------
@@ -42,7 +44,6 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) guiVisible = not guiVisible;
   if (synthPtr->keyPressed(key)) return;
 }
 
