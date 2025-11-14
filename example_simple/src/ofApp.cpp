@@ -8,11 +8,10 @@ void ofApp::setup() {
   TIME_SAMPLE_SET_FRAMERATE(30);
 
   synthPtr = std::make_shared<ofxMarkSynth::Synth>("Simple", ofxMarkSynth::ModConfig {
-    {"Back Color", "0.0, 0.0, 0.0, 1.0"},
   }, false, ofGetWindowSize());
   
   synthPtr->loadFromConfig(ofToDataPath("example_simple.json"));
-  synthPtr->configureGui(nullptr); // nullptr == no imgui
+  synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
 // >>> Manual equivlent of example_simple.json <<<
 //  auto randomVecSourceModPtr = synthPtr->addMod<ofxMarkSynth::RandomVecSourceMod>("Random Points", {
