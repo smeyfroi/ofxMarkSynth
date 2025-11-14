@@ -114,11 +114,11 @@ void Synth::shutdown() {
   });
 }
 
-DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, float fadeBy, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
+DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
   auto fboPtr = std::make_shared<PingPongFbo>();
   fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
-  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, fadeBy, blendMode, isDrawn);
+  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn);
   drawingLayerPtrs.insert({ name, drawingLayerPtr });
   return drawingLayerPtr;
 }

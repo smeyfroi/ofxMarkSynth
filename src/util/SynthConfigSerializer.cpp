@@ -93,9 +93,9 @@ bool SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::sha
         wrap = glEnumFromString(layerJson["wrap"]);
       }
       
-      float fadeBy = 0.0f;
-      if (layerJson.contains("fadeBy") && layerJson["fadeBy"].is_number()) {
-        fadeBy = layerJson["fadeBy"];
+      bool clearOnUpdate = false;
+      if (layerJson.contains("clearOnUpdate") && layerJson["clearOnUpdate"].is_boolean()) {
+        clearOnUpdate = layerJson["clearOnUpdate"];
       }
       
       ofBlendMode blendMode = OF_BLENDMODE_ALPHA;
@@ -119,7 +119,7 @@ bool SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::sha
       }
       
       // Create the drawing layer
-      synth->addDrawingLayer(name, size, internalFormat, wrap, fadeBy, blendMode, useStencil, numSamples, isDrawn);
+      synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn);
       ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name;
     }
     return true;
