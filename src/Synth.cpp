@@ -32,9 +32,6 @@ Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
 compositeSize { compositeSize_ }
 {
-//  loggerChannelPtr = std::make_shared<LoggerChannel>();
-//  ofSetLoggerChannel(loggerChannelPtr);
-  
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   
@@ -75,6 +72,7 @@ compositeSize { compositeSize_ }
   };
 }
 
+// TODO: fold this into loadFromConfig and the ctor?
 void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initDisplayParameterGroup();
   initFboParameterGroup();
@@ -82,8 +80,13 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   
   parameters = getParameterGroup();
 
-  // Pass a windowPtr for an imgui else handle it in the calling ofApp
-  if (windowPtr) gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
+  // Pass a windowPtr for a full imgui, else handle it in the calling ofApp
+  if (windowPtr) {
+    loggerChannelPtr = std::make_shared<LoggerChannel>();
+    ofSetLoggerChannel(loggerChannelPtr);
+      
+    gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
+  }
 }
 
 void Synth::shutdown() {

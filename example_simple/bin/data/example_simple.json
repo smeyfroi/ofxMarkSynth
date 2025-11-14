@@ -3,19 +3,6 @@
   "name": "Simple Synth",
   "description": "Simple example with random points visualized with Introspector",
   
-  "drawingLayers": {
-    "background": {
-      "size": [1920, 1080],
-      "internalFormat": "GL_RGBA",
-      "wrap": "GL_CLAMP_TO_EDGE",
-      "fadeBy": 0.0,
-      "blendMode": "OF_BLENDMODE_ALPHA",
-      "useStencil": false,
-      "numSamples": 0,
-      "isDrawn": true
-    }
-  },
-  
   "mods": {
     "Random Points": {
       "type": "RandomVecSource",
@@ -34,22 +21,5 @@
   
   "connections": [
     "Random Points.vec2 -> Introspector.points"
-  ],
-  
-  "intents": {
-    "Calm": {
-      "energy": 0.2,
-      "density": 0.3,
-      "structure": 0.7,
-      "chaos": 0.1,
-      "granularity": 0.1
-    },
-    "Energetic": {
-      "energy": 0.9,
-      "density": 0.7,
-      "structure": 0.4,
-      "chaos": 0.5,
-      "granularity": 0.5
-    }
-  }
+  ]
 }
