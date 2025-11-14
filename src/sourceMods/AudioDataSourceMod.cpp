@@ -9,15 +9,16 @@
 #include <cmath>
 
 
+
 namespace ofxMarkSynth {
 
 
+
 AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
-                                       const std::filesystem::path& rootSourceMaterialPath,
-                                       const std::filesystem::path& sourceMaterialPath)
+                                       const std::filesystem::path& sourceAudioPath)
 : Mod { synthPtr, name, std::move(config) }
 {
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/sourceMaterialPath);
+  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(sourceAudioPath);
   initialise();
 }
 
@@ -258,6 +259,7 @@ void AudioDataSourceMod::shutdown() {
   audioAnalysisClientPtr->stopRecording();
   audioAnalysisClientPtr->closeStream();
 }
+
 
 
 } // ofxMarkSynth

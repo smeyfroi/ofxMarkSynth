@@ -14,14 +14,16 @@
 #endif
 
 
+
 namespace ofxMarkSynth {
+
 
 
 class VideoFlowSourceMod : public Mod {
 
 public:
-  VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording, std::string recordingPath);
-  VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute);
+  VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, const std::filesystem::path& sourceVideoFilePath, bool mute);
+  VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording, const std::filesystem::path& recordingPath);
   ~VideoFlowSourceMod();
   void update() override;
   void draw() override;
@@ -42,6 +44,7 @@ private:
   void initRecorder();
 #endif
 };
+
 
 
 } // ofxMarkSynth

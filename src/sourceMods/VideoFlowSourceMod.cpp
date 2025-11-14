@@ -8,25 +8,27 @@
 #include "VideoFlowSourceMod.hpp"
 
 
+
 namespace ofxMarkSynth {
 
 
-VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording_, std::string recordingDir_)
-: Mod { synthPtr, name, std::move(config) },
-saveRecording { saveRecording_ },
-recordingDir { recordingDir_ }
+
+VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, const std::filesystem::path& sourceVideoFilePath, bool mute)
+: Mod { synthPtr, name, std::move(config) }
 {
-  motionFromVideo.initialiseCamera(deviceID, size);
+  motionFromVideo.load(sourceVideoFilePath, mute);
   
   sourceNameIdMap = {
     { "flowFbo", SOURCE_FLOW_FBO }
   };
 }
 
-VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, std::string videoFilePath, bool mute)
-: Mod { synthPtr, name, std::move(config) }
+VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, int deviceID, glm::vec2 size, bool saveRecording_, const std::filesystem::path& recordingDir_)
+: Mod { synthPtr, name, std::move(config) },
+saveRecording { saveRecording_ },
+recordingDir { recordingDir_ }
 {
-  motionFromVideo.load(videoFilePath, mute);
+  motionFromVideo.initialiseCamera(deviceID, size);
   
   sourceNameIdMap = {
     { "flowFbo", SOURCE_FLOW_FBO }
@@ -80,6 +82,7 @@ void VideoFlowSourceMod::draw() {
 bool VideoFlowSourceMod::keyPressed(int key) {
   return motionFromVideo.keyPressed(key);
 }
+
 
 
 } // ofxMarkSynth

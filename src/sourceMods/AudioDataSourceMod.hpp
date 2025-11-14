@@ -17,8 +17,7 @@ class AudioDataSourceMod : public Mod {
 
 public:
   AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
-                     const std::filesystem::path& rootSourceMaterialPath,
-                     const std::filesystem::path& sourceMaterialPath);
+                     const std::filesystem::path& sourceAudioPath);
   AudioDataSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config,
                      const std::string& micDeviceName,
                      bool recordAudio,

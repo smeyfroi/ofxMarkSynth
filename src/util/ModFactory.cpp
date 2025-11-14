@@ -65,44 +65,40 @@ std::vector<std::string> ModFactory::getRegisteredTypes() {
 void ModFactory::initializeBuiltinTypes() {
 
   registerType("AudioDataSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
-    auto rootSourceMaterialPathPtr = r.get<std::filesystem::path>("rootSourceMaterialPath");
-    auto sourceMaterialPathPtr = r.get<std::filesystem::path>("sourceMaterialPath");
+    auto sourceAudioPathPtr = r.get<std::filesystem::path>("sourceAudioPath");
     auto micDeviceNamePtr = r.get<std::string>("micDeviceName");
     auto recordAudioPtr = r.get<bool>("recordAudio");
     auto recordingPathPtr = r.get<std::filesystem::path>("recordingPath");
-    if (rootSourceMaterialPathPtr && sourceMaterialPathPtr) {
-      return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), *rootSourceMaterialPathPtr, *sourceMaterialPathPtr);
+    if (sourceAudioPathPtr) {
+      return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), *sourceAudioPathPtr);
     } else if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
       return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), *micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);
     }
-    ofLogError("ModFactory") << "AudioDataSourceMod requires either 'rootSourceMaterialPath' and 'sourceMaterialPath', or 'micDeviceName', 'recordAudio', and 'recordingPath' resources";
+    ofLogError("ModFactory") << "AudioDataSourceMod requires either 'sourceVideoPath' or 'micDeviceName', 'recordAudio', 'recordingPath' resources";
     return nullptr;
   });
   
-//  registerType("RandomFloatSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
-//    // TODO: RandomFloatSourceMod has complex constructor with ranges - need to extract from config or use defaults
-//    return std::make_shared<RandomFloatSourceMod>(s, n, std::move(c), 
-//                                                   std::pair<float, float>{0.0f, 1.0f},
-//                                                   std::pair<float, float>{0.0f, 1.0f});
-//  });
-//  
-//  registerType("RandomHslColor", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
-//    return std::make_shared<RandomHslColorMod>(s, n, std::move(c));
-//  });
-//  
-//  registerType("RandomVecSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
-//    // Default to vec2 (dimension=2)
-//    int dimension = 2;
-//    auto it = c.find("Dimension");
-//    if (it != c.end()) {
-//      dimension = std::stoi(it->second);
-//    }
-//    return std::make_shared<RandomVecSourceMod>(s, n, std::move(c), dimension);
-//  });
-//  
-//  registerType("VideoFlowSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceMap& r) -> ModPtr {
-//    return std::make_shared<VideoFlowSourceMod>(s, n, std::move(c));
-//  });
+  registerType("RandomFloatSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<RandomFloatSourceMod>(s, n, std::move(c),
+                                                  std::pair<float, float>{0.0f, 1.0f}, // min range
+                                                  std::pair<float, float>{0.0f, 1.0f}, // max range
+                                                  0); // seed
+  });
+  
+  registerType("RandomHslColor", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<RandomHslColorMod>(s, n, std::move(c));
+  });
+
+  // TODO: make configurable (see Mod)
+  registerType("RandomVecSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<RandomVecSourceMod>(s, n, std::move(c));
+  });
+  
+  registerType("VideoFlowSource", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+    auto sourceVideoPathPtr = r.get<std::filesystem::path>("sourceVideoPath");
+    auto sourceVideoMutePtr = r.get<bool>("sourceVideoMute");
+    return std::make_shared<VideoFlowSourceMod>(s, n, std::move(c), *sourceVideoPathPtr, *sourceVideoMutePtr);
+  });
   
   // Register all process mods
   registerType("Cluster", [](Synth* s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
