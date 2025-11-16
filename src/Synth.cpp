@@ -24,6 +24,7 @@ std::string saveFilePath(const std::string& filename) {
 constexpr std::string SETTINGS_FOLDER_NAME = "settings";
 constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawings";
 constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
+constexpr float COMPOSITE_PANEL_GAP_PX = 8.0;
 
 
 
@@ -35,7 +36,7 @@ compositeSize { compositeSize_ }
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   
-  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - 8.0;
+  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - COMPOSITE_PANEL_GAP_PX;
   if (sidePanelWidth > 0.0) {
     sidePanelHeight = ofGetWindowHeight();
     leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
