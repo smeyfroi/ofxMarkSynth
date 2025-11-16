@@ -81,11 +81,19 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   parameters = getParameterGroup();
 
   // Pass a windowPtr for a full imgui, else handle it in the calling ofApp
+  // FIXME: this also means that child params don't get added into the Synth param group
   if (windowPtr) {
     loggerChannelPtr = std::make_shared<LoggerChannel>();
     ofSetLoggerChannel(loggerChannelPtr);
       
     gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
+  } else {
+    // Assume that we want Mod params added as child params to the Synth parameter group
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
+      const auto& [name, modPtr] = pair;
+      ofParameterGroup& pg = modPtr->getParameterGroup();
+      if (pg.size() != 0) parameters.add(pg);
+    });
   }
 }
 
@@ -367,7 +375,6 @@ void Synth::drawMiddlePanel(float w, float h, float scale) {
       tonemapShader.end();
     }
     ofPopMatrix();
-    
   }
   ofPopMatrix();
 }
@@ -549,7 +556,7 @@ void Synth::initParameters() {
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
     const auto& [name, modPtr] = pair;
     ofParameterGroup& pg = modPtr->getParameterGroup();
-//    if (pg.size() != 0) parameters.add(pg);
+    // for a non-imgui, the Mod parameters are added into the Synth parameter group in configureGui()
   });
 }
 

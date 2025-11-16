@@ -38,6 +38,7 @@ using ModPtrMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 class Synth : public Mod {
   
 public:
+  // The composite is the middle (square) section, scaled to fit the window height
   Synth(const std::string& name, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_);
   void drawGui();
   void shutdown() override;

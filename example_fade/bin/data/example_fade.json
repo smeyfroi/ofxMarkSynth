@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "name": "Fade Synth",
+  "description": "Simple example with random points that fade on a drawing layer",
+  
+  "drawingLayers": {
+    "foreground": {
+      "size": [1080, 1080],
+      "internalFormat": "GL_RGBA32F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Random Points": {
+      "type": "RandomVecSource",
+      "config": {
+        "CreatedPerUpdate": "1.0"
+      }
+    },
+    "Circles": {
+      "type": "SoftCircle",
+      "config": {
+        "Color": "0.6,0.7,0.2,1.0",
+        "Color Multiplier": "1.0",
+        "Alpha Multiplier": "1.0",
+        "Softness": "0.4",
+        "Radius": "0.125"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Fade": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.01"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    }
+  },
+  
+  "connections": [
+    "Random Points.vec2 -> Circles.points"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}

@@ -1,0 +1,13 @@
+keyPressed()=1|1|0
+GL_Synth::draw=1|1|0
+Fade=1|1|0
+draw()=1|1|0
+Synth-updateComposites=1|1|0
+GL_Synth-updateComposites=1|1|0
+GL_Circles=1|1|0
+Synth-updateIntents=1|1|0
+GL_Fade=1|1|0
+update()=1|1|0
+Random Points=1|1|0
+GL_Random Points=1|1|0
+Circles=1|1|0

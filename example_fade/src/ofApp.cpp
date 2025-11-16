@@ -1,57 +1,35 @@
 #include "ofApp.h"
-
-//--------------------------------------------------------------
-ofxMarkSynth::ModPtrs ofApp::createMods() {
-  auto mods = ofxMarkSynth::ModPtrs {};
-
-  auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
-    {"CreatedPerUpdate", "0.4"}
-  }, 2);
-  
-  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
-  randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
-                                 drawPointsModPtr,
-                                 ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-  
-  auto translateModPtr = addMod<ofxMarkSynth::TranslateMod>(mods, "Translate", {});
-  drawPointsModPtr->addSink(ofxMarkSynth::DrawPointsMod::SOURCE_FBO,
-                            translateModPtr,
-                            ofxMarkSynth::TranslateMod::SINK_FBO);
-  
-  auto multiplyModPtr = addMod<ofxMarkSynth::MultiplyMod>(mods, "Fade", {});
-  translateModPtr->addSink(ofxMarkSynth::TranslateMod::SOURCE_FBO,
-                           multiplyModPtr,
-                           ofxMarkSynth::MultiplyMod::SINK_FBO);
-
-  drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
-
-  return mods;
-}
-
-ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  addFboConfigPtr(fbos, "foreground", fboPtr, ofGetWindowSize()*8.0, GL_RGBA32F, GL_REPEAT, ofColor::black, false, OF_BLENDMODE_ALPHA);
-  return fbos;
-}
+#include "ofxTimeMeasurements.h"
 
 void ofApp::setup() {
-  ofSetBackgroundColor(0);
   ofDisableArbTex();
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  ofSetBackgroundColor(0);
+  ofSetFrameRate(30);
+  TIME_SAMPLE_SET_FRAMERATE(30);
 
-  synth.configure(createFboConfigs(), createMods(), ofGetWindowSize()*8.0);
+  const glm::vec2 SYNTH_COMPOSITE_SIZE = { 1080, 1080 }; // drawing layers are scaled down to this size to fit into the window height
+  const bool START_PAUSED = false;
   
-  parameters.add(synth.getParameterGroup("Synth"));
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Fade", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
+  
+  synthPtr->loadFromConfig(ofToDataPath("example_fade.json"));
+  synthPtr->configureGui(nullptr); // nullptr == no imgui window
+
+  // No imgui; we manage an ofxGui here instead
+  parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  synth.update();
+  synthPtr->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
+  synthPtr->draw();
   if (guiVisible) gui.draw();
 }
 
@@ -62,7 +40,7 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
-  if (synth.keyPressed(key)) return;
+  if (synthPtr->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

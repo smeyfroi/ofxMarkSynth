@@ -69,15 +69,16 @@ int SynthConfigSerializer::ofBlendModeFromString(const std::string& str) {
   return OF_BLENDMODE_ALPHA;
 }
 
-bool SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
+SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("drawingLayers") || !j["drawingLayers"].is_object()) {
     ofLogNotice("SynthConfigSerializer") << "No drawingLayers section in config";
-    return true; // Not an error - layers are optional
+    return {}; // Not an error - layers are optional
   }
   
+  SynthConfigSerializer::NamedLayers layers;
   try {
     for (const auto& [name, layerJson] : j["drawingLayers"].items()) {
-      glm::vec2 size(1920, 1080); // defaults
+      glm::vec2 size { 1080, 1080 };
       if (layerJson.contains("size") && layerJson["size"].is_array() && layerJson["size"].size() == 2) {
         size.x = layerJson["size"][0];
         size.y = layerJson["size"][1];
@@ -118,18 +119,18 @@ bool SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::sha
         isDrawn = layerJson["isDrawn"];
       }
       
-      // Create the drawing layer
-      synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn);
-      ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name;
+      auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn);
+      layers[name] = layerPtr;
+      ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << "(size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
     }
-    return true;
+    return layers;
   } catch (const std::exception& e) {
     ofLogError("SynthConfigSerializer") << "Failed to parse drawing layers: " << e.what();
-    return false;
+    return layers;
   }
 }
 
-bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources) {
+bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const NamedLayers& layers) {
   if (!j.contains("mods") || !j["mods"].is_object()) {
     ofLogError("SynthConfigSerializer") << "No mods section in config";
     return false;
@@ -167,6 +168,25 @@ bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<S
       }
       
       ofLogNotice("SynthConfigSerializer") << "Created Mod: " << name << " (" << type << ")";
+      
+      if (modJson.contains("layers") && modJson["layers"].is_object()) {
+        for (const auto& [layerPtrName, value] : modJson["layers"].items()) {
+          if (value.is_array()) {
+            for (const std::string layerName : value) {
+              auto it = layers.find(layerName);
+              if (it == layers.end()) {
+                ofLogWarning("SynthConfigSerializer") << "Mod '" << layerName << "' references unknown drawing layer '" << layerName << "'";
+                continue;
+              }
+              auto drawingLayerPtr = it->second;
+              modPtr->receiveDrawingLayerPtr(layerPtrName, drawingLayerPtr);
+              ofLogNotice("SynthConfigSerializer") << "  Assigned drawing layer '" << layerName << "' to Mod '" << name << "' layer key '" << layerPtrName << "'";
+            }
+          } else {
+            ofLogError("SynthConfigSerializer") << "Mod '" << name << "' layers key '" << layerPtrName << "' is not an array";
+          }
+        }
+      }
     }
     return true;
   } catch (const std::exception& e) {
@@ -265,8 +285,8 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
       ofLogWarning("SynthConfigSerializer") << "Config version " << version << " may not be compatible (expected 1.0)";
     }
   }
-  
-  // Log config info
+
+  // Synth metadata
   if (j.contains("name") && j["name"].is_string()) {
     const auto name = j["name"].get<std::string>();
     ofLogNotice("SynthConfigSerializer") << "Loading config: " << name;
@@ -277,10 +297,10 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
   }
   
   // Parse each section in order
-  if (!parseDrawingLayers(j, synth)) return false;
-  if (!parseMods(j, synth, resources)) return false;
-  if (!parseConnections(j, synth)) return false;
-  if (!parseIntents(j, synth)) return false;
+  SynthConfigSerializer::NamedLayers namedLayers = parseDrawingLayers(j, synth);
+  parseMods(j, synth, resources, namedLayers);
+  parseConnections(j, synth);
+  parseIntents(j, synth);
   
   ofLogNotice("SynthConfigSerializer") << "Successfully loaded config";
   return true;

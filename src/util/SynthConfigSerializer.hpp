@@ -11,6 +11,7 @@
 #include "nlohmann/json.hpp"
 #include "glm/vec2.hpp"
 #include "ModFactory.hpp"
+#include "Mod.hpp"
 
 
 
@@ -21,6 +22,8 @@ namespace ofxMarkSynth {
 class Synth;
 
 class SynthConfigSerializer {
+  using NamedLayers = std::unordered_map<std::string, DrawingLayerPtr>;
+  
 public:
   // Load Synth configuration from JSON file
   static bool load(std::shared_ptr<Synth> synth,
@@ -41,8 +44,8 @@ private:
   static bool fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources);
   
   // Helper functions for parsing specific sections
-  static bool parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth);
-  static bool parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources);
+  static NamedLayers parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth);
+  static bool parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const NamedLayers& layers);
   static bool parseConnections(const nlohmann::json& j, std::shared_ptr<Synth> synth);
   static bool parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth);
   

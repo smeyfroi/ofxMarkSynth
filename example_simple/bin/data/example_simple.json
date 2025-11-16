@@ -11,11 +11,7 @@
       }
     },
     "Introspector": {
-      "type": "Introspector",
-      "config": {},
-      "resources": {
-        "introspector": "introspectorPtr"
-      }
+      "type": "Introspector"
     }
   },
   
