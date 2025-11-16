@@ -18,9 +18,9 @@ void ofApp::setup() {
   resources.add("recordingPath", RECORDING_PATH);
 
   synthPtr = std::make_shared<ofxMarkSynth::Synth>("Fade", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
+  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
 
-  synthPtr->loadFromConfig(ofToDataPath("2.json"), resources);
+  synthPtr->loadFromConfig(ofToDataPath("2.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
   ofAddListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);

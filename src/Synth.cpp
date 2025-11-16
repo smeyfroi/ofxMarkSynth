@@ -8,6 +8,7 @@
 #include "Synth.hpp"
 #include "ofxTimeMeasurements.h"
 #include "ofConstants.h"
+#include "ofUtils.h"
 #include "Gui.hpp"
 #include "util/SynthConfigSerializer.hpp"
 
@@ -28,10 +29,11 @@ constexpr float COMPOSITE_PANEL_GAP_PX = 8.0;
 
 
 
-Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_) :
+Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources_) :
 Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
-compositeSize { compositeSize_ }
+compositeSize { compositeSize_ },
+resources { std::move(resources_) }
 {
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -121,6 +123,34 @@ void Synth::shutdown() {
     thread->waitForThread(false);
     ofLogNotice("Synth") << "Done waiting for save thread to finish";
   });
+}
+
+void Synth::unload() {
+  ofLogNotice("Synth") << "Synth::unload " << name;
+
+  // 1) Shutdown and clear Mods
+  for (auto& kv : modPtrs) {
+    const auto& modPtr = kv.second;
+    if (modPtr) modPtr->shutdown();
+  }
+  modPtrs.clear();
+
+  // 2) Clear drawing layers
+  drawingLayerPtrs.clear();
+
+  // 3) Clear GUI live texture hooks
+  liveTexturePtrFns.clear();
+
+  // 4) Clear parameter groups related to config
+  fboParamPtrs.clear();
+  fboParameters.clear();
+
+  intentActivationParameters.clear();
+  intentParameters.clear();
+  intentActivations.clear();
+
+  // Note: Keep displayParameters, imageCompositeFbo, side panel FBOs, and tonemapShader
+  // Rebuild of groups happens when reloading config (configureGui/init* called then)
 }
 
 DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
@@ -505,6 +535,12 @@ bool Synth::keyPressed(int key) {
     return true;
   }
 
+  // Quick config switchers from data root
+  if (key >= '1' && key <= '8' && !plusKeyPressed && !equalsKeyPressed) {
+    switchToConfig(ofToDataPath(std::string(1, char(key)) + ".json", true));
+    return true;
+  }
+
   // >>> Deal with the `[+=][0-9]` chords
   if (key == '+') {
     plusKeyPressed = true;
@@ -562,8 +598,10 @@ void Synth::startHibernation() {
 }
 
 void Synth::cancelHibernation() {
-  if (hibernationState != HibernationState::ACTIVE) {
+  if (hibernationState == HibernationState::FADING_OUT) {
     ofLogNotice("Synth") << "Cancelling hibernation";
+  }
+  if (hibernationState != HibernationState::ACTIVE) {
     hibernationState = HibernationState::ACTIVE;
     hibernationAlpha = 1.0f;
     paused = false;  // Resume updates
@@ -580,12 +618,11 @@ void Synth::updateHibernation() {
     hibernationAlpha = 0.0f;
     hibernationState = HibernationState::HIBERNATED;
     
+    ofLogNotice("Synth") << "Hibernation complete after " << elapsed << "s";
     HibernationCompleteEvent event;
     event.fadeDuration = elapsed;
     event.synthName = name;
     ofNotifyEvent(hibernationCompleteEvent, event, this);
-    
-    ofLogNotice("Synth") << "Hibernation complete after " << elapsed << "s";
   } else {
     float t = elapsed / duration;
     hibernationAlpha = 1.0f - t;
@@ -708,7 +745,7 @@ void Synth::applyIntentToAllMods() {
   }
 }
 
-bool Synth::loadFromConfig(const std::string& filepath, const ResourceManager& resources) {
+bool Synth::loadFromConfig(const std::string& filepath) {
   ofLogNotice("Synth") << "Loading config from: " << filepath;
   
   // Initialize Mod factory if not already done
@@ -729,6 +766,52 @@ bool Synth::loadFromConfig(const std::string& filepath, const ResourceManager& r
   }
   
   return success;
+}
+
+void Synth::switchToConfig(const std::string& filepath, bool useHibernation) {
+  pendingConfigPath = filepath;
+  pendingUseHibernation = useHibernation;
+  hasPendingConfigSwitch = true;
+
+  if (useHibernation) {
+    if (hibernationState == HibernationState::ACTIVE) {
+      ofAddListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
+      startHibernation();
+      return;
+    } else if (hibernationState == HibernationState::FADING_OUT) {
+      ofAddListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
+      return;
+    } else if (hibernationState == HibernationState::HIBERNATED) {
+      // Perform immediately while black
+    }
+  }
+
+  // Immediate switch (no hibernation or already hibernated)
+  unload();
+  loadFromConfig(pendingConfigPath);
+  initParameters();
+  initFboParameterGroup();
+  initIntentParameterGroup();
+  if (useHibernation && hibernationState == HibernationState::HIBERNATED) {
+    cancelHibernation();
+  }
+  hasPendingConfigSwitch = false;
+}
+
+void Synth::onHibernationCompleteForSwitch(HibernationCompleteEvent& args) {
+  ofRemoveListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
+  if (!hasPendingConfigSwitch) return;
+
+  unload();
+  loadFromConfig(pendingConfigPath);
+  initParameters();
+  initFboParameterGroup();
+  initIntentParameterGroup();
+
+  if (pendingUseHibernation) {
+    cancelHibernation();
+  }
+  hasPendingConfigSwitch = false;
 }
 
 

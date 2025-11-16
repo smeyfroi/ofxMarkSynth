@@ -39,7 +39,7 @@ class Synth : public Mod {
   
 public:
   // The composite is the middle (square) section, scaled to fit the window height
-  Synth(const std::string& name, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_);
+  Synth(const std::string& name, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
   void drawGui();
   void shutdown() override;
   
@@ -55,8 +55,11 @@ public:
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
   
-  // Config system
-  bool loadFromConfig(const std::string& filepath, const ResourceManager& resources = {});
+   // Config system
+   bool loadFromConfig(const std::string& filepath);
+   void unload();
+   void switchToConfig(const std::string& filepath, bool useHibernation = true);
+
 
   float getAgency() const override { return agencyParameter; }
 
@@ -91,9 +94,12 @@ protected:
   void initParameters() override;
 
 private:
+  ResourceManager resources;
+  Gui gui;
+
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
-  Gui gui;
+
   void initDisplayParameterGroup();
   void initFboParameterGroup();
   void initIntentParameterGroup();
@@ -121,6 +127,12 @@ private:
   void drawMiddlePanel(float w, float h, float scale);
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
+
+  // Switch-to-config support
+  void onHibernationCompleteForSwitch(HibernationCompleteEvent& args);
+  bool hasPendingConfigSwitch { false };
+  std::string pendingConfigPath;
+  bool pendingUseHibernation { true };
 
   // Intent system
   IntentActivations intentActivations;
