@@ -69,7 +69,7 @@ void ModFactory::initializeBuiltinTypes() {
     auto micDeviceNamePtr = r.get<std::string>("micDeviceName");
     auto recordAudioPtr = r.get<bool>("recordAudio");
     auto recordingPathPtr = r.get<std::filesystem::path>("recordingPath");
-    if (sourceAudioPathPtr) {
+    if (sourceAudioPathPtr && !sourceAudioPathPtr->empty()) {
       return std::make_shared<AudioDataSourceMod>(s.get(), n, std::move(c), *sourceAudioPathPtr);
     } else if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
       return std::make_shared<AudioDataSourceMod>(s.get(), n, std::move(c), *micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);

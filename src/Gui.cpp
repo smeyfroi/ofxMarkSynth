@@ -46,6 +46,8 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
 }
 
 void Gui::exit() {
+  if (!synthPtr) return; // not used by a Synth
+  
   ImNodes::DestroyContext();
   imgui.exit();
 }

@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "name": "Sandlines Synth 2",
+  "description": "Sandline example number 2 to contrast with number 1",
+  
+  "drawingLayers": {
+    "foreground": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA32F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Random Radius": {
+      "type": "RandomFloatSource",
+      "config": {
+        "CreatedPerUpdate": "0.05",
+        "Min": "2.0",
+        "Max": "4.0"
+      }
+    },
+    "Audio": {
+      "type": "AudioDataSource",
+      "config": {
+        "MinPitch": "50.0",
+        "MaxPitch": "800.0",
+        "MinRms": "0.0005",
+        "MaxRms": "0.02"
+      }
+    },
+    "Cluster": {
+      "type": "Cluster"
+    },
+    "Fade": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.01"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Sand Line": {
+      "type": "SandLine",
+      "config": {
+        "Color": "0.1,0.7,0.8,0.2",
+        "Density": "0.3",
+        "AlphaMultiplier": "0.8"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    }
+  },
+  
+  "connections": [
+    "Random Radius.float -> Sand Line.PointRadius",
+    "Audio.pitchRmsPoints -> Cluster.vec2",
+    "Cluster.clusterCentreVec2 -> Sand Line.points"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}
