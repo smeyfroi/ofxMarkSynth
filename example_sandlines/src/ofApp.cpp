@@ -2,49 +2,6 @@
 #include "ofxTimeMeasurements.h"
 #include "ModFactory.hpp"
 
-//--------------------------------------------------------------
-//ofxMarkSynth::ModPtrs ofApp::createMods() {
-//  auto mods = ofxMarkSynth::ModPtrs {};
-//
-//  auto randomFloatSourceModPtr = addMod<ofxMarkSynth::RandomFloatSourceMod>(mods, "Random Radius", ofxMarkSynth::ModConfig {
-//    {"CreatedPerUpdate", "0.05"},
-//    {"Min", "0.5"},
-//    {"Max", "2.0"}
-//  }, std::pair<float, float>{0.0, 64.0}, std::pair<float, float>{0.0, 64.0});
-//
-//  auto audioDataSourceModPtr = addMod<ofxMarkSynth::AudioDataSourceMod>(mods, "Audio Points", {
-//    {"MinPitch", "50.0"},
-//    {"MaxPitch", "1500.0"}
-//  }, audioDataProcessorPtr);
-//
-//  auto clusterModPtr = addMod<ofxMarkSynth::ClusterMod>(mods, "Clusters", {});
-//  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
-//                                 clusterModPtr,
-//                                 ofxMarkSynth::ClusterMod::SINK_VEC2);
-//
-//  auto sandLineModPtr = addMod<ofxMarkSynth::SandLineMod>(mods, "Sand lines", {
-//    {"Color", "1.0, 0.0, 0.5, 0.2"},
-//    {"Density", "0.4"}
-//  });
-//  randomFloatSourceModPtr->addSink(ofxMarkSynth::RandomFloatSourceMod::SOURCE_FLOAT,
-//                                   sandLineModPtr,
-//                                   ofxMarkSynth::SandLineMod::SINK_POINT_RADIUS);
-//  clusterModPtr->addSink(ofxMarkSynth::ClusterMod::SOURCE_VEC2,
-//                                 sandLineModPtr,
-//                                 ofxMarkSynth::SandLineMod::SINK_POINTS);
-//
-//  sandLineModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
-//
-//  return mods;
-//}
-
-//ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-//  ofxMarkSynth::FboConfigPtrs fbos;
-//  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-//  fbos.emplace_back(fboConfigPtrBackground);
-//  return fbos;
-//}
-
 void ofApp::setup() {
   ofDisableArbTex();
   glEnable(GL_PROGRAM_POINT_SIZE);
