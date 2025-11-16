@@ -103,7 +103,7 @@ class Intent;
 class Mod : public std::enable_shared_from_this<Mod> {
   
 public:
-  Mod(Synth* synth, const std::string& name, const ModConfig&& config);
+  Mod(Synth* synth, const std::string& name, ModConfig config);
   virtual ~Mod() = default;
   virtual void shutdown() {};
   virtual void update() {};

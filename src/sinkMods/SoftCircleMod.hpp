@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class SoftCircleMod : public Mod {
 
 public:
-  SoftCircleMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  SoftCircleMod(Synth* synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;

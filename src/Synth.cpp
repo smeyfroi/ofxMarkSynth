@@ -29,7 +29,7 @@ constexpr float COMPOSITE_PANEL_GAP_PX = 8.0;
 
 
 
-Synth::Synth(const std::string& name_, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources_) :
+Synth::Synth(const std::string& name_, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources_) :
 Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
 compositeSize { compositeSize_ },

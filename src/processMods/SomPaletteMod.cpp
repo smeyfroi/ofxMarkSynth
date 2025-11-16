@@ -12,7 +12,7 @@
 namespace ofxMarkSynth {
 
 
-SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, const ModConfig&& config)
+SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   somPalette.numIterations = iterationsParameter;

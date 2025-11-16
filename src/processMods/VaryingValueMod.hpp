@@ -16,7 +16,7 @@
 //
 //class VaryingValueMod : public Mod {
 //public:
-//  VaryingValueMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+//  VaryingValueMod(Synth* synthPtr, const std::string& name, ModConfig config);
 //  void update() override;
 //  void receive(int sinkId, const float& value) override;
 //  void applyIntent(const Intent& intent, float strength) override;

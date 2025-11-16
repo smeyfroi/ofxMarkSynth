@@ -22,7 +22,7 @@ public:
   void applyIntent(const Intent& intent, float strength) override;
 
 public:
-  SmearMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  SmearMod(Synth* synthPtr, const std::string& name, ModConfig config);
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const float& value) override;

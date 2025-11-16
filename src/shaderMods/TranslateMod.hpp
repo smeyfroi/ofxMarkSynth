@@ -19,7 +19,7 @@
 //class TranslateMod : public Mod {
 //
 //public:
-//  TranslateMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+//  TranslateMod(Synth* synthPtr, const std::string& name, ModConfig config);
 //  void update() override;
 //  void receive(int sinkId, const glm::vec2& v) override;
 //  void applyIntent(const Intent& intent, float strength) override;

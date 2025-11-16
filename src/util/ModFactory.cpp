@@ -30,7 +30,7 @@ void ModFactory::registerType(const std::string& typeName, ModCreatorFn creator)
 ModPtr ModFactory::create(const std::string& typeName,
                          std::shared_ptr<Synth> synth,
                          const std::string& name,
-                         ModConfig&& config,
+                         ModConfig config,
                          const ResourceManager& resources) {
   auto& registry = getRegistry();
   auto it = registry.find(typeName);
@@ -64,7 +64,7 @@ std::vector<std::string> ModFactory::getRegisteredTypes() {
 
 void ModFactory::initializeBuiltinTypes() {
 
-  registerType("AudioDataSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("AudioDataSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     auto sourceAudioPathPtr = r.get<std::filesystem::path>("sourceAudioPath");
     auto micDeviceNamePtr = r.get<std::string>("micDeviceName");
     auto recordAudioPtr = r.get<bool>("recordAudio");
@@ -78,92 +78,92 @@ void ModFactory::initializeBuiltinTypes() {
     return nullptr;
   });
   
-  registerType("RandomFloatSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("RandomFloatSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomFloatSourceMod>(s.get(), n, std::move(c),
                                                   std::pair<float, float>{0.0f, 1.0f}, // min range
                                                   std::pair<float, float>{0.0f, 1.0f}, // max range
                                                   0); // seed
   });
   
-  registerType("RandomHslColor", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("RandomHslColor", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomHslColorMod>(s.get(), n, std::move(c));
   });
 
   // TODO: make configurable (see Mod)
-  registerType("RandomVecSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("RandomVecSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomVecSourceMod>(s.get(), n, std::move(c));
   });
   
-  registerType("VideoFlowSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("VideoFlowSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     auto sourceVideoPathPtr = r.get<std::filesystem::path>("sourceVideoPath");
     auto sourceVideoMutePtr = r.get<bool>("sourceVideoMute");
     return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *sourceVideoPathPtr, *sourceVideoMutePtr);
   });
   
   // Register all process mods
-  registerType("Cluster", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Cluster", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<ClusterMod>(s.get(), n, std::move(c));
   });
   
-  registerType("Fluid", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Fluid", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<FluidMod>(s.get(), n, std::move(c));
   });
   
-  registerType("FluidRadialImpulse", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("FluidRadialImpulse", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<FluidRadialImpulseMod>(s.get(), n, std::move(c));
   });
   
-  registerType("MultiplyAdd", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("MultiplyAdd", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<MultiplyAddMod>(s.get(), n, std::move(c));
   });
   
-  registerType("ParticleField", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("ParticleField", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<ParticleFieldMod>(s.get(), n, std::move(c));
   });
   
-  registerType("ParticleSet", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("ParticleSet", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<ParticleSetMod>(s.get(), n, std::move(c));
   });
   
-  registerType("Path", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Path", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<PathMod>(s.get(), n, std::move(c));
   });
   
-  registerType("PixelSnapshot", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("PixelSnapshot", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<PixelSnapshotMod>(s.get(), n, std::move(c));
   });
   
-  registerType("Smear", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Smear", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SmearMod>(s.get(), n, std::move(c));
   });
   
-  registerType("SoftCircle", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("SoftCircle", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SoftCircleMod>(s.get(), n, std::move(c));
   });
   
   // Register all sink mods
-  registerType("Collage", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Collage", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<CollageMod>(s.get(), n, std::move(c));
   });
   
-  registerType("DividedArea", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("DividedArea", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<DividedAreaMod>(s.get(), n, std::move(c));
   });
   
-  registerType("Introspector", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Introspector", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<IntrospectorMod>(s.get(), n, std::move(c));
   });
   
-  registerType("SandLine", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("SandLine", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SandLineMod>(s.get(), n, std::move(c));
   });
   
-  registerType("SomPalette", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("SomPalette", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SomPaletteMod>(s.get(), n, std::move(c));
   });
   
   // Register all layer mods
-  registerType("Fade", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig&& c, const ResourceManager& r) -> ModPtr {
+  registerType("Fade", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<FadeMod>(s.get(), n, std::move(c));
   });
   

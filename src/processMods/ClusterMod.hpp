@@ -36,7 +36,7 @@ class ClusterMod : public Mod {
   friend class PointClustersAdaptor;
 
 public:
-  ClusterMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  ClusterMod(Synth* synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;

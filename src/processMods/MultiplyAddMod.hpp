@@ -20,7 +20,7 @@ namespace ofxMarkSynth {
 class MultiplyAddMod : public Mod {
   
 public:
-  MultiplyAddMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  MultiplyAddMod(Synth* synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;

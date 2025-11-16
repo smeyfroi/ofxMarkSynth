@@ -34,7 +34,7 @@ void connectSourceToSinks(ModPtr sourceModPtr, std::initializer_list<Connections
 
 
 
-Mod::Mod(Synth* synthPtr_, const std::string& name_, const ModConfig&& config_)
+Mod::Mod(Synth* synthPtr_, const std::string& name_, ModConfig config_)
 : synthPtr { synthPtr_ },
 name { name_ },
 id { nextId },

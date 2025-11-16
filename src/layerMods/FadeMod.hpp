@@ -21,7 +21,7 @@ namespace ofxMarkSynth {
 
 class FadeMod : public Mod {
 public:
-  FadeMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  FadeMod(Synth* synthPtr, const std::string& name, ModConfig config);
   void update() override;
   void receive(int sinkId, const float& value) override;
   void applyIntent(const Intent& intent, float strength) override;

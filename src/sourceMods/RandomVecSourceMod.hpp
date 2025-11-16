@@ -17,7 +17,7 @@ class RandomVecSourceMod : public Mod {
 
 public:
   // TODO: make dimension and range configurable (see also ModFactory)
-  RandomVecSourceMod(Synth* synthPtr, const std::string& name, const ModConfig&& config, short vecDimensions = 2);
+  RandomVecSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, short vecDimensions = 2);
   void update() override;
   void applyIntent(const Intent& intent, float strength) override;
   

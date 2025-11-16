@@ -39,7 +39,7 @@ class Synth : public Mod {
   
 public:
   // The composite is the middle (square) section, scaled to fit the window height
-  Synth(const std::string& name, const ModConfig&& config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
+  Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
   void drawGui();
   void shutdown() override;
   

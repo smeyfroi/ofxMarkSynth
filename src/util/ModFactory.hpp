@@ -53,7 +53,7 @@ public:
   }
 };
 
-using ModCreatorFn = std::function<ModPtr(std::shared_ptr<Synth>, const std::string&, ModConfig&&, const ResourceManager&)>;
+using ModCreatorFn = std::function<ModPtr(std::shared_ptr<Synth>, const std::string&, ModConfig, const ResourceManager&)>;
 
 
 
@@ -66,8 +66,8 @@ public:
   static ModPtr create(const std::string& typeName,
                       std::shared_ptr<Synth> synth,
                       const std::string& name,
-                      ModConfig&& config,
-                      const ResourceManager& resources);
+                       ModConfig config,
+                       const ResourceManager& resources);
   
   static bool isRegistered(const std::string& typeName);
   static std::vector<std::string> getRegisteredTypes();

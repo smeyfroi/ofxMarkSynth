@@ -40,7 +40,7 @@ class FluidMod : public Mod {
   friend class FluidSimulationAdaptor;
 
 public:
-  FluidMod(Synth* synthPtr, const std::string& name, const ModConfig&& config);
+  FluidMod(Synth* synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void setup();
