@@ -23,6 +23,8 @@ void ofApp::setup() {
   synthPtr->loadFromConfig(ofToDataPath("2.json"), resources);
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
+  ofAddListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);
+
   // No imgui; we manage an ofxGui here instead
   parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
@@ -41,6 +43,7 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+  ofRemoveListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);
   synthPtr->shutdown();
 }
 
@@ -88,4 +91,10 @@ void ofApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
 
+}
+
+//--------------------------------------------------------------
+void ofApp::onSynthHibernationComplete(ofxMarkSynth::Synth::HibernationCompleteEvent& e){
+  ofLogNotice("ofApp") << "Hibernation complete! Duration: " << e.fadeDuration 
+                       << "s, Synth: " << e.synthName;
 }

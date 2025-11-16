@@ -223,39 +223,50 @@ void Synth::update() {
   recorderStatus = recorder.isRecording() ? "Yes" : "No";
   saveStatus = ofToString(SaveToFileThread::activeThreadCount);
   
-  if (paused) return;
+  // Update hibernation fade even when paused
+  updateHibernation();
   
-  TS_START("Synth-updateIntents");
-  updateIntentActivations();
-  computeActiveIntent();
-  applyIntentToAllMods();
-  activeIntentInfoLabel1 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
-                          " D" + ofToString(activeIntent.getDensity(), 2) +
-                          " C" + ofToString(activeIntent.getChaos(), 2);
-  activeIntentInfoLabel2 = ofToString("S") + ofToString(activeIntent.getStructure(), 2) +
-                          " G" + ofToString(activeIntent.getGranularity(), 2);
-  TS_STOP("Synth-updateIntents");
+  // When paused, skip Mod updates but still update composites if hibernating
+  if (paused && hibernationState == HibernationState::ACTIVE) {
+    return;
+  }
+  
+  // Update Mods only when not paused
+  if (!paused) {
+    TS_START("Synth-updateIntents");
+    updateIntentActivations();
+    computeActiveIntent();
+    applyIntentToAllMods();
+    activeIntentInfoLabel1 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
+                            " D" + ofToString(activeIntent.getDensity(), 2) +
+                            " C" + ofToString(activeIntent.getChaos(), 2);
+    activeIntentInfoLabel2 = ofToString("S") + ofToString(activeIntent.getStructure(), 2) +
+                            " G" + ofToString(activeIntent.getGranularity(), 2);
+    TS_STOP("Synth-updateIntents");
 
-  backgroundColorController.update();
+    backgroundColorController.update();
+    
+    std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
+      const auto& [name, fcptr] = pair;
+      if (fcptr->clearOnUpdate) {
+        fcptr->fboPtr->getSource().begin();
+        ofClear(DEFAULT_CLEAR_COLOR);
+        fcptr->fboPtr->getSource().end();
+      }
+    });
+    
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
+      const auto& [name, modPtr] = pair;
+      TSGL_START(name);
+      TS_START(name);
+      modPtr->update();
+      TS_STOP(name);
+      TSGL_STOP(name);
+    });
+  }
   
-  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
-    const auto& [name, fcptr] = pair;
-    if (fcptr->clearOnUpdate) {
-      fcptr->fboPtr->getSource().begin();
-      ofClear(DEFAULT_CLEAR_COLOR);
-      fcptr->fboPtr->getSource().end();
-    }
-  });
-  
-  std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
-    const auto& [name, modPtr] = pair;
-    TSGL_START(name);
-    TS_START(name);
-    modPtr->update();
-    TS_STOP(name);
-    TSGL_STOP(name);
-  });
-  
+  // Always update composites (whether paused or not) when hibernating
+  // When not hibernating, only update if not paused
   TSGL_START("Synth-updateComposites");
   TS_START("Synth-updateComposites");
   updateCompositeImage();
@@ -264,7 +275,9 @@ void Synth::update() {
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
   
-  emit(Synth::SOURCE_COMPOSITE_FBO, imageCompositeFbo);
+  if (!paused) {
+    emit(Synth::SOURCE_COMPOSITE_FBO, imageCompositeFbo);
+  }
 }
 
 glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
@@ -311,7 +324,13 @@ void Synth::updateCompositeImage() {
       float layerAlpha = fboParameters.getFloat(i);
       ++i;
       if (layerAlpha == 0.0) return;
-      ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, layerAlpha });
+      
+      float finalAlpha = layerAlpha;
+      if (hibernationState != HibernationState::ACTIVE) {
+        finalAlpha *= hibernationAlpha;
+      }
+      
+      ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, finalAlpha });
       dlptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
     });
   }
@@ -330,22 +349,34 @@ void Synth::updateCompositeSideImages() {
   // Easing helper
   auto easeIn = [](float x){ return x * x * x; };
 
-  // Left panel
   leftPanelCompositeFbo.begin();
   {
     float alphaIn = easeIn(leftCycleElapsed); // drop quickly, then ease
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
+    
+    float alphaOut = 1.0f - alphaIn;
+    if (hibernationState != HibernationState::ACTIVE) {
+      alphaOut *= hibernationAlpha;
+      alphaIn *= hibernationAlpha;
+    }
+    
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaOut });
     leftPanelFbo.getTarget().draw(0.0, 0.0);
     ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
     leftPanelFbo.getSource().draw(0.0, 0.0);
   }
   leftPanelCompositeFbo.end();
 
-  // Right panel
   rightPanelCompositeFbo.begin();
   {
     float alphaIn = easeIn(rightCycleElapsed);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0f - alphaIn });
+    
+    float alphaOut = 1.0f - alphaIn;
+    if (hibernationState != HibernationState::ACTIVE) {
+      alphaOut *= hibernationAlpha;
+      alphaIn *= hibernationAlpha;
+    }
+    
+    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaOut });
     rightPanelFbo.getTarget().draw(0.0, 0.0);
     ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
     rightPanelFbo.getSource().draw(0.0, 0.0);
@@ -463,6 +494,15 @@ bool Synth::keyPressed(int key) {
 //    });
     return true;
   }
+  
+  if (key == 'H') {
+    if (hibernationState == HibernationState::ACTIVE) {
+      startHibernation();
+    } else {
+      cancelHibernation();
+    }
+    return true;
+  }
 
   // >>> Deal with the `[+=][0-9]` chords
   if (key == '+') {
@@ -508,6 +548,58 @@ bool Synth::keyPressed(int key) {
   return handled;
 }
 
+// Hibernation system implementation
+
+void Synth::startHibernation() {
+  if (hibernationState == HibernationState::ACTIVE) {
+    ofLogNotice("Synth") << "Starting hibernation, fade duration: " 
+                         << hibernationFadeDurationParameter.get() << "s";
+    hibernationState = HibernationState::FADING_OUT;
+    hibernationStartTime = ofGetElapsedTimef();
+    paused = true;  // Pause updates immediately
+  }
+}
+
+void Synth::cancelHibernation() {
+  if (hibernationState != HibernationState::ACTIVE) {
+    ofLogNotice("Synth") << "Cancelling hibernation";
+    hibernationState = HibernationState::ACTIVE;
+    hibernationAlpha = 1.0f;
+    paused = false;  // Resume updates
+  }
+}
+
+void Synth::updateHibernation() {
+  if (hibernationState != HibernationState::FADING_OUT) return;
+  
+  float elapsed = ofGetElapsedTimef() - hibernationStartTime;
+  float duration = hibernationFadeDurationParameter.get();
+  
+  if (elapsed >= duration) {
+    hibernationAlpha = 0.0f;
+    hibernationState = HibernationState::HIBERNATED;
+    
+    HibernationCompleteEvent event;
+    event.fadeDuration = elapsed;
+    event.synthName = name;
+    ofNotifyEvent(hibernationCompleteEvent, event, this);
+    
+    ofLogNotice("Synth") << "Hibernation complete after " << elapsed << "s";
+  } else {
+    float t = elapsed / duration;
+    hibernationAlpha = 1.0f - t;
+  }
+}
+
+std::string Synth::getHibernationStateString() const {
+  switch (hibernationState) {
+    case HibernationState::ACTIVE:     return "Active";
+    case HibernationState::FADING_OUT: return "Hibernating...";
+    case HibernationState::HIBERNATED: return "Hibernated";
+  }
+  return "Unknown";
+}
+
 void Synth::initFboParameterGroup() {
   fboParameters.clear();
   
@@ -551,6 +643,7 @@ void Synth::initParameters() {
   parameters.add(agencyParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
+  parameters.add(hibernationFadeDurationParameter);
   
   // initialise Mod parameters but do not add them to Synth parameters
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {

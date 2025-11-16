@@ -76,6 +76,13 @@ public:
   static constexpr int SINK_BACKGROUND_COLOR = 100;
   static constexpr int SINK_RESET_RANDOMNESS = 200;
   
+  class HibernationCompleteEvent : public ofEventArgs {
+  public:
+    float fadeDuration;
+    std::string synthName;
+  };
+  ofEvent<HibernationCompleteEvent> hibernationCompleteEvent;
+  
   friend class Gui;
   friend class NodeEditorModel;
   friend class NodeEditorLayout;
@@ -154,6 +161,25 @@ private:
 
   bool plusKeyPressed { false };
   bool equalsKeyPressed { false };
+  
+  // >>> Hibernation system
+  enum class HibernationState {
+    ACTIVE,        // Normal operation
+    FADING_OUT,    // Hibernating - fade in progress
+    HIBERNATED     // Fully hibernated (black screen, paused)
+  };
+  HibernationState hibernationState { HibernationState::ACTIVE };
+  float hibernationAlpha { 1.0f };  // 1.0 = fully visible, 0.0 = fully black
+  float hibernationStartTime { 0.0f };
+  ofParameter<float> hibernationFadeDurationParameter { "Hibernate Duration", 2.0, 0.5, 10.0 };
+  void startHibernation();
+  void cancelHibernation();
+  void updateHibernation();
+  bool isHibernating() const { return hibernationState != HibernationState::ACTIVE; }
+  std::string getHibernationStateString() const;
+  HibernationState getHibernationState() const { return hibernationState; }
+  float getHibernationStartTime() const { return hibernationStartTime; }
+  // <<<
   
 #ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
