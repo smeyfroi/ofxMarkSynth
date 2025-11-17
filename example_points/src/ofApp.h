@@ -4,6 +4,10 @@
 #include "ofxMarkSynth.h"
 #include "ofxGui.h"
 
+constexpr float FRAME_RATE = 30.0;
+const bool START_PAUSED = false; // false for dev
+const glm::vec2 SYNTH_COMPOSITE_SIZE = { 1080, 1080 }; // drawing layers are scaled down to this size to fit into the window height
+
 class ofApp: public ofBaseApp{
 public:
 	void setup();
@@ -22,11 +26,7 @@ public:
 	void gotMessage(ofMessage msg);
 	
 private:
-	ofxMarkSynth::Synth synth;
-  ofxMarkSynth::ModPtrs createMods();
-  ofxMarkSynth::FboConfigPtrs createFboConfigs();
-  ofxMarkSynth::FboPtr fboPtr = std::make_shared<PingPongFbo>();
-  ofxMarkSynth::FboPtr fluidVelocitiesFboPtr = std::make_shared<PingPongFbo>();
+  std::shared_ptr<ofxMarkSynth::Synth> synthPtr;
   
   bool guiVisible { true };
   ofxPanel gui;

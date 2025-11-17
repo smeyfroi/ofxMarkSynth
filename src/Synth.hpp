@@ -60,8 +60,8 @@ public:
    void unload();
    void switchToConfig(const std::string& filepath, bool useHibernation = true);
 
-
   float getAgency() const override { return agencyParameter; }
+  void setAgency(float agency) { agencyParameter = agency; }
 
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
@@ -168,6 +168,8 @@ private:
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
   ofxLabel pauseStatus;
+  
+  std::string currentConfigPath;
   
   bool guiVisible { true };
 

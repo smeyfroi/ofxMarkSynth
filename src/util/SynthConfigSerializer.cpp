@@ -43,8 +43,10 @@ int SynthConfigSerializer::glEnumFromString(const std::string& str) {
   if (str == "GL_RGB") return GL_RGB;
   if (str == "GL_RGBA32F") return GL_RGBA32F;
   if (str == "GL_RGB32F") return GL_RGB32F;
+  if (str == "GL_RG32F") return GL_RG32F;
   if (str == "GL_RGBA16F") return GL_RGBA16F;
   if (str == "GL_RGB16F") return GL_RGB16F;
+  if (str == "GL_RG16F") return GL_RG16F;
   if (str == "GL_RGBA8") return GL_RGBA8;
   if (str == "GL_RGB8") return GL_RGB8;
   
@@ -295,7 +297,11 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
   if (j.contains("description") && j["description"].is_string()) {
     ofLogNotice("SynthConfigSerializer") << "  " << j["description"].get<std::string>();
   }
-  
+  if (j.contains("agency") && j["agency"].is_number()) {
+    ofLogNotice("SynthConfigSerializer") << "  Agency: " << j["agency"].get<float>();
+    synth->setAgency(j["agency"].get<float>());
+  }
+
   // Parse each section in order
   SynthConfigSerializer::NamedLayers namedLayers = parseDrawingLayers(j, synth);
   parseMods(j, synth, resources, namedLayers);

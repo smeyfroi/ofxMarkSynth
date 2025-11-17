@@ -149,6 +149,9 @@ void Synth::unload() {
   intentParameters.clear();
   intentActivations.clear();
 
+  // 5) Clear current config path
+  currentConfigPath.clear();
+
   // Note: Keep displayParameters, imageCompositeFbo, side panel FBOs, and tonemapShader
   // Rebuild of groups happens when reloading config (configureGui/init* called then)
 }
@@ -760,6 +763,7 @@ bool Synth::loadFromConfig(const std::string& filepath) {
   bool success = SynthConfigSerializer::load(std::static_pointer_cast<Synth>(shared_from_this()), filepath, resources);
   
   if (success) {
+    currentConfigPath = filepath;
     ofLogNotice("Synth") << "Successfully loaded config from: " << filepath;
   } else {
     ofLogError("Synth") << "Failed to load config from: " << filepath;

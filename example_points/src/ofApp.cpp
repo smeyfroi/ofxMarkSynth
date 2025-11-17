@@ -1,84 +1,45 @@
 #include "ofApp.h"
-
-//--------------------------------------------------------------
-ofxMarkSynth::ModPtrs ofApp::createMods() {
-  auto mods = ofxMarkSynth::ModPtrs {};
-
-  auto randomFloatSourceModPtr = addMod<ofxMarkSynth::RandomFloatSourceMod>(mods, "Random Radius", {
-    {"CreatedPerUpdate", "0.05"},
-    {"Min", "0.001"},
-    {"Max", "0.05"}
-  }, std::pair<float, float>{0.0, 0.1}, std::pair<float, float>{0.0, 0.1});
-
-  auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
-    {"CreatedPerUpdate", "0.4"}
-  }, 2);
-  
-  auto randomColourSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Colours", ofxMarkSynth::ModConfig {
-    {"CreatedPerUpdate", "0.1"}
-  }, 4);
-  
-  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
-  randomColourSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC4,
-                                   drawPointsModPtr,
-                                   ofxMarkSynth::DrawPointsMod::SINK_POINT_COLOR);
-  randomFloatSourceModPtr->addSink(ofxMarkSynth::RandomFloatSourceMod::SOURCE_FLOAT,
-                                   drawPointsModPtr,
-                                   ofxMarkSynth::DrawPointsMod::SINK_POINT_RADIUS);
-  randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
-                                 drawPointsModPtr,
-                                 ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-
-  auto fluidModPtr = addMod<ofxMarkSynth::FluidMod>(mods, "Fluid", ofxMarkSynth::ModConfig {});
-
-  drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
-  fluidModPtr->receive(ofxMarkSynth::FluidMod::SINK_VALUES_FBO, fboPtr);
-  fluidModPtr->receive(ofxMarkSynth::FluidMod::SINK_VELOCITIES_FBO, fluidVelocitiesFboPtr);
-  
-  return mods;
-}
-
-ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrFluidValues = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrFluidValues);
-  return fbos;
-}
+#include "ofxTimeMeasurements.h"
+#include "ModFactory.hpp"
 
 void ofApp::setup() {
-  ofSetBackgroundColor(0);
   ofDisableArbTex();
-  ofSetFrameRate(60);
-
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  fluidVelocitiesFboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGB32F);
-  fluidVelocitiesFboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0));
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  ofSetBackgroundColor(0);
+  ofSetFrameRate(FRAME_RATE);
+  TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
-  parameters.add(synth.getParameterGroup("Synth"));
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Points", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
+
+  synthPtr->loadFromConfig(ofToDataPath("1.json"));
+  synthPtr->configureGui(nullptr); // nullptr == no imgui window
+
+  // No imgui; we manage an ofxGui here instead
+  parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  synth.update();
+  synthPtr->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
+  synthPtr->draw();
   if (guiVisible) gui.draw();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+  synthPtr->shutdown();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return; }
-  if (synth.keyPressed(key)) return;
+  if (synthPtr->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

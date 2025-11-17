@@ -288,7 +288,15 @@ void Gui::drawInternalState() {
   ImGui::EndChild();
 }
 
-void Gui::drawStatus() {
+void Gui::drawStatus() {  
+  if (!synthPtr->currentConfigPath.empty()) {
+    std::filesystem::path p(synthPtr->currentConfigPath);
+    std::string filename = p.filename().string();
+    ImGui::TextColored(GREY_COLOR, "Config: %s", filename.c_str());
+  } else {
+    ImGui::TextColored(GREY_COLOR, "Config: None");
+  }
+
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
   
   if (synthPtr->paused) {
