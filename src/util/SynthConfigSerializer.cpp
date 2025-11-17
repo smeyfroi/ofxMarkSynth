@@ -262,10 +262,10 @@ bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_pt
       ofLogNotice("SynthConfigSerializer") << "Created intent: " << name;
     }
     
-    // NOTE: Currently Synth manages its own Intent presets in initIntentPresets()
-    // We would need to add a method like Synth::setIntentPresets(intentPresets) to use these
-    // For now, just log that we parsed them
-    ofLogNotice("SynthConfigSerializer") << "Parsed " << intentPresets.size() << " intents (not yet integrated with Synth)";
+    // Set the parsed intents into Synth
+    if (!intentPresets.empty()) {
+      synth->setIntentPresets(intentPresets);
+    }
     
     return true;
   } catch (const std::exception& e) {

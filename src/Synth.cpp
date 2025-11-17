@@ -79,6 +79,11 @@ resources { std::move(resources_) }
 void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initDisplayParameterGroup();
   initFboParameterGroup();
+  
+  // Initialize intents if not already set (e.g., from config)
+  if (intentActivations.empty()) {
+    initIntentPresets();
+  }
   initIntentParameterGroup();
   
   parameters = getParameterGroup();
@@ -659,7 +664,8 @@ void Synth::initIntentParameterGroup() {
   
   intentParameters.setName("Intent");
   intentParameters.add(intentStrengthParameter);
-  initIntentPresets();
+  // Don't recreate intents here - they should be set via setIntentPresets() or initIntentPresets()
+  // Just add the existing activation parameters to the group
   for (auto& p : intentActivationParameters) intentParameters.add(*p);
 }
 
@@ -694,6 +700,24 @@ void Synth::initParameters() {
   });
 }
 
+void Synth::setIntentPresets(const std::vector<IntentPtr>& presets) {
+  if (presets.size() > 7) {
+    ofLogWarning("Synth") << "Received " << presets.size() << " intents, limiting to 7";
+  }
+  
+  intentActivations.clear();
+  intentActivationParameters.clear();
+  
+  size_t count = std::min(presets.size(), size_t(7));
+  for (size_t i = 0; i < count; ++i) {
+    intentActivations.emplace_back(presets[i]);
+    auto p = std::make_shared<ofParameter<float>>(presets[i]->getName() + " Activation", 0.0f, 0.0f, 1.0f);
+    intentActivationParameters.push_back(p);
+  }
+  
+  ofLogNotice("Synth") << "Set " << count << " intent presets from config";
+}
+
 void Synth::initIntentPresets() {
   // Remember fader 0 is a master control, and there are another 7 faders available
   std::vector<IntentPtr> presets = {
@@ -705,13 +729,7 @@ void Synth::initIntentPresets() {
     Intent::createPreset("Minimal", 0.1f, 0.1f, 0.8f, 0.05f, 0.1f),
     Intent::createPreset("Maximum", 0.95f, 0.95f, 0.5f, 0.8f, 0.95f),
   };
-  intentActivations.clear();
-  intentActivationParameters.clear();
-  for (auto& ip : presets) {
-    intentActivations.emplace_back(ip);
-    auto p = std::make_shared<ofParameter<float>>(ip->getName() + " Activation", 0.0f, 0.0f, 1.0f);
-    intentActivationParameters.push_back(p);
-  }
+  setIntentPresets(presets);
 }
 
 void Synth::updateIntentActivations() {

@@ -59,6 +59,8 @@ public:
    bool loadFromConfig(const std::string& filepath);
    void unload();
    void switchToConfig(const std::string& filepath, bool useHibernation = true);
+   void setIntentPresets(const std::vector<IntentPtr>& presets);
+   void initIntentPresets();
 
   float getAgency() const override { return agencyParameter; }
   void setAgency(float agency) { agencyParameter = agency; }
@@ -144,7 +146,6 @@ private:
   const Intent& getActiveIntent() const { return activeIntent; }
   float getIntentStrength() const { return intentStrengthParameter; }
   void applyIntent(const Intent& intent, float intentStrength) override;
-  void initIntentPresets();
   void updateIntentActivations();
   void computeActiveIntent();
   void applyIntentToAllMods();
