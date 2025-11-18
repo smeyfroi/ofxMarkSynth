@@ -5,6 +5,7 @@
 #include "ParamController.h"
 #include "IntentMapping.hpp"
 
+#include "sourceMods/StaticTextSourceMod.hpp"
 #include "RandomVecSourceMod.hpp"
 #include "RandomHslColorMod.hpp"
 #include "RandomFloatSourceMod.hpp"
@@ -29,6 +30,7 @@
 #include "ParticleSetMod.hpp"
 #include "DividedAreaMod.hpp"
 #include "SandLineMod.hpp"
+#include "sinkMods/TextMod.hpp"
 #include "CollageMod.hpp"
 #include "FluidRadialImpulseMod.hpp"
 #include "SoftCircleMod.hpp"

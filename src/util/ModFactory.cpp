@@ -78,6 +78,15 @@ void ModFactory::initializeBuiltinTypes() {
     return nullptr;
   });
   
+  registerType("StaticTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    auto staticTextPtr = r.get<std::string>("staticText");
+    if (!staticTextPtr) {
+      ofLogError("ModFactory") << "StaticTextSourceMod requires 'staticText' resource";
+      return nullptr;
+    }
+    return std::make_shared<StaticTextSourceMod>(s.get(), n, std::move(c), *staticTextPtr);
+  });
+  
   registerType("RandomFloatSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomFloatSourceMod>(s.get(), n, std::move(c),
                                                   std::pair<float, float>{0.0f, 1.0f}, // min range
@@ -156,6 +165,15 @@ void ModFactory::initializeBuiltinTypes() {
   
   registerType("SandLine", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SandLineMod>(s.get(), n, std::move(c));
+  });
+  
+  registerType("Text", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    auto fontPathPtr = r.get<std::filesystem::path>("fontPath");
+    if (!fontPathPtr) {
+      ofLogError("ModFactory") << "TextMod requires 'fontPath' resource";
+      return nullptr;
+    }
+    return std::make_shared<TextMod>(s.get(), n, std::move(c), *fontPathPtr);
   });
   
   registerType("SomPalette", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {

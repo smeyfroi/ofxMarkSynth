@@ -1,0 +1,15 @@
+keyPressed()=1|1|0
+GL_Synth::draw=1|1|0
+GL_Synth-updateComposites=1|1|0
+Title Source=1|1|0
+Random Color=1|1|0
+draw()=1|1|0
+Synth-updateComposites=1|1|0
+Text Display=1|1|0
+GL_Random Color=1|1|0
+GL_Random Position=1|1|0
+GL_Text Display=1|1|0
+Synth-updateIntents=1|1|0
+GL_Title Source=1|1|0
+Random Position=1|1|0
+update()=1|1|0

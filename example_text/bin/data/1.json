@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "name": "Text Synth",
+  "description": "Static text example",
+  "agency": 0.5,
+  
+  "drawingLayers": {
+    "textLayer": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA32F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": true,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Title Source": {
+      "type": "StaticTextSource",
+      "config": {
+        "Emit Once": "true",
+        "Delay": "0.5"
+      }
+    },
+    "Text Display": {
+      "type": "Text",
+      "config": {
+        "Font Size": "0.08",
+        "Position": "0.5,0.5",
+        "Color": "1.0,0.9,0.5,1.0",
+        "Alpha": "1.0"
+      },
+      "layers": {
+        "default": ["textLayer"]
+      }
+    },
+    "Random Color": {
+      "type": "RandomHslColor",
+      "config": {
+        "CreatedPerUpdate": "0.5"
+      }
+    },
+    "Random Position": {
+      "type": "RandomVecSource",
+      "config": {
+        "CreatedPerUpdate": "0.05"
+      }
+    }
+  },
+  
+  "connections": [
+    "Title Source.text -> Text Display.text",
+    "Random Color.vec4 -> Text Display.Color",
+    "Random Position.vec2 -> Text Display.Position"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}

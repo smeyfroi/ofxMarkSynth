@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "Lerp.h"
+#include "util/Lerp.h"
 
 
 
