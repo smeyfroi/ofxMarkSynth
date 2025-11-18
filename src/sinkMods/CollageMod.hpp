@@ -24,21 +24,21 @@ public:
   CollageMod(Synth* synthPtr, const std::string& name, ModConfig config);
   void update() override;
   void receive(int sinkId, const ofPath& path) override;
-  void receive(int sinkId, const ofFbo& value) override;
+  void receive(int sinkId, const ofTexture& texture) override;
   void receive(int sinkId, const glm::vec4& v) override;
   void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr std::string OUTLINE_LAYERPTR_NAME { "outlines" };
 
   static constexpr int SINK_PATH = 1;
-  static constexpr int SINK_SNAPSHOT_FBO = 11;
+  static constexpr int SINK_SNAPSHOT_TEXTURE = 11;
   static constexpr int SINK_COLOR = 20;
 
 protected:
   void initParameters() override;
 
   ofPath path;
-  ofFbo snapshotFbo;
+  ofTexture snapshotTexture;
 
   ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> colorController { colorParameter };

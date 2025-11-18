@@ -15,11 +15,13 @@ ofxIntrospector
 ofxMotionFromVideo
 ofxSpatialHash
 ofxParticleSet
+ofxParticleField
 ofxPlottable
 ofxPointClusters
 ofxSelfOrganizingMap
 ofxSomPalette
 ofxTimeMeasurements
 ofxTinyEXR
+ofxFatLines
+ofxImGui
 ofxMarkSynth
-ofxParticleField

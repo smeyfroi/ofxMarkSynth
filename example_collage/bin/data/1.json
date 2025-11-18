@@ -1,0 +1,93 @@
+{
+  "version": "1.0",
+  "name": "Collage Synth",
+  "description": "Collage example number 1",
+  "agency": 1.0,
+  
+  "drawingLayers": {
+    "foreground": {
+      "size": [1200, 1200],
+      "internalFormat": "GL_RGBA8",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": true,
+      "numSamples": 0,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Random Point": {
+      "type": "RandomVecSource",
+      "config": {
+        "CreatedPerUpdate": "0.5"
+      }
+    },
+    "Particles": {
+      "type": "ParticleSet",
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Snapshot": {
+      "type": "PixelSnapshot",
+      "config": {
+        "Size": "192,192"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Path": {
+      "type": "Path"
+    },
+    "Random Color": {
+      "type": "RandomHslColor",
+      "config": {
+        "CreatedPerUpdate": "0.01"
+      }
+    },
+    "Collage": {
+      "type": "Collage",
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Fade": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.0005"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    }
+  },
+  
+  "connections": [
+    "Random Point.vec2 -> Particles.points",
+    "Random Point.vec2 -> Path.vec2",
+    "Snapshot.snapshotTexture -> Collage.snapshotTexture",
+    "Path.path -> Collage.path",
+    "Random Color.vec4 -> Collage.Color"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}
+

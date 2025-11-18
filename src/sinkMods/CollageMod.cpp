@@ -21,7 +21,7 @@ CollageMod::CollageMod(Synth* synthPtr, const std::string& name, ModConfig confi
 {
   sinkNameIdMap = {
     { "path", SINK_PATH },
-    { "snapshotFbo", SINK_SNAPSHOT_FBO },
+    { "snapshotTexture", SINK_SNAPSHOT_TEXTURE },
     { colorParameter.getName(), SINK_COLOR }
   };
   
@@ -45,7 +45,7 @@ void CollageMod::update() {
   outlineController.update();
   
   if (path.getCommands().size() <= 3) return;
-  if (strategyParameter == 1 && !snapshotFbo.isAllocated()) return;
+  if (strategyParameter == 1 && !snapshotTexture.isAllocated()) return;
 
   auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt0) return;
@@ -136,7 +136,7 @@ void CollageMod::update() {
     
     // Could also limit the scaling to some limit, and optionally crop here?
     
-    snapshotFbo.draw(x, y, w, h);
+    snapshotTexture.draw(x, y, w, h);
     
     glDisable(GL_STENCIL_TEST);
   }
@@ -145,15 +145,13 @@ void CollageMod::update() {
   path.clear();
 }
 
-void CollageMod::receive(int sinkId, const ofFbo& value) {
+void CollageMod::receive(int sinkId, const ofTexture& texture) {
   switch (sinkId) {
-    case SINK_SNAPSHOT_FBO:
-      //  ofxMarkSynth::fboCopyBlit(newFieldFbo, fieldFbo);
-      //  ofxMarkSynth::fboCopyDraw(newFieldFbo, fieldFbo);
-      snapshotFbo = value;
+    case SINK_SNAPSHOT_TEXTURE:
+      snapshotTexture = texture;
       break;
     default:
-      ofLogError("CollageMod") << "ofFbo receive for unknown sinkId " << sinkId;
+      ofLogError("CollageMod") << "ofTexture receive for unknown sinkId " << sinkId;
   }
 }
 

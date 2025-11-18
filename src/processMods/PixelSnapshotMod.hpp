@@ -23,11 +23,9 @@ public:
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
-  void receive(int sinkId, const ofFbo& value) override;
   void applyIntent(const Intent& intent, float strength) override;
 
-  static constexpr int SINK_SNAPSHOT_SOURCE = 10;
-  static constexpr int SOURCE_SNAPSHOT = 11;
+  static constexpr int SOURCE_SNAPSHOT_TEXTURE = 11;
 
 protected:
   void initParameters() override;
@@ -35,12 +33,11 @@ protected:
 private:
   float updateCount;
   ofParameter<float> snapshotsPerUpdateParameter { "SnapshotsPerUpdate", 1.0/30.0, 0.0, 1.0 };
-  ofParameter<float> sizeParameter { "Size", 1024, 128, 8096 }; // must be smaller than the source FBO
+  ofParameter<float> sizeParameter { "Size", 1024, 128, 8096 }; // must be smaller than the source layer
   ParamController<float> sizeController { sizeParameter };
 
-  ofFbo sourceFbo;
-  ofFbo snapshotFbo;
-  const ofFbo createSnapshot(const ofFbo& fbo);
+  ofFbo snapshotFbo; // Scratchpad FBO for GPU-based cropping operation
+  const ofTexture& createSnapshot(const ofFbo& sourceFbo);
 
   bool visible = false;
 };

@@ -17,11 +17,8 @@ namespace ofxMarkSynth {
 PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
-  sinkNameIdMap = {
-    { "snapshotSource", SINK_SNAPSHOT_SOURCE }
-  };
   sourceNameIdMap = {
-    { "snapshot", SOURCE_SNAPSHOT }
+    { "snapshotTexture", SOURCE_SNAPSHOT_TEXTURE }
   };
   
   sourceNameControllerPtrMap = {
@@ -35,45 +32,37 @@ void PixelSnapshotMod::initParameters() {
 }
 
 void PixelSnapshotMod::update() {
-  if (!sourceFbo.isAllocated()) return;
-
   sizeController.update();
   
   updateCount += snapshotsPerUpdateParameter;
   if (updateCount >= 1.0) {
-    emit(SOURCE_SNAPSHOT, createSnapshot(sourceFbo));
+    auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+    if (!drawingLayerPtrOpt) return;
+    auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
+    if (!fboPtr->getSource().isAllocated()) return;
+
+    emit(SOURCE_SNAPSHOT_TEXTURE, createSnapshot(fboPtr->getSource()));
     updateCount = 0;
   }
 }
 
-const ofFbo PixelSnapshotMod::createSnapshot(const ofFbo& fbo) {
+const ofTexture& PixelSnapshotMod::createSnapshot(const ofFbo& sourceFbo) {
   int size = static_cast<int>(sizeController.value);
   if (static_cast<int>(snapshotFbo.getWidth()) != size || static_cast<int>(snapshotFbo.getHeight()) != size) {
     snapshotFbo.allocate(size, size, GL_RGBA8);
   }
 
-  int x = ofRandom(0, fbo.getWidth() - snapshotFbo.getWidth());
-  int y = ofRandom(0, fbo.getHeight() - snapshotFbo.getHeight());
+  int x = ofRandom(0, sourceFbo.getWidth() - snapshotFbo.getWidth());
+  int y = ofRandom(0, sourceFbo.getHeight() - snapshotFbo.getHeight());
   
   snapshotFbo.begin();
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofClear(0, 0, 0, 0);
+  ofEnableBlendMode(OF_BLENDMODE_DISABLED);  // Direct copy without alpha blending
   ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
-  fbo.draw(-x, -y);
+  sourceFbo.draw(-x, -y);  // Offset to crop
   snapshotFbo.end();
 
-  return snapshotFbo;
-}
-
-void PixelSnapshotMod::receive(int sinkId, const ofFbo& value) {
-  switch (sinkId) {
-    case SINK_SNAPSHOT_SOURCE:
-      //  ofxMarkSynth::fboCopyBlit(newFieldFbo, fieldFbo);
-      //  ofxMarkSynth::fboCopyDraw(newFieldFbo, fieldFbo);
-      sourceFbo = value;
-      break;
-    default:
-      ofLogError("PixelSnapshotMod") << "ofFbo receive for unknown sinkId " << sinkId;
-  }
+  return snapshotFbo.getTexture();
 }
 
 void PixelSnapshotMod::draw() {

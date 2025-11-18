@@ -128,6 +128,7 @@ public:
   virtual void receive(int sinkId, const ofFloatPixels& pixels);
   virtual void receive(int sinkId, const ofPath& path);
   virtual void receive(int sinkId, const ofFbo& fbo);
+  virtual void receive(int sinkId, const ofTexture& texture);
   
   void receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr);
   std::optional<DrawingLayerPtr> getCurrentNamedDrawingLayerPtr(const std::string& name);

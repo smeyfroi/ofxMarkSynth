@@ -137,6 +137,7 @@ template void Mod::emit(int sourceId, const float& value);
 template void Mod::emit(int sourceId, const ofFloatPixels& value);
 template void Mod::emit(int sourceId, const ofPath& value);
 template void Mod::emit(int sourceId, const ofFbo& value);
+template void Mod::emit(int sourceId, const ofTexture& value);
 
 void Mod::receive(int sinkId, const glm::vec2& point) {
   ofLogError("Mod") << "Bad receive of glm::vec2";
@@ -164,6 +165,10 @@ void Mod::receive(int sinkId, const ofPath& path) {
 
 void Mod::receive(int sinkId, const ofFbo& fbo) {
   ofLogError("Mod") << "Bad receive of ofFbo";
+}
+
+void Mod::receive(int sinkId, const ofTexture& texture) {
+  ofLogError("Mod") << "Bad receive of ofTexture";
 }
 
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
