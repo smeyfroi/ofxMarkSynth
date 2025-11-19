@@ -87,6 +87,28 @@ void ModFactory::initializeBuiltinTypes() {
     return std::make_shared<StaticTextSourceMod>(s.get(), n, std::move(c), *staticTextPtr);
   });
   
+  registerType("FileTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    auto filePathPtr = r.get<std::string>("textFilePath");
+    if (!filePathPtr) {
+      ofLogError("ModFactory") << "FileTextSourceMod requires 'textFilePath' resource";
+      return nullptr;
+    }
+    return std::make_shared<FileTextSourceMod>(s.get(), n, std::move(c), *filePathPtr);
+  });
+  
+  registerType("RandomWordSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    auto filePathPtr = r.get<std::string>("wordFilePath");
+    if (!filePathPtr) {
+      ofLogError("ModFactory") << "RandomWordSourceMod requires 'wordFilePath' resource";
+      return nullptr;
+    }
+    return std::make_shared<RandomWordSourceMod>(s.get(), n, std::move(c), *filePathPtr);
+  });
+  
+  registerType("TimerSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<TimerSourceMod>(s.get(), n, std::move(c));
+  });
+  
   registerType("RandomFloatSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomFloatSourceMod>(s.get(), n, std::move(c),
                                                   std::pair<float, float>{0.0f, 1.0f}, // min range

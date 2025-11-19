@@ -1,0 +1,15 @@
+GL_Synth::draw=1|1|0
+keyPressed()=1|1|0
+Words=1|1|0
+Color Source=1|1|0
+GL_Synth-updateComposites=1|1|0
+GL_Color Source=1|1|0
+update()=1|1|0
+GL_Timer=1|1|0
+Synth-updateIntents=1|1|0
+Timer=1|1|0
+GL_Words=1|1|0
+GL_Text Display=1|1|0
+draw()=1|1|0
+Synth-updateComposites=1|1|0
+Text Display=1|1|0

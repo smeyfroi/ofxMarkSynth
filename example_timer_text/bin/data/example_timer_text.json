@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "name": "Timer Text Example",
+  "description": "Demonstrates TimerSourceMod triggering RandomWordSourceMod to display animated text",
+  "agency": 0.5,
+  
+  "drawingLayers": {
+    "textLayer": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA16F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": true,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 2,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Timer": {
+      "type": "TimerSource",
+      "config": {
+        "Interval": "1.5",
+        "Enabled": "true"
+      }
+    },
+    "Words": {
+      "type": "RandomWordSource"
+    },
+    "Text Display": {
+      "type": "Text",
+      "config": {
+        "Font Size": "0.12",
+        "Position": "0.5,0.5",
+        "Color": "1.0,1.0,1.0,1.0",
+        "Alpha": "1.0"
+      },
+      "layers": {
+        "default": ["textLayer"]
+      }
+    },
+    "Color Source": {
+      "type": "RandomHslColor",
+      "config": {
+        "CreatedPerUpdate": "0.01"
+      }
+    }
+  },
+  
+  "connections": [
+    "Timer.tick -> Words.nextWord",
+    "Words.text -> Text Display.text",
+    "Color Source.vec4 -> Text Display.Color"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}
