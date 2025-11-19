@@ -14,19 +14,20 @@ namespace ofxMarkSynth {
 
 
 
-StaticTextSourceMod::StaticTextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
-                                         const std::string& text)
-: Mod { synthPtr, name, std::move(config) },
-  staticText { text }
+StaticTextSourceMod::StaticTextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config)
+: Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
     { "text", SOURCE_TEXT }
   };
   
+  textParameter.addListener(this, &StaticTextSourceMod::onTextChanged);
+  
   startTime = ofGetElapsedTimef();
 }
 
 void StaticTextSourceMod::initParameters() {
+  parameters.add(textParameter);
   parameters.add(emitOnceParameter);
   parameters.add(delayParameter);
 }
@@ -39,10 +40,14 @@ void StaticTextSourceMod::update() {
   float elapsedTime = ofGetElapsedTimef() - startTime;
   if (elapsedTime < delayParameter) return;
   
-  emit(SOURCE_TEXT, staticText);
+  emit(SOURCE_TEXT, textParameter.get());
   hasEmitted = true;
-  
-  ofLogNotice("StaticTextSourceMod") << "Emitted text: '" << staticText << "'";
+//  ofLogVerbose("StaticTextSourceMod") << "Emitted text: '" << textParameter.get() << "'";
+}
+
+void StaticTextSourceMod::onTextChanged(std::string& text) {
+  hasEmitted = false;
+  ofLogNotice("StaticTextSourceMod") << "Text changed to: '" << text << "', will re-emit";
 }
 
 

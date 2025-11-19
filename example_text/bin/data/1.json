@@ -21,6 +21,7 @@
     "Title Source": {
       "type": "StaticTextSource",
       "config": {
+        "Text": "Hello World",
         "Emit Once": "true",
         "Delay": "0.5"
       }
@@ -55,22 +56,5 @@
     "Title Source.text -> Text Display.text",
     "Random Color.vec4 -> Text Display.Color",
     "Random Position.vec2 -> Text Display.Position"
-  ],
-  
-  "intents": {
-    "Calm": {
-      "energy": 0.2,
-      "density": 0.3,
-      "structure": 0.7,
-      "chaos": 0.1,
-      "granularity": 0.1
-    },
-    "Energetic": {
-      "energy": 0.9,
-      "density": 0.7,
-      "structure": 0.4,
-      "chaos": 0.5,
-      "granularity": 0.5
-    }
-  }
+  ]
 }

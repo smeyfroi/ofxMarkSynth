@@ -11,7 +11,6 @@ void ofApp::setup() {
   
   ofxMarkSynth::ResourceManager resources;
   resources.add("fontPath", FONT_PATH);
-  resources.add("staticText", STATIC_TEXT);
 
   synthPtr = std::make_shared<ofxMarkSynth::Synth>("Text", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);

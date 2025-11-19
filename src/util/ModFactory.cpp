@@ -79,12 +79,7 @@ void ModFactory::initializeBuiltinTypes() {
   });
   
   registerType("StaticTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto staticTextPtr = r.get<std::string>("staticText");
-    if (!staticTextPtr) {
-      ofLogError("ModFactory") << "StaticTextSourceMod requires 'staticText' resource";
-      return nullptr;
-    }
-    return std::make_shared<StaticTextSourceMod>(s.get(), n, std::move(c), *staticTextPtr);
+    return std::make_shared<StaticTextSourceMod>(s.get(), n, std::move(c));
   });
   
   registerType("FileTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {

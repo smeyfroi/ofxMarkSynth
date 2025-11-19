@@ -19,8 +19,7 @@ namespace ofxMarkSynth {
 class StaticTextSourceMod : public Mod {
 
 public:
-  StaticTextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
-                      const std::string& text);
+  StaticTextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config);
   
   void update() override;
   
@@ -30,13 +29,15 @@ protected:
   void initParameters() override;
   
 private:
-  std::string staticText;
   bool hasEmitted { false };
   
+  ofParameter<std::string> textParameter { "Text", "" };
   ofParameter<bool> emitOnceParameter { "Emit Once", true };
   ofParameter<float> delayParameter { "Delay", 0.0, 0.0, 10.0 };
   
   float startTime;
+  
+  void onTextChanged(std::string& text);
 };
 
 
