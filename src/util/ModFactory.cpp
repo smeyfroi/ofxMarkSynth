@@ -82,22 +82,13 @@ void ModFactory::initializeBuiltinTypes() {
     return std::make_shared<StaticTextSourceMod>(s.get(), n, std::move(c));
   });
   
-  registerType("FileTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto filePathPtr = r.get<std::string>("textFilePath");
-    if (!filePathPtr) {
-      ofLogError("ModFactory") << "FileTextSourceMod requires 'textFilePath' resource";
+  registerType("TextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    auto textSourcesPathPtr = r.get<std::string>("textSourcesPath");
+    if (!textSourcesPathPtr) {
+      ofLogError("ModFactory") << "TextSource requires 'textSourcesPath' resource (base directory)";
       return nullptr;
     }
-    return std::make_shared<FileTextSourceMod>(s.get(), n, std::move(c), *filePathPtr);
-  });
-  
-  registerType("RandomWordSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto filePathPtr = r.get<std::string>("wordFilePath");
-    if (!filePathPtr) {
-      ofLogError("ModFactory") << "RandomWordSourceMod requires 'wordFilePath' resource";
-      return nullptr;
-    }
-    return std::make_shared<RandomWordSourceMod>(s.get(), n, std::move(c), *filePathPtr);
+    return std::make_shared<TextSourceMod>(s.get(), n, std::move(c), *textSourcesPathPtr);
   });
   
   registerType("TimerSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {

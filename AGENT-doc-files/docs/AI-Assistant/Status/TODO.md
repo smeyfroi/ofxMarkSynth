@@ -5,7 +5,7 @@
 
 ## DO IT NOW:
 
-- [ ] Introduce a node editor based on imgui for Mod configuration and connection
+- [ ]
 
 ## REMEMBER:
 

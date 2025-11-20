@@ -26,7 +26,13 @@
       }
     },
     "Words": {
-      "type": "RandomWordSource"
+      "type": "TextSource",
+      "config": {
+        "Text Filename": "words.txt",
+        "Parse Words": "1",
+        "Randomness": "1.0",
+        "Loop": "1"
+      }
     },
     "Text Display": {
       "type": "Text",
@@ -49,7 +55,7 @@
     "Fade": {
       "type": "Fade",
       "config": {
-        "Alpha": "0.0005"
+        "Alpha": "0.01"
       },
       "layers": {
         "default": ["textLayer"]
@@ -58,7 +64,7 @@
   },
   
   "connections": [
-    "Timer.tick -> Words.nextWord",
+    "Timer.tick -> Words.next",
     "Words.text -> Text Display.text",
     "Color Source.vec4 -> Text Display.Color"
   ],

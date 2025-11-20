@@ -21,6 +21,7 @@ class SomPaletteMod : public Mod {
 
 public:
   SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  ~SomPaletteMod();
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;

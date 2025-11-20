@@ -20,6 +20,7 @@ class StaticTextSourceMod : public Mod {
 
 public:
   StaticTextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  ~StaticTextSourceMod();
   
   void update() override;
   

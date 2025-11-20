@@ -145,6 +145,9 @@ void TextMod::renderText(const std::string& text) {
   int pixelSize = static_cast<int>(fontSizeController.value * fboPtr->getHeight());
   if (pixelSize < 8) pixelSize = 8; // Minimum readable size
   
+  // Round to nearest 5 pixels to avoid excessive font reloads during smooth transitions
+  pixelSize = ((pixelSize + 2) / 5) * 5;
+  
   loadFontAtSize(pixelSize);
   
   if (!fontLoaded) return;

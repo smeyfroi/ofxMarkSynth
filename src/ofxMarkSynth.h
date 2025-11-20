@@ -6,8 +6,7 @@
 #include "IntentMapping.hpp"
 
 #include "sourceMods/StaticTextSourceMod.hpp"
-#include "sourceMods/FileTextSourceMod.hpp"
-#include "sourceMods/RandomWordSourceMod.hpp"
+#include "sourceMods/TextSourceMod.hpp"
 #include "sourceMods/TimerSourceMod.hpp"
 #include "RandomVecSourceMod.hpp"
 #include "RandomHslColorMod.hpp"

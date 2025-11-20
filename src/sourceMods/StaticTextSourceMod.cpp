@@ -21,15 +21,19 @@ StaticTextSourceMod::StaticTextSourceMod(Synth* synthPtr, const std::string& nam
     { "text", SOURCE_TEXT }
   };
   
-  textParameter.addListener(this, &StaticTextSourceMod::onTextChanged);
-  
   startTime = ofGetElapsedTimef();
+}
+
+StaticTextSourceMod::~StaticTextSourceMod() {
+  textParameter.removeListener(this, &StaticTextSourceMod::onTextChanged);
 }
 
 void StaticTextSourceMod::initParameters() {
   parameters.add(textParameter);
   parameters.add(emitOnceParameter);
   parameters.add(delayParameter);
+  
+  textParameter.addListener(this, &StaticTextSourceMod::onTextChanged);
 }
 
 void StaticTextSourceMod::update() {

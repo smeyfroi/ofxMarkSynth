@@ -32,6 +32,10 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig
   };
 }
 
+SomPaletteMod::~SomPaletteMod() {
+  iterationsParameter.removeListener(this, &SomPaletteMod::onIterationsParameterChanged);
+}
+
 void SomPaletteMod::onIterationsParameterChanged(float& value) {
   somPalette.setNumIterations(iterationsParameter);
 }

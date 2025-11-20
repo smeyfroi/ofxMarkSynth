@@ -11,7 +11,7 @@ void ofApp::setup() {
 
   ofxMarkSynth::ResourceManager resources;
   resources.add("fontPath", FONT_PATH);
-  resources.add("wordFilePath", WORD_FILE_PATH);
+  resources.add("textSourcesPath", ofToDataPath("text"));
 
   synthPtr = std::make_shared<ofxMarkSynth::Synth>("Timer Text Example", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);

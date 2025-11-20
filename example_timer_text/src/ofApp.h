@@ -8,7 +8,6 @@ constexpr float FRAME_RATE = 30.0;
 const bool START_PAUSED = false; // false for dev
 const glm::vec2 SYNTH_COMPOSITE_SIZE = { 768, 768 }; // drawing layers are scaled down to this size to fit into the window height
 const std::filesystem::path FONT_PATH { "/System/Library/Fonts/Helvetica.ttc" };
-const std::string WORD_FILE_PATH = "words.txt";
 
 class ofApp: public ofBaseApp{
 public:
