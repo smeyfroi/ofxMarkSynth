@@ -11,7 +11,9 @@
 #include "ImHelpers.h"
 #include "ofColor.h"
 #include "NodeEditorModel.hpp"
+#include "util/ModSnapshotManager.hpp"
 #include <memory>
+#include <unordered_set>
 
 
 
@@ -43,9 +45,11 @@ private:
   void drawDisplayControls();
   void drawInternalState();
   void drawStatus();
-  void drawNode(const ModPtr& modPtr);
+  void drawNode(const ModPtr& modPtr, bool highlight = false);
   void drawNode(const DrawingLayerPtr& layerPtr);
   void drawNodeEditor();
+  void drawSnapshotControls();
+  std::vector<ModPtr> getSelectedMods();
 
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;
@@ -57,6 +61,13 @@ private:
   bool layoutComputed { false };      // track if layout has been computed
   bool layoutAutoLoadAttempted { false }; // track if we've tried auto-load
 
+  // Snapshot system for saving/recalling Mod parameters
+  ModSnapshotManager snapshotManager;
+  bool snapshotsLoaded { false };
+  char snapshotNameBuffer[64] = "";
+  std::unordered_set<std::string> highlightedMods;  // Mods to highlight after load
+  float highlightStartTime { 0.0f };
+  static constexpr float HIGHLIGHT_DURATION { 1.5f };  // seconds
 };
 
 

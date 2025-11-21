@@ -321,8 +321,15 @@ void Gui::drawStatus() {
 }
 
 constexpr int FBO_PARAMETER_ID = 0;
-void Gui::drawNode(const ModPtr& modPtr) {
+void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   int modId = modPtr->getId();
+  
+  // Push highlight colors if this Mod was recently affected by a snapshot load
+  if (highlight) {
+    ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(50, 200, 100, 255));
+    ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(70, 220, 120, 255));
+    ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(90, 240, 140, 255));
+  }
   
   ImNodes::BeginNode(modId);
 
@@ -360,6 +367,13 @@ void Gui::drawNode(const ModPtr& modPtr) {
   }
   
   ImNodes::EndNode();
+  
+  // Pop highlight colors
+  if (highlight) {
+    ImNodes::PopColorStyle();
+    ImNodes::PopColorStyle();
+    ImNodes::PopColorStyle();
+  }
 }
 
 void Gui::drawNode(const DrawingLayerPtr& layerPtr) {
@@ -393,6 +407,7 @@ void Gui::drawNodeEditor() {
     nodeEditorDirty = false;
     layoutComputed = false;
     layoutAutoLoadAttempted = false; // Reset auto-load on rebuild
+    snapshotsLoaded = false; // Reload snapshots on rebuild
   }
 
   ImGui::Begin("NodeEditor");
@@ -406,6 +421,20 @@ void Gui::drawNodeEditor() {
         animateLayout = false; // Don't animate if we loaded positions
         ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
       }
+    }
+  }
+  
+  // Auto-load snapshots on first draw
+  if (!snapshotsLoaded) {
+    snapshotManager.loadFromFile(synthPtr->getName());
+    snapshotsLoaded = true;
+  }
+  
+  // Clear highlights after timeout
+  if (!highlightedMods.empty()) {
+    float elapsed = ofGetElapsedTimef() - highlightStartTime;
+    if (elapsed > HIGHLIGHT_DURATION) {
+      highlightedMods.clear();
     }
   }
   
@@ -447,6 +476,9 @@ void Gui::drawNodeEditor() {
     }
   }
   
+  // Draw snapshot controls
+  drawSnapshotControls();
+  
   // Draw the node editor
   ImNodes::BeginNodeEditor();
   
@@ -457,7 +489,8 @@ void Gui::drawNodeEditor() {
   for (const auto& node : nodeEditorModel.nodes) {
     const auto& objectPtr = node.objectPtr;
     if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
-      drawNode(*modPtrPtr);
+      bool highlight = highlightedMods.contains((*modPtrPtr)->getName());
+      drawNode(*modPtrPtr, highlight);
     } else if (const auto drawingLayerPtrPtr = std::get_if<DrawingLayerPtr>(&objectPtr)) {
       drawNode(*drawingLayerPtrPtr);
     } else {
@@ -525,6 +558,147 @@ void Gui::drawNodeEditor() {
   nodeEditorModel.syncPositionsFromImNodes();
   
   ImGui::End();
+}
+
+std::vector<ModPtr> Gui::getSelectedMods() {
+  std::vector<ModPtr> selectedMods;
+  
+  int numSelected = ImNodes::NumSelectedNodes();
+  if (numSelected == 0) return selectedMods;
+  
+  std::vector<int> selectedIds(numSelected);
+  ImNodes::GetSelectedNodes(selectedIds.data());
+  
+  // Convert node IDs to ModPtrs
+  for (int nodeId : selectedIds) {
+    for (const auto& node : nodeEditorModel.nodes) {
+      if (const auto modPtrPtr = std::get_if<ModPtr>(&node.objectPtr)) {
+        if ((*modPtrPtr)->getId() == nodeId) {
+          selectedMods.push_back(*modPtrPtr);
+          break;
+        }
+      }
+    }
+  }
+  
+  return selectedMods;
+}
+
+void Gui::drawSnapshotControls() {
+  ImGui::Separator();
+  
+  // Get selected Mods
+  auto selectedMods = getSelectedMods();
+  bool hasSelection = !selectedMods.empty();
+  bool hasName = strlen(snapshotNameBuffer) > 0;
+  
+  // Text input for snapshot name
+  ImGui::SetNextItemWidth(120.0f);
+  ImGui::InputTextWithHint("##SnapshotName", "snapshot name", snapshotNameBuffer, sizeof(snapshotNameBuffer));
+  
+  ImGui::SameLine();
+  ImGui::Text("(%zu sel)", selectedMods.size());
+  
+  ImGui::SameLine();
+  
+  // Undo button
+  if (snapshotManager.canUndo()) {
+    if (ImGui::Button("Undo") || (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))) {
+      auto affected = snapshotManager.undo(synthPtr);
+      highlightedMods = affected;
+      highlightStartTime = ofGetElapsedTimef();
+    }
+  } else {
+    ImGui::BeginDisabled();
+    ImGui::Button("Undo");
+    ImGui::EndDisabled();
+  }
+  
+  // Snapshot slot buttons
+  ImGui::Text("Snapshots:");
+  ImGui::SameLine();
+  
+  for (int i = 0; i < ModSnapshotManager::NUM_SLOTS; ++i) {
+    if (i > 0) ImGui::SameLine();
+    
+    bool occupied = snapshotManager.isSlotOccupied(i);
+    std::string label = std::to_string(i + 1);
+    
+    // Determine button action
+    bool canSave = hasName && hasSelection;
+    bool canLoad = occupied && !hasName;
+    bool canClear = occupied && hasName && !hasSelection; // Shift+click or type name without selection to clear
+    
+    // Color based on state
+    if (occupied) {
+      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.5f, 0.3f, 1.0f));
+      ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.6f, 0.4f, 1.0f));
+      ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.7f, 0.5f, 1.0f));
+    }
+    
+    // Disable button if no valid action
+    bool disabled = !canSave && !canLoad && !canClear;
+    if (disabled) ImGui::BeginDisabled();
+    
+    ImGui::PushID(i);
+    if (ImGui::Button(label.c_str(), ImVec2(28, 0))) {
+      if (canSave) {
+        // Save snapshot
+        auto snapshot = snapshotManager.capture(snapshotNameBuffer, selectedMods);
+        snapshotManager.saveToSlot(i, snapshot);
+        snapshotManager.saveToFile(synthPtr->getName());
+        snapshotNameBuffer[0] = '\0';  // Clear name
+        ofLogNotice("Gui") << "Saved snapshot to slot " << (i + 1);
+      } else if (canLoad) {
+        // Load snapshot
+        auto snapshot = snapshotManager.getSlot(i);
+        if (snapshot) {
+          auto affected = snapshotManager.apply(synthPtr, *snapshot);
+          highlightedMods = affected;
+          highlightStartTime = ofGetElapsedTimef();
+          ofLogNotice("Gui") << "Loaded snapshot from slot " << (i + 1);
+        }
+      } else if (canClear) {
+        // Clear slot (type a name without selection to enable clear)
+        snapshotManager.clearSlot(i);
+        snapshotManager.saveToFile(synthPtr->getName());
+        snapshotNameBuffer[0] = '\0';  // Clear name
+        ofLogNotice("Gui") << "Cleared snapshot slot " << (i + 1);
+      }
+    }
+    ImGui::PopID();
+    
+    if (disabled) ImGui::EndDisabled();
+    if (occupied) ImGui::PopStyleColor(3);
+    
+    // Tooltip for occupied slots
+    if (occupied && ImGui::IsItemHovered()) {
+      auto snapshot = snapshotManager.getSlot(i);
+      if (snapshot) {
+        ImGui::SetTooltip("%s\n%zu mods\n\n[Click to load]\n[Type name + click to clear]", 
+                          snapshot->name.c_str(), 
+                          snapshot->modParams.size());
+      }
+    } else if (!occupied && ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("[Select mods + type name + click to save]");
+    }
+  }
+  
+  // Keyboard shortcuts for loading slots (F1-F8 keys)
+  for (int i = 0; i < ModSnapshotManager::NUM_SLOTS; ++i) {
+    ImGuiKey key = static_cast<ImGuiKey>(ImGuiKey_F1 + i);
+    if (ImGui::IsKeyPressed(key) && !ImGui::GetIO().WantTextInput) {
+      if (snapshotManager.isSlotOccupied(i)) {
+        auto snapshot = snapshotManager.getSlot(i);
+        if (snapshot) {
+          auto affected = snapshotManager.apply(synthPtr, *snapshot);
+          highlightedMods = affected;
+          highlightStartTime = ofGetElapsedTimef();
+          ofLogNotice("Gui") << "Loaded snapshot from slot " << (i + 1) << " via F" << (i + 1);
+        }
+      }
+    }
+  }
 }
 
 

@@ -11,6 +11,7 @@
 #include "ofUtils.h"
 #include "Gui.hpp"
 #include "util/SynthConfigSerializer.hpp"
+#include "ofxImGui.h"
 
 
 
@@ -523,6 +524,9 @@ void Synth::saveImage() {
 }
 
 bool Synth::keyPressed(int key) {
+  // Don't handle keyboard if ImGui is capturing text input
+  if (ImGui::GetIO().WantTextInput) return false;
+  
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
   
   if (key == OF_KEY_SPACE) {
