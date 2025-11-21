@@ -1,61 +1,44 @@
 #include "ofApp.h"
-
-//--------------------------------------------------------------
-ofxMarkSynth::ModPtrs ofApp::createMods() {
-  auto mods = ofxMarkSynth::ModPtrs {};
-
-  auto randomVecSourceModPtr = addMod<ofxMarkSynth::RandomVecSourceMod>(mods, "Random Points", {
-    {"CreatedPerUpdate", "0.4"}
-  }, 2);
-  
-  auto particleSetModPtr = addMod<ofxMarkSynth::ParticleSetMod>(mods, "Particles", {});
-  randomVecSourceModPtr->addSink(ofxMarkSynth::RandomVecSourceMod::SOURCE_VEC2,
-                                 particleSetModPtr,
-                                 ofxMarkSynth::ParticleSetMod::SINK_POINTS);
-  
-  particleSetModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
-
-  return mods;
-}
-
-ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
-  return fbos;
-}
+#include "ofxTimeMeasurements.h"
 
 void ofApp::setup() {
-  ofSetBackgroundColor(0);
   ofDisableArbTex();
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  ofSetBackgroundColor(0);
+  ofSetFrameRate(FRAME_RATE);
+  TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
-  
-  parameters.add(synth.getParameterGroup("Synth"));
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Points", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
+
+  synthPtr->loadFromConfig(ofToDataPath("1.json"));
+  synthPtr->configureGui(nullptr); // nullptr == no imgui window
+
+  // No imgui; we manage an ofxGui here instead
+  parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  synth.update();
+  synthPtr->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
+  synthPtr->draw();
   if (guiVisible) gui.draw();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+  synthPtr->shutdown();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) guiVisible = not guiVisible;
-  if (synth.keyPressed(key)) return;
+  if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return; }
+  if (synthPtr->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

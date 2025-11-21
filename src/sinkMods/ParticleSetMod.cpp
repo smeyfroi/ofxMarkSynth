@@ -53,8 +53,8 @@ void ParticleSetMod::update() {
   
   fboPtr->getSource().begin();
   ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
-  particleSet.draw();
+//  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
+  particleSet.draw(glm::vec2(fboPtr->getWidth(), fboPtr->getHeight()));
   fboPtr->getSource().end();
 }
 
