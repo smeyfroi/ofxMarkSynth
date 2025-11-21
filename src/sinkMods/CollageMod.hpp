@@ -8,8 +8,6 @@
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "PingPongFbo.h"
-#include "MaskShader.h"
-#include "AddTextureThresholded.h"
 #include "ParamController.h"
 
 
