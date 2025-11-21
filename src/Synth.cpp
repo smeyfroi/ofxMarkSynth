@@ -525,7 +525,7 @@ void Synth::saveImage() {
 
 bool Synth::keyPressed(int key) {
   // Don't handle keyboard if ImGui is capturing text input
-  if (ImGui::GetIO().WantTextInput) return false;
+  if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) return false;
   
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
   
