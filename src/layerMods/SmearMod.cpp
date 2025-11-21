@@ -165,13 +165,34 @@ void SmearMod::applyIntent(const Intent& intent, float strength) {
   // Density -> GhostBlend
   ghostBlendController.updateIntent(linearMap(d, ghostBlendController), strength);
 
-  // TODO: fix these
-//  if (strength > 0.01f) {
-//    int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
-//    gridLevelsParameter.set(levels);
-//    float p = linearMap(g, 4.0f, 32.0f);
-//    foldPeriodParameter.set(glm::vec2 { p, p });
-//  }
+  // Structure → Strategy preference (more structure = more organized strategies)
+  if (strength > 0.05f) {
+    int strategy;
+    if (s < 0.2f) {
+      strategy = 0; // Off for very low structure
+    } else if (s < 0.4f) {
+      strategy = 2; // Per-cell random offset for low structure
+    } else if (s < 0.6f) {
+      strategy = 4; // Per-cell rotation for mid structure
+    } else if (s < 0.8f) {
+      strategy = 1; // Cell-quantized for mid-high structure
+    } else {
+      strategy = 3; // Boundary teleport for high structure
+    }
+    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
+    
+    // Structure → gridLevels
+    int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
+    if (gridLevelsParameter.get() != levels) gridLevelsParameter.set(levels);
+    
+    // Granularity → gridSize (fine granularity = larger grid cells)
+    float gridVal = linearMap(1.0f - g, 8.0f, 64.0f);
+    gridSizeParameter.set(glm::vec2 { gridVal, gridVal });
+    
+    // Granularity → foldPeriod
+    float p = linearMap(g, 4.0f, 32.0f);
+    foldPeriodParameter.set(glm::vec2 { p, p });
+  }
 }
 
 

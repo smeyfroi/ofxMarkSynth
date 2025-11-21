@@ -60,10 +60,16 @@ const float RandomFloatSourceMod::createRandomFloat() const {
 void RandomFloatSourceMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
 
-  // Density -> floatsPerUpdate
+  // Density → floatsPerUpdate
   floatsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), floatsPerUpdateController, 0.5f), strength);
   
-  // TODO: min and max
+  // Energy → range width (higher energy = wider range, centered around midpoint)
+  float currentMid = (minController.getManualMin() + maxController.getManualMax()) * 0.5f;
+  float fullRange = maxController.getManualMax() - minController.getManualMin();
+  float targetRange = linearMap(intent.getEnergy(), 0.2f * fullRange, fullRange);
+  float halfRange = targetRange * 0.5f;
+  minController.updateIntent(std::max(minController.getManualMin(), currentMid - halfRange), strength);
+  maxController.updateIntent(std::min(maxController.getManualMax(), currentMid + halfRange), strength);
 }
 
 

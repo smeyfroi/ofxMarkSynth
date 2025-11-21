@@ -84,8 +84,9 @@ bool PixelSnapshotMod::keyPressed(int key) {
 void PixelSnapshotMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
   
-  // Inverse Structure → Size
-  float sizeI = inverseMap(intent.getStructure(), sizeController);
+  // Inverse Structure + Granularity → Size (less structure & fine granularity = larger snapshots)
+  float combinedFactor = (1.0f - intent.getStructure()) * 0.6f + intent.getGranularity() * 0.4f;
+  float sizeI = linearMap(combinedFactor, sizeController);
   sizeController.updateIntent(sizeI, strength);
 }
 

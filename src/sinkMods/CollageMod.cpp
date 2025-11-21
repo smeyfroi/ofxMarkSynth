@@ -190,12 +190,12 @@ void CollageMod::applyIntent(const Intent& intent, float strength) {
   float targetSaturation = std::clamp(satEnergy * satChaos * satStructure, 0.0f, 3.0f);
   saturationController.updateIntent(targetSaturation, strength);
 
-//  if (strength > 0.01f) {
-//    int strategy = (intent.getStructure() > 0.55f || intent.getGranularity() > 0.6f) ? 1 : 0;
-//    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
-//    bool outlineOn = intent.getChaos() < 0.7f;
-//    if (outlineParameter.get() != outlineOn) outlineParameter.set(outlineOn);
-//  }
+  if (strength > 0.01f) {
+    int strategy = (intent.getStructure() > 0.55f || intent.getGranularity() > 0.6f) ? 1 : 0;
+    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
+    bool outlineOn = intent.getChaos() < 0.6f;
+    outlineController.updateIntent(outlineOn ? 1.0f : 0.0f, strength);
+  }
 }
 
 

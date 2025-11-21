@@ -166,17 +166,22 @@ void PathMod::applyIntent(const Intent& intent, float strength) {
   float maxVertexProximityI = linearMap(intent.getGranularity(), maxVertexProximityController);
   maxVertexProximityController.updateIntent(maxVertexProximityI, strength);
   
-  // TODO: maxVertices
+  // Density → maxVertices (more density = more complex paths)
+  float maxVerticesI = linearMap(intent.getDensity(), maxVerticesController);
+  maxVerticesController.updateIntent(maxVerticesI, strength);
   
-//  if (intent.getChaos() > 0.6 && intent.getStructure() < 0.4) {
-//    strategyParameter = 2;
-//  } else if (intent.getStructure() > 0.7) {
-//    strategyParameter = 3;
-//  } else if (intent.getStructure() < 0.3) {
-//    strategyParameter = 0;
-//  } else {
-//    strategyParameter = 1;
-//  }
+  // Chaos + Structure → Strategy selection
+  if (strength > 0.05f) {
+    if (intent.getChaos() > 0.6f && intent.getStructure() < 0.4f) {
+      strategyParameter = 2; // horizontals - chaotic, unstructured
+    } else if (intent.getStructure() > 0.7f) {
+      strategyParameter = 3; // convex hull - highly structured
+    } else if (intent.getStructure() < 0.3f) {
+      strategyParameter = 0; // polypath - low structure
+    } else {
+      strategyParameter = 1; // bounds - middle ground
+    }
+  }
 }
 
 void PathMod::receive(int sinkId, const glm::vec2& v) {

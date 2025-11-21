@@ -232,7 +232,8 @@ void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
 void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
   
-//  angleController.updateIntent(ofxMarkSynth::exponentialMap(intent.getChaos(), 0.0f, 0.5f), strength);
+  // Chaos → Angle variation
+  angleController.updateIntent(ofxMarkSynth::exponentialMap(intent.getChaos(), 0.0f, 0.5f), strength);
   
   // Granularity → pathWidth
   float pathWidthI = exponentialMap(intent.getGranularity(), pathWidthController, 0.7f);
@@ -247,6 +248,13 @@ void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
   majorColor.a = ofxMarkSynth::exponentialMap(intent.getDensity(), 0.0f, 1.0f, 0.5f);
   majorLineColorController.updateIntent(majorColor, strength);
+  
+  // Structure → Strategy selection (0=pairs, 1=angles, 2=radiating)
+  if (strength > 0.05f) {
+    float s = intent.getStructure();
+    int strategy = (s < 0.3f) ? 0 : (s < 0.7f ? 1 : 2);
+    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
+  }
 }
 
 

@@ -109,8 +109,8 @@ void TextMod::receive(int sinkId, const glm::vec4& v) {
 void TextMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;
   
-  // Energy → Font Size
-  float fontSizeI = exponentialMap(intent.getEnergy(), fontSizeController);
+  // Granularity → Font Size (scale of features)
+  float fontSizeI = exponentialMap(intent.getGranularity(), fontSizeController);
   fontSizeController.updateIntent(fontSizeI, strength);
   
   // Energy → Color
@@ -121,6 +121,21 @@ void TextMod::applyIntent(const Intent& intent, float strength) {
   // Density → Alpha
   float alphaI = linearMap(intent.getDensity(), alphaParameter);
   alphaController.updateIntent(alphaI, strength);
+  
+  // Chaos → Position jitter (randomize position around current value)
+  float chaos = intent.getChaos();
+  if (chaos > 0.1f) {
+    glm::vec2 basePos = positionController.value;
+    float jitterAmount = chaos * 0.15f; // max 15% of screen jitter at full chaos
+    glm::vec2 jitteredPos = basePos + glm::vec2(
+      ofRandom(-jitterAmount, jitterAmount),
+      ofRandom(-jitterAmount, jitterAmount)
+    );
+    // Clamp to valid range
+    jitteredPos.x = std::clamp(jitteredPos.x, 0.05f, 0.95f);
+    jitteredPos.y = std::clamp(jitteredPos.y, 0.05f, 0.95f);
+    positionController.updateIntent(jitteredPos, strength * chaos);
+  }
 }
 
 void TextMod::loadFontAtSize(int pixelSize) {
