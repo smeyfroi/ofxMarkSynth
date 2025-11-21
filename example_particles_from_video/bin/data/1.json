@@ -1,12 +1,12 @@
 {
   "version": "1.0",
-  "name": "Particles Synth",
-  "description": "Particles example number 1",
+  "name": "Video Particles Synth",
+  "description": "Video Particles example number 1",
   "agency": 0.5,
   
   "drawingLayers": {
     "foreground": {
-      "size": [1024, 1024],
+      "size": [1920, 1080],
       "internalFormat": "GL_RGBA32F",
       "wrap": "GL_CLAMP_TO_EDGE",
       "clearOnUpdate": false,
@@ -18,16 +18,15 @@
   },
 
   "mods": {
-    "Random Point": {
-      "type": "RandomVecSource",
-      "config": {
-        "CreatedPerUpdate": "10.0"
-      }
-    },
     "Random Color": {
       "type": "RandomHslColor",
       "config": {
         "CreatedPerUpdate": "0.1"
+      }
+    },
+    "Video Flow": {
+      "type": "VideoFlowSource",
+      "config": {
       }
     },
     "Particles": {
@@ -35,7 +34,9 @@
       "config": {
         "colourMultiplier": "0.5",
         "particleDrawRadius": "1.0",
-        "maxSpeed": "5.0"
+        "maxSpeed": "5.0",
+        "Spin": 0.01,
+        "connectionRadius": 0.1
       },
       "layers": {
         "default": ["foreground"]
@@ -53,7 +54,7 @@
   },
   
   "connections": [
-    "Random Point.vec2 -> Particles.point",
+    "Video Flow.pointVelocity -> Particles.pointVelocity",
     "Random Color.vec4 -> Particles.Color"
   ],
   
@@ -74,4 +75,3 @@
     }
   }
 }
-

@@ -29,8 +29,8 @@ public:
   void receive(int sinkId, const glm::vec4& v) override;
   void applyIntent(const Intent& intent, float strength) override;
 
-  static constexpr int SINK_POINTS = 1;
-  static constexpr int SINK_POINT_VELOCITIES = 2;
+  static constexpr int SINK_POINT = 1;
+  static constexpr int SINK_POINT_VELOCITY = 2;
   static constexpr int SINK_SPIN = 10;
   static constexpr int SINK_COLOR = 20;
 

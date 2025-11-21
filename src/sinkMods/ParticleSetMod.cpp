@@ -18,8 +18,8 @@ ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, ModConf
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {
-    { "points", SINK_POINTS },
-    { "pointVelocities", SINK_POINT_VELOCITIES },
+    { "point", SINK_POINT },
+    { "pointVelocity", SINK_POINT_VELOCITY },
     { spinParameter.getName(), SINK_SPIN },
     { colorParameter.getName(), SINK_COLOR }
   };
@@ -107,7 +107,7 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
 
 void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
   switch (sinkId) {
-    case SINK_POINTS:
+    case SINK_POINT:
       newPoints.push_back(glm::vec4 { point, ofRandom(0.01)-0.005, ofRandom(0.01)-0.005 });
       break;
     default:
@@ -117,7 +117,7 @@ void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
 
 void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
-    case SINK_POINT_VELOCITIES:
+    case SINK_POINT_VELOCITY:
       newPoints.push_back(v);
       break;
     case SINK_COLOR:

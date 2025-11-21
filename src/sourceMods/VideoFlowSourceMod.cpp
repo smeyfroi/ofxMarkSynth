@@ -6,6 +6,8 @@
 //
 
 #include "VideoFlowSourceMod.hpp"
+#include "IntentMapping.hpp"
+#include "Parameter.hpp"
 
 
 
@@ -14,12 +16,14 @@ namespace ofxMarkSynth {
 
 
 VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute)
-: Mod { synthPtr, name, std::move(config) }
+: Mod { synthPtr, name, std::move(config) },
+saveRecording { false }
 {
   motionFromVideo.load(sourceVideoFilePath, mute);
   
   sourceNameIdMap = {
-    { "flowFbo", SOURCE_FLOW_FBO }
+    { "flowFbo", SOURCE_FLOW_FBO },
+    { "pointVelocity", SOURCE_POINT_VELOCITY }
   };
 }
 
@@ -31,7 +35,8 @@ recordingDir { recordingDir_ }
   motionFromVideo.initialiseCamera(deviceID, size);
   
   sourceNameIdMap = {
-    { "flowFbo", SOURCE_FLOW_FBO }
+    { "flowFbo", SOURCE_FLOW_FBO },
+    { "pointVelocity", SOURCE_POINT_VELOCITY }
   };
 }
 
@@ -55,7 +60,7 @@ void VideoFlowSourceMod::initRecorder() {
 #endif
 
 void VideoFlowSourceMod::initParameters() {
-  parameters.add(motionFromVideo.getParameterGroup());
+  addFlattenedParameterGroup(parameters, motionFromVideo.getParameterGroup());
 }
 
 void VideoFlowSourceMod::update() {
@@ -63,6 +68,16 @@ void VideoFlowSourceMod::update() {
   
   if (motionFromVideo.isReady()) {
     emit(SOURCE_FLOW_FBO, motionFromVideo.getMotionFbo());
+  }
+  
+  // TODO: make this a separate process Mod that can sample a texture
+  // TODO: make the number of samples a parameter
+  if (motionFromVideo.isReady()) {
+    for (int i = 0; i < 100; i++) {
+      if (auto vec = motionFromVideo.trySampleMotion()) {
+        emit(SOURCE_POINT_VELOCITY, vec.value());
+      }
+    }
   }
 }
 

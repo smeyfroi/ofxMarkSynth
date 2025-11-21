@@ -30,6 +30,7 @@ public:
   bool keyPressed(int key) override;
 
   static constexpr int SOURCE_FLOW_FBO = 10;
+  static constexpr int SOURCE_POINT_VELOCITY = 20;
 
 protected:
   void initParameters() override;

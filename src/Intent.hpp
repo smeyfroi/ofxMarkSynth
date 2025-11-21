@@ -15,11 +15,11 @@ using IntentPtr = std::shared_ptr<Intent>;
 
 
 /*
- * Energy -> amount of motion, speed, activity, jitter
- * Density -> amount of elements, complexity, detail
- * Structure -> organization, patterns, repetition
- * Chaos -> randomness, unpredictability, noise
- * Granularity -> scale of features
+ • Energy → speed, motion, intensity, magnitude, size, activity level
+ • Density → quantity, opacity, detail level, connection strength
+ • Structure → organization, alignment, brightness, pattern regularity
+ • Chaos → randomness, variance, noise, unpredictability, disorder
+ • Granularity → scale, resolution, feature size, clustering
  */
 class Intent {
 public:

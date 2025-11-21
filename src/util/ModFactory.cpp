@@ -74,7 +74,7 @@ void ModFactory::initializeBuiltinTypes() {
     } else if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
       return std::make_shared<AudioDataSourceMod>(s.get(), n, std::move(c), *micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);
     }
-    ofLogError("ModFactory") << "AudioDataSourceMod requires either 'sourceVideoPath' or 'micDeviceName', 'recordAudio', 'recordingPath' resources";
+    ofLogError("ModFactory") << "AudioDataSourceMod requires either 'sourceAudioPath' or 'micDeviceName', 'recordAudio', 'recordingPath' resources";
     return nullptr;
   });
   
@@ -114,7 +114,17 @@ void ModFactory::initializeBuiltinTypes() {
   registerType("VideoFlowSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     auto sourceVideoPathPtr = r.get<std::filesystem::path>("sourceVideoPath");
     auto sourceVideoMutePtr = r.get<bool>("sourceVideoMute");
-    return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *sourceVideoPathPtr, *sourceVideoMutePtr);
+    auto cameraDeviceIdPtr = r.get<int>("cameraDeviceId");
+    auto videoSizePtr = r.get<glm::vec2>("videoSize");
+    auto saveRecordingPtr = r.get<bool>("saveRecording");
+    auto recordingPathPtr = r.get<std::filesystem::path>("recordingPath");
+    if (sourceVideoPathPtr && !sourceVideoPathPtr->empty() && sourceVideoMutePtr) {
+      return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *sourceVideoPathPtr, *sourceVideoMutePtr);
+    } else if (cameraDeviceIdPtr && videoSizePtr && saveRecordingPtr && recordingPathPtr) {
+      return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *cameraDeviceIdPtr, *videoSizePtr, *saveRecordingPtr, *recordingPathPtr);
+    }
+    ofLogError("ModFactory") << "VideoFlowSource requires either 'sourceVideoPath' 'sourceVideoMute' or 'cameraDeviceName' 'videoSize' 'saveRecording' 'recordingPath' resources";
+    return nullptr;
   });
   
   // Register all process mods

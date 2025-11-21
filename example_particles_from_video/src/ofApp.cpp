@@ -1,59 +1,52 @@
 #include "ofApp.h"
-
-//--------------------------------------------------------------
-ofxMarkSynth::ModPtrs ofApp::createMods() {
-  auto mods = ofxMarkSynth::ModPtrs {};
-
-  auto videoFlowSourceModPtr = addMod<ofxMarkSynth::VideoFlowSourceMod>(mods, "Video", {}, ofToDataPath("trimmed.mov"), true);
-  
-  auto particleSetModPtr = addMod<ofxMarkSynth::ParticleSetMod>(mods, "Particles", {});
-  videoFlowSourceModPtr->addSink(ofxMarkSynth::VideoFlowSourceMod::SOURCE_VEC4,
-                                 particleSetModPtr,
-                                 ofxMarkSynth::ParticleSetMod::SINK_POINT_VELOCITIES);
-  
-  particleSetModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
-
-  return mods;
-}
-
-ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
-  return fbos;
-}
+#include "ofxTimeMeasurements.h"
 
 void ofApp::setup() {
-  ofSetBackgroundColor(0);
   ofDisableArbTex();
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  ofSetBackgroundColor(0);
+  ofSetFrameRate(FRAME_RATE);
+  TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
-  
-  parameters.add(synth.getParameterGroup("Synth"));
+  ofxMarkSynth::ResourceManager resources;
+  resources.add("sourceVideoPath", SOURCE_VIDEO_PATH);
+  resources.add("sourceVideoMute", SOURCE_VIDEO_MUTE);
+  resources.add("cameraDeviceId", CAMERA_DEVICE_ID);
+  resources.add("videoSize", VIDEO_SIZE);
+  resources.add("saveRecording", SAVE_RECORDING);
+  resources.add("recordingPath", RECORDING_PATH);
+
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Video Particles", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+
+  synthPtr->loadFromConfig(ofToDataPath("1.json"));
+  synthPtr->configureGui(nullptr); // nullptr == no imgui window
+
+  // No imgui; we manage an ofxGui here instead
+  parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  synth.update();
+  synthPtr->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
+  synthPtr->draw();
   if (guiVisible) gui.draw();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+  synthPtr->shutdown();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
-  if (synth.keyPressed(key)) return;
+  if (synthPtr->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------

@@ -82,20 +82,11 @@ ofParameterGroup& Mod::getParameterGroup() {
     parameters.setName(name);
     initParameters();
     
-    if (parameters.contains("colourMultiplier")) {
-      ofLogNotice() << "1. colourMultiplier: " << parameters.get("colourMultiplier").cast<float>();
-    }
-
     for (const auto& [k, v] : config) {
-      ofLogNotice() << "Setting parameter " << k << " to " << v;
       if (!trySetParameterFromString(parameters, k, v)) {
         ofLogError("Mod") << "Bad parameter: " << k;
       }
-      ofLogNotice() << "Set parameter " << k << " to " << parameters.get(k).toString();
     }
-    
-    if (parameters.contains("colourMultiplier")) ofLogNotice() << "2. colourMultiplier: " << parameters.get("colourMultiplier").cast<float>();
-
   }
   return parameters;
 }
