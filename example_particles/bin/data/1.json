@@ -33,6 +33,9 @@
     "Particles": {
       "type": "ParticleSet",
       "config": {
+        "colourMultiplier": "0.5",
+        "particleDrawRadius": "1.0",
+        "maxSpeed": "5.0"
       },
       "layers": {
         "default": ["foreground"]
@@ -41,7 +44,7 @@
     "Fade": {
       "type": "Fade",
       "config": {
-        "Alpha": "0.001"
+        "Alpha": "0.01"
       },
       "layers": {
         "default": ["foreground"]
