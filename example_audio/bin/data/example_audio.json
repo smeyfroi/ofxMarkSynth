@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "name": "Audio Synth",
+  "description": "Simple audio example with Introspector",
+  
+  "mods": {
+    "Audio": {
+      "type": "AudioDataSource",
+      "config": {
+        "MinPitch": "50.0",
+        "MaxPitch": "2500.0"
+      }
+    },
+    "Introspector": {
+      "type": "Introspector"
+    }
+  },
+  
+  "connections": [
+    "Audio.pitchRmsPoints -> Introspector.points",
+    "Audio.complexSpectralDifferenceScalar -> Introspector.horizontalLines1",
+    "Audio.spectralCrestScalar -> Introspector.horizontalLines2",
+    "Audio.zeroCrossingRateScalar -> Introspector.horizontalLines3"
+  ]
+}

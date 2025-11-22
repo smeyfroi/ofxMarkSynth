@@ -7,6 +7,18 @@
 #include "ofxAudioAnalysisClient.h"
 #include "ofxAudioData.h"
 
+const std::filesystem::path ROOT_SOURCE_MATERIAL_PATH { "/Users/steve/Documents/music-source-material" };
+const std::filesystem::path SOURCE_AUDIO_PATH { ROOT_SOURCE_MATERIAL_PATH/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav" };
+constexpr int VIDEO_DEVICE_ID = 0;
+constexpr bool RECORD_VIDEO = false;
+constexpr bool RECORD_AUDIO = false;
+const std::string MIC_DEVICE_NAME = "Apple Inc.: MacBook Pro Microphone";
+constexpr float FRAME_RATE = 30.0;
+constexpr bool START_PAUSED = false; // false for dev
+const std::string MAX_RMS = "0.02"; // "0.02"; // "0.11" more likely for live
+const std::filesystem::path RECORDING_PATH { "/Users/steve/Documents/recordings" };
+constexpr glm::vec2 SYNTH_COMPOSITE_SIZE = { 768, 768 }; // drawing layers are scaled down to this size to fit into the window height
+
 class ofApp: public ofBaseApp{
 public:
 	void setup();
@@ -25,17 +37,9 @@ public:
 	void gotMessage(ofMessage msg);
 	
 private:
-	ofxMarkSynth::Synth synth;
-  ofxMarkSynth::ModPtrs createMods();
-  ofxMarkSynth::FboConfigPtrs createFboConfigs();
-  ofxMarkSynth::FboPtr fboPtr = std::make_shared<PingPongFbo>();
-
-  std::shared_ptr<Introspector> introspectorPtr;
-  std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClientPtr;
-  std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
+  std::shared_ptr<ofxMarkSynth::Synth> synthPtr;
 
   bool guiVisible { true };
   ofxPanel gui;
   ofParameterGroup parameters; // I think we rely on this declaration coming after the synth to ensure that destructors are done in the right order
-
 };

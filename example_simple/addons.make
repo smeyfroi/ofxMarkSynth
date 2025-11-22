@@ -15,7 +15,6 @@ ofxFatLines
 ofxImGui
 ofxIntrospector
 ofxMotionFromVideo
-ofxSpatialHash
 ofxParticleSet
 ofxParticleField
 ofxPlottable
@@ -25,3 +24,4 @@ ofxSomPalette
 ofxTimeMeasurements
 ofxTinyEXR
 ofxMarkSynth
+ofxSpatialHash

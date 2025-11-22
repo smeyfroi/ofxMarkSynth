@@ -17,7 +17,7 @@ void ofApp::setup() {
   resources.add("recordAudio", RECORD_AUDIO);
   resources.add("recordingPath", RECORDING_PATH);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Fade", ofxMarkSynth::ModConfig {
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Sandline", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("2.json"));
