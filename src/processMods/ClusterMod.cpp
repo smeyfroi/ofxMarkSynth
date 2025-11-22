@@ -15,12 +15,6 @@ namespace ofxMarkSynth {
 
 
 
-int PointClustersAdaptor::getNumClusters() const {
-  return static_cast<int>(ownerModPtr->clustersControllerPtr->value);
-}
-
-
-
 ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {

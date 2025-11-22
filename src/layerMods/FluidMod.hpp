@@ -15,29 +15,7 @@ namespace ofxMarkSynth {
 
 
 
-class FluidMod;
-
-
-
-// Allows us to use ParamController
-class FluidSimulationAdaptor : public FluidSimulation {
-public:
-  FluidSimulationAdaptor(FluidMod* ownerModPtr) : ownerModPtr{ ownerModPtr } {};
-  float getDt() const override;
-  float getVorticity() const override;
-  float getValueAdvectDissipation() const override;
-  float getVelocityAdvectDissipation() const override;
-//  int getValueDiffusionIterations() const override;
-//  int getVelocityDiffusionIterations() const override;
-//  int getPressureDiffusionIterations() const override;
-private:
-  FluidMod* ownerModPtr;
-};
-
-
-
 class FluidMod : public Mod {
-  friend class FluidSimulationAdaptor;
 
 public:
   FluidMod(Synth* synthPtr, const std::string& name, ModConfig config);
@@ -52,7 +30,7 @@ protected:
   void initParameters() override;
 
 private:
-  FluidSimulationAdaptor fluidSimulation { this };
+  FluidSimulation fluidSimulation;
   
   std::unique_ptr<ParamController<float>> dtControllerPtr;
   std::unique_ptr<ParamController<float>> vorticityControllerPtr;

@@ -16,21 +16,6 @@ namespace ofxMarkSynth {
 
 
 
-float FluidSimulationAdaptor::getDt() const {
-  return static_cast<float>(ownerModPtr->dtControllerPtr->value);
-}
-float FluidSimulationAdaptor::getVorticity() const {
-  return static_cast<float>(ownerModPtr->vorticityControllerPtr->value);
-}
-float FluidSimulationAdaptor::getValueAdvectDissipation() const {
-  return static_cast<float>(ownerModPtr->valueDissipationControllerPtr->value);
-}
-float FluidSimulationAdaptor::getVelocityAdvectDissipation() const {
-  return static_cast<float>(ownerModPtr->velocityDissipationControllerPtr->value);
-}
-
-
-
 FluidMod::FluidMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {}
@@ -70,6 +55,11 @@ void FluidMod::setup() {
 }
 
 void FluidMod::update() {
+  dtControllerPtr->update();
+  vorticityControllerPtr->update();
+  valueDissipationControllerPtr->update();
+  velocityDissipationControllerPtr->update();
+  
   setup();  
   fluidSimulation.update();
 }
