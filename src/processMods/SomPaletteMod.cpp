@@ -45,6 +45,7 @@ void SomPaletteMod::initParameters() {
   iterationsParameter.addListener(this, &SomPaletteMod::onIterationsParameterChanged);
 }
 
+// Texture values have a range approximately -0.7 to 0.7
 ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
   const int w = in.getWidth();
   const int h = in.getHeight();
@@ -81,20 +82,21 @@ ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
   return out;
 }
 
-void SomPaletteMod::ensureFieldFbo(int w, int h) {
-  if (fieldFbo.isAllocated()
-      && fieldFbo.getWidth() == w && fieldFbo.getHeight() == h) {
+void SomPaletteMod::ensureFieldTexture(int w, int h) {
+  if (fieldTexture.isAllocated()
+      && fieldTexture.getWidth() == w && fieldTexture.getHeight() == h) {
     return;
   }
-  ofFbo::Settings s;
-  s.width = w;
-  s.height = h;
-  s.internalformat = GL_RG16F;
-  s.useDepth = false;
-  s.useStencil = false;
-  s.numColorbuffers = 1;
-  s.textureTarget = GL_TEXTURE_2D;
-  fieldFbo.allocate(s);
+  ofTextureData texData;
+  texData.width = w;
+  texData.height = h;
+  texData.textureTarget = GL_TEXTURE_2D;
+  texData.glInternalFormat = GL_RG16F;
+  texData.bFlipTexture = false;
+  texData.wrapModeHorizontal = GL_REPEAT;
+  texData.wrapModeVertical = GL_REPEAT;
+  
+  fieldTexture.allocate(texData);
 }
 
 void SomPaletteMod::update() {
@@ -118,9 +120,9 @@ void SomPaletteMod::update() {
   const ofPixels& pixelsRef = somPalette.getPixelsRef();
   if (pixelsRef.getWidth() == 0 || pixelsRef.getHeight() == 0) return;
   ofFloatPixels converted = rgbToRG_Opponent(pixelsRef);
-  ensureFieldFbo(converted.getWidth(), converted.getHeight());
-  fieldFbo.getTexture().loadData(converted);
-  emit(SOURCE_FIELD, fieldFbo);
+  ensureFieldTexture(converted.getWidth(), converted.getHeight());
+  fieldTexture.loadData(converted);
+  emit(SOURCE_FIELD, fieldTexture);
 }
 
 glm::vec4 SomPaletteMod::createVec4(int i) {

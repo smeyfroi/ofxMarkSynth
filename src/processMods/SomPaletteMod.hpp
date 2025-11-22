@@ -54,8 +54,8 @@ private:
 
   std::vector<glm::vec3> newVecs;
   
-  ofFbo fieldFbo; // RG float texture converted from RGB float pixels of the SOM
-  void ensureFieldFbo(int w, int h);
+  ofTexture fieldTexture; // RG float texture converted from RGB float pixels of the SOM
+  void ensureFieldTexture(int w, int h);
 
   std::ranlux24_base randomGen { 0 }; // fast generator with fixed seed
   std::uniform_int_distribution<> randomDistrib { 0, SomPalette::size - 1 };

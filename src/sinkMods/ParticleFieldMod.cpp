@@ -60,13 +60,13 @@ void ParticleFieldMod::update() {
   particleField.draw(fboPtr->getSource(), !drawingLayerPtr->clearOnUpdate);
 }
 
-void ParticleFieldMod::receive(int sinkId, const ofFbo& value) {
+void ParticleFieldMod::receive(int sinkId, const ofTexture& value) {
   switch (sinkId) {
     case SINK_FIELD_1_FBO:
-      particleField.setField1(value.getTexture());
+      particleField.setField1(value);
       break;
     case SINK_FIELD_2_FBO:
-      particleField.setField2(value.getTexture());
+      particleField.setField2(value);
       break;
     default:
       ofLogError("ParticleFieldMod") << "ofFbo receive for unknown sinkId " << sinkId;
