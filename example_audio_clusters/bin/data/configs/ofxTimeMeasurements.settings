@@ -1,0 +1,15 @@
+GL_Synth::draw=1|1|0
+GL_Synth-updateComposites=1|1|0
+update()=1|1|0
+GL_Audio=1|1|0
+Cluster=1|1|0
+GL_Cluster=1|1|0
+keyPressed()=1|1|0
+Audio=1|1|0
+draw()=1|1|0
+Synth-updateComposites=1|1|0
+Fade=1|1|0
+Synth-updateIntents=1|1|0
+GL_Fade=1|1|0
+Point=1|1|0
+GL_Point=1|1|0

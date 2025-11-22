@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "name": "Audio Clusters 1",
+  "description": "Audio data with clusters visualised as points",
+  
+  "drawingLayers": {
+    "foreground": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA32F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Audio": {
+      "type": "AudioDataSource",
+      "config": {
+        "MinPitch": "50.0",
+        "MaxPitch": "800.0",
+        "MinRms": "0.0005",
+        "MaxRms": "0.02"
+      }
+    },
+    "Cluster": {
+      "type": "Cluster"
+    },
+    "Point": {
+      "type": "SoftCircle",
+      "config": {
+        "Color": "1.0,0.2,0.5,0.2",
+        "Color Multiplier": "1.0",
+        "Alpha Multiplier": "0.7",
+        "Softness": "0.2"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Fade": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.003"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    }
+  },
+  
+  "connections": [
+    "Audio.pitchRmsPoints -> Cluster.vec2",
+    "Cluster.clusterCentreVec2 -> Point.points"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}

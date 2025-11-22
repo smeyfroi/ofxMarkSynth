@@ -1,4 +1,5 @@
 GL_Synth::draw=1|1|0
+keyPressed()=1|1|0
 Circle=1|1|0
 GL_Circle=1|1|0
 Fluid=1|1|0
