@@ -1,79 +1,50 @@
 #include "ofApp.h"
-
-//--------------------------------------------------------------
-ofxMarkSynth::ModPtrs ofApp::createMods() {
-  auto mods = ofxMarkSynth::ModPtrs {};
-
-  auto audioDataSourceModPtr = addMod<ofxMarkSynth::AudioDataSourceMod>(mods, "Audio Points", {
-    {"MinPitch", "50.0"},
-    {"MaxPitch", "2500.0"}
-  }, audioDataProcessorPtr);
-
-  auto audioPaletteModPtr = addMod<ofxMarkSynth::SomPaletteMod>(mods, "Palette Creator", {});
-  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_SPECTRAL_POINTS,
-                                 audioPaletteModPtr,
-                                 ofxMarkSynth::SomPaletteMod::SINK_VEC3);
-
-  auto drawPointsModPtr = addMod<ofxMarkSynth::DrawPointsMod>(mods, "Draw Points", {});
-  audioPaletteModPtr->addSink(ofxMarkSynth::SomPaletteMod::SOURCE_RANDOM_VEC4,
-                                   drawPointsModPtr,
-                                   ofxMarkSynth::DrawPointsMod::SINK_POINT_COLOR);
-  audioDataSourceModPtr->addSink(ofxMarkSynth::AudioDataSourceMod::SOURCE_PITCH_RMS_POINTS,
-                                 drawPointsModPtr,
-                                 ofxMarkSynth::DrawPointsMod::SINK_POINTS);
-
-  drawPointsModPtr->receive(ofxMarkSynth::DrawPointsMod::SINK_FBO, fboPtr);
-
-  return mods;
-}
-
-ofxMarkSynth::FboConfigPtrs ofApp::createFboConfigs() {
-  ofxMarkSynth::FboConfigPtrs fbos;
-  auto fboConfigPtrBackground = std::make_shared<ofxMarkSynth::FboConfig>(fboPtr, nullptr);
-  fbos.emplace_back(fboConfigPtrBackground);
-  return fbos;
-}
+#include "ofxTimeMeasurements.h"
+#include "ModFactory.hpp"
 
 void ofApp::setup() {
-  ofSetBackgroundColor(0);
   ofDisableArbTex();
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  ofSetBackgroundColor(0);
+  ofSetFrameRate(FRAME_RATE);
+  TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
+  
+  ofxMarkSynth::ResourceManager resources;
+  resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
+  resources.add("micDeviceName", MIC_DEVICE_NAME);
+  resources.add("recordAudio", RECORD_AUDIO);
 
-  const std::filesystem::path rootSourceMaterialPath { "/Users/steve/Documents/music-source-material" };
-  //  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"20250208-trombone-melody.wav");
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>();
-  audioDataProcessorPtr = std::make_shared<ofxAudioData::Processor>(audioAnalysisClientPtr);
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Sandline", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
 
-  fboPtr->allocate(ofGetWindowWidth(), ofGetWindowHeight(), GL_RGBA32F);
-  fboPtr->getSource().clearColorBuffer(ofFloatColor(0.0, 0.0, 0.0, 0.0));
-  synth.configure(createMods(), createFboConfigs(), ofGetWindowSize());
+  synthPtr->loadFromConfig(ofToDataPath("1.json"));
+  synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
-  parameters.add(synth.getParameterGroup("Synth"));
+  // No imgui; we manage an ofxGui here instead
+  parameters.add(synthPtr->getParameterGroup());
   gui.setup(parameters);
-  gui.getGroup("Synth").minimizeAll();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-  audioDataProcessorPtr->update();
-  synth.update();
+  synthPtr->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  synth.draw();
+  synthPtr->draw();
   if (guiVisible) gui.draw();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-  audioAnalysisClientPtr->closeStream();
+  synthPtr->shutdown();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
   if (key == OF_KEY_TAB) guiVisible = not guiVisible;
-  if (audioAnalysisClientPtr->keyPressed(key)) return;
-  if (synth.keyPressed(key)) return;
+  if (synthPtr->keyPressed(key)) return;
 }
 
 //--------------------------------------------------------------
