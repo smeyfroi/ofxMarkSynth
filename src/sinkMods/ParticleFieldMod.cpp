@@ -23,15 +23,28 @@ ParticleFieldMod::ParticleFieldMod(Synth* synthPtr, const std::string& name, Mod
     { "field1Fbo", SINK_FIELD_1_FBO },
     { "field2Fbo", SINK_FIELD_2_FBO },
     { "colorFieldFbo", SINK_COLOR_FIELD_FBO },
-    { "pointColor", SINK_POINT_COLOR }
+    { "pointColor", SINK_POINT_COLOR },
+    { "minWeight", SINK_MIN_WEIGHT },
+    { "maxWeight", SINK_MAX_WEIGHT }
   };
 }
 
 void ParticleFieldMod::initParameters() {
   addFlattenedParameterGroup(parameters, particleField.getParameterGroup());
+  
+  minWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("minWeight").cast<float>());
+  maxWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxWeight").cast<float>());
+  
+  sourceNameControllerPtrMap = {
+    { parameters.get("minWeight").cast<float>().getName(), minWeightControllerPtr.get() },
+    { parameters.get("maxWeight").cast<float>().getName(), maxWeightControllerPtr.get() }
+  };
 }
 
 void ParticleFieldMod::update() {
+  minWeightControllerPtr->update();
+  maxWeightControllerPtr->update();
+  
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto drawingLayerPtr = drawingLayerPtrOpt.value();
@@ -87,6 +100,12 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
         resetDrawingLayer();
       }
       break;
+    case SINK_MIN_WEIGHT:
+      minWeightControllerPtr->updateAuto(value, getAgency());
+      break;
+    case SINK_MAX_WEIGHT:
+      maxWeightControllerPtr->updateAuto(value, getAgency());
+      break;
     default:
       ofLogError("ParticleFieldMod") << "Float receive for unknown sinkId " << sinkId;
   }
@@ -104,6 +123,14 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
     return color;
   });
+  
+  // Granularity → minWeight (inverse: fine granularity = lighter min weight = more responsive)
+  float minWeightI = inverseMap(intent.getGranularity(), *minWeightControllerPtr);
+  minWeightControllerPtr->updateIntent(minWeightI, strength);
+  
+  // Chaos → maxWeight (linear: more chaos = heavier max weight = greater mass variation)
+  float maxWeightI = linearMap(intent.getChaos(), *maxWeightControllerPtr);
+  maxWeightControllerPtr->updateIntent(maxWeightI, strength);
 }
 
 

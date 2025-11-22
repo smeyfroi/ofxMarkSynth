@@ -9,6 +9,7 @@
 
 #include "Mod.hpp"
 #include "ofxParticleField.h"
+#include "ParamController.h"
 
 namespace ofxMarkSynth {
 
@@ -27,6 +28,8 @@ public:
   static constexpr int SINK_FIELD_2_FBO = 21;
   static constexpr int SINK_COLOR_FIELD_FBO = 30; // TODO: not implemented yet
   static constexpr int SINK_POINT_COLOR = 31; // to update color for a block of particles
+  static constexpr int SINK_MIN_WEIGHT = 40;
+  static constexpr int SINK_MAX_WEIGHT = 41;
 
 protected:
   void initParameters() override;
@@ -34,6 +37,8 @@ protected:
 private:
   ofxParticleField::ParticleField particleField;
   
+  std::unique_ptr<ParamController<float>> minWeightControllerPtr;
+  std::unique_ptr<ParamController<float>> maxWeightControllerPtr;
 };
 
 
