@@ -245,6 +245,8 @@ constexpr float thumbW = 128.0f;
 constexpr ImVec2 thumbSize(thumbW, thumbW);
 
 void Gui::drawInternalState() {
+  if (synthPtr->liveTexturePtrFns.size() == 0) return;
+  
   // Calculate required height: text + image + padding
   const float contentHeight = ImGui::GetTextLineHeightWithSpacing() + thumbW + ImGui::GetStyle().ItemSpacing.y + 20.0f;
   
