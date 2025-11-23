@@ -66,6 +66,7 @@ These addons expose parameters via `getParameterGroup()` that are flattened into
 | ofxRenderer | `../ofxRenderer/src/fluid/FluidSimulation.h` | FluidMod |
 | ofxMotionFromVideo | `../ofxMotionFromVideo/src/ofxMotionFromVideo.h` | VideoFlowSourceMod |
 | ofxParticleField | `../ofxParticleField/src/ParticleField.h` | ParticleFieldMod |
+| ofxDividedArea | `../ofxDividedArea/src/ofxDividedArea.h` | DividedAreaMod |
 
 ## JSON Structure
 

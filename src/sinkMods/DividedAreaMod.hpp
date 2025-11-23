@@ -56,6 +56,8 @@ private:
   ParamController<float> pathWidthController { pathWidthParameter };
   ofParameter<float> majorLineWidthParameter { "MajorLineWidth", 200.0, 0.0, 500.0 };
   ParamController<float> majorLineWidthController { majorLineWidthParameter };
+  ofParameter<float> maxUnconstrainedLinesParameter { "MaxUnconstrainedLines", 3.0, 1.0, 10.0 };
+  ParamController<float> maxUnconstrainedLinesController { maxUnconstrainedLinesParameter };
   float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;

@@ -8,6 +8,7 @@
 #include "DividedAreaMod.hpp"
 #include "LineGeom.h"
 #include "IntentMapping.hpp"
+#include "Parameter.hpp"
 
 
 namespace ofxMarkSynth {
@@ -15,7 +16,7 @@ namespace ofxMarkSynth {
 
 DividedAreaMod::DividedAreaMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) },
-dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
+dividedArea({ { 1.0, 1.0 }, static_cast<int>(maxUnconstrainedLinesParameter.get()) }) // normalised area size
 {
   sinkNameIdMap = {
     { "majorAnchors", SINK_MAJOR_ANCHORS },
@@ -34,7 +35,8 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
     { minorLineColorParameter.getName(), &minorLineColorController },
     { majorLineColorParameter.getName(), &majorLineColorController },
     { pathWidthParameter.getName(), &pathWidthController },
-    { majorLineWidthParameter.getName(), &majorLineWidthController }
+    { majorLineWidthParameter.getName(), &majorLineWidthController },
+    { maxUnconstrainedLinesParameter.getName(), &maxUnconstrainedLinesController }
   };
 }
 
@@ -45,7 +47,8 @@ void DividedAreaMod::initParameters() {
   parameters.add(majorLineWidthParameter);
   parameters.add(minorLineColorParameter);
   parameters.add(majorLineColorParameter);
-  parameters.add(dividedArea.getParameterGroup());
+  parameters.add(maxUnconstrainedLinesParameter);
+  addFlattenedParameterGroup(parameters, dividedArea.getParameterGroup());
 }
 
 void DividedAreaMod::addConstrainedLinesThroughPointPairs(float width) {
@@ -89,6 +92,8 @@ void DividedAreaMod::update() {
   majorLineColorController.update();
   pathWidthController.update();
   majorLineWidthController.update();
+  maxUnconstrainedLinesController.update();
+  dividedArea.maxUnconstrainedDividerLines = static_cast<int>(maxUnconstrainedLinesController.value);
   
   dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
   newMajorAnchors.clear();
@@ -252,6 +257,14 @@ void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
   majorColor.a = ofxMarkSynth::exponentialMap(intent.getDensity(), 0.0f, 1.0f, 0.5f);
   majorLineColorController.updateIntent(majorColor, strength);
+  
+  // Chaos → MaxUnconstrainedLines (more chaos = more divisions, exponential so high counts are rare)
+  float maxLinesI = exponentialMap(intent.getChaos(), 1.0f, 9.0f, 2.0f);
+  maxUnconstrainedLinesController.updateIntent(maxLinesI, strength);
+  
+  // Granularity → MajorLineWidth
+  float majorWidthI = linearMap(intent.getGranularity(), majorLineWidthController);
+  majorLineWidthController.updateIntent(majorWidthI, strength);
   
   // Structure → Strategy selection (0=pairs, 1=angles, 2=radiating)
   if (strength > 0.05f) {

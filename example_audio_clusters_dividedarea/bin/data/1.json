@@ -20,17 +20,7 @@
       "numSamples": 0,
       "isDrawn": true
     },
-    "majorLines": {
-      "size": [768, 768],
-      "internalFormat": "GL_RGBA16F",
-      "wrap": "GL_CLAMP_TO_EDGE",
-      "clearOnUpdate": false,
-      "blendMode": "OF_BLENDMODE_ALPHA",
-      "useStencil": false,
-      "numSamples": 0,
-      "isDrawn": true
-    },
-    "minorLines": {
+    "lines": {
       "size": [768, 768],
       "internalFormat": "GL_RGBA",
       "wrap": "GL_CLAMP_TO_EDGE",
@@ -82,17 +72,8 @@
         "MajorLineWidth": "40"
       },
       "layers": {
-        "default": ["minorLines"],
-        "major-lines": ["majorLines"]
-      }
-    },
-    "Fade Major Lines": {
-      "type": "Fade",
-      "config": {
-        "Alpha": "0.05"
-      },
-      "layers": {
-        "default": ["majorLines"]
+        "default": ["lines"],
+        "major-lines": ["lines"]
       }
     }
   },
