@@ -1,0 +1,125 @@
+{
+  "version": "1.0",
+  "name": "Audio Clusters Divided Area 1",
+  "description": "Audio data with clusters and a divided area",
+  
+  "synth": {
+    "agency": 0.5,
+    "backgroundColor": "0.1, 0.05, 0.3, 1",
+    "backgroundMultiplier": 0.2
+  },
+
+  "drawingLayers": {
+    "foreground": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA32F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true
+    },
+    "majorLines": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA16F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true
+    },
+    "minorLines": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": true,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 4,
+      "isDrawn": true
+    }
+  },
+
+  "mods": {
+    "Audio": {
+      "type": "AudioDataSource",
+      "config": {
+        "MinPitch": "50.0",
+        "MaxPitch": "800.0",
+        "MinRms": "0.0005",
+        "MaxRms": "0.02"
+      }
+    },
+    "Cluster": {
+      "type": "Cluster"
+    },
+    "Point": {
+      "type": "SoftCircle",
+      "config": {
+        "Color": "1.0,0.2,0.5,0.2",
+        "Color Multiplier": "1.0",
+        "Alpha Multiplier": "0.7",
+        "Softness": "0.2"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Fade": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.003"
+      },
+      "layers": {
+        "default": ["foreground"]
+      }
+    },
+    "Divided Area": {
+      "type": "DividedArea",
+      "config": {
+        "MajorLineWidth": "40"
+      },
+      "layers": {
+        "default": ["minorLines"],
+        "major-lines": ["majorLines"]
+      }
+    },
+    "Fade Major Lines": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.05"
+      },
+      "layers": {
+        "default": ["majorLines"]
+      }
+    }
+  },
+  
+  "connections": [
+    "Audio.pitchRmsPoints -> Cluster.vec2",
+    "Cluster.clusterCentreVec2 -> Point.points",
+    "Cluster.clusterCentreVec2 -> Divided Area.majorAnchors",
+    "Cluster.clusterCentreVec2 -> Divided Area.minorAnchors",
+    ".compositeFbo -> Divided Area.backgroundSource"
+  ],
+  
+  "intents": {
+    "Calm": {
+      "energy": 0.2,
+      "density": 0.3,
+      "structure": 0.7,
+      "chaos": 0.1,
+      "granularity": 0.1
+    },
+    "Energetic": {
+      "energy": 0.9,
+      "density": 0.7,
+      "structure": 0.4,
+      "chaos": 0.5,
+      "granularity": 0.5
+    }
+  }
+}
+

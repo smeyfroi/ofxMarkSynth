@@ -16,8 +16,6 @@
 namespace ofxMarkSynth {
 
 
-// SINK_FBO is used to draw unconstrained lines
-// SINK_FBO_1 is used to draw constrained lines
 class DividedAreaMod : public Mod {
 
 public:
@@ -56,6 +54,8 @@ private:
   ParamController<ofFloatColor> majorLineColorController { majorLineColorParameter };
   ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.01 };
   ParamController<float> pathWidthController { pathWidthParameter };
+  ofParameter<float> majorLineWidthParameter { "MajorLineWidth", 200.0, 0.0, 500.0 };
+  ParamController<float> majorLineWidthController { majorLineWidthParameter };
   float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;

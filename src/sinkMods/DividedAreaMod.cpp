@@ -33,7 +33,8 @@ dividedArea({ { 1.0, 1.0 }, 7 }) // normalised area size
     { angleParameter.getName(), &angleController },
     { minorLineColorParameter.getName(), &minorLineColorController },
     { majorLineColorParameter.getName(), &majorLineColorController },
-    { pathWidthParameter.getName(), &pathWidthController }
+    { pathWidthParameter.getName(), &pathWidthController },
+    { majorLineWidthParameter.getName(), &majorLineWidthController }
   };
 }
 
@@ -41,6 +42,7 @@ void DividedAreaMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(angleParameter);
   parameters.add(pathWidthParameter);
+  parameters.add(majorLineWidthParameter);
   parameters.add(minorLineColorParameter);
   parameters.add(majorLineColorParameter);
   parameters.add(dividedArea.getParameterGroup());
@@ -86,6 +88,7 @@ void DividedAreaMod::update() {
   minorLineColorController.update();
   majorLineColorController.update();
   pathWidthController.update();
+  majorLineWidthController.update();
   
   dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
   newMajorAnchors.clear();
@@ -106,27 +109,28 @@ void DividedAreaMod::update() {
     }
   }
   
-  const float maxLineWidth = 160.0;
-  const float minLineWidth = 110.0;
+//  const float maxLineWidth = 160.0;
+//  const float minLineWidth = 110.0;
 
   // draw unconstrained
   auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
-  if (!drawingLayerPtrOpt0) return;
-  auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
-
-  // need a background for the refraction effect
-  if (backgroundFbo.isAllocated()) {
-    fboPtr0->getSource().begin();
-    const ofFloatColor majorDividerColor = majorLineColorController.value;
-    // TODO: bring back the flat coloured major lines?
-//    dividedArea.draw({},
-//                     { minLineWidth, maxLineWidth, majorDividerColor },
-//                     fboPtr0->getWidth());
-    ofSetColor(majorDividerColor);
-    dividedArea.draw(0.0, 200.0, fboPtr0->getWidth(), backgroundFbo);
-    fboPtr0->getSource().end();
+  if (drawingLayerPtrOpt0) {
+    auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
+    
+    // need a background for the refraction effect
+    if (backgroundFbo.isAllocated()) {
+      fboPtr0->getSource().begin();
+      const ofFloatColor majorDividerColor = majorLineColorController.value;
+      // TODO: bring back the flat coloured major lines?
+      //    dividedArea.draw({},
+      //                     { minLineWidth, maxLineWidth, majorDividerColor },
+      //                     fboPtr0->getWidth());
+      ofSetColor(majorDividerColor);
+      dividedArea.draw(0.0, majorLineWidthController.value, fboPtr0->getWidth(), backgroundFbo);
+      fboPtr0->getSource().end();
+    }
   }
-
+  
   // draw constrained
   auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt1) return;

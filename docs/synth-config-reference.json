@@ -196,9 +196,10 @@
       "config": {
         "Strategy": "0",
         "Angle": "0.125",
+        "PathWidth": "0",
+        "MajorLineWidth": "200",
         "MinorLineColor": "0, 0, 0, 1",
-        "MajorLineColor": "0, 0, 0, 1",
-        "PathWidth": "0"
+        "MajorLineColor": "0, 0, 0, 1"
       }
     },
 
