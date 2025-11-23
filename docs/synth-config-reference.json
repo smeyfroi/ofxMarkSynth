@@ -1,0 +1,306 @@
+{
+  "version": "1.0",
+  "description": "Reference of all Mod types with default parameter values. Copy/paste entries to create new Synth configurations.",
+  "mods": {
+
+    "_comment_source_mods": "=== SOURCE MODS ===",
+
+    "ExampleAudioDataSource": {
+      "type": "AudioDataSource",
+      "_requires": "ResourceManager with 'sourceAudioPath' OR ('micDeviceName', 'recordAudio', 'recordingPath')",
+      "config": {
+        "MinPitch": "50",
+        "MaxPitch": "800",
+        "MinRms": "0",
+        "MaxRms": "0.02",
+        "MinComplexSpectralDifference": "20",
+        "MaxComplexSpectralDifference": "70",
+        "MinSpectralCrest": "20",
+        "MaxSpectralCrest": "100",
+        "MinZeroCrossingRate": "5",
+        "MaxZeroCrossingRate": "15"
+      }
+    },
+
+    "ExampleStaticTextSource": {
+      "type": "StaticTextSource",
+      "config": {
+        "Text": "",
+        "Emit Once": "1",
+        "Delay": "0"
+      }
+    },
+
+    "ExampleTextSource": {
+      "type": "TextSource",
+      "_requires": "ResourceManager with 'textSourcesPath'",
+      "config": {
+        "Text Filename": "text.txt",
+        "Parse Words": "0",
+        "Randomness": "0",
+        "Loop": "1"
+      }
+    },
+
+    "ExampleTimerSource": {
+      "type": "TimerSource",
+      "config": {
+        "Interval": "1",
+        "Enabled": "1"
+      }
+    },
+
+    "ExampleRandomFloatSource": {
+      "type": "RandomFloatSource",
+      "config": {
+        "CreatedPerUpdate": "1",
+        "Min": "0",
+        "Max": "1"
+      }
+    },
+
+    "ExampleRandomHslColor": {
+      "type": "RandomHslColor",
+      "config": {
+        "CreatedPerUpdate": "1",
+        "MinSaturation": "0",
+        "MaxSaturation": "1",
+        "MinLightness": "0",
+        "MaxLightness": "1",
+        "MinAlpha": "0",
+        "MaxAlpha": "1"
+      }
+    },
+
+    "ExampleRandomVecSource": {
+      "type": "RandomVecSource",
+      "config": {
+        "CreatedPerUpdate": "1"
+      }
+    },
+
+    "ExampleVideoFlowSource": {
+      "type": "VideoFlowSource",
+      "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'recordingPath')",
+      "_params_from": "ofxMotionFromVideo",
+      "config": {
+        "xFlowSampleThresholdNeg": "-0.05",
+        "xFlowSampleThresholdPos": "0.05",
+        "yFlowSampleThresholdNeg": "-0.05",
+        "yFlowSampleThresholdPos": "0.05"
+      }
+    },
+
+    "_comment_process_mods": "=== PROCESS MODS ===",
+
+    "ExampleCluster": {
+      "type": "Cluster",
+      "_params_from": "ofxPointClusters",
+      "config": {
+        "Max Source Points": "2000",
+        "Clusters": "5",
+        "Agency Factor": "1"
+      }
+    },
+
+    "ExampleFluid": {
+      "type": "Fluid",
+      "_params_from": "ofxRenderer FluidSimulation",
+      "config": {
+        "dt": "0.003",
+        "Vorticity": "50",
+        "Value Dissipation": "0.999",
+        "Velocity Dissipation": "0.999",
+        "Value Iterations": "1",
+        "Velocity Iterations": "1",
+        "Pressure Iterations": "25",
+        "Agency Factor": "1"
+      }
+    },
+
+    "ExampleMultiplyAdd": {
+      "type": "MultiplyAdd",
+      "config": {
+        "Multiplier": "1",
+        "Adder": "0",
+        "Agency Factor": "1"
+      }
+    },
+
+    "ExamplePath": {
+      "type": "Path",
+      "config": {
+        "Strategy": "0",
+        "MaxVertices": "3",
+        "MaxVertexProximity": "0.07",
+        "MinVertexProximity": "0.01"
+      }
+    },
+
+    "ExamplePixelSnapshot": {
+      "type": "PixelSnapshot",
+      "config": {
+        "SnapshotsPerUpdate": "0.0333333",
+        "Size": "1024"
+      }
+    },
+
+    "ExampleSmear": {
+      "type": "Smear",
+      "config": {
+        "MixNew": "0.9",
+        "AlphaMultiplier": "0.998",
+        "Translation": "0, 0",
+        "Field1Multiplier": "0.001",
+        "Field1Bias": "0, 0",
+        "Field2Multiplier": "0.005",
+        "Field2Bias": "0, 0",
+        "GridSize": "8, 8",
+        "Strategy": "0",
+        "JumpAmount2": "0.5",
+        "BorderWidth7": "0.05",
+        "GridLevels5": "1",
+        "GhostBlend8": "0.5",
+        "FoldPeriod9": "8, 8"
+      }
+    },
+
+    "ExampleSomPalette": {
+      "type": "SomPalette",
+      "config": {
+        "Iterations": "2000"
+      }
+    },
+
+    "_comment_sink_mods": "=== SINK MODS ===",
+
+    "ExampleCollage": {
+      "type": "Collage",
+      "config": {
+        "Color": "1, 1, 1, 1",
+        "Saturation": "1.5",
+        "Outline": "1",
+        "Strategy": "1"
+      }
+    },
+
+    "ExampleDividedArea": {
+      "type": "DividedArea",
+      "config": {
+        "Strategy": "0",
+        "Angle": "0.125",
+        "MinorLineColor": "0, 0, 0, 1",
+        "MajorLineColor": "0, 0, 0, 1",
+        "PathWidth": "0"
+      }
+    },
+
+    "ExampleFluidRadialImpulse": {
+      "type": "FluidRadialImpulse",
+      "config": {
+        "Impulse Radius": "0.001",
+        "Impulse Strength": "0.01"
+      }
+    },
+
+    "ExampleIntrospector": {
+      "type": "Introspector",
+      "config": {
+        "PointSize": "1",
+        "PointFade": "30",
+        "Color": "255, 255, 0, 255",
+        "HorizontalLineFade": "30",
+        "HorizontalLine1Color": "0, 0, 139, 255",
+        "HorizontalLine2Color": "169, 169, 169, 255",
+        "HorizontalLine3Color": "0, 100, 0, 255"
+      }
+    },
+
+    "ExampleParticleField": {
+      "type": "ParticleField",
+      "_params_from": "ofxParticleField",
+      "config": {
+        "ln2ParticleCount": "14",
+        "velocityDamping": "0.997",
+        "forceMultiplier": "0.01",
+        "maxVelocity": "0.001",
+        "particleSize": "8",
+        "jitterStrength": "0.2",
+        "jitterSmoothing": "0.1",
+        "speedThreshold": "2",
+        "minWeight": "0.5",
+        "maxWeight": "2"
+      }
+    },
+
+    "ExampleParticleSet": {
+      "type": "ParticleSet",
+      "_params_from": "ofxParticleSet",
+      "config": {
+        "Spin": "0.03",
+        "Color": "1, 1, 1, 1",
+        "strategy": "2",
+        "maxParticles": "5000",
+        "maxParticleAge": "500",
+        "timeStep": "0.016",
+        "velocityDamping": "0.995",
+        "attractionStrength": "-0.02",
+        "attractionRadius": "0.1",
+        "forceScale": "0.1",
+        "connectionRadius": "0.05",
+        "colourMultiplier": "0.2",
+        "particleDrawRadius": "3",
+        "initialVelocityScale": "50",
+        "maxSpeed": "10",
+        "sortNeighborWindow": "256",
+        "lineFadeExponent": "1",
+        "Agency Factor": "1"
+      }
+    },
+
+    "ExampleSandLine": {
+      "type": "SandLine",
+      "config": {
+        "Density": "0.05",
+        "PointRadius": "1",
+        "Color": "1, 1, 1, 1",
+        "AlphaMultiplier": "0.05",
+        "StdDevAlong": "0.5",
+        "StdDevPerpendicular": "0.01"
+      }
+    },
+
+    "ExampleSoftCircle": {
+      "type": "SoftCircle",
+      "config": {
+        "Radius": "0.005",
+        "Color": "0.5, 0.5, 0.5, 0.5",
+        "Color Multiplier": "0.5",
+        "Alpha Multiplier": "0.2",
+        "Softness": "0.3",
+        "Agency Factor": "1"
+      }
+    },
+
+    "ExampleText": {
+      "type": "Text",
+      "_requires": "ResourceManager with 'fontPath'",
+      "config": {
+        "Position": "0.5, 0.5",
+        "Font Size": "0.05",
+        "Color": "1, 1, 1, 1",
+        "Alpha": "1",
+        "Agency Factor": "1"
+      }
+    },
+
+    "_comment_layer_mods": "=== LAYER MODS ===",
+
+    "ExampleFade": {
+      "type": "Fade",
+      "config": {
+        "Alpha": "0.01"
+      }
+    }
+  }
+}
