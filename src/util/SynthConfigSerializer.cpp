@@ -12,6 +12,7 @@
 #include "ofUtils.h"
 #include <fstream>
 #include <filesystem>
+#include <sstream>
 
 
 
@@ -225,6 +226,47 @@ bool SynthConfigSerializer::parseConnections(const nlohmann::json& j, std::share
   }
 }
 
+static ofFloatColor parseFloatColor(const std::string& str) {
+  std::vector<float> values;
+  std::stringstream ss(str);
+  std::string token;
+  while (std::getline(ss, token, ',')) {
+    values.push_back(std::stof(ofTrim(token)));
+  }
+  if (values.size() >= 4) {
+    return ofFloatColor(values[0], values[1], values[2], values[3]);
+  } else if (values.size() >= 3) {
+    return ofFloatColor(values[0], values[1], values[2], 1.0f);
+  }
+  return ofFloatColor(0, 0, 0, 1);
+}
+
+bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
+  if (!j.contains("synth") || !j["synth"].is_object()) {
+    return true; // Optional section
+  }
+  
+  const auto& synthJson = j["synth"];
+  
+  if (synthJson.contains("agency") && synthJson["agency"].is_number()) {
+    synth->setAgency(synthJson["agency"].get<float>());
+    ofLogNotice("SynthConfigSerializer") << "  Synth agency: " << synthJson["agency"].get<float>();
+  }
+  
+  if (synthJson.contains("backgroundColor") && synthJson["backgroundColor"].is_string()) {
+    ofFloatColor color = parseFloatColor(synthJson["backgroundColor"].get<std::string>());
+    synth->backgroundColorParameter.set(color);
+    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundColor: " << synthJson["backgroundColor"].get<std::string>();
+  }
+  
+  if (synthJson.contains("backgroundMultiplier") && synthJson["backgroundMultiplier"].is_number()) {
+    synth->backgroundMultiplierParameter.set(synthJson["backgroundMultiplier"].get<float>());
+    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundMultiplier: " << synthJson["backgroundMultiplier"].get<float>();
+  }
+  
+  return true;
+}
+
 bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("intents") || !j["intents"].is_object()) {
     ofLogNotice("SynthConfigSerializer") << "No intents section in config";
@@ -297,10 +339,9 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
   if (j.contains("description") && j["description"].is_string()) {
     ofLogNotice("SynthConfigSerializer") << "  " << j["description"].get<std::string>();
   }
-  if (j.contains("agency") && j["agency"].is_number()) {
-    ofLogNotice("SynthConfigSerializer") << "  Agency: " << j["agency"].get<float>();
-    synth->setAgency(j["agency"].get<float>());
-  }
+
+  // Parse synth-level configuration (agency, backgroundColor, backgroundMultiplier)
+  parseSynthConfig(j, synth);
 
   // Parse each section in order
   SynthConfigSerializer::NamedLayers namedLayers = parseDrawingLayers(j, synth);

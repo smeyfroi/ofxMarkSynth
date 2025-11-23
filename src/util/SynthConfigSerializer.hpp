@@ -48,6 +48,7 @@ private:
   static bool parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const NamedLayers& layers);
   static bool parseConnections(const nlohmann::json& j, std::shared_ptr<Synth> synth);
   static bool parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth);
+  static bool parseSynthConfig(const nlohmann::json& j, std::shared_ptr<Synth> synth);
   
   // Helper to convert JSON string to GL enum
   static int glEnumFromString(const std::string& str);

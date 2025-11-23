@@ -1,6 +1,13 @@
 {
   "version": "1.0",
   "description": "Reference of all Mod types with default parameter values. Copy/paste entries to create new Synth configurations.",
+
+  "synth": {
+    "agency": 0,
+    "backgroundColor": "0, 0, 0, 1",
+    "backgroundMultiplier": 0.1
+  },
+
   "mods": {
 
     "_comment_source_mods": "=== SOURCE MODS ===",

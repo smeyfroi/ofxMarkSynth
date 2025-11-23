@@ -91,6 +91,7 @@ public:
   friend class Gui;
   friend class NodeEditorModel;
   friend class NodeEditorLayout;
+  friend class SynthConfigSerializer;
   
 protected:
   void initParameters() override;
