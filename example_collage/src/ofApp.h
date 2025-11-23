@@ -24,11 +24,17 @@ public:
 	void windowResized(int w, int h) override;
 	void dragEvent(ofDragInfo dragInfo) override;
 	void gotMessage(ofMessage msg) override;
-	
+
+  // >>> imgui
+  void setGuiWindowPtr(std::shared_ptr<ofAppBaseWindow> windowPtr) { guiWindowPtr = windowPtr; }
+  void drawGui(ofEventArgs& args);
+  void keyPressedEvent(ofKeyEventArgs& e) { keyPressed(e.key); } // adapter for ofAddListener
+  // <<< imgui
+
 private:
   std::shared_ptr<ofxMarkSynth::Synth> synthPtr;
-
-  bool guiVisible { true };
-  ofxPanel gui;
-  ofParameterGroup parameters; // I think we rely on this declaration coming after the synth to ensure that destructors are done in the right order
+  
+  // >>> imgui
+  std::shared_ptr<ofAppBaseWindow> guiWindowPtr;
+  // <<< imgui
 };

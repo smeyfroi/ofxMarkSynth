@@ -15,11 +15,7 @@ void ofApp::setup() {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
-  synthPtr->configureGui(nullptr); // nullptr == no imgui window
-
-  // No imgui; we manage an ofxGui here instead
-  parameters.add(synthPtr->getParameterGroup());
-  gui.setup(parameters);
+  synthPtr->configureGui(guiWindowPtr); // nullptr == no imgui window
 }
 
 //--------------------------------------------------------------
@@ -30,8 +26,13 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
   synthPtr->draw();
-  if (guiVisible) gui.draw();
 }
+
+// >>> imgui
+void ofApp::drawGui(ofEventArgs& args){
+  synthPtr->drawGui();
+}
+// <<< imgui
 
 //--------------------------------------------------------------
 void ofApp::exit(){
@@ -40,7 +41,6 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) guiVisible = not guiVisible;
   if (synthPtr->keyPressed(key)) return;
 }
 
