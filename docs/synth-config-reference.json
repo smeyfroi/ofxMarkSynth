@@ -53,7 +53,9 @@
       "type": "TimerSource",
       "config": {
         "Interval": "1",
-        "Enabled": "1"
+        "Enabled": "1",
+        "One Shot": "0",
+        "Time To Next": "0"
       }
     },
 
