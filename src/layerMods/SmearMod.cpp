@@ -22,8 +22,8 @@ SmearMod::SmearMod(Synth* synthPtr, const std::string& name, ModConfig config)
   sinkNameIdMap = {
     { "vec2", SINK_VEC2 },
     { "float", SINK_FLOAT },
-    { "field1Fbo", SINK_FIELD_1_FBO },
-    { "field2Fbo", SINK_FIELD_2_FBO }
+    { "field1Tex", SINK_FIELD_1_TEX },
+    { "field2Tex", SINK_FIELD_2_TEX }
   };
   
   sourceNameControllerPtrMap = {
@@ -82,13 +82,13 @@ void SmearMod::update() {
   };
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   // TODO: make this more forgiving
-  if (field2Fbo.isAllocated() && field1Fbo.isAllocated()) {
+  if (field2Tex.isAllocated() && field1Tex.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,
-                       field1Fbo.getTexture(), field1MultiplierController.value, field1BiasParameter,
-                       field2Fbo.getTexture(), field2MultiplierController.value, field2BiasParameter,
+                       field1Tex, field1MultiplierController.value, field1BiasParameter,
+                       field2Tex, field2MultiplierController.value, field2BiasParameter,
                        gridParameters);
-  } else if (field1Fbo.isAllocated()) {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Fbo.getTexture(), field1MultiplierController.value, field1BiasParameter);
+  } else if (field1Tex.isAllocated()) {
+    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Tex, field1MultiplierController.value, field1BiasParameter);
   } else {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier);
   }
@@ -127,19 +127,18 @@ void SmearMod::receive(int sinkId, const glm::vec2& v) {
   }
 }
 
-void SmearMod::receive(int sinkId, const ofFbo& value) {
+void SmearMod::receive(int sinkId, const ofTexture& value) {
   switch (sinkId) {
-    case SINK_FIELD_1_FBO:
-      field1Fbo = value;
+    case SINK_FIELD_1_TEX:
+      field1Tex = value;
       break;
-    case SINK_FIELD_2_FBO:
-      field2Fbo = value;
+    case SINK_FIELD_2_TEX:
+      field2Tex = value;
       break;
     default:
-      ofLogError("SmearMod") << "ofFbo receive for unknown sinkId " << sinkId;
+      ofLogError("SmearMod") << "ofTexture receive for unknown sinkId " << sinkId;
   }
 }
-
 
 void SmearMod::applyIntent(const Intent& intent, float strength) {
   if (strength < 0.01) return;

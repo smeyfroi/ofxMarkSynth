@@ -32,7 +32,7 @@ private:
   short vecDimensions;
   
   float vecCount;
-  ofParameter<float> vecsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
+  ofParameter<float> vecsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 10.0 };
   ParamController<float> vecsPerUpdateController { vecsPerUpdateParameter };
   
   const glm::vec2 createRandomVec2() const;

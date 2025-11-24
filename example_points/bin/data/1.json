@@ -2,8 +2,13 @@
   "version": "1.0",
   "name": "Points Synth",
   "description": "Points example number 1",
-  "agency": 1.0,
   
+  "synth": {
+    "agency": 1.0,
+    "backgroundColor": "0.0, 0.0, 0.0, 1",
+    "backgroundMultiplier": 0.1
+  },
+
   "drawingLayers": {
     "foreground": {
       "size": [768, 768],
@@ -62,13 +67,13 @@
     "Random Impulse Point": {
       "type": "RandomVecSource",
       "config": {
-        "CreatedPerUpdate": "0.1"
+        "CreatedPerUpdate": "0.5"
       }
     },
     "Impulse": {
       "type": "FluidRadialImpulse",
       "config": {
-        "Impulse Radius": "0.2",
+        "Impulse Radius": "0.15",
         "Impulse Strength": "0.3"
       },
       "layers": {
@@ -78,7 +83,7 @@
     "Fluid": {
       "type": "Fluid",
       "config": {
-        "dt": "0.3"
+        "dt": "0.05"
       },
       "layers": {
         "default": ["foreground"],

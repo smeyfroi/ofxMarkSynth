@@ -26,12 +26,12 @@ public:
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const float& value) override;
-  void receive(int sinkId, const ofFbo& value) override;
+  void receive(int sinkId, const ofTexture& value) override;
 
   static constexpr int SINK_VEC2 = 10;
   static constexpr int SINK_FLOAT = 11;
-  static constexpr int SINK_FIELD_1_FBO = 20;
-  static constexpr int SINK_FIELD_2_FBO = 21;
+  static constexpr int SINK_FIELD_1_TEX = 20;
+  static constexpr int SINK_FIELD_2_TEX = 21;
 
 protected:
   void initParameters() override;
@@ -65,7 +65,7 @@ private:
 
   SmearShader smearShader;
   
-  ofFbo field1Fbo, field2Fbo;
+  ofTexture field1Tex, field2Tex;
   bool useField2;
 };
 
