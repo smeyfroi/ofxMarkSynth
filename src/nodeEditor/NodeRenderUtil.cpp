@@ -7,6 +7,7 @@
 
 #include "NodeRenderUtil.hpp"
 #include "ImGuiUtil.hpp"
+#include <cstdio>
 
 
 
@@ -125,6 +126,34 @@ void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
   addContributionWeights(modPtr, parameter.getName());
 }
 
+void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter) {
+  const auto& name = parameter.getName();
+  bool value = parameter.get();
+  if (ImGui::Checkbox(("##" + name).c_str(), &value)) {
+    parameter.set(value);
+  }
+  ImGui::SetItemTooltip("%s", name.c_str());
+  ImGui::SameLine();
+  ImGui::Text("%s", parameter.getName().c_str());
+  addContributionWeights(modPtr, parameter.getName());
+}
+
+void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter) {
+  const auto& name = parameter.getName();
+  const auto current = parameter.get();
+  char buf[256];
+  std::snprintf(buf, sizeof(buf), "%s", current.c_str());
+  ImGui::PushItemWidth(sliderWidth);
+  if (ImGui::InputText(("##" + name).c_str(), buf, sizeof(buf))) {
+    parameter.set(std::string(buf));
+  }
+  ImGui::SetItemTooltip("%s", name.c_str());
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  ImGui::Text("%s", parameter.getName().c_str());
+  addContributionWeights(modPtr, parameter.getName());
+}
+
 void addContributionWeights(const ModPtr& modPtr, const std::string& paramName) {
   if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
     auto& controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
@@ -144,6 +173,12 @@ void addParameter(const ModPtr& modPtr, ofAbstractParameter& parameter) {
   } else if (parameter.type() == typeid(ofParameter<float>).name()) {
     auto& floatParam = parameter.cast<float>();
     addParameter(modPtr, floatParam);
+  } else if (parameter.type() == typeid(ofParameter<bool>).name()) {
+    auto& boolParam = parameter.cast<bool>();
+    addParameter(modPtr, boolParam);
+  } else if (parameter.type() == typeid(ofParameter<std::string>).name()) {
+    auto& stringParam = parameter.cast<std::string>();
+    addParameter(modPtr, stringParam);
   } else if (parameter.type() == typeid(ofParameter<ofFloatColor>).name()) {
     auto& colorParam = parameter.cast<ofFloatColor>();
     addParameter(modPtr, colorParam);

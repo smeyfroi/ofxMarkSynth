@@ -20,6 +20,8 @@ namespace NodeRenderUtil {
 void drawVerticalSliders(ofParameterGroup& paramGroup);
 void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter);
 void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter);
+void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter);
+void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter);
 void addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter);
 void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter);
 void addParameter(const ModPtr& modPtr, ofAbstractParameter& parameterPtr);
