@@ -24,6 +24,8 @@ public:
   void setup();
   void applyIntent(const Intent& intent, float strength) override;
 
+  static constexpr int SOURCE_VELOCITIES_TEXTURE = 10;
+
   static constexpr std::string VELOCITIES_LAYERPTR_NAME { "velocities" };
   
 protected:

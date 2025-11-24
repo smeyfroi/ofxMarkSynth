@@ -18,7 +18,11 @@ namespace ofxMarkSynth {
 
 FluidMod::FluidMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
-{}
+{
+  sourceNameIdMap = {
+    { "velocitiesTexture", SOURCE_VELOCITIES_TEXTURE }
+  };
+}
 
 float FluidMod::getAgency() const {
   return Mod::getAgency() * agencyFactorParameter;
@@ -62,6 +66,8 @@ void FluidMod::update() {
   
   setup();  
   fluidSimulation.update();
+  
+  emit(SOURCE_VELOCITIES_TEXTURE, fluidSimulation.getFlowVelocitiesFbo().getSource().getTexture());
 }
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {
