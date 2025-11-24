@@ -28,8 +28,13 @@ protected:
 private:
   float colorCount;
   const ofFloatColor createRandomColor() const;
+  float randomHueFromCenterWidth(float center, float width) const;
   ofParameter<float> colorsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
   ParamController<float> colorsPerUpdateController { colorsPerUpdateParameter };
+  ofParameter<float> hueCenterParameter { "HueCenter", 0.0, 0.0, 1.0 };
+  ParamController<float> hueCenterController { hueCenterParameter };
+  ofParameter<float> hueWidthParameter { "HueWidth", 1.0, 0.0, 1.0 };
+  ParamController<float> hueWidthController { hueWidthParameter };
   ofParameter<float> minSaturationParameter { "MinSaturation", 0.0, 0.0, 1.0 };
   ParamController<float> minSaturationController { minSaturationParameter };
   ofParameter<float> maxSaturationParameter { "MaxSaturation", 1.0, 0.0, 1.0 };

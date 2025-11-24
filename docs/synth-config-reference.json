@@ -70,6 +70,8 @@
       "type": "RandomHslColor",
       "config": {
         "CreatedPerUpdate": "1",
+        "HueCenter": "0",
+        "HueWidth": "1",
         "MinSaturation": "0",
         "MaxSaturation": "1",
         "MinLightness": "0",

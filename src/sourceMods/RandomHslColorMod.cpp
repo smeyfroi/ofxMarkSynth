@@ -21,6 +21,8 @@ RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, M
   
   sourceNameControllerPtrMap = {
     { colorsPerUpdateParameter.getName(), &colorsPerUpdateController },
+    { hueCenterParameter.getName(), &hueCenterController },
+    { hueWidthParameter.getName(), &hueWidthController },
     { minSaturationParameter.getName(), &minSaturationController },
     { maxSaturationParameter.getName(), &maxSaturationController },
     { minLightnessParameter.getName(), &minLightnessController },
@@ -32,6 +34,8 @@ RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, M
 
 void RandomHslColorMod::initParameters() {
   parameters.add(colorsPerUpdateParameter);
+  parameters.add(hueCenterParameter);
+  parameters.add(hueWidthParameter);
   parameters.add(minSaturationParameter);
   parameters.add(maxSaturationParameter);
   parameters.add(minLightnessParameter);
@@ -42,6 +46,8 @@ void RandomHslColorMod::initParameters() {
 
 void RandomHslColorMod::update() {
   colorsPerUpdateController.update();
+  hueCenterController.update();
+  hueWidthController.update();
   minSaturationController.update();
   maxSaturationController.update();
   minLightnessController.update();
@@ -61,11 +67,22 @@ void RandomHslColorMod::update() {
 }
 
 const ofFloatColor RandomHslColorMod::createRandomColor() const {
-  auto c = ofFloatColor::fromHsb(ofRandom(),
-                                 ofRandom(minSaturationController.value, maxSaturationController.value),
-                                 ofRandom(minLightnessController.value, maxLightnessController.value));
+  float hue = randomHueFromCenterWidth(hueCenterController.value, hueWidthController.value);
+  auto c = ofFloatColor::fromHsb(
+    hue,
+    ofRandom(minSaturationController.value, maxSaturationController.value),
+    ofRandom(minLightnessController.value, maxLightnessController.value)
+  );
   c.a = ofRandom(minAlphaController.value, maxAlphaController.value);
   return c;
+}
+
+float RandomHslColorMod::randomHueFromCenterWidth(float center, float width) const {
+  auto wrap01 = [](float v){ v = fmodf(v, 1.0f); return v < 0.0f ? v + 1.0f : v; };
+  center = wrap01(center);
+  width  = ofClamp(width, 0.0f, 1.0f);
+  float half = 0.5f * width;
+  return wrap01(center + ofRandom(-half, half));
 }
 
 void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
@@ -73,6 +90,12 @@ void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
 
   // Density → number of colors per update (non-linear)
   colorsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), colorsPerUpdateController, 2.0f), strength);
+
+  // Intent → Hue center/width (Energy shifts center; Chaos widens)
+  float targetCenter = ofLerp(0.6f, 0.08f, intent.getEnergy());
+  float targetWidth  = ofLerp(0.08f, 1.0f, intent.getChaos());
+  hueCenterController.updateIntent(targetCenter, strength);
+  hueWidthController.updateIntent(targetWidth, strength);
 
   // Energy → saturation range (higher energy = more saturated)
   minSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.2f, 0.8f), strength);

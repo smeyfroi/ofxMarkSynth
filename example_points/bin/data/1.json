@@ -83,7 +83,7 @@
     "Fluid": {
       "type": "Fluid",
       "config": {
-        "dt": "0.05"
+        "dt": "0.01"
       },
       "layers": {
         "default": ["foreground"],
