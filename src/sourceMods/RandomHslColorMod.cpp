@@ -16,7 +16,7 @@ RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, M
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
-    { "vec4", SOURCE_VEC4 }
+    { "Vec4", SOURCE_VEC4 }
   };
   
   sourceNameControllerPtrMap = {

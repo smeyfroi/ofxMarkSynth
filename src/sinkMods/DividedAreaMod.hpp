@@ -48,9 +48,9 @@ private:
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 2 }; // 0 = point pairs, 1 = point angles, 2 = radiating
   ofParameter<float> angleParameter { "Angle", 0.125, 0.0, 0.5 };
   ParamController<float> angleController { angleParameter };
-  ofParameter<ofFloatColor> minorLineColorParameter { "MinorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<ofFloatColor> minorLineColorParameter { "MinorLineColour", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> minorLineColorController { minorLineColorParameter };
-  ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColor", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColour", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> majorLineColorController { majorLineColorParameter };
   ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.01 };
   ParamController<float> pathWidthController { pathWidthParameter };

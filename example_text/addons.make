@@ -15,7 +15,6 @@ ofxFatLines
 ofxImGui
 ofxIntrospector
 ofxMotionFromVideo
-ofxSpatialHash
 ofxParticleSet
 ofxParticleField
 ofxPlottable

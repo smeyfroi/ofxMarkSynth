@@ -17,10 +17,10 @@ PathMod::PathMod(Synth* synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {
-    { "vec2", SINK_VEC2 }
+    { "Point", SINK_VEC2 }
   };
   sourceNameIdMap = {
-    { "path", SOURCE_PATH }
+    { "Path", SOURCE_PATH }
   };
   
   sourceNameControllerPtrMap = {

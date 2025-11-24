@@ -66,11 +66,11 @@
   },
   
   "connections": [
-    "Random Point.vec2 -> Particles.point",
-    "Random Point.vec2 -> Path.vec2",
-    "Snapshot.snapshotTexture -> Collage.snapshotTexture",
-    "Path.path -> Collage.path",
-    "Random Color.vec4 -> Collage.Color"
+    "Random Point.Vec2 -> Particles.Point",
+    "Random Point.Vec2 -> Path.Point",
+    "Snapshot.SnapshotTexture -> Collage.SnapshotTexture",
+    "Path.Path -> Collage.Path",
+    "Random Color.Vec4 -> Collage.Colour"
   ],
   
   "intents": {

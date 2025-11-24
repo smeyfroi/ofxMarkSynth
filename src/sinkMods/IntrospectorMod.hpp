@@ -41,7 +41,7 @@ private:
 
   ofParameter<float> pointSizeParameter { "PointSize", 1.0, 0.0, 4.0 };
   ofParameter<int> pointFadeParameter { "PointFade", 30, 0, 240 };
-  ofParameter<ofColor> colorParameter { "Color", ofColor::yellow, ofColor(0, 255), ofColor(255, 255) };
+  ofParameter<ofColor> colorParameter { "Colour", ofColor::yellow, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<int> horizontalLineFadeParameter { "HorizontalLineFade", 30, 0, 240 };
   ofParameter<ofColor> horizontalLine1ColorParameter { "HorizontalLine1Color", ofColor::darkBlue, ofColor(0, 255), ofColor(255, 255) };
   ofParameter<ofColor> horizontalLine2ColorParameter { "HorizontalLine2Color", ofColor::darkGray, ofColor(0, 255), ofColor(255, 255) };

@@ -155,9 +155,9 @@ private:
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
-  ofParameter<ofFloatColor> backgroundColorParameter { "Back Color", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> backgroundColorParameter { "BackgroundColour", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
-  ofParameter<float> backgroundMultiplierParameter { "Back Mult", 0.1, 0.0, 1.0 };
+  ofParameter<float> backgroundMultiplierParameter { "BackgroundMultiplier", 0.1, 0.0, 1.0 };
   ofParameter<int> toneMapTypeParameter { "Tone map", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
   ofParameter<float> exposureParameter { "Exposure", 1.0, 0.0, 4.0 };
   ofParameter<float> gammaParameter { "Gamma", 2.2, 0.1, 5.0 };

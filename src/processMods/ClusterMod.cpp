@@ -19,11 +19,11 @@ ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, ModConfig confi
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {
-    { "vec2", SINK_VEC2 },
-    { "changeClusterNum", SINK_CHANGE_CLUSTER_NUM }
+    { "Point", SINK_VEC2 },
+    { "ChangeClusterCount", SINK_CHANGE_CLUSTER_NUM }
   };
   sourceNameIdMap = {
-    { "clusterCentreVec2", SOURCE_CLUSTER_CENTRE_VEC2 }
+    { "ClusterCentre", SOURCE_CLUSTER_CENTRE_VEC2 }
   };
 }
 

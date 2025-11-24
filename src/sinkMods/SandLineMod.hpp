@@ -42,7 +42,7 @@ private:
   ParamController<float> densityController { densityParameter };
   ofParameter<float> pointRadiusParameter { "PointRadius", 1.0, 0.0, 32.0 };
   ParamController<float> pointRadiusController { pointRadiusParameter };
-  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.05, 0.0, 1.0 };
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };

@@ -49,7 +49,7 @@
     "Sand Line": {
       "type": "SandLine",
       "config": {
-        "Color": "0.1,0.7,0.8,0.2",
+        "Colour": "0.1,0.7,0.8,0.2",
         "Density": "0.3",
         "AlphaMultiplier": "0.8"
       },
@@ -60,9 +60,9 @@
   },
   
   "connections": [
-    "Random Radius.float -> Sand Line.PointRadius",
-    "Audio.pitchRmsPoints -> Cluster.vec2",
-    "Cluster.clusterCentreVec2 -> Sand Line.points"
+    "Random Radius.Float -> Sand Line.PointRadius",
+    "Audio.PitchRmsPoint -> Cluster.Point",
+    "Cluster.ClusterCentre -> Sand Line.Point"
   ],
   
   "intents": {

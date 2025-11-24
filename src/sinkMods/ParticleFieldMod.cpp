@@ -20,12 +20,12 @@ ParticleFieldMod::ParticleFieldMod(Synth* synthPtr, const std::string& name, Mod
   particleField.setup(ofFloatColor(1.0, 1.0, 1.0, 0.3), field1ValueOffset_, field2ValueOffset_);
   
   sinkNameIdMap = {
-    { "field1Fbo", SINK_FIELD_1_FBO },
-    { "field2Fbo", SINK_FIELD_2_FBO },
-    { "colorFieldFbo", SINK_COLOR_FIELD_FBO },
-    { "pointColor", SINK_POINT_COLOR },
-    { "minWeight", SINK_MIN_WEIGHT },
-    { "maxWeight", SINK_MAX_WEIGHT }
+    { "Field1Texture", SINK_FIELD_1_FBO },
+    { "Field2Texture", SINK_FIELD_2_FBO },
+    { "ColourFieldTexture", SINK_COLOR_FIELD_FBO },
+    { "PointColour", SINK_POINT_COLOR },
+    { "MinWeight", SINK_MIN_WEIGHT },
+    { "MaxWeight", SINK_MAX_WEIGHT }
   };
 }
 

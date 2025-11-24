@@ -20,10 +20,11 @@ SmearMod::SmearMod(Synth* synthPtr, const std::string& name, ModConfig config)
   smearShader.load();
   
   sinkNameIdMap = {
-    { "vec2", SINK_VEC2 },
-    { "float", SINK_FLOAT },
-    { "field1Tex", SINK_FIELD_1_TEX },
-    { "field2Tex", SINK_FIELD_2_TEX }
+    { "Translation", SINK_VEC2 },
+    { "MixNew", SINK_FLOAT },
+    { "Field1Texture", SINK_FIELD_1_TEX },
+    { "Field2Texture", SINK_FIELD_2_TEX },
+    { "ChangeLayer", SINK_CHANGE_LAYER }
   };
   
   sourceNameControllerPtrMap = {

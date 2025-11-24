@@ -16,6 +16,6 @@
   },
   
   "connections": [
-    "Random Points.vec2 -> Introspector.points"
+    "Random Points.Vec2 -> Introspector.Point"
   ]
 }

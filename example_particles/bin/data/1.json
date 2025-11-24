@@ -53,8 +53,8 @@
   },
   
   "connections": [
-    "Random Point.vec2 -> Particles.point",
-    "Random Color.vec4 -> Particles.Color"
+    "Random Point.Vec2 -> Particles.Point",
+    "Random Color.Vec4 -> Particles.Colour"
   ],
   
   "intents": {

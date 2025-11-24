@@ -33,7 +33,7 @@
       "type": "StaticTextSource",
       "config": {
         "Text": "",
-        "Emit Once": "1",
+        "EmitOnce": "1",
         "Delay": "0"
       }
     },
@@ -42,8 +42,8 @@
       "type": "TextSource",
       "_requires": "ResourceManager with 'textSourcesPath'",
       "config": {
-        "Text Filename": "text.txt",
-        "Parse Words": "0",
+        "TextFilename": "text.txt",
+        "ParseWords": "0",
         "Randomness": "0",
         "Loop": "1"
       }
@@ -54,8 +54,8 @@
       "config": {
         "Interval": "1",
         "Enabled": "1",
-        "One Shot": "0",
-        "Time To Next": "0"
+        "OneShot": "0",
+        "TimeToNext": "0"
       }
     },
 
@@ -110,7 +110,7 @@
       "config": {
         "Max Source Points": "2000",
         "Clusters": "5",
-        "Agency Factor": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -125,7 +125,7 @@
         "Value Iterations": "1",
         "Velocity Iterations": "1",
         "Pressure Iterations": "25",
-        "Agency Factor": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -134,7 +134,7 @@
       "config": {
         "Multiplier": "1",
         "Adder": "0",
-        "Agency Factor": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -188,7 +188,7 @@
     "ExampleCollage": {
       "type": "Collage",
       "config": {
-        "Color": "1, 1, 1, 1",
+        "Colour": "1, 1, 1, 1",
         "Saturation": "1.5",
         "Outline": "1",
         "Strategy": "1"
@@ -204,8 +204,8 @@
         "Angle": "0.125",
         "PathWidth": "0",
         "MajorLineWidth": "200",
-        "MinorLineColor": "0, 0, 0, 1",
-        "MajorLineColor": "0, 0, 0, 1",
+        "MinorLineColour": "0, 0, 0, 1",
+        "MajorLineColour": "0, 0, 0, 1",
         "MaxUnconstrainedLines": "3",
         "unconstrainedLerpAmount": "0.5",
         "unconstrainedClosePoint": "0.03",
@@ -261,11 +261,11 @@
       "config": {
         "PointSize": "1",
         "PointFade": "30",
-        "Color": "255, 255, 0, 255",
+        "Colour": "255, 255, 0, 255",
         "HorizontalLineFade": "30",
-        "HorizontalLine1Color": "0, 0, 139, 255",
-        "HorizontalLine2Color": "169, 169, 169, 255",
-        "HorizontalLine3Color": "0, 100, 0, 255"
+        "HorizontalLine1Colour": "0, 0, 139, 255",
+        "HorizontalLine2Colour": "169, 169, 169, 255",
+        "HorizontalLine3Colour": "0, 100, 0, 255"
       }
     },
 
@@ -291,7 +291,7 @@
       "_params_from": "ofxParticleSet",
       "config": {
         "Spin": "0.03",
-        "Color": "1, 1, 1, 1",
+        "Colour": "1, 1, 1, 1",
         "strategy": "2",
         "maxParticles": "5000",
         "maxParticleAge": "500",
@@ -307,7 +307,7 @@
         "maxSpeed": "10",
         "sortNeighborWindow": "256",
         "lineFadeExponent": "1",
-        "Agency Factor": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -316,7 +316,7 @@
       "config": {
         "Density": "0.05",
         "PointRadius": "1",
-        "Color": "1, 1, 1, 1",
+        "Colour": "1, 1, 1, 1",
         "AlphaMultiplier": "0.05",
         "StdDevAlong": "0.5",
         "StdDevPerpendicular": "0.01"
@@ -327,11 +327,11 @@
       "type": "SoftCircle",
       "config": {
         "Radius": "0.005",
-        "Color": "0.5, 0.5, 0.5, 0.5",
-        "Color Multiplier": "0.5",
+        "Colour": "0.5, 0.5, 0.5, 0.5",
+        "ColourMultiplier": "0.5",
         "Alpha Multiplier": "0.2",
         "Softness": "0.3",
-        "Agency Factor": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -340,10 +340,10 @@
       "_requires": "ResourceManager with 'fontPath'",
       "config": {
         "Position": "0.5, 0.5",
-        "Font Size": "0.05",
-        "Color": "1, 1, 1, 1",
+        "FontSize": "0.05",
+        "Colour": "1, 1, 1, 1",
         "Alpha": "1",
-        "Agency Factor": "1"
+        "AgencyFactor": "1"
       }
     },
 

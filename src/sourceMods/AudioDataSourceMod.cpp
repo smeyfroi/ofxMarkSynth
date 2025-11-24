@@ -38,19 +38,19 @@ void AudioDataSourceMod::initialise() {
   audioDataPlotsPtr = std::make_shared<ofxAudioData::Plots>(audioDataProcessorPtr);
   
   sourceNameIdMap = {
-    { "pitchRmsPoints", SOURCE_PITCH_RMS_POINTS },
-    { "polarPitchRmsPoints", SOURCE_POLAR_PITCH_RMS_POINTS },
-    { "spectral3dPoints", SOURCE_SPECTRAL_3D_POINTS },
-    { "spectral2dPoints", SOURCE_SPECTRAL_2D_POINTS },
-    { "polarSpectral2dPoints", SOURCE_POLAR_SPECTRAL_2D_POINTS },
-    { "pitchScalar", SOURCE_PITCH_SCALAR },
-    { "rmsScalar", SOURCE_RMS_SCALAR },
-    { "complexSpectralDifferenceScalar", SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR },
-    { "spectralCrestScalar", SOURCE_SPECTRAL_CREST_SCALAR },
-    { "zeroCrossingRateScalar", SOURCE_ZERO_CROSSING_RATE_SCALAR },
-    { "onset1", SOURCE_ONSET1 },
-    { "timbreChange", SOURCE_TIMBRE_CHANGE },
-    { "pitchChange", SOURCE_PITCH_CHANGE }
+    { "PitchRmsPoint", SOURCE_PITCH_RMS_POINTS },
+    { "PolarPitchRmsPoint", SOURCE_POLAR_PITCH_RMS_POINTS },
+    { "Spectral3dPoint", SOURCE_SPECTRAL_3D_POINTS },
+    { "Spectral2dPoint", SOURCE_SPECTRAL_2D_POINTS },
+    { "PolarSpectral2dPoint", SOURCE_POLAR_SPECTRAL_2D_POINTS },
+    { "PitchScalar", SOURCE_PITCH_SCALAR },
+    { "RmsScalar", SOURCE_RMS_SCALAR },
+    { "ComplexSpectralDifferenceScalar", SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR },
+    { "SpectralCrestScalar", SOURCE_SPECTRAL_CREST_SCALAR },
+    { "ZeroCrossingRateScalar", SOURCE_ZERO_CROSSING_RATE_SCALAR },
+    { "Onset1", SOURCE_ONSET1 },
+    { "TimbreChange", SOURCE_TIMBRE_CHANGE },
+    { "PitchChange", SOURCE_PITCH_CHANGE }
   };
 }
 

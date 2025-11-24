@@ -56,8 +56,8 @@
     "Circle": {
       "type": "SoftCircle",
       "config": {
-        "Color Multiplier": "1.0",
-        "Alpha Multiplier": "1.0",
+        "ColourMultiplier": "1.0",
+        "AlphaMultiplier": "1.0",
         "Softness": "0.0"
       },
       "layers": {
@@ -93,10 +93,10 @@
   },
   
   "connections": [
-    "Random Radius.float -> Circle.Radius",
-    "Random Point.vec2 -> Circle.points",
-    "Random Color.vec4 -> Circle.Color",
-    "Random Impulse Point.vec2 -> Impulse.points"
+    "Random Radius.Float -> Circle.Radius",
+    "Random Point.Vec2 -> Circle.Point",
+    "Random Color.Vec4 -> Circle.Colour",
+    "Random Impulse Point.Vec2 -> Impulse.Point"
   ],
   
   "intents": {

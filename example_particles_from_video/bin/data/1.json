@@ -54,8 +54,8 @@
   },
   
   "connections": [
-    "Video Flow.pointVelocity -> Particles.pointVelocity",
-    "Random Color.vec4 -> Particles.Color"
+    "Video Flow.PointVelocity -> Particles.PointVelocity",
+    "Random Color.Vec4 -> Particles.Colour"
   ],
   
   "intents": {

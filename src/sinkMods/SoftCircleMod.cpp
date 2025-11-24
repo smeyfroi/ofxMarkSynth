@@ -20,12 +20,13 @@ SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, ModConfig
   softCircleShader.load();
 
   sinkNameIdMap = {
-    { "points", SINK_POINTS },
+    { "Point", SINK_POINTS },
     { radiusParameter.getName(), SINK_RADIUS },
     { colorParameter.getName(), SINK_COLOR },
     { colorMultiplierParameter.getName(), SINK_COLOR_MULTIPLIER },
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
-    { softnessParameter.getName(), SINK_SOFTNESS }
+    { softnessParameter.getName(), SINK_SOFTNESS },
+    { "ChangeLayer", SINK_CHANGE_LAYER }
   };
   
   sourceNameControllerPtrMap = {

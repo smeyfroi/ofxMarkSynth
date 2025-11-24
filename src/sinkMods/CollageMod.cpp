@@ -20,8 +20,8 @@ CollageMod::CollageMod(Synth* synthPtr, const std::string& name, ModConfig confi
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {
-    { "path", SINK_PATH },
-    { "snapshotTexture", SINK_SNAPSHOT_TEXTURE },
+    { "Path", SINK_PATH },
+    { "SnapshotTexture", SINK_SNAPSHOT_TEXTURE },
     { colorParameter.getName(), SINK_COLOR }
   };
   

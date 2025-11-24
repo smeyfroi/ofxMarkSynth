@@ -22,7 +22,7 @@ RandomFloatSourceMod::RandomFloatSourceMod(Synth* synthPtr, const std::string& n
   maxParameter.setMax(maxRange.second);
   
   sourceNameIdMap = {
-    { "float", SOURCE_FLOAT }
+    { "Float", SOURCE_FLOAT }
   };
   
   sourceNameControllerPtrMap = {

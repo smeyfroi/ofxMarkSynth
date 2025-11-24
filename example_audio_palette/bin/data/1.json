@@ -42,8 +42,8 @@
     "Circle": {
       "type": "SoftCircle",
       "config": {
-        "Color Multiplier": "1.0",
-        "Alpha Multiplier": "0.5",
+        "ColourMultiplier": "1.0",
+        "AlphaMultiplier": "0.5",
         "Radius": "0.05",
         "Softness": "0.8"
       },
@@ -69,10 +69,10 @@
   },
   
   "connections": [
-    "Audio.spectral3dPoints -> Palette.vec3",
-    "Audio.pitchRmsPoints -> Circle.points",
-    "Palette.random -> Circle.Color",
-    "Palette.field -> Particles.field1Fbo"
+    "Audio.Spectral3dPoint -> Palette.Sample",
+    "Audio.PitchRmsPoint -> Circle.Point",
+    "Palette.Random -> Circle.Colour",
+    "Palette.FieldTexture -> Particles.Field1Texture"
   ],
   
   "intents": {

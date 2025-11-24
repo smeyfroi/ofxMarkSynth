@@ -18,7 +18,7 @@ StaticTextSourceMod::StaticTextSourceMod(Synth* synthPtr, const std::string& nam
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
-    { "text", SOURCE_TEXT }
+    { "Text", SOURCE_TEXT }
   };
   
   startTime = ofGetElapsedTimef();

@@ -33,7 +33,7 @@ private:
   bool hasEmitted { false };
   
   ofParameter<std::string> textParameter { "Text", "" };
-  ofParameter<bool> emitOnceParameter { "Emit Once", true };
+  ofParameter<bool> emitOnceParameter { "EmitOnce", true };
   ofParameter<float> delayParameter { "Delay", 0.0, 0.0, 10.0 };
   
   float startTime;

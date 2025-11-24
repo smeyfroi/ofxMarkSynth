@@ -24,4 +24,3 @@ ofxSomPalette
 ofxTimeMeasurements
 ofxTinyEXR
 ofxMarkSynth
-ofxSpatialHash

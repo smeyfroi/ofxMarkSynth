@@ -18,8 +18,8 @@ ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, ModConf
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {
-    { "point", SINK_POINT },
-    { "pointVelocity", SINK_POINT_VELOCITY },
+    { "Point", SINK_POINT },
+    { "PointVelocity", SINK_POINT_VELOCITY },
     { spinParameter.getName(), SINK_SPIN },
     { colorParameter.getName(), SINK_COLOR }
   };

@@ -19,9 +19,9 @@ RandomVecSourceMod::RandomVecSourceMod(Synth* synthPtr, const std::string& name,
 vecDimensions { vecDimensions_ }
 {
   sourceNameIdMap = {
-    { "vec2", SOURCE_VEC2 },
-    { "vec3", SOURCE_VEC3 },
-    { "vec4", SOURCE_VEC4 }
+    { "Vec2", SOURCE_VEC2 },
+    { "Vec3", SOURCE_VEC3 },
+    { "Vec4", SOURCE_VEC4 }
   };
   
   sourceNameControllerPtrMap = {

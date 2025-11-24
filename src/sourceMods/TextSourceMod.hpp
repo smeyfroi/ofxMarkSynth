@@ -52,8 +52,8 @@ private:
   bool hasLoadedFile { false };
   
   // Parameters
-  ofParameter<std::string> textFilenameParameter { "Text Filename", "text.txt" };
-  ofParameter<bool> parseModeParameter { "Parse Words", false };
+  ofParameter<std::string> textFilenameParameter { "TextFilename", "text.txt" };
+  ofParameter<bool> parseModeParameter { "ParseWords", false };
   ofParameter<float> randomnessParameter { "Randomness", 0.0, 0.0, 1.0 };
   ofParameter<bool> loopParameter { "Loop", true };
   

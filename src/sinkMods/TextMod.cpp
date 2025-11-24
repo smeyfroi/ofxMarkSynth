@@ -21,7 +21,7 @@ TextMod::TextMod(Synth* synthPtr, const std::string& name, ModConfig config,
   fontPath { fontPath_ }
 {
   sinkNameIdMap = {
-    { "text", SINK_TEXT },
+    { "Text", SINK_TEXT },
     { positionParameter.getName(), SINK_POSITION },
     { fontSizeParameter.getName(), SINK_FONT_SIZE },
     { colorParameter.getName(), SINK_COLOR },

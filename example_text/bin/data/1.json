@@ -22,16 +22,16 @@
       "type": "StaticTextSource",
       "config": {
         "Text": "Hello World",
-        "Emit Once": "true",
+        "EmitOnce": "true",
         "Delay": "0.5"
       }
     },
     "Text Display": {
       "type": "Text",
       "config": {
-        "Font Size": "0.08",
+        "FontSize": "0.08",
         "Position": "0.5,0.5",
-        "Color": "1.0,0.9,0.5,1.0",
+        "Colour": "1.0,0.9,0.5,1.0",
         "Alpha": "1.0"
       },
       "layers": {
@@ -53,8 +53,8 @@
   },
   
   "connections": [
-    "Title Source.text -> Text Display.text",
-    "Random Color.vec4 -> Text Display.Color",
-    "Random Position.vec2 -> Text Display.Position"
+    "Title Source.Text -> Text Display.Text",
+    "Random Color.Vec4 -> Text Display.Colour",
+    "Random Position.Vec2 -> Text Display.Position"
   ]
 }

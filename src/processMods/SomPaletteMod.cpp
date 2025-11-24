@@ -20,15 +20,15 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig
   somPalette.setVisible(false);
   
   sinkNameIdMap = {
-    { "vec3", SINK_VEC3 },
-    { "switchPalette", SINK_SWITCH_PALETTE }
+    { "Sample", SINK_VEC3 },
+    { "SwitchPalette", SINK_SWITCH_PALETTE }
   };
   sourceNameIdMap = {
-    { "random", SOURCE_RANDOM },
-    { "randomLight", SOURCE_RANDOM_LIGHT },
-    { "randomDark", SOURCE_RANDOM_DARK },
-    { "darkest", SOURCE_DARKEST },
-    { "field", SOURCE_FIELD }
+    { "Random", SOURCE_RANDOM },
+    { "RandomLight", SOURCE_RANDOM_LIGHT },
+    { "RandomDark", SOURCE_RANDOM_DARK },
+    { "Darkest", SOURCE_DARKEST },
+    { "FieldTexture", SOURCE_FIELD }
   };
 }
 

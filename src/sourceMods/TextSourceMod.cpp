@@ -15,14 +15,11 @@ TextSourceMod::TextSourceMod(Synth* synthPtr, const std::string& name,
   textSourcesPath { textSourcesPath_ }
 {
   sourceNameIdMap = {
-    { "text", SOURCE_TEXT }
+    { "Text", SOURCE_TEXT }
   };
   
-  // Register multiple sink names for backward compatibility
   sinkNameIdMap = {
-    { "next", SINK_NEXT },          // Primary name
-    { "nextWord", SINK_NEXT },      // Backward compat: RandomWordSource
-    { "nextLine", SINK_NEXT }       // Backward compat: FileTextSource
+    { "Next", SINK_NEXT }
   };
 }
 

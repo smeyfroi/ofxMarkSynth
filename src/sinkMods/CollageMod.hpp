@@ -38,7 +38,7 @@ protected:
   ofPath path;
   ofTexture snapshotTexture;
 
-  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> saturationParameter { "Saturation", 1.5, 0.0, 4.0 };
   ParamController<float> saturationController { saturationParameter };

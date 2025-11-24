@@ -42,7 +42,7 @@ private:
 
   ofParameter<float> spinParameter { "Spin", 0.03, -0.05, 0.05 };
   ParamController<float> spinController { spinParameter };
-  ofParameter<ofFloatColor> colorParameter { "Color", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+  ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> colorController { colorParameter };
 
   std::unique_ptr<ParamController<float>> timeStepControllerPtr;

@@ -22,8 +22,8 @@ saveRecording { false }
   motionFromVideo.load(sourceVideoFilePath, mute);
   
   sourceNameIdMap = {
-    { "flowFbo", SOURCE_FLOW_FBO },
-    { "pointVelocity", SOURCE_POINT_VELOCITY }
+    { "FlowFbo", SOURCE_FLOW_FBO },
+    { "PointVelocity", SOURCE_POINT_VELOCITY }
   };
 }
 
@@ -35,8 +35,8 @@ recordingDir { recordingDir_ }
   motionFromVideo.initialiseCamera(deviceID, size);
   
   sourceNameIdMap = {
-    { "flowFbo", SOURCE_FLOW_FBO },
-    { "pointVelocity", SOURCE_POINT_VELOCITY }
+    { "FlowFbo", SOURCE_FLOW_FBO },
+    { "PointVelocity", SOURCE_POINT_VELOCITY }
   };
 }
 

@@ -18,7 +18,7 @@ PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, Mod
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
-    { "snapshotTexture", SOURCE_SNAPSHOT_TEXTURE }
+    { "SnapshotTexture", SOURCE_SNAPSHOT_TEXTURE }
   };
   
   sourceNameControllerPtrMap = {

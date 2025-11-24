@@ -18,10 +18,10 @@ IntrospectorMod::IntrospectorMod(Synth* synthPtr, const std::string& name, ModCo
   introspectorPtr->visible = true;
 
   sinkNameIdMap = {
-    { "points", SINK_POINTS },
-    { "horizontalLines1", SINK_HORIZONTAL_LINES_1 },
-    { "horizontalLines2", SINK_HORIZONTAL_LINES_2 },
-    { "horizontalLines3", SINK_HORIZONTAL_LINES_3 }
+    { "Point", SINK_POINTS },
+    { "HorizontalLine1", SINK_HORIZONTAL_LINES_1 },
+    { "HorizontalLine2", SINK_HORIZONTAL_LINES_2 },
+    { "HorizontalLine3", SINK_HORIZONTAL_LINES_3 }
   };
 }
 

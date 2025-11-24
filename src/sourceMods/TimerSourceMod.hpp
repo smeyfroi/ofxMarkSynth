@@ -45,8 +45,8 @@ private:
   ofParameter<float> intervalParameter { "Interval", 1.0, MIN_INTERVAL, 10.0 };
   ParamController<float> intervalController { intervalParameter };
   ofParameter<bool> enabledParameter { "Enabled", true };
-  ofParameter<bool> oneShotParameter { "One Shot", false };
-  ofParameter<float> timeToNextParameter { "Time To Next", 0.0f, 0.0f, 10.0f };
+  ofParameter<bool> oneShotParameter { "OneShot", false };
+  ofParameter<float> timeToNextParameter { "TimeToNext", 0.0f, 0.0f, 10.0f };
   
   float nextFireTime { 0.0f };
   bool hasFired { false };

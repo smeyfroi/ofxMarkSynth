@@ -32,9 +32,9 @@
     "Point": {
       "type": "SoftCircle",
       "config": {
-        "Color": "1.0,0.2,0.5,0.2",
-        "Color Multiplier": "1.0",
-        "Alpha Multiplier": "0.7",
+        "Colour": "1.0,0.2,0.5,0.2",
+        "ColourMultiplier": "1.0",
+        "AlphaMultiplier": "0.7",
         "Softness": "0.2"
       },
       "layers": {
@@ -53,8 +53,8 @@
   },
   
   "connections": [
-    "Audio.pitchRmsPoints -> Cluster.vec2",
-    "Cluster.clusterCentreVec2 -> Point.points"
+    "Audio.PitchRmsPoint -> Cluster.Point",
+    "Cluster.ClusterCentre -> Point.Point"
   ],
   
   "intents": {

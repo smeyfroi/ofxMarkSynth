@@ -52,16 +52,16 @@ private:
   ofParameter<glm::vec2> positionParameter { "Position", {0.5, 0.5}, {0.0, 0.0}, {1.0, 1.0} };
   ParamController<glm::vec2> positionController { positionParameter };
   
-  ofParameter<float> fontSizeParameter { "Font Size", 0.05, 0.01, 0.5 };
+  ofParameter<float> fontSizeParameter { "FontSize", 0.05, 0.01, 0.5 };
   ParamController<float> fontSizeController { fontSizeParameter };
   
-  ofParameter<ofFloatColor> colorParameter { "Color", {1.0, 1.0, 1.0, 1.0}, {0.0, 0.0, 0.0, 0.0}, {1.0, 1.0, 1.0, 1.0} };
+  ofParameter<ofFloatColor> colorParameter { "Colour", {1.0, 1.0, 1.0, 1.0}, {0.0, 0.0, 0.0, 0.0}, {1.0, 1.0, 1.0, 1.0} };
   ParamController<ofFloatColor> colorController { colorParameter };
   
   ofParameter<float> alphaParameter { "Alpha", 1.0, 0.0, 1.0 };
   ParamController<float> alphaController { alphaParameter };
   
-  ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   // Helpers
   void loadFontAtSize(int pixelSize);

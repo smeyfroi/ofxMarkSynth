@@ -28,8 +28,8 @@
     "Words": {
       "type": "TextSource",
       "config": {
-        "Text Filename": "words.txt",
-        "Parse Words": "1",
+        "TextFilename": "words.txt",
+        "ParseWords": "1",
         "Randomness": "1.0",
         "Loop": "1"
       }
@@ -37,9 +37,9 @@
     "Text Display": {
       "type": "Text",
       "config": {
-        "Font Size": "0.12",
+        "FontSize": "0.12",
         "Position": "0.5,0.5",
-        "Color": "1.0,1.0,1.0,1.0",
+        "Colour": "1.0,1.0,1.0,1.0",
         "Alpha": "1.0"
       },
       "layers": {
@@ -64,9 +64,9 @@
   },
   
   "connections": [
-    "Timer.tick -> Words.next",
-    "Words.text -> Text Display.text",
-    "Color Source.vec4 -> Text Display.Color"
+    "Timer.Tick -> Words.Next",
+    "Words.Text -> Text Display.Text",
+    "Color Source.Vec4 -> Text Display.Colour"
   ],
   
   "intents": {

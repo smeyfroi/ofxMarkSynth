@@ -19,15 +19,15 @@ DividedAreaMod::DividedAreaMod(Synth* synthPtr, const std::string& name, ModConf
 dividedArea({ { 1.0, 1.0 }, static_cast<int>(maxUnconstrainedLinesParameter.get()) }) // normalised area size
 {
   sinkNameIdMap = {
-    { "majorAnchors", SINK_MAJOR_ANCHORS },
-    { "minorAnchors", SINK_MINOR_ANCHORS },
-    { "minorPath", SINK_MINOR_PATH },
+    { "MajorAnchor", SINK_MAJOR_ANCHORS },
+    { "MinorAnchor", SINK_MINOR_ANCHORS },
+    { "MinorPath", SINK_MINOR_PATH },
     { minorLineColorParameter.getName(), SINK_MINOR_LINES_COLOR },
     { majorLineColorParameter.getName(), SINK_MAJOR_LINES_COLOR },
-    { "backgroundSource", SINK_BACKGROUND_SOURCE },
-    { "changeAngle", SINK_CHANGE_ANGLE },
-    { "changeStrategy", SINK_CHANGE_STRATEGY },
-    { "changeLayer", SINK_CHANGE_LAYER }
+    { "BackgroundFbo", SINK_BACKGROUND_SOURCE },
+    { "ChangeAngle", SINK_CHANGE_ANGLE },
+    { "ChangeStrategy", SINK_CHANGE_STRATEGY },
+    { "ChangeLayer", SINK_CHANGE_LAYER }
   };
   
   sourceNameControllerPtrMap = {

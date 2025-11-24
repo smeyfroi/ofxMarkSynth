@@ -15,15 +15,15 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-               BuildableName = "example_fade.app"
-               BlueprintName = "example_fade"
-               ReferencedContainer = "container:example_fade.xcodeproj">
+               BuildableName = "example_audio_clusters_dividedarea.app"
+               BlueprintName = "example_audio_clusters_dividedarea"
+               ReferencedContainer = "container:example_audio_clusters_dividedarea.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
@@ -31,16 +31,16 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "example_fade.app"
-            BlueprintName = "example_fade"
-            ReferencedContainer = "container:example_fade.xcodeproj">
+            BuildableName = "example_audio_clusters_dividedarea.app"
+            BlueprintName = "example_audio_clusters_dividedarea"
+            ReferencedContainer = "container:example_audio_clusters_dividedarea.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
@@ -54,12 +54,12 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "example_fade.app"
-            BlueprintName = "example_fade"
-            ReferencedContainer = "container:example_fade.xcodeproj">
+            BuildableName = "example_audio_clusters_dividedarea.app"
+            BlueprintName = "example_audio_clusters_dividedarea"
+            ReferencedContainer = "container:example_audio_clusters_dividedarea.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-       <EnvironmentVariables>
+      <EnvironmentVariables>
          <EnvironmentVariable
             key = "OS_ACTIVITY_MODE"
             value = "disable"
@@ -78,7 +78,7 @@
       </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
@@ -88,17 +88,17 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "example_fade.app"
-            BlueprintName = "example_fade"
-            ReferencedContainer = "container:example_fade.xcodeproj">
+            BuildableName = "example_audio_clusters_dividedarea.app"
+            BlueprintName = "example_audio_clusters_dividedarea"
+            ReferencedContainer = "container:example_audio_clusters_dividedarea.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Release">
+      buildConfiguration = "Debug">
    </AnalyzeAction>
    <ArchiveAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

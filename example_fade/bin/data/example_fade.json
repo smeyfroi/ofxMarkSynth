@@ -26,9 +26,9 @@
     "Circles": {
       "type": "SoftCircle",
       "config": {
-        "Color": "0.6,0.7,0.2,1.0",
-        "Color Multiplier": "1.0",
-        "Alpha Multiplier": "1.0",
+        "Colour": "0.6,0.7,0.2,1.0",
+        "ColourMultiplier": "1.0",
+        "AlphaMultiplier": "1.0",
         "Softness": "0.4",
         "Radius": "0.125"
       },
@@ -48,7 +48,7 @@
   },
   
   "connections": [
-    "Random Points.vec2 -> Circles.points"
+    "Random Points.Vec2 -> Circles.Point"
   ],
   
   "intents": {

@@ -20,7 +20,7 @@ TimerSourceMod::TimerSourceMod(Synth* synthPtr, const std::string& name, ModConf
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
-    { "tick", SOURCE_TICK }
+    { "Tick", SOURCE_TICK }
   };
 
   sinkNameIdMap = {
@@ -31,7 +31,7 @@ TimerSourceMod::TimerSourceMod(Synth* synthPtr, const std::string& name, ModConf
     { "Start", SINK_START },
     { "Stop", SINK_STOP },
     { "Reset", SINK_RESET },
-    { "Trigger Now", SINK_TRIGGER_NOW }
+    { "TriggerNow", SINK_TRIGGER_NOW }
   };
   
   sourceNameControllerPtrMap = {

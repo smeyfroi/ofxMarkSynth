@@ -68,11 +68,11 @@ resources { std::move(resources_) }
   of::random::seed(0);
   
   sourceNameIdMap = {
-    { "compositeFbo", SOURCE_COMPOSITE_FBO }
+    { "CompositeFbo", SOURCE_COMPOSITE_FBO }
   };
   sinkNameIdMap = {
     { backgroundColorParameter.getName(), SINK_BACKGROUND_COLOR },
-    { "resetRandomness", SINK_RESET_RANDOMNESS }
+    { "ResetRandomness", SINK_RESET_RANDOMNESS }
   };
 }
 
