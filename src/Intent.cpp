@@ -22,6 +22,25 @@ IntentPtr Intent::createPreset(const std::string& name,
 }
 
 void Intent::setWeightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents) {
+  // Calculate total weight for normalization
+  float totalWeight = 0.0f;
+  for (const auto& pair : weightedIntents) {
+    float weight = pair.second;
+    if (weight > 0.0001f && pair.first) {
+      totalWeight += weight;
+    }
+  }
+  
+  // If no active intents, set to zero (no Intent influence)
+  if (totalWeight < 0.0001f) {
+    energyParameter = 0.0f;
+    densityParameter = 0.0f;
+    structureParameter = 0.0f;
+    chaosParameter = 0.0f;
+    granularityParameter = 0.0f;
+    return;
+  }
+  
   float blendedEnergy = 0.0f;
   float blendedDensity = 0.0f;
   float blendedStructure = 0.0f;
@@ -33,11 +52,13 @@ void Intent::setWeightedBlend(const std::vector<std::pair<IntentPtr, float>>& we
     float weight = pair.second;
 
     if (weight > 0.0001f && intent) {
-      blendedEnergy += intent->getEnergy() * weight;
-      blendedDensity += intent->getDensity() * weight;
-      blendedStructure += intent->getStructure() * weight;
-      blendedChaos += intent->getChaos() * weight;
-      blendedGranularity += intent->getGranularity() * weight;
+      // Normalize weight so all weights sum to 1.0
+      float normalizedWeight = weight / totalWeight;
+      blendedEnergy += intent->getEnergy() * normalizedWeight;
+      blendedDensity += intent->getDensity() * normalizedWeight;
+      blendedStructure += intent->getStructure() * normalizedWeight;
+      blendedChaos += intent->getChaos() * normalizedWeight;
+      blendedGranularity += intent->getGranularity() * normalizedWeight;
     }
   }
 

@@ -139,7 +139,7 @@ private:
 
   // Intent system
   IntentActivations intentActivations;
-  Intent activeIntent { "Active", 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+  Intent activeIntent { "Active", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
   ofParameterGroup intentParameters;
   ofParameter<float> intentStrengthParameter { "Intent Strength", 0.0, 0.0, 1.0 };
   std::vector<std::shared_ptr<ofParameter<float>>> intentActivationParameters;
