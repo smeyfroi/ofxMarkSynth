@@ -34,12 +34,34 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   // Keep Viewports disabled so everything stays inside this window:
   // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-//  ImFontConfig config;
-//  config.MergeMode = false;
-//  io.Fonts->AddFontFromFileTTF("/System/Library/Fonts/Menlo.ttc", 16.0f, &config);
+  
+  // Load font with Unicode icon support
+  ImFontConfig fontConfig;
+  fontConfig.OversampleH = 2;
+  fontConfig.OversampleV = 2;
+  
+  // Define character ranges we need
+  static const ImWchar ranges[] = {
+    0x0020, 0x00FF, // Basic Latin + Latin Supplement
+    0x2010, 0x2027, // General Punctuation (includes ‖ U+2016)
+    0x2190, 0x21FF, // Arrows (includes ↻ U+21BB)
+    0x25A0, 0x25FF, // Geometric Shapes (includes ▶ U+25B6)
+    0,
+  };
+  
+  ImFont* font = imgui.addFont("Arial Unicode.ttf", 18.0f, &fontConfig, ranges, true);
+  if (!font) {
+    ofLogWarning("Gui") << "Failed to load Arial Unicode.ttf, using default font";
+  }
   
   ImGuiStyle& style = ImGui::GetStyle();
   style.WindowRounding = 4.f;
+  
+  // Initialize performance timer
+  timerStartTime = ofGetElapsedTimef();
+  timerPausedTime = 0.0f;
+  timerTotalPausedDuration = 0.0f;
+  timerPaused = false;
   
 //  gui.add(activeIntentInfoLabel1.setup("I1", ""));
 //  gui.add(activeIntentInfoLabel2.setup("I2", ""));
@@ -173,8 +195,10 @@ void Gui::drawLog() {
   ImGui::End();
 }
 
-const char* PAUSE_ICON = "||";
-const char* PLAY_ICON = "> ";
+// Unicode icons for GUI controls
+const char* PLAY_ICON = "\xE2\x96\xB6";   // ▶ U+25B6 Black Right-Pointing Triangle
+const char* PAUSE_ICON = "\xE2\x80\x96";  // ‖ U+2016 Double Vertical Line
+const char* RESET_ICON = "\xE2\x86\xBB";  // ↻ U+21BB Clockwise Open Circle Arrow
 auto RED_COLOR = ImVec4(0.9,0.2,0.2,1);
 auto GREEN_COLOR = ImVec4(0.2,0.6,0.3,1);
 auto YELLOW_COLOR = ImVec4(0.9,0.9,0.2,1);
@@ -298,7 +322,49 @@ void Gui::drawStatus() {
   } else {
     ImGui::TextColored(GREY_COLOR, "Config: None");
   }
-
+  
+  // Performance timer display
+  float currentTime = ofGetElapsedTimef();
+  float elapsedTime;
+  
+  if (timerPaused) {
+    elapsedTime = timerPausedTime - timerStartTime - timerTotalPausedDuration;
+  } else {
+    elapsedTime = currentTime - timerStartTime - timerTotalPausedDuration;
+  }
+  
+  int minutes = static_cast<int>(elapsedTime) / 60;
+  int seconds = static_cast<int>(elapsedTime) % 60;
+  
+  ImGui::Text("Timer: %02d:%02d", minutes, seconds);
+  ImGui::SameLine();
+  
+  // Pause/Resume button
+  if (timerPaused) {
+    if (ImGui::SmallButton(PLAY_ICON)) {
+      timerTotalPausedDuration += (currentTime - timerPausedTime);
+      timerPaused = false;
+    }
+  } else {
+    if (ImGui::SmallButton(PAUSE_ICON)) {
+      timerPausedTime = currentTime;
+      timerPaused = true;
+    }
+  }
+  
+  ImGui::SameLine();
+  
+  // Reset button - sets timer back to 00:00
+  if (ImGui::SmallButton(RESET_ICON)) {
+    timerStartTime = currentTime;
+    timerTotalPausedDuration = 0.0f;
+    if (timerPaused) {
+      timerPausedTime = currentTime;  // Keep paused at 00:00
+    }
+  }
+  
+  // FPS counter on same line with spacing
+  ImGui::SameLine(0.0f, 20.0f);  // 20 pixels spacing
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
   
   if (synthPtr->paused) {
