@@ -22,7 +22,20 @@
 namespace ofxMarkSynth {
 using namespace NodeRenderUtil;
 
+// Unicode icons for GUI controls
+const char* PLAY_ICON = "\xE2\x96\xB6";   // ▶ U+25B6 Black Right-Pointing Triangle
+const char* PAUSE_ICON = "\xE2\x80\x96";  // ‖ U+2016 Double Vertical Line
+const char* RESET_ICON = "\xE2\x86\xBB";  // ↻ U+21BB Clockwise Open Circle Arrow
+const char* RECORD_ICON = "\xE2\x97\x8F"; // ● U+25CF Black Circle
+const char* SAVE_ICON = "\xE2\x86\x93";   // ↓ U+2193 Downwards Arrow
+const char* LOAD_ICON = "\xE2\x86\x91";   // ↑ U+2191 Upwards Arrow
+const char* CLEAR_ICON = "\xE2\x9C\x96";  // ✖ U+2716 Heavy Multiplication X
+const char* SHUFFLE_ICON = "\xE2\x86\xBB"; // ↻ U+21BB Clockwise Open Circle Arrow (reuse)
 
+auto RED_COLOR = ImVec4(0.9,0.2,0.2,1);
+auto GREEN_COLOR = ImVec4(0.2,0.6,0.3,1);
+auto YELLOW_COLOR = ImVec4(0.9,0.9,0.2,1);
+auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
 
 void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindow> windowPtr) {
   synthPtr = synthPtr_;
@@ -44,8 +57,11 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
   static const ImWchar ranges[] = {
     0x0020, 0x00FF, // Basic Latin + Latin Supplement
     0x2010, 0x2027, // General Punctuation (includes ‖ U+2016)
-    0x2190, 0x21FF, // Arrows (includes ↻ U+21BB)
-    0x25A0, 0x25FF, // Geometric Shapes (includes ▶ U+25B6)
+    0x2190, 0x21FF, // Arrows (includes ↻ U+21BB, ↑ U+2191, ↓ U+2193, ↶ U+21B6, ↷ U+21B7)
+    0x2700, 0x27BF, // Dingbats (includes ✓ U+2713, ✖ U+2716, ✗ U+2717)
+    0x2900, 0x297F, // Supplemental Arrows-B (includes ⤮ U+292E)
+    0x25A0, 0x25FF, // Geometric Shapes (includes ▶ U+25B6, ● U+25CF)
+    0x2B00, 0x2BFF, // Miscellaneous Symbols and Arrows (includes ⬆ U+2B06, ⬇ U+2B07)
     0,
   };
   
@@ -149,7 +165,7 @@ void Gui::drawLog() {
   if (ImGui::Begin("Log")) {
     auto& logger = synthPtr->loggerChannelPtr;
     
-    if (ImGui::Button("Clear") && logger) logger->clear();
+    if (ImGui::Button((std::string(CLEAR_ICON) + " Clear").c_str()) && logger) logger->clear();
     ImGui::SameLine();
     if (ImGui::Button("Copy")) ImGui::LogToClipboard();
     ImGui::SameLine();
@@ -194,15 +210,6 @@ void Gui::drawLog() {
   }
   ImGui::End();
 }
-
-// Unicode icons for GUI controls
-const char* PLAY_ICON = "\xE2\x96\xB6";   // ▶ U+25B6 Black Right-Pointing Triangle
-const char* PAUSE_ICON = "\xE2\x80\x96";  // ‖ U+2016 Double Vertical Line
-const char* RESET_ICON = "\xE2\x86\xBB";  // ↻ U+21BB Clockwise Open Circle Arrow
-auto RED_COLOR = ImVec4(0.9,0.2,0.2,1);
-auto GREEN_COLOR = ImVec4(0.2,0.6,0.3,1);
-auto YELLOW_COLOR = ImVec4(0.9,0.9,0.2,1);
-auto GREY_COLOR = ImVec4(0.5,0.5,0.5,1);
 
 void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
@@ -375,7 +382,7 @@ void Gui::drawStatus() {
   
 #ifdef TARGET_MAC
   if (synthPtr->recorder.isRecording()) {
-    ImGui::TextColored(ImVec4(0.9,0.2,0.2,1), "<> Recording");
+    ImGui::TextColored(RED_COLOR, "%s Recording", RECORD_ICON);
   } else {
     ImGui::TextColored(GREY_COLOR, "   Not Recording");
   }
@@ -384,7 +391,7 @@ void Gui::drawStatus() {
   if (SaveToFileThread::activeThreadCount < 1) {
     ImGui::TextColored(GREY_COLOR, "   No Image Saves");
   } else {
-    ImGui::TextColored(YELLOW_COLOR, ">> %d Image Saves", SaveToFileThread::activeThreadCount);
+    ImGui::TextColored(YELLOW_COLOR, "%s %d Image Saves", SAVE_ICON, SaveToFileThread::activeThreadCount);
   }
 }
 
@@ -506,7 +513,7 @@ void Gui::drawNodeEditor() {
     }
   }
   
-  if (ImGui::Button("Random Layout")) {
+  if (ImGui::Button((std::string(SHUFFLE_ICON) + " Random Layout").c_str())) {
     nodeEditorModel.resetLayout();
     layoutComputed = false;
     animateLayout = true;
@@ -516,7 +523,7 @@ void Gui::drawNodeEditor() {
   
   // Save/Load buttons
   ImGui::SameLine();
-  if (ImGui::Button("Save Layout")) {
+  if (ImGui::Button((std::string(SAVE_ICON) + " Save Layout").c_str())) {
     // Sync current positions from imnodes before saving
     nodeEditorModel.syncPositionsFromImNodes();
     if (nodeEditorModel.saveLayout()) {
@@ -526,7 +533,7 @@ void Gui::drawNodeEditor() {
     }
   }
   ImGui::SameLine();
-  if (ImGui::Button("Load Layout")) {
+  if (ImGui::Button((std::string(LOAD_ICON) + " Load Layout").c_str())) {
     if (nodeEditorModel.loadLayout()) {
       layoutComputed = true;
       animateLayout = false;
