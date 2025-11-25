@@ -164,6 +164,9 @@ protected:
   void resetDrawingLayer(const std::string& layerName);
   void disableDrawingLayer();
   void disableDrawingLayer(const std::string& layerName);
+  
+  // Sync controller agencies so GUI weights come from controllers, not recomputed
+  void syncControllerAgencies();
 
 private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on

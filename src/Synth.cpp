@@ -263,6 +263,10 @@ void Synth::update() {
   recorderStatus = recorder.isRecording() ? "Yes" : "No";
   saveStatus = ofToString(SaveToFileThread::activeThreadCount);
   
+  // Update global ParamController settings from Synth parameters
+  ParamControllerSettings::instance().manualBiasDecaySec = manualBiasDecaySecParameter;
+  ParamControllerSettings::instance().baseManualBias = baseManualBiasParameter;
+  
   // Update hibernation fade even when paused
   updateHibernation();
   
@@ -692,6 +696,8 @@ void Synth::initParameters() {
   parameters.clear();
   
   parameters.add(agencyParameter);
+  parameters.add(manualBiasDecaySecParameter);
+  parameters.add(baseManualBiasParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
   parameters.add(hibernationFadeDurationParameter);

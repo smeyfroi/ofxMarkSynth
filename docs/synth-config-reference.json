@@ -4,8 +4,13 @@
 
   "synth": {
     "agency": 0,
+    "manualBiasDecaySec": 0.8,
+    "baseManualBias": 0.1,
     "backgroundColor": "0, 0, 0, 1",
-    "backgroundMultiplier": 0.1
+    "backgroundMultiplier": 0.1,
+    "_comment_agency": "agency: 0.0 = fully manual control, 1.0 = fully autonomous",
+    "_comment_manualBiasDecaySec": "manualBiasDecaySec: Time (0.1-5.0s) for manual control influence to decay after releasing controls",
+    "_comment_baseManualBias": "baseManualBias: Minimum manual control influence (0.0-0.5) that persists after decay"
   },
 
   "mods": {

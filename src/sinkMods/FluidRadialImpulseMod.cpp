@@ -37,6 +37,7 @@ void FluidRadialImpulseMod::initParameters() {
 }
 
 void FluidRadialImpulseMod::update() {
+  syncControllerAgencies();
   impulseRadiusController.update();
   impulseStrengthController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
@@ -79,7 +80,6 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   // Granularity → Impulse Radius
   float impulseRadiusI = linearMap(intent.getGranularity(), impulseRadiusController);

@@ -326,7 +326,6 @@ constexpr int FBO_PARAMETER_ID = 0;
 void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   int modId = modPtr->getId();
   
-  // Push highlight colors if this Mod was recently affected by a snapshot load
   if (highlight) {
     ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(50, 200, 100, 255));
     ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(70, 220, 120, 255));
@@ -355,6 +354,7 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   ImGui::TextUnformatted("FBO");
   ImNodes::EndInputAttribute();
 
+  // Parameters without sinks
   for (auto& parameter : modPtr->parameters) {
     if (!modPtr->sinkNameIdMap.contains(parameter->getName())) {
       addParameter(modPtr, *parameter);

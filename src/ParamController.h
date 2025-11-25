@@ -2,6 +2,21 @@
 
 #include "ofMain.h"
 #include "util/Lerp.h"
+#include <cmath>
+
+// Exponential smoothing toward target over timeConstant seconds
+inline float smoothToFloat(float current, float target, float dt, float timeConstant) {
+  if (timeConstant <= 0.0f) return target;
+  float alpha = 1.0f - std::exp(-dt / timeConstant);
+  return ofLerp(current, target, alpha);
+}
+
+template<typename T>
+inline T smoothTo(const T& current, const T& target, float dt, float timeConstant) {
+  if (timeConstant <= 0.0f) return target;
+  float alpha = 1.0f - std::exp(-dt / timeConstant);
+  return lerp(current, target, alpha);
+}
 
 
 
@@ -9,11 +24,27 @@ namespace ofxMarkSynth {
 
 
 
+// Global settings for all ParamControllers - set by Synth, read by ParamControllers
+struct ParamControllerSettings {
+  float manualBiasDecaySec = 0.8f;  // Time constant for manual bias decay
+  float baseManualBias = 0.1f;      // Minimum manual control share (doesn't fully decay to zero)
+  
+  static ParamControllerSettings& instance() {
+    static ParamControllerSettings settings;
+    return settings;
+  }
+};
+
+
+
 // This only exists so that we can introspect the weights for Gui without needing to templatize everything
 class BaseParamController {
 public:
   virtual ~BaseParamController() = default;
-  float wAuto, wManual, wIntent;
+  float wAuto = 0.0f;
+  float wManual = 1.0f;
+  float wIntent = 0.0f;
+  virtual void setAgency(float a) = 0; // ensure GUI reads controller-computed weights
 };
 
 
@@ -36,6 +67,9 @@ public:
     paramListener = manualValueParameter.newListener([this](T&) {
       lastManualUpdateTime = ofGetElapsedTimef();
     });
+    
+    // Initialize weights (wAuto, wManual, wIntent) before first GUI render
+    update();
   }
   
   T getManualMin() const {
@@ -65,29 +99,18 @@ public:
     agency = newAgency;
     update();
   }
-
-  // TODO: push to util/Lerp.h
-  inline float oneMinusExp(float dt, float tau) {
-    if (tau <= 0.0f) return 1.0f;
-    return 1.0f - std::exp(-dt / tau);
-  }
-
-  // TODO: push to util/Lerp.h
-  inline T smoothTo(T current, T target, float dt, float tau) {
-    float alpha = oneMinusExp(dt, tau);
-    return lerp(value, target, alpha);
-  }
-
-  // TODO: push to util/Lerp.h
-  inline float smoothToFloat(float current, float target, float dt, float tau) {
-    float alpha = oneMinusExp(dt, tau);
-    return ofLerp(current, target, alpha);
+  
+  // Allow Mods to push their live agency so GUI uses controller-computed weights
+  void setAgency(float a) override {
+    agency = a;
   }
   
   void update() {
     float dt = ofGetLastFrameTime();
 
-    manualBias = isManualControlActive() ? 1.0f : smoothToFloat(manualBias, baseManualBias, dt, manualBiasDecaySec);
+    // Use global settings for manual bias decay behavior
+    auto& settings = ParamControllerSettings::instance();
+    manualBias = isManualControlActive() ? 1.0f : smoothToFloat(manualBias, settings.baseManualBias, dt, settings.manualBiasDecaySec);
     manualSmoothed = smoothTo(manualSmoothed, manualValueParameter.get(), dt, manualSmoothSec);
     autoSmoothed   = smoothTo(autoSmoothed, autoValue, dt, autoSmoothSec);
     intentSmoothed = smoothTo(intentSmoothed, intentValue, dt, intentSmoothSec);
@@ -129,9 +152,8 @@ private:
   float agency;
   float intentStrength;
   
-  float baseManualBias { 0.1f }; // minimum human control share TODO: make this configurable as an ofParameter on the ofApp (`ofGetAppPtr()`)
-  float manualBias { 0.0f }; // 1.0 after manual interaction, decays to baseManualBias
-  float manualBiasDecaySec { 0.8f }; // time constant for manualBias decay
+  // Note: baseManualBias and manualBiasDecaySec are now in ParamControllerSettings global singleton
+  float manualBias { 0.0f }; // 1.0 after manual interaction, decays to baseManualBias (from settings)
   
   float autoSmoothSec = 0.05f, intentSmoothSec = 0.25f, manualSmoothSec = 0.02f;
   T autoSmoothed, intentSmoothed, manualSmoothed;

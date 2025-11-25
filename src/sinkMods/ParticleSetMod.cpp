@@ -64,6 +64,7 @@ void ParticleSetMod::initParameters() {
 }
 
 void ParticleSetMod::update() {
+  syncControllerAgencies();
   spinController.update();
   colorController.update();
   timeStepControllerPtr->update();
@@ -129,7 +130,6 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Chaos * Energy → spin (small range around 0)
   spinController.updateIntent(ofxMarkSynth::linearMap(intent.getEnergy() * intent.getChaos(), -0.05f, 0.05f), strength);

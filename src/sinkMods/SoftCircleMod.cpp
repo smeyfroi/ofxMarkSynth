@@ -52,6 +52,7 @@ float SoftCircleMod::getAgency() const {
 }
 
 void SoftCircleMod::update() {
+  syncControllerAgencies();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -131,7 +132,6 @@ void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Energy → Radius
   float radiusI = exponentialMap(intent.getEnergy(), radiusController);

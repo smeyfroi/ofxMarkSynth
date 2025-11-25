@@ -182,6 +182,13 @@ void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr 
   drawingLayerPtrs.push_back(drawingLayerPtr);
 }
 
+void Mod::syncControllerAgencies() {
+  float a = getAgency();
+  for (auto& kv : sourceNameControllerPtrMap) {
+    if (kv.second) kv.second->setAgency(a);
+  }
+}
+
 std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, int index) {
   if (index < 0) return std::nullopt;
   if (!namedDrawingLayerPtrs.contains(name)) return std::nullopt;

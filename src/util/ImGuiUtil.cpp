@@ -17,8 +17,8 @@ namespace ImGuiUtil {
 
 
 
-constexpr ImU32 COLOR_SEGMENT1 = IM_COL32(255, 151, 151, 255);
-constexpr ImU32 COLOR_SEGMENT2 = IM_COL32(51, 255, 151, 255);
+constexpr ImU32 COLOR_SEGMENT1 = IM_COL32(255, 51, 51, 255);
+constexpr ImU32 COLOR_SEGMENT2 = IM_COL32(147, 51, 255, 255);
 constexpr ImU32 COLOR_SEGMENT3 = IM_COL32(151, 151, 255, 255);
 
 void drawProportionalSegmentedLine(float param1, float param2, float param3) {

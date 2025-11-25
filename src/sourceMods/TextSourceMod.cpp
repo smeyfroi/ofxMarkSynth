@@ -21,7 +21,12 @@ TextSourceMod::TextSourceMod(Synth* synthPtr, const std::string& name,
   sinkNameIdMap = {
     { "Next", SINK_NEXT }
   };
-}
+  
+  // Expose controller so UI can show contribution weights
+  sourceNameControllerPtrMap = {
+    { randomnessParameter.getName(), &randomnessController }
+  };
+ }
 
 TextSourceMod::~TextSourceMod() {
   // Clean up listeners to prevent memory leaks on mod destruction
@@ -144,7 +149,6 @@ void TextSourceMod::receive(int sinkId, const float& value) {
 }
 
 void TextSourceMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Map Chaos dimension (0.0-1.0) directly to randomness (0.0-1.0)
   // Low chaos → sequential, structured, predictable

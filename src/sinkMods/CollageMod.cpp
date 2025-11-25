@@ -40,6 +40,7 @@ void CollageMod::initParameters() {
 }
 
 void CollageMod::update() {
+  syncControllerAgencies();
   colorController.update();
   saturationController.update();
   outlineController.update();
@@ -176,7 +177,6 @@ void CollageMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void CollageMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   ofFloatColor energetic = energyToColor(intent);
   ofFloatColor structured = structureToBrightness(intent);

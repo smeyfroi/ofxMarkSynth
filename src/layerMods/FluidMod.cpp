@@ -59,6 +59,7 @@ void FluidMod::setup() {
 }
 
 void FluidMod::update() {
+  syncControllerAgencies();
   dtControllerPtr->update();
   vorticityControllerPtr->update();
   valueDissipationControllerPtr->update();
@@ -71,7 +72,6 @@ void FluidMod::update() {
 }
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   if (!fluidSimulation.isSetup()) return;
   
   // Energy → dt

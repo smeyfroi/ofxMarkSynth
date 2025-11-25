@@ -57,6 +57,7 @@ void SmearMod::initParameters() {
 }
 
 void SmearMod::update() {
+  syncControllerAgencies();
   mixNewController.update();
   alphaMultiplierController.update();
   field1MultiplierController.update();
@@ -142,7 +143,6 @@ void SmearMod::receive(int sinkId, const ofTexture& value) {
 }
 
 void SmearMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   float e = intent.getEnergy();
   float d = intent.getDensity();

@@ -45,6 +45,7 @@ void RandomHslColorMod::initParameters() {
 }
 
 void RandomHslColorMod::update() {
+  syncControllerAgencies();
   colorsPerUpdateController.update();
   hueCenterController.update();
   hueWidthController.update();
@@ -86,7 +87,6 @@ float RandomHslColorMod::randomHueFromCenterWidth(float center, float width) con
 }
 
 void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   // Density → number of colors per update (non-linear)
   colorsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), colorsPerUpdateController, 2.0f), strength);

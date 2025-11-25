@@ -32,6 +32,7 @@ void PixelSnapshotMod::initParameters() {
 }
 
 void PixelSnapshotMod::update() {
+  syncControllerAgencies();
   sizeController.update();
   
   updateCount += snapshotsPerUpdateParameter;
@@ -82,7 +83,6 @@ bool PixelSnapshotMod::keyPressed(int key) {
 }
 
 void PixelSnapshotMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Inverse Structure + Granularity → Size (less structure & fine granularity = larger snapshots)
   float combinedFactor = (1.0f - intent.getStructure()) * 0.6f + intent.getGranularity() * 0.4f;

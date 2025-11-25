@@ -49,6 +49,7 @@ float TextMod::getAgency() const {
 }
 
 void TextMod::update() {
+  syncControllerAgencies();
   // Update all parameter controllers
   positionController.update();
   fontSizeController.update();
@@ -107,7 +108,6 @@ void TextMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void TextMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Granularity → Font Size (scale of features)
   float fontSizeI = exponentialMap(intent.getGranularity(), fontSizeController);

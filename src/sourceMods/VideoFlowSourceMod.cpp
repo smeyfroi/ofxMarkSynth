@@ -64,6 +64,7 @@ void VideoFlowSourceMod::initParameters() {
 }
 
 void VideoFlowSourceMod::update() {
+  syncControllerAgencies();
   motionFromVideo.update();
   
   if (motionFromVideo.isReady()) {

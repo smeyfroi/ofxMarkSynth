@@ -34,6 +34,7 @@ void RandomVecSourceMod::initParameters() {
 }
 
 void RandomVecSourceMod::update() {
+  syncControllerAgencies();
   vecsPerUpdateController.update();
   
   vecCount += vecsPerUpdateController.value;
@@ -72,7 +73,6 @@ const glm::vec4 RandomVecSourceMod::createRandomVec4() const {
 }
 
 void RandomVecSourceMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   // Density → vectors per update
   vecsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), vecsPerUpdateController, 2.0f), strength);

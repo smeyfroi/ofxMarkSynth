@@ -39,6 +39,7 @@ void RandomFloatSourceMod::initParameters() {
 }
 
 void RandomFloatSourceMod::update() {
+  syncControllerAgencies();
   floatsPerUpdateController.update();
   minController.update();
   maxController.update();
@@ -58,7 +59,6 @@ const float RandomFloatSourceMod::createRandomFloat() const {
 }
 
 void RandomFloatSourceMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   // Density → floatsPerUpdate
   floatsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), floatsPerUpdateController, 0.5f), strength);

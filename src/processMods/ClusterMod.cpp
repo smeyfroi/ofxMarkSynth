@@ -42,6 +42,7 @@ float ClusterMod::getAgency() const {
 }
 
 void ClusterMod::update() {
+  syncControllerAgencies();
   clustersControllerPtr->update();
 
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v) {
@@ -82,8 +83,6 @@ void ClusterMod::receive(int sinkId, const float& v) {
 }
 
 void ClusterMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01f) return;
-  
   // Chaos -> number of clusters
   float targetClusters = linearMap(intent.getChaos(), *clustersControllerPtr);
   clustersControllerPtr->updateIntent(static_cast<float>(targetClusters), strength);

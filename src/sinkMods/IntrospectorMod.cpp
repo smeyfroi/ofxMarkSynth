@@ -36,6 +36,7 @@ void IntrospectorMod::initParameters() {
 }
 
 void IntrospectorMod::update() {
+  syncControllerAgencies();
   if (!introspectorPtr) { ofLogError("IntrospectorMod") << "Update called with no introspector"; return; }
   
   introspectorPtr->update();

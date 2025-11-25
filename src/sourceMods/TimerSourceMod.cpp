@@ -50,6 +50,7 @@ void TimerSourceMod::initParameters() {
 }
 
 void TimerSourceMod::update() {
+  syncControllerAgencies();
   intervalController.update();
 
   // Consume Time To Next if set via GUI/automation
@@ -147,14 +148,11 @@ void TimerSourceMod::receive(int sinkId, const float& value) {
 }
 
 void TimerSourceMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Map Energy intent to interval (inverse relationship: higher energy = shorter interval)
   float energy = intent.getEnergy();
-  if (energy > 0.01f) {
-    float mappedInterval = exponentialMap(1.0f - energy, intervalController, 0.5f);
-    intervalController.updateIntent(mappedInterval, strength);
-  }
+  float mappedInterval = exponentialMap(1.0f - energy, intervalController, 0.5f);
+  intervalController.updateIntent(mappedInterval, strength);
 }
 
 

@@ -5,6 +5,8 @@
   
   "synth": {
     "agency": 0.5,
+    "manualBiasDecaySec": 0.8,
+    "baseManualBias": 0.1,
     "backgroundColor": "0.1, 0.05, 0.3, 1",
     "backgroundMultiplier": 0.2
   },

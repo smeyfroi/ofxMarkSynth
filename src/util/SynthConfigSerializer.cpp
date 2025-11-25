@@ -264,6 +264,16 @@ bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::share
     ofLogNotice("SynthConfigSerializer") << "  Synth backgroundMultiplier: " << synthJson["backgroundMultiplier"].get<float>();
   }
   
+  if (synthJson.contains("manualBiasDecaySec") && synthJson["manualBiasDecaySec"].is_number()) {
+    synth->manualBiasDecaySecParameter.set(synthJson["manualBiasDecaySec"].get<float>());
+    ofLogNotice("SynthConfigSerializer") << "  Manual bias decay time: " << synthJson["manualBiasDecaySec"].get<float>();
+  }
+  
+  if (synthJson.contains("baseManualBias") && synthJson["baseManualBias"].is_number()) {
+    synth->baseManualBiasParameter.set(synthJson["baseManualBias"].get<float>());
+    ofLogNotice("SynthConfigSerializer") << "  Base manual bias: " << synthJson["baseManualBias"].get<float>();
+  }
+  
   return true;
 }
 

@@ -30,6 +30,7 @@ void FadeMod::initParameters() {
 }
 
 void FadeMod::update() {
+  syncControllerAgencies();
   alphaMultiplierController.update();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
@@ -82,7 +83,6 @@ void FadeMod::receive(int sinkId, const float& value) {
 }
 
 void FadeMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 
   // Density and Granularity (secondary) -> alpha multiplier
   float alphaMultI = exponentialMap(intent.getDensity() * 0.8f +

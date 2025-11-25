@@ -42,6 +42,7 @@ void ParticleFieldMod::initParameters() {
 }
 
 void ParticleFieldMod::update() {
+  syncControllerAgencies();
   minWeightControllerPtr->update();
   maxWeightControllerPtr->update();
   
@@ -112,7 +113,6 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
 }
 
 void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.5f);

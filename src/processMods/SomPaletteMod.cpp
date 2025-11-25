@@ -100,6 +100,7 @@ void SomPaletteMod::ensureFieldTexture(int w, int h) {
 }
 
 void SomPaletteMod::update() {
+  syncControllerAgencies();
 //  learningRateController.update();
 //  iterationsController.update();
   if (newVecs.empty()) return;
@@ -170,7 +171,6 @@ void SomPaletteMod::receive(int sinkId, const float& v) {
 }
 
 void SomPaletteMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
 //  float targetIterations = linearMap(intent.getStructure() * intent.getDensity(), 1000.0f, 20000.0f);
 //  iterationsParameter = static_cast<int>(ofLerp(iterationsParameter.get(), targetIterations, strength * 0.1f));
 }

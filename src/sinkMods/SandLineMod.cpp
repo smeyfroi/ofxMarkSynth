@@ -73,6 +73,7 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
 }
 
 void SandLineMod::update() {
+  syncControllerAgencies();
   densityController.update();
   pointRadiusController.update();
   colorController.update();
@@ -138,7 +139,6 @@ void SandLineMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void SandLineMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Density + Granularity → Density
   float densityI = exponentialMap(intent.getEnergy() * intent.getGranularity(), densityController);

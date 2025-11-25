@@ -37,6 +37,7 @@ void StaticTextSourceMod::initParameters() {
 }
 
 void StaticTextSourceMod::update() {
+  syncControllerAgencies();
   if (hasEmitted && emitOnceParameter) {
     return;
   }

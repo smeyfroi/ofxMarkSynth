@@ -156,6 +156,7 @@ void AudioDataSourceMod::emitScalar(int sourceId, float minParameter, float maxP
 }
 
 void AudioDataSourceMod::update() {
+  syncControllerAgencies();
   if (!audioDataProcessorPtr) { ofLogError("AudioDataSourceMod") << "Update called with no audioDataProcessor"; return; }
   
   audioDataProcessorPtr->update();

@@ -42,6 +42,7 @@ float MultiplyAddMod::getAgency() const {
 }
 
 void MultiplyAddMod::update() {
+  syncControllerAgencies();
   multiplierController.update();
   adderController.update();
 }
@@ -63,7 +64,6 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
 }
 
 void MultiplyAddMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Energy → multiply (higher energy = higher multiplier)
   float multI = exponentialMap(intent.getEnergy(), multiplierController);

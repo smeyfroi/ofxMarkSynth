@@ -109,6 +109,7 @@ ofPath makeHorizontalStripesPath(const std::vector<glm::vec2>& points) {
 }
 
 void PathMod::update() {
+  syncControllerAgencies();
   maxVerticesController.update();
   maxVertexProximityController.update();
   minVertexProximityController.update();
@@ -156,7 +157,6 @@ bool PathMod::keyPressed(int key) {
 }
 
 void PathMod::applyIntent(const Intent& intent, float strength) {
-  if (strength < 0.01) return;
   
   // Inverse Density → Min Vertex Proximity
   float minVertexProximityI = inverseExponentialMap(intent.getDensity(), minVertexProximityController);

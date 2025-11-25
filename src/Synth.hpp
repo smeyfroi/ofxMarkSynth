@@ -64,6 +64,8 @@ public:
 
   float getAgency() const override { return agencyParameter; }
   void setAgency(float agency) { agencyParameter = agency; }
+  float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
+  float getBaseManualBias() const { return baseManualBiasParameter; }
 
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
@@ -152,6 +154,8 @@ private:
   void applyIntentToAllMods();
   
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
+  ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
+  ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
   ofParameterGroup displayParameters;
