@@ -84,7 +84,9 @@ void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   float value = parameter.get();
   
   ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), "%.2f")) {
+  const float r = parameter.getMax() - parameter.getMin();
+  const char* fmt = (r <= 0.01f) ? "%.5f" : (r <= 0.1f) ? "%.4f" : (r <= 1.0f) ? "%.3f" : "%.2f";
+  if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), fmt)) {
     parameter.set(value);
   }
   ImGui::SetItemTooltip("%s", name.c_str());
