@@ -135,7 +135,7 @@ void ModFactory::initializeBuiltinTypes() {
     } else if (cameraDeviceIdPtr && videoSizePtr && saveRecordingPtr && recordingPathPtr) {
       return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *cameraDeviceIdPtr, *videoSizePtr, *saveRecordingPtr, *recordingPathPtr);
     }
-    ofLogError("ModFactory") << "VideoFlowSource requires either ('sourceVideoPath' 'sourceVideoMute') or ('cameraDeviceName' 'videoSize' 'saveRecording' 'videoRecordingPath') resources";
+    ofLogError("ModFactory") << "VideoFlowSource requires ('sourceVideoPath', 'sourceVideoMute') or ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath') resources";
     return nullptr;
   });
   

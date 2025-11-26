@@ -97,7 +97,7 @@
 
     "ExampleVideoFlowSource": {
       "type": "VideoFlowSource",
-      "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'recordingPath')",
+      "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath')",
       "_params_from": "ofxMotionFromVideo",
       "config": {
         "xFlowSampleThresholdNeg": "-0.05",

@@ -56,7 +56,7 @@ Choose one configuration:
   - `cameraDeviceId` (int)
   - `videoSize` (glm::vec2)  // width, height
   - `saveRecording` (bool)
-  - `recordingPath` (std::filesystem::path)
+  - `videoRecordingPath` (std::filesystem::path)
 
 Example:
 ```cpp
@@ -69,7 +69,7 @@ resources.add("sourceVideoMute", false);
 resources.add("cameraDeviceId", 0);
 resources.add("videoSize", glm::vec2(1280, 720));
 resources.add("saveRecording", true);
-resources.add("recordingPath", std::filesystem::path("video-recordings/"));
+resources.add("videoRecordingPath", std::filesystem::path("video-recordings/"));
 ```
 
 ---
@@ -117,7 +117,12 @@ These Mods are constructed without `ResourceManager` dependencies:
 ofxMarkSynth::ResourceManager resources;
 // Add required resources for the Mods you will create
 resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
+// Audio file playback requires all 5 resources
 resources.add("sourceAudioPath", std::filesystem::path("audio/music.wav"));
+resources.add("audioOutDeviceName", std::string("Apple Inc.: MacBook Pro Speakers"));
+resources.add("audioBufferSize", 256);
+resources.add("audioChannels", 1);
+resources.add("audioSampleRate", 48000);
 
 auto synth = std::make_shared<ofxMarkSynth::Synth>(
   "MySynth",
