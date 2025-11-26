@@ -15,7 +15,7 @@
 
 
 
-// TODO: FBO handling is more complicated: a Mod can have a set of layers that it can draw on
+// TODO: DrawingLayer handling is more complicated: a Mod can have a set of layers that it can draw on. We have the links so far, but no indication of which is active. A DrawingLayer can also not drawn (e.g. fluid velocities)
 
 
 
@@ -78,9 +78,6 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
   timerPausedTime = 0.0f;
   timerTotalPausedDuration = 0.0f;
   timerPaused = false;
-  
-//  gui.add(activeIntentInfoLabel1.setup("I1", ""));
-//  gui.add(activeIntentInfoLabel2.setup("I2", ""));
 }
 
 void Gui::exit() {
@@ -173,12 +170,8 @@ void Gui::drawLog() {
     filter.Draw("Filter", 180);
     ImGui::Separator();
     
-    ImGui::BeginChild(
-                      "LogScrollRegion",
-                      ImVec2(0, 0),
-                      true,
-                      ImGuiWindowFlags_HorizontalScrollbar
-                      );
+    ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), true,
+                      ImGuiWindowFlags_HorizontalScrollbar);
     
     for (auto &l : logger->getLogs()) {
       if (!filter.PassFilter(l.message.c_str())) continue;
@@ -775,7 +768,6 @@ void Gui::drawSnapshotControls() {
     }
   }
 }
-
 
 
 
