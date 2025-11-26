@@ -68,13 +68,25 @@ void ModFactory::initializeBuiltinTypes() {
     auto sourceAudioPathPtr = r.get<std::filesystem::path>("sourceAudioPath");
     auto micDeviceNamePtr = r.get<std::string>("micDeviceName");
     auto recordAudioPtr = r.get<bool>("recordAudio");
-    auto recordingPathPtr = r.get<std::filesystem::path>("recordingPath");
+    auto recordingPathPtr = r.get<std::filesystem::path>("audioRecordingPath");
+    
     if (sourceAudioPathPtr && !sourceAudioPathPtr->empty()) {
-      return std::make_shared<AudioDataSourceMod>(s.get(), n, std::move(c), *sourceAudioPathPtr);
+      auto outDeviceNamePtr = r.get<std::string>("audioOutDeviceName");
+      auto bufferSizePtr = r.get<int>("audioBufferSize");
+      auto nChannelsPtr = r.get<int>("audioChannels");
+      auto sampleRatePtr = r.get<int>("audioSampleRate");
+      
+      if (!outDeviceNamePtr || !bufferSizePtr || !nChannelsPtr || !sampleRatePtr) {
+        ofLogError("ModFactory") << "AudioDataSourceMod with 'sourceAudioPath' also requires 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate' resources";
+        return nullptr;
+      }
+      
+      return std::make_shared<AudioDataSourceMod>(s.get(), n, std::move(c),
+          *sourceAudioPathPtr, *outDeviceNamePtr, *bufferSizePtr, *nChannelsPtr, *sampleRatePtr);
     } else if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
       return std::make_shared<AudioDataSourceMod>(s.get(), n, std::move(c), *micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);
     }
-    ofLogError("ModFactory") << "AudioDataSourceMod requires either 'sourceAudioPath' or 'micDeviceName', 'recordAudio', 'recordingPath' resources";
+    ofLogError("ModFactory") << "AudioDataSourceMod requires ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate') or ('micDeviceName', 'recordAudio', 'audioRecordingPath') resources";
     return nullptr;
   });
   
@@ -117,13 +129,13 @@ void ModFactory::initializeBuiltinTypes() {
     auto cameraDeviceIdPtr = r.get<int>("cameraDeviceId");
     auto videoSizePtr = r.get<glm::vec2>("videoSize");
     auto saveRecordingPtr = r.get<bool>("saveRecording");
-    auto recordingPathPtr = r.get<std::filesystem::path>("recordingPath");
+    auto recordingPathPtr = r.get<std::filesystem::path>("videoRecordingPath");
     if (sourceVideoPathPtr && !sourceVideoPathPtr->empty() && sourceVideoMutePtr) {
       return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *sourceVideoPathPtr, *sourceVideoMutePtr);
     } else if (cameraDeviceIdPtr && videoSizePtr && saveRecordingPtr && recordingPathPtr) {
       return std::make_shared<VideoFlowSourceMod>(s.get(), n, std::move(c), *cameraDeviceIdPtr, *videoSizePtr, *saveRecordingPtr, *recordingPathPtr);
     }
-    ofLogError("ModFactory") << "VideoFlowSource requires either 'sourceVideoPath' 'sourceVideoMute' or 'cameraDeviceName' 'videoSize' 'saveRecording' 'recordingPath' resources";
+    ofLogError("ModFactory") << "VideoFlowSource requires either ('sourceVideoPath' 'sourceVideoMute') or ('cameraDeviceName' 'videoSize' 'saveRecording' 'videoRecordingPath') resources";
     return nullptr;
   });
   

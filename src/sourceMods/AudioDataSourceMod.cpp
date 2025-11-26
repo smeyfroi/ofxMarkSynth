@@ -15,10 +15,15 @@ namespace ofxMarkSynth {
 
 
 AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
-                                       const std::filesystem::path& sourceAudioPath)
+                                       const std::filesystem::path& sourceAudioPath,
+                                       const std::string& outDeviceName,
+                                       int bufferSize,
+                                       int nChannels,
+                                       int sampleRate)
 : Mod { synthPtr, name, std::move(config) }
 {
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(sourceAudioPath);
+  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(
+      sourceAudioPath, outDeviceName, bufferSize, nChannels, sampleRate);
   initialise();
 }
 

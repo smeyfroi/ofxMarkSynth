@@ -19,7 +19,7 @@
 
     "ExampleAudioDataSource": {
       "type": "AudioDataSource",
-      "_requires": "ResourceManager with 'sourceAudioPath' OR ('micDeviceName', 'recordAudio', 'recordingPath')",
+      "_requires": "ResourceManager with ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate') OR ('micDeviceName', 'recordAudio', 'audioRecordingPath')",
       "config": {
         "MinPitch": "50",
         "MaxPitch": "800",
