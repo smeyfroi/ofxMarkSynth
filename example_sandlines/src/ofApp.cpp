@@ -13,9 +13,10 @@ void ofApp::setup() {
   resources.add("sourceVideoPath", SOURCE_VIDEO_PATH);
   resources.add("sourceVideoMute", SOURCE_VIDEO_MUTE);
   resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
-  resources.add("micDeviceName", MIC_DEVICE_NAME);
-  resources.add("recordAudio", RECORD_AUDIO);
-  resources.add("recordingPath", RECORDING_PATH);
+  resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
+  resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
+  resources.add("audioChannels", AUDIO_CHANNELS);
+  resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
 
   synthPtr = std::make_shared<ofxMarkSynth::Synth>("Sandline", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
