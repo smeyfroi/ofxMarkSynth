@@ -381,10 +381,10 @@ void Gui::drawStatus() {
   }
 #endif
   
-  if (SaveToFileThread::activeThreadCount < 1) {
+  if (SaveToFileThread::getActiveThreadCount() < 1) {
     ImGui::TextColored(GREY_COLOR, "   No Image Saves");
   } else {
-    ImGui::TextColored(YELLOW_COLOR, "%s %d Image Saves", SAVE_ICON, SaveToFileThread::activeThreadCount);
+    ImGui::TextColored(YELLOW_COLOR, "%s %d Image Saves", SAVE_ICON, SaveToFileThread::getActiveThreadCount());
   }
 }
 

@@ -269,7 +269,7 @@ void Synth::applyIntent(const Intent& intent, float intentStrength) {
 void Synth::update() {
   pauseStatus = paused ? "Yes" : "No";
   recorderStatus = recorder.isRecording() ? "Yes" : "No";
-  saveStatus = ofToString(SaveToFileThread::activeThreadCount);
+  saveStatus = ofToString(SaveToFileThread::getActiveThreadCount());
   
   // Update global ParamController settings from Synth parameters
   ParamControllerSettings::instance().manualBiasDecaySec = manualBiasDecaySecParameter;
