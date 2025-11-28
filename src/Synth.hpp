@@ -99,6 +99,17 @@ public:
   };
   ofEvent<HibernationCompleteEvent> hibernationCompleteEvent;
   
+  class ConfigUnloadEvent : public ofEventArgs {
+  public:
+    std::string previousConfigPath;
+  };
+  class ConfigLoadedEvent : public ofEventArgs {
+  public:
+    std::string newConfigPath;
+  };
+  ofEvent<ConfigUnloadEvent> configWillUnloadEvent;
+  ofEvent<ConfigLoadedEvent> configDidLoadEvent;
+  
   friend class Gui;
   friend class NodeEditorModel;
   friend class NodeEditorLayout;
@@ -194,6 +205,7 @@ private:
   std::string currentConfigPath;
   
   bool guiVisible { true };
+  bool initialLoadCallbackEmitted { false };
   
   // >>> Hibernation system
   enum class HibernationState {

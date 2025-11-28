@@ -167,6 +167,12 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
       if (pg.size() != 0) parameters.add(pg);
     });
   }
+  if (!initialLoadCallbackEmitted && !currentConfigPath.empty()) {
+    ConfigLoadedEvent ev;
+    ev.newConfigPath = currentConfigPath;
+    ofNotifyEvent(configDidLoadEvent, ev, this);
+    initialLoadCallbackEmitted = true;
+  }
 }
 
 void Synth::shutdown() {
@@ -858,12 +864,22 @@ void Synth::switchToConfig(const std::string& filepath, bool useHibernation) {
   }
 
   // Immediate switch (no hibernation or already hibernated)
+  {
+    ConfigUnloadEvent willEv;
+    willEv.previousConfigPath = currentConfigPath;
+    ofNotifyEvent(configWillUnloadEvent, willEv, this);
+  }
   unload();
   loadFromConfig(pendingConfigPath);
   initParameters();
   initFboParameterGroup();
   initIntentParameterGroup();
   gui.markNodeEditorDirty();
+  {
+    ConfigLoadedEvent didEv;
+    didEv.newConfigPath = currentConfigPath;
+    ofNotifyEvent(configDidLoadEvent, didEv, this);
+  }
   ofLogNotice("Synth") << "Switched to config: " << currentConfigPath;
   if (useHibernation && hibernationState == HibernationState::HIBERNATED) {
     cancelHibernation();
@@ -875,12 +891,22 @@ void Synth::onHibernationCompleteForSwitch(HibernationCompleteEvent& args) {
   ofRemoveListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
   if (!hasPendingConfigSwitch) return;
 
+  {
+    ConfigUnloadEvent willEv;
+    willEv.previousConfigPath = currentConfigPath;
+    ofNotifyEvent(configWillUnloadEvent, willEv, this);
+  }
   unload();
   loadFromConfig(pendingConfigPath);
   initParameters();
   initFboParameterGroup();
   initIntentParameterGroup();
   gui.markNodeEditorDirty();
+  {
+    ConfigLoadedEvent didEv;
+    didEv.newConfigPath = currentConfigPath;
+    ofNotifyEvent(configDidLoadEvent, didEv, this);
+  }
   ofLogNotice("Synth") << "Switched to config: " << currentConfigPath;
 
   if (pendingUseHibernation) {
