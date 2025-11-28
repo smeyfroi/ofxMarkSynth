@@ -595,7 +595,7 @@ void Synth::saveImage() {
 
 bool Synth::keyPressed(int key) {
   // Don't handle keyboard if ImGui is capturing text input
-  if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) return false;
+  if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureKeyboard) return false;
   
   if (performanceNavigator.keyPressed(key)) return true;
   
@@ -637,6 +637,9 @@ bool Synth::keyPressed(int key) {
 }
 
 bool Synth::keyReleased(int key) {
+  // Don't handle keyboard if ImGui is capturing text input
+  if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureKeyboard) return false;
+
   if (performanceNavigator.keyReleased(key)) return true;
   return false;
 }

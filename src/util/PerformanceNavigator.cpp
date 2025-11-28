@@ -209,9 +209,6 @@ void PerformanceNavigator::update() {
   if (actionTriggered) return;  // Already triggered, waiting for release
   
   uint64_t elapsed = ofGetElapsedTimeMillis() - holdStartTime;
-  
-  ofLogVerbose("PerformanceNavigator") << "update: elapsed=" << elapsed << " threshold=" << HOLD_THRESHOLD_MS;
-  
   if (elapsed >= HOLD_THRESHOLD_MS) {
     ofLogNotice("PerformanceNavigator") << "update: triggering action " << static_cast<int>(activeHold);
     HoldAction action = activeHold;

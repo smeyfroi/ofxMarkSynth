@@ -45,6 +45,8 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
 
   ImGuiIO& io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  // Disable ImGui keyboard navigation so arrow keys reach the Synth
+  io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
   // Keep Viewports disabled so everything stays inside this window:
   // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
   
