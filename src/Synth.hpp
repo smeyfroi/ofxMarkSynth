@@ -43,22 +43,24 @@ public:
   // The composite is the middle (square) section, scaled to fit the window height
   Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
   void drawGui();
-  void shutdown() override;
-  
-  template <typename ModT>
-  ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
-  template <typename ModT, typename... Args>
-  ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
-  ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
-  void addMod(ofxMarkSynth::ModPtr modPtr) { modPtrs.insert({ modPtr->getName(), modPtr }); }
-  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
-  void addConnections(const std::string& dsl);
-  void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
-  ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
-  void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
-  
-  bool loadFromConfig(const std::string& filepath);
-  void unload();
+   void shutdown() override;
+   
+   template <typename ModT>
+   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
+   template <typename ModT, typename... Args>
+   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
+   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
+   void addMod(ofxMarkSynth::ModPtr modPtr) { modPtrs.insert({ modPtr->getName(), modPtr }); }
+   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
+   void addConnections(const std::string& dsl);
+   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
+   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
+   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
+   
+   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
+   
+   bool loadFromConfig(const std::string& filepath);
+   void unload();
   void switchToConfig(const std::string& filepath, bool useHibernation = true);
   void loadFirstPerformanceConfig();
   void setIntentPresets(const std::vector<IntentPtr>& presets);

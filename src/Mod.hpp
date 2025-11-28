@@ -110,7 +110,7 @@ public:
   virtual void draw() {};
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
-  std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
+  virtual std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   int getId() const;
   void setName(const std::string& name_) { name = name_; }
   const std::string& getName() const;

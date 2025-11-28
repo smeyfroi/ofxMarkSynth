@@ -919,6 +919,22 @@ void Synth::loadFirstPerformanceConfig() {
   performanceNavigator.loadFirstConfigIfAvailable();
 }
 
+std::optional<std::reference_wrapper<ofAbstractParameter>> Synth::findParameterByNamePrefix(const std::string& name) {
+  if (auto ownParam = Mod::findParameterByNamePrefix(name)) {
+    return ownParam;
+  }
+
+  for (auto& kv : modPtrs) {
+    auto& modPtr = kv.second;
+    if (!modPtr) continue;
+    if (auto childParam = modPtr->findParameterByNamePrefix(name)) {
+      return childParam;
+    }
+  }
+  
+  return std::nullopt;
+}
+
 
 
 } // ofxMarkSynth
