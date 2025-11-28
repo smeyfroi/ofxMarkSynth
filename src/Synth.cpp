@@ -542,15 +542,7 @@ bool Synth::keyPressed(int key) {
   // Don't handle keyboard if ImGui is capturing text input
   if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) return false;
   
-  // Performance navigator: arrow keys with press-and-hold
-  if (key == OF_KEY_RIGHT) {
-    performanceNavigator.beginHold(PerformanceNavigator::HoldAction::NEXT, PerformanceNavigator::HoldSource::KEYBOARD);
-    return true;
-  }
-  if (key == OF_KEY_LEFT) {
-    performanceNavigator.beginHold(PerformanceNavigator::HoldAction::PREV, PerformanceNavigator::HoldSource::KEYBOARD);
-    return true;
-  }
+  if (performanceNavigator.keyPressed(key)) return true;
   
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
   
@@ -590,10 +582,7 @@ bool Synth::keyPressed(int key) {
 }
 
 bool Synth::keyReleased(int key) {
-  if (key == OF_KEY_RIGHT || key == OF_KEY_LEFT) {
-    performanceNavigator.endHold(PerformanceNavigator::HoldSource::KEYBOARD);
-    return true;
-  }
+  if (performanceNavigator.keyReleased(key)) return true;
   return false;
 }
 

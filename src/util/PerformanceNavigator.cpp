@@ -21,6 +21,26 @@ PerformanceNavigator::PerformanceNavigator(Synth* synth_)
 : synth(synth_)
 {}
 
+bool PerformanceNavigator::keyPressed(int key) {
+  if (key == OF_KEY_RIGHT) {
+    beginHold(HoldAction::NEXT, HoldSource::KEYBOARD);
+    return true;
+  }
+  if (key == OF_KEY_LEFT) {
+    beginHold(HoldAction::PREV, HoldSource::KEYBOARD);
+    return true;
+  }
+  return false;
+}
+
+bool PerformanceNavigator::keyReleased(int key) {
+  if (key == OF_KEY_RIGHT || key == OF_KEY_LEFT) {
+    endHold(HoldSource::KEYBOARD);
+    return true;
+  }
+  return false;
+}
+
 void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
   configs.clear();
   folderPath = folder;

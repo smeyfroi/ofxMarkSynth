@@ -30,6 +30,8 @@ public:
   enum class HoldSource { NONE, KEYBOARD, MOUSE };
   
   explicit PerformanceNavigator(Synth* synth);
+  bool keyPressed(int key);
+  bool keyReleased(int key);
   
   // Load configs from folder
   void loadFromFolder(const std::filesystem::path& folderPath);
