@@ -209,33 +209,29 @@ void Gui::drawSynthControls() {
   
   addParameterGroup(synthPtr, synthPtr->getParameterGroup());
   
-  ImGui::SeparatorText("Intents");
+  drawPerformanceNavigator();
   drawIntentControls();
-  
-  ImGui::SeparatorText("Layers");
   drawLayerControls();
-  
-  ImGui::SeparatorText("Display");
   drawDisplayControls();
-  
-  ImGui::SeparatorText("State");
   drawInternalState();
-  
-  ImGui::SeparatorText("Status");
   drawStatus();
   
   ImGui::End();
 }
 
 void Gui::drawIntentControls() {
+  ImGui::SeparatorText("Intents");
   drawVerticalSliders(synthPtr->intentParameters);
 }
 
 void Gui::drawLayerControls() {
+  ImGui::SeparatorText("Layers");
   drawVerticalSliders(synthPtr->fboParameters);
 }
 
 void Gui::drawDisplayControls() {
+  ImGui::SeparatorText("Display");
+
   ofxImGui::Settings settings = ofxImGui::Settings();
   
   const char* tonemapOptions[] = {
@@ -270,6 +266,8 @@ constexpr ImVec2 thumbSize(thumbW, thumbW);
 
 void Gui::drawInternalState() {
   if (synthPtr->liveTexturePtrFns.size() == 0) return;
+  
+  ImGui::SeparatorText("State");
   
   // Calculate required height: text + image + padding
   const float contentHeight = ImGui::GetTextLineHeightWithSpacing() + thumbW + ImGui::GetStyle().ItemSpacing.y + 20.0f;
@@ -314,7 +312,9 @@ void Gui::drawInternalState() {
   ImGui::EndChild();
 }
 
-void Gui::drawStatus() {  
+void Gui::drawStatus() {
+  ImGui::SeparatorText("Status");
+
   if (!synthPtr->currentConfigPath.empty()) {
     std::filesystem::path p(synthPtr->currentConfigPath);
     std::string filename = p.filename().string();
@@ -652,6 +652,222 @@ std::vector<ModPtr> Gui::getSelectedMods() {
   return selectedMods;
 }
 
+void Gui::drawPerformanceNavigator() {
+  auto& nav = synthPtr->performanceNavigator;
+  
+  if (!nav.hasConfigs()) {
+    ImGui::TextColored(GREY_COLOR, "No performance configs loaded");
+    return;
+  }
+  
+  ImGui::SeparatorText("Performance");
+  
+  // Hibernation countdown indicator (fixed height, centered label)
+  {
+    const float barHeight = 4.0f;
+    const ImVec2 barSize(-1, barHeight);
+    const bool fading = (synthPtr->getHibernationState() == Synth::HibernationState::FADING_OUT);
+
+    if (fading) {
+      float elapsed = ofGetElapsedTimef() - synthPtr->getHibernationStartTime();
+      float duration = synthPtr->getHibernationFadeDurationSec();
+      float progress = ofClamp(elapsed / std::max(0.001f, duration), 0.0f, 1.0f);
+      ImGui::ProgressBar(progress, barSize, "");
+    } else {
+      ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(130,130,130,140));
+      ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(60,60,60,80));
+      ImGui::ProgressBar(0.0f, barSize, "");
+      ImGui::PopStyleColor(2);
+    }
+  }
+  
+  // Config list with scrolling
+  const float listHeight = 120.0f;
+  ImGui::BeginChild("ConfigList", ImVec2(0, listHeight), true);
+  {
+    const auto& configs = nav.getConfigs();
+    int currentIndex = nav.getCurrentIndex();
+    
+    for (int i = 0; i < static_cast<int>(configs.size()); ++i) {
+      std::string configName = nav.getConfigName(i);
+      bool isCurrentConfig = (i == currentIndex);
+      bool isNextConfig = (i == currentIndex + 1);
+      
+      // Highlight current and next configs
+      if (isCurrentConfig) {
+        ImGui::PushStyleColor(ImGuiCol_Text, GREEN_COLOR);
+      } else if (isNextConfig) {
+        ImGui::PushStyleColor(ImGuiCol_Text, YELLOW_COLOR);
+      }
+      
+      // Check if this item is being held for jump
+      bool isJumpTarget = (nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
+                           nav.getJumpTargetIndex() == i);
+      
+      // Selectable item with hold-to-jump
+      std::string label = isCurrentConfig ? "> " + configName : "  " + configName;
+      if (isNextConfig) label = "  " + configName + " (next)";
+      
+      ImGui::PushID(i);
+      
+      // Draw progress bar overlay if holding this item
+      if (isJumpTarget) {
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        float progress = nav.getHoldProgress();
+        float width = ImGui::GetContentRegionAvail().x * progress;
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        drawList->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + ImGui::GetTextLineHeight()),
+                                IM_COL32(100, 200, 100, 80));
+      }
+      
+      if (ImGui::Selectable(label.c_str(), isCurrentConfig)) {
+        // Single click does nothing - need hold
+      }
+      
+      // Handle mouse hold for jump
+      if (ImGui::IsItemActive() && !isCurrentConfig) {
+        if (nav.getActiveHold() != PerformanceNavigator::HoldAction::JUMP ||
+            nav.getJumpTargetIndex() != i) {
+          nav.beginHold(PerformanceNavigator::HoldAction::JUMP, PerformanceNavigator::HoldSource::MOUSE, i);
+        }
+      } else if (!ImGui::IsItemActive() && nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
+                 nav.getJumpTargetIndex() == i && nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
+        nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
+      }
+      
+      ImGui::PopID();
+      
+      if (isCurrentConfig || isNextConfig) {
+        ImGui::PopStyleColor();
+      }
+    }
+  }
+  ImGui::EndChild();
+  
+  ImGui::Text("(click and hold to jump)");
+  
+  // PREV / NEXT buttons with progress rings
+  float buttonSize = 60.0f;
+  float spacing = 20.0f;
+  
+  int currentIndex = nav.getCurrentIndex();
+  int configCount = nav.getConfigCount();
+  bool canPrev = currentIndex > 0;
+  bool canNext = currentIndex < configCount - 1;
+  
+  // Center the buttons
+  float totalWidth = buttonSize * 2 + spacing;
+  float startX = (ImGui::GetContentRegionAvail().x - totalWidth) / 2.0f;
+  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + startX);
+  
+  // PREV button
+  {
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImVec2 center(pos.x + buttonSize / 2, pos.y + buttonSize / 2);
+    float radius = buttonSize / 2 - 5;
+    
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    
+    // Background circle
+    if (canPrev) {
+      drawList->AddCircle(center, radius, IM_COL32(100, 100, 100, 255), 32, 2.0f);
+    } else {
+      drawList->AddCircle(center, radius, IM_COL32(60, 60, 60, 128), 32, 2.0f);
+    }
+    
+    // Progress arc if holding PREV
+    if (nav.getActiveHold() == PerformanceNavigator::HoldAction::PREV) {
+      float progress = nav.getHoldProgress();
+      float startAngle = -IM_PI / 2;  // 12 o'clock
+      float endAngle = startAngle + (progress * 2 * IM_PI);
+      drawList->PathArcTo(center, radius, startAngle, endAngle, 32);
+      drawList->PathStroke(IM_COL32(100, 200, 100, 255), false, 4.0f);
+    }
+    
+    // Invisible button for interaction
+    ImGui::InvisibleButton("##prev", ImVec2(buttonSize, buttonSize));
+    
+    // Draw left arrow icon
+    float arrowSize = radius * 0.5f;
+    ImU32 arrowColor = canPrev ? IM_COL32(255, 255, 255, 255) : IM_COL32(128, 128, 128, 128);
+    drawList->AddTriangleFilled(
+      ImVec2(center.x - arrowSize * 0.5f, center.y),           // left point
+      ImVec2(center.x + arrowSize * 0.5f, center.y - arrowSize * 0.6f),  // top right
+      ImVec2(center.x + arrowSize * 0.5f, center.y + arrowSize * 0.6f),  // bottom right
+      arrowColor);
+    
+    // Handle mouse hold
+    if (ImGui::IsItemActive() && canPrev) {
+      if (nav.getActiveHold() != PerformanceNavigator::HoldAction::PREV ||
+          nav.getActiveHoldSource() != PerformanceNavigator::HoldSource::MOUSE) {
+        nav.beginHold(PerformanceNavigator::HoldAction::PREV, PerformanceNavigator::HoldSource::MOUSE);
+      }
+    } else if (!ImGui::IsItemActive() && nav.getActiveHold() == PerformanceNavigator::HoldAction::PREV &&
+               nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
+      nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
+    }
+  }
+  
+  ImGui::SameLine(0, spacing);
+  
+  // NEXT button
+  {
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImVec2 center(pos.x + buttonSize / 2, pos.y + buttonSize / 2);
+    float radius = buttonSize / 2 - 5;
+    
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    
+    // Background circle
+    if (canNext) {
+      drawList->AddCircle(center, radius, IM_COL32(100, 100, 100, 255), 32, 2.0f);
+    } else {
+      drawList->AddCircle(center, radius, IM_COL32(60, 60, 60, 128), 32, 2.0f);
+    }
+    
+    // Progress arc if holding NEXT
+    if (nav.getActiveHold() == PerformanceNavigator::HoldAction::NEXT) {
+      float progress = nav.getHoldProgress();
+      float startAngle = -IM_PI / 2;  // 12 o'clock
+      float endAngle = startAngle + (progress * 2 * IM_PI);
+      drawList->PathArcTo(center, radius, startAngle, endAngle, 32);
+      drawList->PathStroke(IM_COL32(100, 200, 100, 255), false, 4.0f);
+    }
+    
+    // Invisible button for interaction
+    ImGui::InvisibleButton("##next", ImVec2(buttonSize, buttonSize));
+    
+    // Draw right arrow icon
+    float arrowSize = radius * 0.5f;
+    ImU32 arrowColor = canNext ? IM_COL32(255, 255, 255, 255) : IM_COL32(128, 128, 128, 128);
+    drawList->AddTriangleFilled(
+      ImVec2(center.x + arrowSize * 0.5f, center.y),           // right point
+      ImVec2(center.x - arrowSize * 0.5f, center.y - arrowSize * 0.6f),  // top left
+      ImVec2(center.x - arrowSize * 0.5f, center.y + arrowSize * 0.6f),  // bottom left
+      arrowColor);
+    
+    // Handle mouse hold
+    if (ImGui::IsItemActive() && canNext) {
+      if (nav.getActiveHold() != PerformanceNavigator::HoldAction::NEXT ||
+          nav.getActiveHoldSource() != PerformanceNavigator::HoldSource::MOUSE) {
+        nav.beginHold(PerformanceNavigator::HoldAction::NEXT, PerformanceNavigator::HoldSource::MOUSE);
+      }
+    } else if (!ImGui::IsItemActive() && nav.getActiveHold() == PerformanceNavigator::HoldAction::NEXT &&
+               nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
+      nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
+    }
+  }
+  
+  // Config counter
+  ImGui::Spacing();
+  std::string counter = "Config " + std::to_string(currentIndex + 1) + " of " + std::to_string(configCount);
+  float counterWidth = ImGui::CalcTextSize(counter.c_str()).x;
+  ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - counterWidth) / 2.0f + ImGui::GetCursorPosX());
+  ImGui::Text("%s", counter.c_str());
+  
+  ImGui::TextColored(GREY_COLOR, "(hold arrow keys or buttons)");
+}
+
 void Gui::drawSnapshotControls() {
   ImGui::Separator();
   
@@ -659,28 +875,6 @@ void Gui::drawSnapshotControls() {
   auto selectedMods = getSelectedMods();
   bool hasSelection = !selectedMods.empty();
   bool hasName = strlen(snapshotNameBuffer) > 0;
-  
-  // Text input for snapshot name
-  ImGui::SetNextItemWidth(120.0f);
-  ImGui::InputTextWithHint("##SnapshotName", "snapshot name", snapshotNameBuffer, sizeof(snapshotNameBuffer));
-  
-  ImGui::SameLine();
-  ImGui::Text("(%zu sel)", selectedMods.size());
-  
-  ImGui::SameLine();
-  
-  // Undo button
-  if (snapshotManager.canUndo()) {
-    if (ImGui::Button("Undo") || (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))) {
-      auto affected = snapshotManager.undo(synthPtr);
-      highlightedMods = affected;
-      highlightStartTime = ofGetElapsedTimef();
-    }
-  } else {
-    ImGui::BeginDisabled();
-    ImGui::Button("Undo");
-    ImGui::EndDisabled();
-  }
   
   // Snapshot slot buttons
   ImGui::Text("Snapshots:");
@@ -743,13 +937,37 @@ void Gui::drawSnapshotControls() {
     if (occupied && ImGui::IsItemHovered()) {
       auto snapshot = snapshotManager.getSlot(i);
       if (snapshot) {
-        ImGui::SetTooltip("%s\n%zu mods\n\n[Click to load]\n[Type name + click to clear]", 
-                          snapshot->name.c_str(), 
+        ImGui::SetTooltip("%s\n%zu mods\n\n[Click to load]\n[Type name + click to clear]",
+                          snapshot->name.c_str(),
                           snapshot->modParams.size());
       }
     } else if (!occupied && ImGui::IsItemHovered()) {
       ImGui::SetTooltip("[Select mods + type name + click to save]");
     }
+  }
+  
+  // Text input for snapshot name
+  ImGui::SameLine();
+
+  ImGui::SetNextItemWidth(120.0f);
+  ImGui::InputTextWithHint("##SnapshotName", "snapshot name", snapshotNameBuffer, sizeof(snapshotNameBuffer));
+  
+  ImGui::SameLine();
+  ImGui::Text("(%zu sel)", selectedMods.size());
+  
+  ImGui::SameLine();
+  
+  // Undo button
+  if (snapshotManager.canUndo()) {
+    if (ImGui::Button("Undo") || (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z))) {
+      auto affected = snapshotManager.undo(synthPtr);
+      highlightedMods = affected;
+      highlightStartTime = ofGetElapsedTimef();
+    }
+  } else {
+    ImGui::BeginDisabled();
+    ImGui::Button("Undo");
+    ImGui::EndDisabled();
   }
   
   // Keyboard shortcuts for loading slots (F1-F8 keys)

@@ -21,6 +21,7 @@
 #include "NodeEditorLayout.hpp"
 #include "LoggerChannel.hpp"
 #include "util/ModFactory.hpp"
+#include "util/PerformanceNavigator.hpp"
 
 
 
@@ -59,6 +60,7 @@ public:
    bool loadFromConfig(const std::string& filepath);
    void unload();
    void switchToConfig(const std::string& filepath, bool useHibernation = true);
+   void loadFirstPerformanceConfig();
    void setIntentPresets(const std::vector<IntentPtr>& presets);
    void initIntentPresets();
 
@@ -66,6 +68,7 @@ public:
   void setAgency(float agency) { agencyParameter = agency; }
   float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
   float getBaseManualBias() const { return baseManualBiasParameter; }
+  float getHibernationFadeDurationSec() const { return hibernationFadeDurationParameter; }
 
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
@@ -78,6 +81,7 @@ public:
   void toggleRecording();
   void saveImage();
   bool keyPressed(int key) override;
+  bool keyReleased(int key);
   
   static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SINK_BACKGROUND_COLOR = 100;
@@ -94,6 +98,7 @@ public:
   friend class NodeEditorModel;
   friend class NodeEditorLayout;
   friend class SynthConfigSerializer;
+  friend class PerformanceNavigator;
   
 protected:
   void initParameters() override;
@@ -101,6 +106,7 @@ protected:
 private:
   ResourceManager resources;
   Gui gui;
+  PerformanceNavigator performanceNavigator { this };
 
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;

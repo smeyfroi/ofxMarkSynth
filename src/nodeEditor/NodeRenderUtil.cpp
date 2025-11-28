@@ -17,6 +17,8 @@ namespace NodeRenderUtil {
 
 
 void drawVerticalSliders(ofParameterGroup& paramGroup) {
+  if (paramGroup.size() == 0) return;
+  
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
   const ImVec2 sliderSize(24, 140);
   const float colW = sliderSize.x + 0.0f;   // column width (slider + padding)

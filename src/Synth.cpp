@@ -67,6 +67,14 @@ resources { std::move(resources_) }
   
   of::random::seed(0);
   
+  // Initialize performance navigator from ResourceManager if path is provided
+  if (resources.has("performanceConfigRootPath")) {
+    auto pathPtr = resources.get<std::filesystem::path>("performanceConfigRootPath");
+    if (pathPtr) {
+      performanceNavigator.loadFromFolder(*pathPtr);
+    }
+  }
+  
   sourceNameIdMap = {
     { "CompositeFbo", SOURCE_COMPOSITE_FBO }
   };
@@ -266,6 +274,9 @@ void Synth::update() {
   // Update global ParamController settings from Synth parameters
   ParamControllerSettings::instance().manualBiasDecaySec = manualBiasDecaySecParameter;
   ParamControllerSettings::instance().baseManualBias = baseManualBiasParameter;
+  
+  // Update performance navigator hold state
+  performanceNavigator.update();
   
   // Update hibernation fade even when paused
   updateHibernation();
@@ -531,6 +542,16 @@ bool Synth::keyPressed(int key) {
   // Don't handle keyboard if ImGui is capturing text input
   if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) return false;
   
+  // Performance navigator: arrow keys with press-and-hold
+  if (key == OF_KEY_RIGHT) {
+    performanceNavigator.beginHold(PerformanceNavigator::HoldAction::NEXT, PerformanceNavigator::HoldSource::KEYBOARD);
+    return true;
+  }
+  if (key == OF_KEY_LEFT) {
+    performanceNavigator.beginHold(PerformanceNavigator::HoldAction::PREV, PerformanceNavigator::HoldSource::KEYBOARD);
+    return true;
+  }
+  
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
   
   if (key == OF_KEY_SPACE) {
@@ -599,6 +620,14 @@ bool Synth::keyPressed(int key) {
     return modPtr->keyPressed(key);
   });
   return handled;
+}
+
+bool Synth::keyReleased(int key) {
+  if (key == OF_KEY_RIGHT || key == OF_KEY_LEFT) {
+    performanceNavigator.endHold(PerformanceNavigator::HoldSource::KEYBOARD);
+    return true;
+  }
+  return false;
 }
 
 // Hibernation system implementation
@@ -729,7 +758,7 @@ void Synth::setIntentPresets(const std::vector<IntentPtr>& presets) {
 }
 
 void Synth::initIntentPresets() {
-  // Remember fader 0 is a master control, and there are another 7 faders available
+  // Fader 0 should be a master control, then there are 7 others available
   std::vector<IntentPtr> presets = {
     Intent::createPreset("Calm", 0.2f, 0.3f, 0.7f, 0.1f, 0.1f),
     Intent::createPreset("Energetic", 0.9f, 0.7f, 0.4f, 0.5f, 0.5f),
@@ -769,7 +798,6 @@ void Synth::computeActiveIntent() {
 }
 
 void Synth::applyIntentToAllMods() {
-  // Apply to Synth first, then to Mods
   applyIntent(activeIntent, intentStrengthParameter);
   for (auto& kv : modPtrs) {
     kv.second->applyIntent(activeIntent, intentStrengthParameter);
@@ -779,15 +807,12 @@ void Synth::applyIntentToAllMods() {
 bool Synth::loadFromConfig(const std::string& filepath) {
   ofLogNotice("Synth") << "Loading config from: " << filepath;
   
-  // Initialize Mod factory if not already done
   static bool factoryInitialized = false;
   if (!factoryInitialized) {
     ModFactory::initializeBuiltinTypes();
     factoryInitialized = true;
   }
   
-  // Load and parse the config
-  // Cast from shared_ptr<Mod> (from enable_shared_from_this<Mod>) to shared_ptr<Synth>
   bool success = SynthConfigSerializer::load(std::static_pointer_cast<Synth>(shared_from_this()), filepath, resources);
   
   if (success) {
@@ -824,6 +849,8 @@ void Synth::switchToConfig(const std::string& filepath, bool useHibernation) {
   initParameters();
   initFboParameterGroup();
   initIntentParameterGroup();
+  gui.markNodeEditorDirty();
+  ofLogNotice("Synth") << "Switched to config: " << currentConfigPath;
   if (useHibernation && hibernationState == HibernationState::HIBERNATED) {
     cancelHibernation();
   }
@@ -839,11 +866,17 @@ void Synth::onHibernationCompleteForSwitch(HibernationCompleteEvent& args) {
   initParameters();
   initFboParameterGroup();
   initIntentParameterGroup();
+  gui.markNodeEditorDirty();
+  ofLogNotice("Synth") << "Switched to config: " << currentConfigPath;
 
   if (pendingUseHibernation) {
     cancelHibernation();
   }
   hasPendingConfigSwitch = false;
+}
+
+void Synth::loadFirstPerformanceConfig() {
+  performanceNavigator.loadFirstConfigIfAvailable();
 }
 
 

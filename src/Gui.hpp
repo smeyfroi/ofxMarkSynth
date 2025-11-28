@@ -31,6 +31,7 @@ public:
   void setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindow> windowPtr);
   void exit();
   void draw();
+  void markNodeEditorDirty() { nodeEditorDirty = true; }
   
   
   
@@ -49,6 +50,7 @@ private:
   void drawNode(const DrawingLayerPtr& layerPtr);
   void drawNodeEditor();
   void drawSnapshotControls();
+  void drawPerformanceNavigator();
   std::vector<ModPtr> getSelectedMods();
 
   std::shared_ptr<Synth> synthPtr;
