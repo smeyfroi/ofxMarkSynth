@@ -32,9 +32,7 @@ public:
   void exit();
   void draw();
   void markNodeEditorDirty() { nodeEditorDirty = true; }
-  
-  
-  
+
 private:
   void drawDockspace();
   void buildInitialDockLayout(ImGuiID dockspaceId);

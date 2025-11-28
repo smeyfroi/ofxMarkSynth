@@ -184,9 +184,6 @@ private:
   std::string currentConfigPath;
   
   bool guiVisible { true };
-
-  bool plusKeyPressed { false };
-  bool equalsKeyPressed { false };
   
   // >>> Hibernation system
   enum class HibernationState {

@@ -572,39 +572,6 @@ bool Synth::keyPressed(int key) {
     return true;
   }
 
-  // Quick config switchers from data root
-  if (key >= '1' && key <= '8' && !plusKeyPressed && !equalsKeyPressed) {
-    switchToConfig(ofToDataPath(std::string(1, char(key)) + ".json", true));
-    return true;
-  }
-
-  // >>> Deal with the `[+=][0-9]` chords
-  if (key == '+') {
-    plusKeyPressed = true;
-    equalsKeyPressed = false;
-    return true;
-  }
-  if (key == '=') {
-    equalsKeyPressed = true;
-    plusKeyPressed = false;
-    return true;
-  }
-  if (key >= '0' && key <= '9') {
-    if (plusKeyPressed) {
-//      gui.saveToFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
-      plusKeyPressed = false;
-      return true;
-    } else if (equalsKeyPressed) {
-//      gui.loadFromFile(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name+"/settings-"+char(key)+".json"));
-      equalsKeyPressed = false;
-      return true;
-    }
-  } else {
-    equalsKeyPressed = false;
-    plusKeyPressed = false;
-  }
-  // <<<
-  
   if (key == 'S') {
     saveImage();
     return true;
