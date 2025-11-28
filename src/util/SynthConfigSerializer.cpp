@@ -20,24 +20,6 @@ namespace ofxMarkSynth {
 
 
 
-// Use existing saveFilePath helper from Synth.cpp
-extern std::string saveFilePath(const std::string& filename);
-constexpr const char* CONFIG_FOLDER_NAME = "configs";
-
-
-
-std::string SynthConfigSerializer::getConfigDirectory(const std::string& synthName) {
-  return saveFilePath(std::string(CONFIG_FOLDER_NAME) + "/" + synthName);
-}
-
-std::string SynthConfigSerializer::getConfigFilePath(const std::string& synthName, const std::string& configName) {
-  return saveFilePath(std::string(CONFIG_FOLDER_NAME) + "/" + synthName + "/" + configName + ".json");
-}
-
-bool SynthConfigSerializer::exists(const std::filesystem::path& filepath) {
-  return std::filesystem::exists(filepath);
-}
-
 int SynthConfigSerializer::glEnumFromString(const std::string& str) {
   // Common GL enums used in ofxMarkSynth
   if (str == "GL_RGBA") return GL_RGBA;

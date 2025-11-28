@@ -40,7 +40,6 @@ public:
     
     ModSnapshotManager() = default;
     
-    // Capture current parameters from selected Mods
     Snapshot capture(const std::string& name, const std::vector<ModPtr>& selectedMods);
     
     // Apply snapshot to Synth (only affects named Mods)
@@ -52,13 +51,11 @@ public:
     std::unordered_set<std::string> undo(std::shared_ptr<Synth> synth);
     bool canUndo() const { return undoSnapshot.has_value(); }
     
-    // Slot management
     void saveToSlot(int slot, const Snapshot& snapshot);
     std::optional<Snapshot> getSlot(int slot) const;
     bool isSlotOccupied(int slot) const;
     void clearSlot(int slot);
     
-    // Persistence
     bool saveToFile(const std::string& synthName);
     bool loadFromFile(const std::string& synthName);
     static std::string getSnapshotFilePath(const std::string& synthName);
@@ -67,7 +64,6 @@ private:
     std::array<std::optional<Snapshot>, NUM_SLOTS> slots;
     std::optional<Snapshot> undoSnapshot;  // Single level of undo
     
-    // JSON serialization
     nlohmann::json toJson() const;
     void fromJson(const nlohmann::json& j);
     static nlohmann::json snapshotToJson(const Snapshot& snapshot);

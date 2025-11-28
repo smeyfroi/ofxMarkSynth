@@ -19,14 +19,48 @@ namespace ofxMarkSynth {
 
 
 
-std::string saveFilePath(const std::string& filename) {
-  return ofFilePath::getUserHomeDir()+"/Documents/MarkSynth/"+filename;
+std::filesystem::path Synth::artefactRootPath{};
+bool Synth::artefactRootPathSet = false;
+
+void Synth::setArtefactRootPath(const std::filesystem::path& root) {
+  artefactRootPath = root;
+  artefactRootPathSet = true;
 }
 
-constexpr std::string SETTINGS_FOLDER_NAME = "settings";
-constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawings";
-constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recordings";
-constexpr float COMPOSITE_PANEL_GAP_PX = 8.0;
+std::string Synth::saveArtefactFilePath(const std::string& filename) {
+  if (!artefactRootPathSet) {
+    ofLogError("Synth") << "performanceArtefactRootPath not set in ResourceManager";
+    return filename;
+  }
+  auto path = artefactRootPath/filename;
+  auto directory = path.parent_path();
+  std::filesystem::create_directories(directory);
+  return path.string();
+}
+
+std::filesystem::path Synth::configRootPath{};
+bool Synth::configRootPathSet = false;
+
+void Synth::setConfigRootPath(const std::filesystem::path& root) {
+  configRootPath = root;
+  configRootPathSet = true;
+}
+
+std::string Synth::saveConfigFilePath(const std::string& filename) {
+  if (!configRootPathSet) {
+    ofLogError("Synth") << "performanceConfigRootPath not set in ResourceManager";
+    return filename;
+  }
+  auto path = configRootPath/filename;
+  auto directory = path.parent_path();
+  std::filesystem::create_directories(directory);
+  return path.string();
+}
+
+constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawing";
+constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recording";
+// Also: camera-recording, mic-recording
+// Also: ModSnapshotManager uses "mod-snapshots" and NodeEditorLayoutManager uses "node-layouts"
 
 
 
@@ -39,7 +73,7 @@ resources { std::move(resources_) }
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   
-  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - COMPOSITE_PANEL_GAP_PX;
+  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - *resources.get<float>("compositePanelGapPx");
   if (sidePanelWidth > 0.0) {
     sidePanelHeight = ofGetWindowHeight();
     leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
@@ -50,12 +84,34 @@ resources { std::move(resources_) }
 
   tonemapShader.load();
   
-#ifdef TARGET_MAC
-  std::filesystem::create_directories(saveFilePath(SETTINGS_FOLDER_NAME+"/"+name));
-  std::filesystem::create_directories(saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name));
-  std::filesystem::create_directories(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name));
-#endif
-
+  if (resources.has("performanceArtefactRootPath")) {
+    auto p = resources.get<std::filesystem::path>("performanceArtefactRootPath");
+    if (p) {
+      if (!std::filesystem::exists(*p)) {
+        ofLogError("Synth") << "performanceArtefactRootPath does not exist: " << *p;
+      }
+      Synth::setArtefactRootPath(*p);
+    } else {
+      ofLogError("Synth") << "Resource 'performanceArtefactRootPath' present but wrong type";
+    }
+  } else {
+    ofLogError("Synth") << "Missing required resource 'performanceArtefactRootPath'";
+  }
+  
+  if (resources.has("performanceConfigRootPath")) {
+    auto p = resources.get<std::filesystem::path>("performanceConfigRootPath");
+    if (p) {
+      if (!std::filesystem::exists(*p)) {
+        ofLogError("Synth") << "performanceConfigRootPath does not exist: " << *p;
+      }
+      Synth::setConfigRootPath(*p);
+    } else {
+      ofLogError("Synth") << "Resource 'performanceConfigRootPath' present but wrong type";
+    }
+  } else {
+    ofLogError("Synth") << "Missing required resource 'performanceConfigRootPath'";
+  }
+  
 #ifdef TARGET_MAC
   recorderCompositeFbo.allocate(1920, 1080, GL_RGB);
   recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/12000);
@@ -67,11 +123,11 @@ resources { std::move(resources_) }
   
   of::random::seed(0);
   
-  // Initialize performance navigator from ResourceManager if path is provided
+  // Initialize performance navigator from ResourceManager if path is provided (allow for the old manual configuration until that gets stripped and simplified)
   if (resources.has("performanceConfigRootPath")) {
     auto pathPtr = resources.get<std::filesystem::path>("performanceConfigRootPath");
     if (pathPtr) {
-      performanceNavigator.loadFromFolder(*pathPtr);
+      performanceNavigator.loadFromFolder(*pathPtr/"synth");
     }
   }
   
@@ -102,7 +158,6 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   if (windowPtr) {
     loggerChannelPtr = std::make_shared<LoggerChannel>();
     ofSetLoggerChannel(loggerChannelPtr);
-      
     gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
   } else {
     // Assume that we want Mod params added as child params to the Synth parameter group
@@ -520,7 +575,7 @@ void Synth::toggleRecording() {
     recorder.stop();
     ofSetWindowTitle("");
   } else {
-    recorder.setOutputPath(saveFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".mp4"));
+    recorder.setOutputPath(Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".mp4"));
     recorder.startCustomRecord();
     ofSetWindowTitle("[Recording]");
   }
@@ -529,7 +584,7 @@ void Synth::toggleRecording() {
 
 void Synth::saveImage() {
   SaveToFileThread* threadPtr = new SaveToFileThread();
-  std::string filepath = saveFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
+  std::string filepath = Synth::saveArtefactFilePath(SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".exr");
   ofLogNotice("Synth") << "Fetch drawing to save to " << filepath;
   ofFloatPixels pixels;
   pixels.allocate(imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight(), OF_IMAGE_COLOR);

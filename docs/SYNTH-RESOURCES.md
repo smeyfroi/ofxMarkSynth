@@ -100,6 +100,26 @@ resources.add("textSourcesPath", ofToDataPath("text"));
 
 ---
 
+### Performance Artefact Root
+Base directory for saved artefacts (snapshots, node layouts, videos).
+- `performanceArtefactRootPath` (std::filesystem::path)
+
+Example:
+```cpp
+ofxMarkSynth::ResourceManager resources;
+resources.add("performanceArtefactRootPath", std::filesystem::path(ofToDataPath("artefacts")));
+```
+
+### Performance Config Root
+Base directory of performance configs for PerformanceNavigator::loadFromFolder.
+- `performanceConfigRootPath` (std::filesystem::path)
+
+Example:
+```cpp
+ofxMarkSynth::ResourceManager resources;
+resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("performance-configs")));
+```
+
 ## Mods That Do Not Require Resources
 
 These Mods are constructed without `ResourceManager` dependencies:

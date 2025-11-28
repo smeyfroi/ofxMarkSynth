@@ -21,14 +21,13 @@ namespace ofxMarkSynth {
 
 
 
-// Use existing saveFilePath helper from Synth.cpp
-extern std::string saveFilePath(const std::string& filename);
-constexpr const char* LAYOUT_FOLDER_NAME = "node-layouts";
+
+constexpr const char* LAYOUT_FOLDER_NAME = "node-layout";
 
 
 
 std::string NodeEditorLayoutSerializer::getLayoutFilePath(const std::string& synthName) {
-  return saveFilePath(std::string(LAYOUT_FOLDER_NAME) + "/" + synthName + "/layout.json");
+  return Synth::saveConfigFilePath(std::string(LAYOUT_FOLDER_NAME) + "/" + synthName + "/layout.json");
 }
 
 bool NodeEditorLayoutSerializer::exists(const std::string& synthName) {

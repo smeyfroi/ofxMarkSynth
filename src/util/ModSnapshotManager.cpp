@@ -18,14 +18,13 @@ namespace ofxMarkSynth {
 
 
 
-// Use existing saveFilePath helper from Synth.cpp
-extern std::string saveFilePath(const std::string& filename);
-constexpr const char* SNAPSHOT_FOLDER_NAME = "mod-snapshots";
+
+constexpr const char* SNAPSHOT_FOLDER_NAME = "mod-snapshot";
 
 
 
 std::string ModSnapshotManager::getSnapshotFilePath(const std::string& synthName) {
-    return saveFilePath(std::string(SNAPSHOT_FOLDER_NAME) + "/" + synthName + "/snapshots.json");
+    return Synth::saveConfigFilePath(std::string(SNAPSHOT_FOLDER_NAME) + "/" + synthName + "/snapshots.json");
 }
 
 using ParamMap = ModSnapshotManager::ParamMap;

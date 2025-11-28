@@ -13,6 +13,7 @@
 #endif
 #include "TonemapShader.h"
 #include <unordered_map>
+#include <filesystem>
 #include "SaveToFileThread.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"
@@ -56,28 +57,32 @@ public:
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
   
-   // Config system
-   bool loadFromConfig(const std::string& filepath);
-   void unload();
-   void switchToConfig(const std::string& filepath, bool useHibernation = true);
-   void loadFirstPerformanceConfig();
-   void setIntentPresets(const std::vector<IntentPtr>& presets);
-   void initIntentPresets();
-
+  bool loadFromConfig(const std::string& filepath);
+  void unload();
+  void switchToConfig(const std::string& filepath, bool useHibernation = true);
+  void loadFirstPerformanceConfig();
+  void setIntentPresets(const std::vector<IntentPtr>& presets);
+  void initIntentPresets();
+  
+  static void setArtefactRootPath(const std::filesystem::path& root);
+  static std::string saveArtefactFilePath(const std::string& relative);
+  static void setConfigRootPath(const std::filesystem::path& root);
+  static std::string saveConfigFilePath(const std::string& relative);
+  
   float getAgency() const override { return agencyParameter; }
   void setAgency(float agency) { agencyParameter = agency; }
   float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
   float getBaseManualBias() const { return baseManualBiasParameter; }
   float getHibernationFadeDurationSec() const { return hibernationFadeDurationParameter; }
-
+  
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
   void update() override;
   glm::vec2 getSize() const { return compositeSize; }
   void draw() override;
-
+  
   void audioCallback(float* buffer, int bufferSize, int nChannels);
-
+  
   void toggleRecording();
   void saveImage();
   bool keyPressed(int key) override;
@@ -102,20 +107,25 @@ public:
   
 protected:
   void initParameters() override;
-
+  
 private:
+  static std::filesystem::path artefactRootPath;
+  static bool artefactRootPathSet;
+  static std::filesystem::path configRootPath;
+  static bool configRootPathSet;
+  
   ResourceManager resources;
   Gui gui;
   PerformanceNavigator performanceNavigator { this };
-
+  
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
-
+  
   void initDisplayParameterGroup();
   void initFboParameterGroup();
   void initIntentParameterGroup();
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns; // named accessors for GUI
-
+  
   bool paused;
   
   TonemapShader tonemapShader;
@@ -134,17 +144,17 @@ private:
   float leftSidePanelTimeoutSecs { 7.0 };
   float rightSidePanelTimeoutSecs { 11.0 };
   void updateSidePanels();
-
+  
   void drawMiddlePanel(float w, float h, float scale);
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
-
+  
   // Switch-to-config support
   void onHibernationCompleteForSwitch(HibernationCompleteEvent& args);
   bool hasPendingConfigSwitch { false };
   std::string pendingConfigPath;
   bool pendingUseHibernation { true };
-
+  
   // Intent system
   IntentActivations intentActivations;
   Intent activeIntent { "Active", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
@@ -231,7 +241,7 @@ ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModCon
 }
 
 
-std::string saveFilePath(const std::string& filename);
+
 
 
 

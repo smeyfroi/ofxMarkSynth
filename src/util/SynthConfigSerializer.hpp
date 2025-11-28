@@ -33,12 +33,6 @@ public:
   // Check if config file exists
   static bool exists(const std::filesystem::path& filepath);
   
-  // Get default config directory path
-  static std::string getConfigDirectory(const std::string& synthName);
-  
-  // Get config file path by name
-  static std::string getConfigFilePath(const std::string& synthName, const std::string& configName);
-  
 private:
   // Parse JSON and populate Synth
   static bool fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources);
