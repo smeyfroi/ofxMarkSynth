@@ -25,6 +25,7 @@ public:
   VideoFlowSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute);
   VideoFlowSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording, const std::filesystem::path& recordingPath);
   ~VideoFlowSourceMod();
+  void shutdown() override;
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;

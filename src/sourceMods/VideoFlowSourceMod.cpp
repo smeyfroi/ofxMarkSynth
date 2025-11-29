@@ -47,6 +47,10 @@ VideoFlowSourceMod::~VideoFlowSourceMod() {
 #endif
 }
 
+void VideoFlowSourceMod::shutdown() {
+  motionFromVideo.stop();
+}
+
 #ifdef TARGET_MAC
 void VideoFlowSourceMod::initRecorder() {
   recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/6000);
