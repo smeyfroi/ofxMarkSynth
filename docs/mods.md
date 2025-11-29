@@ -390,7 +390,7 @@ Draws soft, alpha-blended circles with Gaussian falloff.
 
 **Falloff Modes**:
 - `0` (Glow): Exponential falloff creating sharp-centered, glowing marks. Good for dark backgrounds where marks add light.
-- `1` (Dab): Quadratic falloff for broader, softer marks. Ideal for white/light backgrounds where you want subtle, watercolor-like marks. Use darker colors (low RGB values) for more visible marks.
+- `1` (Dab): Quadratic falloff for broader, softer marks with premultiplied alpha compositing. Marks accumulate naturally without halo artifacts when overlapping. Works well on any background color.
 
 **Intent Integration**: Full Intent support with agency control.
 

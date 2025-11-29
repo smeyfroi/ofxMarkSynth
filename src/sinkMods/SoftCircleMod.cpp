@@ -78,7 +78,15 @@ void SoftCircleMod::update() {
   int falloff = falloffParameter.get();
   
   fboPtr->getSource().begin();
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  
+  if (falloff == 1) {
+    // Dab: premultiplied alpha blend for proper compositing without halos
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  } else {
+    // Glow: standard alpha blending
+    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  }
   
   std::for_each(newPoints.begin(),
                 newPoints.end(),
