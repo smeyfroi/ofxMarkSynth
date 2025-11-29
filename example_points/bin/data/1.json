@@ -97,24 +97,5 @@
     "Random Point.Vec2 -> Circle.Point",
     "Random Color.Vec4 -> Circle.Colour",
     "Random Impulse Point.Vec2 -> Impulse.Point"
-  ],
-  
-  "intents": [
-    {
-      "name": "Calm",
-      "energy": 0.2,
-      "density": 0.3,
-      "structure": 0.7,
-      "chaos": 0.1,
-      "granularity": 0.1
-    },
-    {
-      "name": "Energetic",
-      "energy": 0.9,
-      "density": 0.7,
-      "structure": 0.4,
-      "chaos": 0.5,
-      "granularity": 0.5
-    }
   ]
 }

@@ -67,24 +67,5 @@
     "Timer.Tick -> Words.Next",
     "Words.Text -> Text Display.Text",
     "Color Source.Vec4 -> Text Display.Colour"
-  ],
-  
-  "intents": [
-    {
-      "name": "Calm",
-      "energy": 0.2,
-      "density": 0.3,
-      "structure": 0.7,
-      "chaos": 0.1,
-      "granularity": 0.1
-    },
-    {
-      "name": "Energetic",
-      "energy": 0.9,
-      "density": 0.7,
-      "structure": 0.4,
-      "chaos": 0.5,
-      "granularity": 0.5
-    }
   ]
 }
