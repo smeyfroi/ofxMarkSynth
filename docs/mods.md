@@ -61,6 +61,7 @@ Extracts motion flow data from video (file or camera).
 **Sources**:
 - `FlowFbo` (texture): Optical flow field as texture
 - `PointVelocity` (vec2): Motion vectors at sampled points
+- `Point` (vec2): Sampled motion point positions
 
 **Key Parameters**:
 - Motion detection sensitivity

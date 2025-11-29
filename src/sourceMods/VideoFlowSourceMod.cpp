@@ -23,7 +23,8 @@ saveRecording { false }
   
   sourceNameIdMap = {
     { "FlowFbo", SOURCE_FLOW_FBO },
-    { "PointVelocity", SOURCE_POINT_VELOCITY }
+    { "PointVelocity", SOURCE_POINT_VELOCITY },
+    { "Point", SOURCE_POINT }
   };
 }
 
@@ -77,6 +78,7 @@ void VideoFlowSourceMod::update() {
     for (int i = 0; i < 100; i++) {
       if (auto vec = motionFromVideo.trySampleMotion()) {
         emit(SOURCE_POINT_VELOCITY, vec.value());
+        emit(SOURCE_POINT, glm::vec2 { vec.value() });
       }
     }
   }

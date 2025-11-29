@@ -31,6 +31,7 @@ public:
 
   static constexpr int SOURCE_FLOW_FBO = 10;
   static constexpr int SOURCE_POINT_VELOCITY = 20;
+  static constexpr int SOURCE_POINT = 21;
 
 protected:
   void initParameters() override;
