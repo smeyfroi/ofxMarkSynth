@@ -465,8 +465,12 @@ void Synth::updateCompositeSideImages() {
   // Easing helper
   auto easeIn = [](float x){ return x * x * x; };
 
+  ofFloatColor backgroundColor = backgroundColorController.value;
+  backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0;
+
   leftPanelCompositeFbo.begin();
   {
+    ofClear(backgroundColor);
     float alphaIn = easeIn(leftCycleElapsed); // drop quickly, then ease
     
     float alphaOut = 1.0f - alphaIn;
@@ -484,6 +488,7 @@ void Synth::updateCompositeSideImages() {
 
   rightPanelCompositeFbo.begin();
   {
+    ofClear(backgroundColor);
     float alphaIn = easeIn(rightCycleElapsed);
     
     float alphaOut = 1.0f - alphaIn;
