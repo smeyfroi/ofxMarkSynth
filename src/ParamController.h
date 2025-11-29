@@ -45,6 +45,7 @@ public:
   float wManual = 1.0f;
   float wIntent = 0.0f;
   bool hasReceivedAutoValue = false;
+  bool hasReceivedIntentValue = false;
   virtual void setAgency(float a) = 0; // ensure GUI reads controller-computed weights
 };
 
@@ -92,6 +93,7 @@ public:
   void updateIntent(T newIntentValue, float newIntentStrength) {
     intentValue = newIntentValue;
     intentStrength = newIntentStrength;
+    hasReceivedIntentValue = true;
     update();
   }
   

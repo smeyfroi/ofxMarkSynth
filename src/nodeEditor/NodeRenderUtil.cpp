@@ -162,7 +162,7 @@ void addContributionWeights(const ModPtr& modPtr, const std::string& paramName) 
   if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
     auto* controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
     float wAuto = controllerPtr->hasReceivedAutoValue ? controllerPtr->wAuto : 0.0f;
-    float wIntent = controllerPtr->wIntent;
+    float wIntent = controllerPtr->hasReceivedIntentValue ? controllerPtr->wIntent : 0.0f;
     float wManual = controllerPtr->wManual;
     float sum = wAuto + wIntent + wManual;
     if (sum > 1e-6f) {
