@@ -320,11 +320,11 @@ void Synth::receive(int sinkId, const float& v) {
 
 void Synth::applyIntent(const Intent& intent, float intentStrength) {
   // Structure & Inverse Chaos -> background brightness
-  float structure = intent.getStructure();
-  float chaos = intent.getChaos();
-  float brightness = ofLerp(0.0f, 0.15f, structure) * (1.0f - chaos * 0.5f);
-  ofFloatColor target = ofFloatColor(brightness, brightness, brightness, 1.0f);
-  backgroundColorController.updateIntent(target, intentStrength);
+//  float structure = intent.getStructure();
+//  float chaos = intent.getChaos();
+//  float brightness = ofLerp(0.0f, 0.15f, structure) * (1.0f - chaos * 0.5f);
+//  ofFloatColor target = ofFloatColor(brightness, brightness, brightness, 1.0f);
+//  backgroundColorController.updateIntent(target, intentStrength);
 }
 
 void Synth::update() {
