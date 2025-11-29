@@ -44,6 +44,7 @@ void SoftCircleMod::initParameters() {
   parameters.add(colorMultiplierParameter);
   parameters.add(alphaMultiplierParameter);
   parameters.add(softnessParameter);
+  parameters.add(falloffParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -74,13 +75,17 @@ void SoftCircleMod::update() {
   softnessController.update();
   float softness = softnessController.value;
 
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  int falloff = falloffParameter.get();
+  
   fboPtr->getSource().begin();
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [&](const auto& p) {
-    softCircleShader.render(p * fboPtr->getSize(), radius * fboPtr->getWidth(), color, softness);
+    softCircleShader.render(p * fboPtr->getSize(), radius * fboPtr->getWidth(), color, softness, falloff);
   });
+  
   fboPtr->getSource().end();
   
   newPoints.clear();

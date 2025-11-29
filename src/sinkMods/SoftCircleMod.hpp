@@ -48,6 +48,7 @@ private:
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
   ofParameter<float> softnessParameter { "Softness", 0.3, 0.0, 1.0 };
   ParamController<float> softnessController { softnessParameter };
+  ofParameter<int> falloffParameter { "Falloff", 0, 0, 1 }; // 0 = Glow, 1 = Dab
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
   std::vector<glm::vec2> newPoints;

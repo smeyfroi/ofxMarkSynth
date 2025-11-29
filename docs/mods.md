@@ -385,7 +385,12 @@ Draws soft, alpha-blended circles with Gaussian falloff.
 - `ColourMultiplier`: RGB intensity (0.0-1.0)
 - `AlphaMultiplier`: Transparency (0.0-1.0)
 - `Softness`: Edge blur (0.0-1.0)
+- `Falloff`: Falloff mode (0=Glow, 1=Dab)
 - `AgencyFactor`: Intent responsiveness
+
+**Falloff Modes**:
+- `0` (Glow): Exponential falloff creating sharp-centered, glowing marks. Good for dark backgrounds where marks add light.
+- `1` (Dab): Quadratic falloff for broader, softer marks. Ideal for white/light backgrounds where you want subtle, watercolor-like marks. Use darker colors (low RGB values) for more visible marks.
 
 **Intent Integration**: Full Intent support with agency control.
 
@@ -393,6 +398,7 @@ Draws soft, alpha-blended circles with Gaussian falloff.
 - Create soft atmospheric effects
 - Draw glowing audio-reactive particles
 - Build up luminous compositions through layering
+- Use Falloff=1 (Dab) for subtle marks on white backgrounds
 
 ---
 
