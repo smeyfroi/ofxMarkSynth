@@ -142,10 +142,9 @@ void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
   float radiusI = exponentialMap(intent.getEnergy(), radiusController);
   radiusController.updateIntent(radiusI, strength);
 
-  // Energy → Color
-  ofFloatColor colorI = energyToColor(intent);
-  colorI.a = linearMap(intent.getDensity(), 0.02f, 0.3f);
-  colorController.updateIntent(colorI, strength);
+  // Energy → Color Multiplier
+  float multI = linearMap(intent.getDensity(), colorMultiplierParameter);
+  colorMultiplierController.updateIntent(multI, strength);
 
   // Density → Alpha Multiplier
   float alphaI = linearMap(intent.getDensity(), alphaMultiplierParameter);
