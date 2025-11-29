@@ -87,6 +87,14 @@ ofParameterGroup& Mod::getParameterGroup() {
         ofLogError("Mod") << "Bad parameter: " << k;
       }
     }
+    
+    // Sync all registered ParamControllers with their current parameter values,
+    // possibly loaded from config after the controller was created.
+    for (auto& [name, controllerPtr] : sourceNameControllerPtrMap) {
+      if (controllerPtr) {
+        controllerPtr->syncWithParameter();
+      }
+    }
   }
   return parameters;
 }

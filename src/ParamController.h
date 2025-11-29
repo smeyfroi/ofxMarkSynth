@@ -47,6 +47,7 @@ public:
   bool hasReceivedAutoValue = false;
   bool hasReceivedIntentValue = false;
   virtual void setAgency(float a) = 0; // ensure GUI reads controller-computed weights
+  virtual void syncWithParameter() = 0; // sync controller value with parameter (after config load)
 };
 
 
@@ -107,6 +108,17 @@ public:
   // Allow Mods to push their live agency so GUI uses controller-computed weights
   void setAgency(float a) override {
     agency = a;
+  }
+  
+  // Sync controller value with parameter value (called after config load)
+  void syncWithParameter() override {
+    T paramValue = manualValueParameter.get();
+    value = paramValue;
+    manualSmoothed = paramValue;
+    autoSmoothed = paramValue;
+    intentSmoothed = paramValue;
+    autoValue = paramValue;
+    intentValue = paramValue;
   }
   
   void update() {
