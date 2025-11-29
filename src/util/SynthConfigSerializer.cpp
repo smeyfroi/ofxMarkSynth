@@ -260,15 +260,21 @@ bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::share
 }
 
 bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
-  if (!j.contains("intents") || !j["intents"].is_object()) {
-    ofLogNotice("SynthConfigSerializer") << "No intents section in config";
+  if (!j.contains("intents") || !j["intents"].is_array()) {
+    ofLogNotice("SynthConfigSerializer") << "No intents array in config";
     return true; // Not an error - intents are optional
   }
   
   try {
     std::vector<IntentPtr> intentPresets;
     
-    for (const auto& [name, intentJson] : j["intents"].items()) {
+    for (const auto& intentJson : j["intents"]) {
+      if (!intentJson.contains("name") || !intentJson["name"].is_string()) {
+        ofLogWarning("SynthConfigSerializer") << "Intent missing 'name' field, skipping";
+        continue;
+      }
+      
+      std::string name = intentJson["name"];
       float energy = 0.5f;
       float density = 0.5f;
       float structure = 0.5f;

@@ -58,20 +58,22 @@
     "Random Color.Vec4 -> Particles.Colour"
   ],
   
-  "intents": {
-    "Calm": {
+  "intents": [
+    {
+      "name": "Calm",
       "energy": 0.2,
       "density": 0.3,
       "structure": 0.7,
       "chaos": 0.1,
       "granularity": 0.1
     },
-    "Energetic": {
+    {
+      "name": "Energetic",
       "energy": 0.9,
       "density": 0.7,
       "structure": 0.4,
       "chaos": 0.5,
       "granularity": 0.5
     }
-  }
+  ]
 }
