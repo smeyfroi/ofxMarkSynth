@@ -210,6 +210,7 @@ void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
   
 //  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
+  addParameter(synthPtr, synthPtr->agencyParameter);
   
   drawPerformanceNavigator();
   drawIntentControls();
