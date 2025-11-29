@@ -818,9 +818,16 @@ void Synth::computeActiveIntent() {
 }
 
 void Synth::applyIntentToAllMods() {
-  applyIntent(activeIntent, intentStrengthParameter);
+  // Scale effective intent strength by total activation weight
+  float totalActivation = 0.0f;
+  for (const auto& ia : intentActivations) {
+    totalActivation += ia.activation;
+  }
+  float effectiveStrength = intentStrengthParameter * std::min(1.0f, totalActivation);
+  
+  applyIntent(activeIntent, effectiveStrength);
   for (auto& kv : modPtrs) {
-    kv.second->applyIntent(activeIntent, intentStrengthParameter);
+    kv.second->applyIntent(activeIntent, effectiveStrength);
   }
 }
 
