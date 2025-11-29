@@ -209,7 +209,7 @@ void Gui::drawLog() {
 void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
   
-  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
+//  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
   
   drawPerformanceNavigator();
   drawIntentControls();
@@ -232,7 +232,8 @@ void Gui::drawLayerControls() {
 }
 
 void Gui::drawDisplayControls() {
-  ImGui::SeparatorText("Display");
+  // Collapsible section - starts collapsed for live performance
+  if (!ImGui::CollapsingHeader("Display")) return;
 
   ofxImGui::Settings settings = ofxImGui::Settings();
   
