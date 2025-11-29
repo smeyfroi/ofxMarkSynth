@@ -247,7 +247,7 @@ void Gui::drawDisplayControls() {
   int currentTonemap = synthPtr->toneMapTypeParameter.get();
   ImGui::PushItemWidth(150.0f);
   if (ImGui::Combo("##tonemap", &currentTonemap, tonemapOptions, IM_ARRAYSIZE(tonemapOptions))) {
-    synthPtr->displayParameters[2].cast<int>().set(currentTonemap);
+    synthPtr->toneMapTypeParameter.set(currentTonemap);
   }
   ImGui::PopItemWidth();
   ImGui::SameLine();
