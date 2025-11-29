@@ -44,6 +44,7 @@ public:
   float wAuto = 0.0f;
   float wManual = 1.0f;
   float wIntent = 0.0f;
+  bool hasReceivedAutoValue = false;
   virtual void setAgency(float a) = 0; // ensure GUI reads controller-computed weights
 };
 
@@ -97,6 +98,7 @@ public:
   void updateAuto(T newAutoValue, float newAgency) {
     autoValue = newAutoValue;
     agency = newAgency;
+    hasReceivedAutoValue = true;
     update();
   }
   

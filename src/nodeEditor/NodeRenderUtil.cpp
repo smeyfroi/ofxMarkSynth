@@ -160,8 +160,17 @@ void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter) {
 
 void addContributionWeights(const ModPtr& modPtr, const std::string& paramName) {
   if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
-    auto& controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
-    ImGuiUtil::drawProportionalSegmentedLine(controllerPtr->wAuto, controllerPtr->wIntent, controllerPtr->wManual);
+    auto* controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
+    float wAuto = controllerPtr->hasReceivedAutoValue ? controllerPtr->wAuto : 0.0f;
+    float wIntent = controllerPtr->wIntent;
+    float wManual = controllerPtr->wManual;
+    float sum = wAuto + wIntent + wManual;
+    if (sum > 1e-6f) {
+      wAuto /= sum;
+      wIntent /= sum;
+      wManual /= sum;
+    }
+    ImGuiUtil::drawProportionalSegmentedLine(wAuto, wIntent, wManual);
   }
 }
 
