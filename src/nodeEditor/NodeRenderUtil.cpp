@@ -45,7 +45,7 @@ void drawVerticalSliders(ofParameterGroup& paramGroup) {
       
       // copy current value to a local so VSliderFloat can edit it by pointer
       float v = paramGroup[i].cast<float>().get();
-      if (ImGui::VSliderFloat("##v", sliderSize, &v, 0.0, 1.0, "%.1f")) {
+      if (ImGui::VSliderFloat("##v", sliderSize, &v, 0.0f, 1.0f, "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
         paramGroup[i].cast<float>().set(v);
       }
       ImGui::SetItemTooltip("%s", name.c_str());
@@ -88,7 +88,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   ImGui::PushItemWidth(sliderWidth);
   const float r = parameter.getMax() - parameter.getMin();
   const char* fmt = (r <= 0.01f) ? "%.5f" : (r <= 0.1f) ? "%.4f" : (r <= 1.0f) ? "%.3f" : "%.2f";
-  if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), fmt)) {
+  if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), fmt, ImGuiSliderFlags_NoRoundToFormat)) {
     parameter.set(value);
   }
   ImGui::SetItemTooltip("%s", name.c_str());
@@ -120,7 +120,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
   float valueArray[2] = { value.x, value.y };
   
   ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderFloat2(("##" + name).c_str(), valueArray, parameter.getMin().x, parameter.getMax().x, "%.2f")) {
+  if (ImGui::SliderFloat2(("##" + name).c_str(), valueArray, parameter.getMin().x, parameter.getMax().x, "%.2f", ImGuiSliderFlags_NoRoundToFormat)) {
     parameter.set(glm::vec2(valueArray[0], valueArray[1]));
   }
   ImGui::SetItemTooltip("%s", name.c_str());
