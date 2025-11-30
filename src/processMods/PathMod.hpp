@@ -30,7 +30,6 @@ protected:
   void initParameters() override;
 
 private:
-  float updateCount;
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 3 }; // 0=polypath; 1=bounds; 2=horizontals; 3=convex hull
   ofParameter<float> maxVerticesParameter { "MaxVertices", 3, 0, 20 };
   ParamController<float> maxVerticesController { maxVerticesParameter };

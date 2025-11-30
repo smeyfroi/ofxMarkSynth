@@ -13,7 +13,8 @@ namespace ofxMarkSynth {
 
 
 RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, ModConfig config)
-: Mod { synthPtr, name, std::move(config) }
+: colorCount { 0.0f },
+Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
     { "Vec4", SOURCE_VEC4 }
@@ -25,10 +26,22 @@ RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, M
     { hueWidthParameter.getName(), &hueWidthController },
     { minSaturationParameter.getName(), &minSaturationController },
     { maxSaturationParameter.getName(), &maxSaturationController },
-    { minLightnessParameter.getName(), &minLightnessController },
-    { maxLightnessParameter.getName(), &maxLightnessController },
+    { minBrightnessParameter.getName(), &minBrightnessController },
+    { maxBrightnessParameter.getName(), &maxBrightnessController },
     { minAlphaParameter.getName(), &minAlphaController },
     { maxAlphaParameter.getName(), &maxAlphaController }
+  };
+  
+  sinkNameIdMap = {
+    { "ColorsPerUpdate", SINK_COLORS_PER_UPDATE },
+    { "HueCenter", SINK_HUE_CENTER },
+    { "HueWidth", SINK_HUE_WIDTH },
+    { "MinSaturation", SINK_MIN_SATURATION },
+    { "MaxSaturation", SINK_MAX_SATURATION },
+    { "MinBrightness", SINK_MIN_BRIGHTNESS },
+    { "MaxBrightness", SINK_MAX_BRIGHTNESS },
+    { "MinAlpha", SINK_MIN_ALPHA },
+    { "MaxAlpha", SINK_MAX_ALPHA }
   };
 }
 
@@ -38,8 +51,8 @@ void RandomHslColorMod::initParameters() {
   parameters.add(hueWidthParameter);
   parameters.add(minSaturationParameter);
   parameters.add(maxSaturationParameter);
-  parameters.add(minLightnessParameter);
-  parameters.add(maxLightnessParameter);
+  parameters.add(minBrightnessParameter);
+  parameters.add(maxBrightnessParameter);
   parameters.add(minAlphaParameter);
   parameters.add(maxAlphaParameter);
 }
@@ -51,8 +64,8 @@ void RandomHslColorMod::update() {
   hueWidthController.update();
   minSaturationController.update();
   maxSaturationController.update();
-  minLightnessController.update();
-  maxLightnessController.update();
+  minBrightnessController.update();
+  maxBrightnessController.update();
   minAlphaController.update();
   maxAlphaController.update();
   
@@ -72,10 +85,43 @@ const ofFloatColor RandomHslColorMod::createRandomColor() const {
   auto c = ofFloatColor::fromHsb(
     hue,
     ofRandom(minSaturationController.value, maxSaturationController.value),
-    ofRandom(minLightnessController.value, maxLightnessController.value)
+    ofRandom(minBrightnessController.value, maxBrightnessController.value)
   );
   c.a = ofRandom(minAlphaController.value, maxAlphaController.value);
   return c;
+}
+
+void RandomHslColorMod::receive(int sinkId, const float& value) {
+  float agency = getAgency();
+  switch (sinkId) {
+    case SINK_COLORS_PER_UPDATE:
+      colorsPerUpdateController.updateAuto(value, agency);
+      break;
+    case SINK_HUE_CENTER:
+      hueCenterController.updateAuto(value, agency);
+      break;
+    case SINK_HUE_WIDTH:
+      hueWidthController.updateAuto(value, agency);
+      break;
+    case SINK_MIN_SATURATION:
+      minSaturationController.updateAuto(value, agency);
+      break;
+    case SINK_MAX_SATURATION:
+      maxSaturationController.updateAuto(value, agency);
+      break;
+    case SINK_MIN_BRIGHTNESS:
+      minBrightnessController.updateAuto(value, agency);
+      break;
+    case SINK_MAX_BRIGHTNESS:
+      maxBrightnessController.updateAuto(value, agency);
+      break;
+    case SINK_MIN_ALPHA:
+      minAlphaController.updateAuto(value, agency);
+      break;
+    case SINK_MAX_ALPHA:
+      maxAlphaController.updateAuto(value, agency);
+      break;
+  }
 }
 
 float RandomHslColorMod::randomHueFromCenterWidth(float center, float width) const {
@@ -101,9 +147,9 @@ void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
   minSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.2f, 0.8f), strength);
   maxSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.6f, 1.0f), strength);
 
-  // Structure → lightness contrast (higher structure = wider lightness range)
-  minLightnessController.updateIntent(inverseMap(intent.getStructure(), 0.4f, 0.1f), strength);
-  maxLightnessController.updateIntent(linearMap(intent.getStructure(), 0.6f, 1.0f), strength);
+  // Structure → brightness contrast (higher structure = wider brightness range)
+  minBrightnessController.updateIntent(inverseMap(intent.getStructure(), 0.4f, 0.1f), strength);
+  maxBrightnessController.updateIntent(linearMap(intent.getStructure(), 0.6f, 1.0f), strength);
 
   // Density → alpha range (more density = more opaque)
   minAlphaController.updateIntent(linearMap(intent.getDensity(), 0.2f, 0.8f), strength);

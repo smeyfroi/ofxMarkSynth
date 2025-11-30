@@ -66,7 +66,6 @@ private:
   SmearShader smearShader;
   
   ofTexture field1Tex, field2Tex;
-  bool useField2;
 };
 
 

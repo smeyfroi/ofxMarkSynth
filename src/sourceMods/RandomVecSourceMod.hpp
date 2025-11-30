@@ -31,7 +31,7 @@ protected:
 private:
   short vecDimensions;
   
-  float vecCount;
+  float vecCount { 0.0f };
   ofParameter<float> vecsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 10.0 };
   ParamController<float> vecsPerUpdateController { vecsPerUpdateParameter };
   

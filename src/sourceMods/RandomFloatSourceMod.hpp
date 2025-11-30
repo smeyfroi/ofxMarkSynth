@@ -26,7 +26,7 @@ protected:
   void initParameters() override;
 
 private:
-  float floatCount;
+  float floatCount { 0.0f };
   ofParameter<float> floatsPerUpdateParameter { "CreatedPerUpdate", 1.0, 0.0, 100.0 };
   ParamController<float> floatsPerUpdateController { floatsPerUpdateParameter };
   ofParameter<float> minParameter { "Min", 0.0, 0.0, 1.0 }; // modified in ctor

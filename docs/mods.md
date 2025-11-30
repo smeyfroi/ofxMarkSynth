@@ -122,18 +122,29 @@ Generates random vector positions (2D, 3D, or 4D).
 
 ### RandomHslColorMod
 
-Generates random colors using HSL color space with controllable ranges.
+Generates random colors using HSB (Hue, Saturation, Brightness) color space with controllable ranges.
 
 **Purpose**: Create color variations within artistic constraints.
 
 **Sources**:
 - `Vec4` (vec4): RGBA color as vec4
 
+**Sinks**:
+- `ColorsPerUpdate` (float): Number of colors generated per frame
+- `HueCenter` (float): Center of hue range (0-1)
+- `HueWidth` (float): Width of hue range (0-1)
+- `MinSaturation` (float): Minimum saturation
+- `MaxSaturation` (float): Maximum saturation
+- `MinBrightness` (float): Minimum brightness
+- `MaxBrightness` (float): Maximum brightness
+- `MinAlpha` (float): Minimum alpha
+- `MaxAlpha` (float): Maximum alpha
+
 **Key Parameters**:
 - `CreatedPerUpdate`: Colors generated per frame
-- `HueCenter`, `HueWidth`: Hue range (0-1)
+- `HueCenter`, `HueWidth`: Hue range (0-1, HueCenter uses angular interpolation)
 - `MinSaturation`, `MaxSaturation`: Saturation bounds
-- `MinLightness`, `MaxLightness`: Lightness bounds
+- `MinBrightness`, `MaxBrightness`: Brightness bounds (HSB model)
 - `MinAlpha`, `MaxAlpha`: Opacity bounds
 
 **Intent Integration**: Responds to Chaos dimension.
@@ -142,6 +153,7 @@ Generates random colors using HSL color space with controllable ranges.
 - Generate complementary color schemes
 - Create monochromatic variations
 - Add color diversity to particle systems
+- Connect to RandomFloatSourceMod for agency-controlled parameter drift
 
 ---
 
@@ -953,5 +965,5 @@ Mods with `AgencyFactor` parameters can control their responsiveness to global I
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: November 25, 2025
+**Document Version**: 1.2  
+**Last Updated**: November 30, 2025
