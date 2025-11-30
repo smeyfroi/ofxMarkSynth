@@ -163,7 +163,6 @@ std::unordered_set<std::string> ModSnapshotManager::undo(std::shared_ptr<Synth> 
     
     ofLogNotice("ModSnapshotManager") << "Undid changes to " << affectedMods.size() << " mods";
     
-    // Clear undo state (single level only)
     undoSnapshot.reset();
     
     return affectedMods;
@@ -250,7 +249,6 @@ nlohmann::json ModSnapshotManager::toJson() const {
 }
 
 void ModSnapshotManager::fromJson(const nlohmann::json& j) {
-    // Clear existing slots
     for (auto& slot : slots) {
         slot.reset();
     }
@@ -301,6 +299,10 @@ bool ModSnapshotManager::saveToFile(const std::string& synthName) {
 
 bool ModSnapshotManager::loadFromFile(const std::string& synthName) {
     std::string filepath = getSnapshotFilePath(synthName);
+    
+    for (auto& slot : slots) {
+        slot.reset();
+    }
     
     if (!std::filesystem::exists(filepath)) {
         ofLogNotice("ModSnapshotManager") << "No snapshot file found: " << filepath;
