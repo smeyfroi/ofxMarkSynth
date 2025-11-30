@@ -334,8 +334,10 @@
         "Radius": "0.005",
         "Colour": "0.5, 0.5, 0.5, 0.5",
         "ColourMultiplier": "0.5",
-        "Alpha Multiplier": "0.2",
+        "AlphaMultiplier": "0.2",
         "Softness": "0.3",
+        "Falloff": "0",
+        "_comment_falloff": "Falloff: 0 = Glow, 1 = Dab",
         "AgencyFactor": "1"
       }
     },
