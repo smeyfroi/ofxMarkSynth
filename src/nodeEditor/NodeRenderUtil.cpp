@@ -66,6 +66,16 @@ void drawVerticalSliders(ofParameterGroup& paramGroup) {
 
 constexpr float sliderWidth = 200.0f;
 
+// Helper to add tooltip showing component breakdown and final value for controlled parameters
+void addControllerTooltip(const ModPtr& modPtr, const std::string& paramName) {
+  if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
+    auto* controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("%s", controllerPtr->getFormattedValue().c_str());
+    }
+  }
+}
+
 void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
   const auto& name = parameter.getName();
   int value = parameter.get();
@@ -78,6 +88,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addControllerTooltip(modPtr, parameter.getName());
   addContributionWeights(modPtr, parameter.getName());
 }
 
@@ -95,6 +106,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addControllerTooltip(modPtr, parameter.getName());
   addContributionWeights(modPtr, parameter.getName());
 }
 
@@ -111,6 +123,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addControllerTooltip(modPtr, parameter.getName());
   addContributionWeights(modPtr, parameter.getName());
 }
 
@@ -127,6 +140,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addControllerTooltip(modPtr, parameter.getName());
   addContributionWeights(modPtr, parameter.getName());
 }
 
@@ -139,6 +153,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter) {
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addControllerTooltip(modPtr, parameter.getName());
   addContributionWeights(modPtr, parameter.getName());
 }
 
@@ -155,6 +170,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter) {
   ImGui::PopItemWidth();
   ImGui::SameLine();
   ImGui::Text("%s", parameter.getName().c_str());
+  addControllerTooltip(modPtr, parameter.getName());
   addContributionWeights(modPtr, parameter.getName());
 }
 

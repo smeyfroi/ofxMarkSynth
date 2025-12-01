@@ -3,6 +3,8 @@
 #include "ofMain.h"
 #include "util/Lerp.h"
 #include <cmath>
+#include <cstdio>
+#include <string>
 #include <type_traits>
 
 // Exponential smoothing toward target over timeConstant seconds
@@ -57,7 +59,51 @@ public:
   bool hasReceivedIntentValue = false;
   virtual void setAgency(float a) = 0; // ensure GUI reads controller-computed weights
   virtual void syncWithParameter() = 0; // sync controller value with parameter (after config load)
+  virtual std::string getFormattedValue() const = 0; // formatted string showing component breakdown and final value
 };
+
+
+
+// Helper functions to format different value types as strings
+namespace ParamFormat {
+
+inline std::string formatSingleValue(int v) {
+  char buf[16];
+  std::snprintf(buf, sizeof(buf), "%d", v);
+  return buf;
+}
+
+inline std::string formatSingleValue(float v) {
+  char buf[32];
+  std::snprintf(buf, sizeof(buf), "%.4f", v);
+  return buf;
+}
+
+inline std::string formatSingleValue(const glm::vec2& v) {
+  char buf[64];
+  std::snprintf(buf, sizeof(buf), "(%.3f, %.3f)", v.x, v.y);
+  return buf;
+}
+
+inline std::string formatSingleValue(const glm::vec4& v) {
+  char buf[96];
+  std::snprintf(buf, sizeof(buf), "(%.3f, %.3f, %.3f, %.3f)", v.x, v.y, v.z, v.w);
+  return buf;
+}
+
+inline std::string formatSingleValue(const ofFloatColor& c) {
+  char buf[96];
+  std::snprintf(buf, sizeof(buf), "RGBA(%.2f, %.2f, %.2f, %.2f)", c.r, c.g, c.b, c.a);
+  return buf;
+}
+
+// Fallback for other types
+template<typename T>
+inline std::string formatSingleValue(const T& v) {
+  return "?";
+}
+
+} // namespace ParamFormat
 
 
 
@@ -129,6 +175,39 @@ public:
     intentSmoothed = paramValue;
     autoValue = paramValue;
     intentValue = paramValue;
+  }
+  
+  // Return formatted string showing component breakdown and final value (for tooltip)
+  std::string getFormattedValue() const override {
+    std::string result;
+    char buf[32];
+    
+    if (hasReceivedAutoValue && wAuto > 0.005f) {
+      std::snprintf(buf, sizeof(buf), "Auto (%.0f%%): ", wAuto * 100.0f);
+      result += buf;
+      result += ParamFormat::formatSingleValue(autoSmoothed);
+      result += "\n";
+    }
+    
+    if (hasReceivedIntentValue && wIntent > 0.005f) {
+      std::snprintf(buf, sizeof(buf), "Intent (%.0f%%): ", wIntent * 100.0f);
+      result += buf;
+      result += ParamFormat::formatSingleValue(intentSmoothed);
+      result += "\n";
+    }
+    
+    if (wManual > 0.005f) {
+      std::snprintf(buf, sizeof(buf), "Manual (%.0f%%): ", wManual * 100.0f);
+      result += buf;
+      result += ParamFormat::formatSingleValue(manualSmoothed);
+      result += "\n";
+    }
+    
+    result += "----------------\n";
+    result += "Final: ";
+    result += ParamFormat::formatSingleValue(value);
+    
+    return result;
   }
   
   void update() {
