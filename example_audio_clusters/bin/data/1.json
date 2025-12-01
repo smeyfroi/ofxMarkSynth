@@ -1,6 +1,5 @@
 {
   "version": "1.0",
-  "name": "Audio Clusters 1",
   "description": "Audio data with clusters visualised as points",
   
   "drawingLayers": {

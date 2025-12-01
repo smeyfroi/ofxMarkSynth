@@ -1,6 +1,5 @@
 {
   "version": "1.0",
-  "name": "Fade Synth",
   "description": "Simple example with random points that fade on a drawing layer",
   
   "drawingLayers": {

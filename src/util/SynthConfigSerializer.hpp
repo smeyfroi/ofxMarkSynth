@@ -35,7 +35,7 @@ public:
   
 private:
   // Parse JSON and populate Synth
-  static bool fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources);
+  static bool fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& synthName);
   
   // Helper functions for parsing specific sections
   static NamedLayers parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth);

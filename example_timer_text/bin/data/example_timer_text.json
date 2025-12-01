@@ -1,6 +1,5 @@
 {
   "version": "1.0",
-  "name": "Timer Text Example",
   "description": "Demonstrates TimerSourceMod triggering RandomWordSourceMod to display animated text",
   "agency": 0.5,
   

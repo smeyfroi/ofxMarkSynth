@@ -176,7 +176,6 @@ Each JSON configuration file follows this structure:
 ```json
 {
   "version": "1.0",
-  "name": "Movement N: Title - Section Description",
   "description": "Brief description of what happens visually",
   
   "synth": {

@@ -1,6 +1,5 @@
 {
   "version": "1.0",
-  "name": "Audio Synth",
   "description": "Simple audio example with Introspector",
   
   "mods": {

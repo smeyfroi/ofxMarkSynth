@@ -314,7 +314,7 @@ bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_pt
   }
 }
 
-bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources) {
+bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& synthName) {
   if (!synth) {
     ofLogError("SynthConfigSerializer") << "Null Synth pointer";
     return false;
@@ -328,12 +328,10 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
     }
   }
 
-  // Synth metadata
-  if (j.contains("name") && j["name"].is_string()) {
-    const auto name = j["name"].get<std::string>();
-    ofLogNotice("SynthConfigSerializer") << "Loading config: " << name;
-    synth->setName(name);
-  }
+  // Set synth name from filename
+  synth->setName(synthName);
+  ofLogNotice("SynthConfigSerializer") << "Loading config: " << synthName;
+  
   if (j.contains("description") && j["description"].is_string()) {
     ofLogNotice("SynthConfigSerializer") << "  " << j["description"].get<std::string>();
   }
@@ -362,6 +360,9 @@ bool SynthConfigSerializer::load(std::shared_ptr<Synth> synth, const std::filesy
     return false;
   }
   
+  // Extract synth name from filename (without extension)
+  std::string synthName = filepath.stem().string();
+  
   try {
     std::ifstream file(filepath);
     if (!file.is_open()) {
@@ -374,7 +375,7 @@ bool SynthConfigSerializer::load(std::shared_ptr<Synth> synth, const std::filesy
     file.close();
     
     ofLogNotice("SynthConfigSerializer") << "Parsing config from: " << filepath;
-    return fromJson(j, synth, resources);
+    return fromJson(j, synth, resources, synthName);
     
   } catch (const std::exception& e) {
     ofLogError("SynthConfigSerializer") << "Exception loading config: " << e.what();

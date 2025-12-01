@@ -1,6 +1,5 @@
 {
   "version": "1.0",
-  "name": "Simple Synth",
   "description": "Simple example with random points visualized with Introspector",
   
   "mods": {
