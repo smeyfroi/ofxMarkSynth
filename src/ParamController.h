@@ -269,6 +269,9 @@ public:
       } else {
         targetValue = wAuto * autoSmoothed + wManual * manualSmoothed + wIntent * intentSmoothed;
       }
+    } else if constexpr (std::is_same_v<T, ofFloatColor>) {
+      // ofFloatColor's arithmetic operators ignore alpha, so use explicit weighted blend
+      targetValue = weightedBlend(autoSmoothed, wAuto, manualSmoothed, wManual, intentSmoothed, wIntent);
     } else {
       targetValue = wAuto * autoSmoothed + wManual * manualSmoothed + wIntent * intentSmoothed;
     }

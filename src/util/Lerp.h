@@ -43,6 +43,23 @@ inline ofFloatColor lerp(const ofFloatColor& a, const ofFloatColor& b, float t) 
 }
 
 // =============================================================================
+// Weighted blending for colors (handles all RGBA channels properly)
+// =============================================================================
+
+// Weighted blend of three colors with proper RGBA handling
+// Note: ofFloatColor's arithmetic operators ignore alpha, so we handle it explicitly
+inline ofFloatColor weightedBlend(const ofFloatColor& a, float wA,
+                                   const ofFloatColor& b, float wB,
+                                   const ofFloatColor& c, float wC) {
+  return ofFloatColor {
+    a.r * wA + b.r * wB + c.r * wC,
+    a.g * wA + b.g * wB + c.g * wC,
+    a.b * wA + b.b * wB + c.b * wC,
+    a.a * wA + b.a * wB + c.a * wC
+  };
+}
+
+// =============================================================================
 // Angular interpolation for cyclic values (e.g., hue in [0, 1])
 // =============================================================================
 
