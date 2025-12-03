@@ -349,7 +349,7 @@ Self-organizing map that learns color palettes from 3D color input.
 **Purpose**: Generate coherent color schemes from audio or other data.
 
 **Sinks**:
-- `Vec3` (vec3): RGB color input for training
+- `Sample` (vec3): RGB color input for training
 - `SwitchPalette` (float): Change active palette
 
 **Sources**:
@@ -512,8 +512,8 @@ Divides the drawing space with lines using various geometric strategies.
 - `MajorAnchor` (vec2): Major division line anchor points
 - `MinorAnchor` (vec2): Minor division line anchors
 - `MinorPath` (ofPath): Path for line generation
-- `MinorLinesColour` (vec4): Minor line color
-- `MajorLinesColour` (vec4): Major line color
+- `MinorLineColour` (vec4): Minor line color
+- `MajorLineColour` (vec4): Major line color
 - `BackgroundFbo` (texture): Source for refraction on major lines
 - `ChangeAngle`, `ChangeStrategy`, `ChangeLayer`: Control commands
 
@@ -773,7 +773,7 @@ FadeMod (slow fade for accumulation)
 ```
 AudioDataSourceMod (microphone)
   └─ Onset1 → RandomVecSourceMod.trigger
-  
+
 RandomVecSourceMod
   └─ Vec2 → ParticleSetMod.Point
 
@@ -892,7 +892,7 @@ FadeMod (subtle fade)
 ```
 AudioDataSourceMod
   └─ Onset1 → RandomVecSourceMod.trigger
-  
+
 RandomVecSourceMod
   └─ Vec2 → FluidRadialImpulseMod.Points
 
@@ -965,5 +965,5 @@ Mods with `AgencyFactor` parameters can control their responsiveness to global I
 
 ---
 
-**Document Version**: 1.2  
+**Document Version**: 1.2
 **Last Updated**: November 30, 2025

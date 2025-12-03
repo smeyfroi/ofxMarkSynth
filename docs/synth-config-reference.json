@@ -81,8 +81,8 @@
         "HueWidth": "1",
         "MinSaturation": "0",
         "MaxSaturation": "1",
-        "MinLightness": "0",
-        "MaxLightness": "1",
+        "MinBrightness": "0",
+        "MaxBrightness": "1",
         "MinAlpha": "0",
         "MaxAlpha": "1"
       }
