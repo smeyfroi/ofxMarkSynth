@@ -59,8 +59,16 @@ void AudioDataSourceMod::initialise() {
   };
 }
 
-void AudioDataSourceMod::registerAudioCallback(ofxAudioAnalysisClient::LocalGistClient::AudioFrameCallback audioFrameCallback) {
-  audioAnalysisClientPtr->setAudioFrameCallback(audioFrameCallback);
+void AudioDataSourceMod::startSegmentRecording(const std::string& filepath) {
+  audioAnalysisClientPtr->startSegmentRecording(filepath);
+}
+
+void AudioDataSourceMod::stopSegmentRecording() {
+  audioAnalysisClientPtr->stopSegmentRecording();
+}
+
+bool AudioDataSourceMod::isSegmentRecording() const {
+  return audioAnalysisClientPtr->isSegmentRecording();
 }
 
 void AudioDataSourceMod::initParameters() {

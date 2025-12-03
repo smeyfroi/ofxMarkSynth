@@ -28,6 +28,8 @@
 
 namespace ofxMarkSynth {
 
+class AudioDataSourceMod;
+
 
 
 const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
@@ -83,7 +85,7 @@ public:
   glm::vec2 getSize() const { return compositeSize; }
   void draw() override;
   
-  void audioCallback(float* buffer, int bufferSize, int nChannels);
+  void setAudioDataSourceMod(std::weak_ptr<AudioDataSourceMod> mod);
   
   void toggleRecording();
   void saveImage();
@@ -236,6 +238,9 @@ private:
   std::vector<SaveToFileThread*> saveToFileThreads;
   
   std::shared_ptr<LoggerChannel> loggerChannelPtr;
+  
+  // Audio source mod for synchronized audio/video recording
+  std::weak_ptr<AudioDataSourceMod> audioDataSourceModPtr;
 };
 
 

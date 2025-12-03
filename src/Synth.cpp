@@ -12,6 +12,7 @@
 #include "Gui.hpp"
 #include "util/SynthConfigSerializer.hpp"
 #include "ofxImGui.h"
+#include "sourceMods/AudioDataSourceMod.hpp"
 
 
 
@@ -121,9 +122,11 @@ resources { std::move(resources_) }
   recorderCompositeFbo.allocate(1920, 1080, GL_RGB);
   recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/12000);
   recorder.setOverWrite(true);
-  recorder.setFFmpegPathToAddonsPath();
-  recorder.setInputPixelFormat(OF_IMAGE_COLOR);
-//  recorder.setVideoCodec("libx264"); // doesn't work, nor h265
+//  recorder.setFFmpegPathToAddonsPath(); // use ffmpeg in the ofxFfmpegVideoRecorder addon
+  recorder.setFFmpegPath("/opt/homebrew/bin/ffmpeg");
+//  recorder.setInputPixelFormat(ofPixelFormat::OF_PIXELS_RGB);
+  recorder.setVideoCodec("h264_videotoolbox"); // hw accelerated in macos. hevc_videotoolbox is higher quality but slower and less compatible
+//  recorder.setAudioConfig(1024, 44100); // **********
 #endif
   
   of::random::seed(0);
@@ -562,6 +565,7 @@ void Synth::draw() {
   drawDebugViews();
 
 #ifdef TARGET_MAC
+  // Maybe this should be in update()?
   if (!paused && recorder.isRecording()) {
     recorderCompositeFbo.begin();
     float scale = recorderCompositeFbo.getHeight() / imageCompositeFbo.getHeight(); // could precompute this
@@ -577,9 +581,8 @@ void Synth::draw() {
   TSGL_STOP("Synth::draw");
 }
 
-void Synth::audioCallback(float* buffer, int bufferSize, int nChannels) {
-  if (!recorder.isRecording()) return;
-//  recorder.addBuffer(buffer, bufferSize, nChannels);
+void Synth::setAudioDataSourceMod(std::weak_ptr<AudioDataSourceMod> mod) {
+  audioDataSourceModPtr = mod;
 }
 
 void Synth::drawGui() {
@@ -591,9 +594,19 @@ void Synth::toggleRecording() {
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {
     recorder.stop();
+    // Stop audio segment recording
+    if (auto audioMod = audioDataSourceModPtr.lock()) {
+      audioMod->stopSegmentRecording();
+    }
     ofSetWindowTitle("");
   } else {
-    recorder.setOutputPath(Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+ofGetTimestampString()+".mp4"));
+    std::string timestamp = ofGetTimestampString();
+    recorder.setOutputPath(Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+timestamp+".mp4"));
+    // Start audio segment recording with matching timestamp
+    if (auto audioMod = audioDataSourceModPtr.lock()) {
+      audioMod->startSegmentRecording(
+        Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/audio-"+timestamp+".wav"));
+    }
     recorder.startCustomRecord();
     ofSetWindowTitle("[Recording]");
   }

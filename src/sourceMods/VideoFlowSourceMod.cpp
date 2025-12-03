@@ -53,12 +53,13 @@ void VideoFlowSourceMod::shutdown() {
 
 #ifdef TARGET_MAC
 void VideoFlowSourceMod::initRecorder() {
-  recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/6000);
+  recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/8000);
   recorder.setOverWrite(true);
   if (recordingDir == "") recordingDir = ofToDataPath("video-flow-recordings");
   std::filesystem::create_directory(recordingDir);
-  recorder.setFFmpegPathToAddonsPath();
-  recorder.setInputPixelFormat(OF_IMAGE_COLOR);
+//  recorder.setFFmpegPathToAddonsPath();
+  recorder.setFFmpegPath("/opt/homebrew/bin/ffmpeg");
+//  recorder.setInputPixelFormat(ofPixelFormat::OF_PIXELS_RGB);
   recorder.setOutputPath(recordingDir+"/video-flow-recording-"+ofGetTimestampString()+".mp4");
   recorder.startCustomRecord();
 }

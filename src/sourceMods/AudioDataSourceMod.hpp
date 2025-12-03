@@ -31,7 +31,11 @@ public:
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
-  void registerAudioCallback(ofxAudioAnalysisClient::LocalGistClient::AudioFrameCallback audioFrameCallback);
+  
+  // Segment recording - for synchronized audio/video recording
+  void startSegmentRecording(const std::string& filepath);
+  void stopSegmentRecording();
+  bool isSegmentRecording() const;
 
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
   static constexpr int SOURCE_POLAR_PITCH_RMS_POINTS = 2;

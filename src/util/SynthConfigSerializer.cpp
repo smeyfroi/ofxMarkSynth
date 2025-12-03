@@ -8,6 +8,7 @@
 #include "SynthConfigSerializer.hpp"
 #include "Synth.hpp"
 #include "Intent.hpp"
+#include "../sourceMods/AudioDataSourceMod.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
 #include <fstream>
@@ -153,6 +154,14 @@ bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<S
       }
       
       ofLogNotice("SynthConfigSerializer") << "Created Mod: " << name << " (" << type << ")";
+      
+      // Register AudioDataSourceMod with Synth for synchronized audio/video recording
+      if (type == "AudioDataSource") {
+        if (auto audioMod = std::dynamic_pointer_cast<AudioDataSourceMod>(modPtr)) {
+          synth->setAudioDataSourceMod(audioMod);
+          ofLogNotice("SynthConfigSerializer") << "  Registered AudioDataSourceMod for synchronized recording";
+        }
+      }
       
       if (modJson.contains("layers") && modJson["layers"].is_object()) {
         for (const auto& [layerPtrName, value] : modJson["layers"].items()) {
