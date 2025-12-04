@@ -233,6 +233,13 @@ private:
 #ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
   ofFbo recorderCompositeFbo;
+  
+  // PBO-based async pixel readback for video recording
+  static constexpr int NUM_PBOS = 2;
+  ofBufferObject recorderPbos[NUM_PBOS];
+  int recorderPboWriteIndex { 0 };  // PBO currently being written to by GPU
+  int recorderFrameCount { 0 };      // Frames captured since recording started
+  ofPixels recorderPixels;           // Reusable pixel buffer
 #endif
   
   std::vector<SaveToFileThread*> saveToFileThreads;

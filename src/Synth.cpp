@@ -127,6 +127,13 @@ resources { std::move(resources_) }
 //  recorder.setInputPixelFormat(ofPixelFormat::OF_PIXELS_RGB);
   recorder.setVideoCodec("h264_videotoolbox"); // hw accelerated in macos. hevc_videotoolbox is higher quality but slower and less compatible
 //  recorder.setAudioConfig(1024, 44100); // **********
+  
+  // Allocate PBOs for async pixel readback
+  size_t pboSize = 1920 * 1080 * 3;  // RGB bytes
+  for (int i = 0; i < NUM_PBOS; i++) {
+    recorderPbos[i].allocate(pboSize, GL_DYNAMIC_READ);
+  }
+  recorderPixels.allocate(1920, 1080, OF_PIXELS_RGB);
 #endif
   
   of::random::seed(0);
@@ -563,6 +570,7 @@ void Synth::draw() {
   drawSidePanels(0.0, ofGetWindowWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
   drawMiddlePanel(ofGetWindowWidth(), ofGetWindowHeight(), compositeScale);
   drawDebugViews();
+  TSGL_STOP("Synth::draw");
 
 #ifdef TARGET_MAC
   // Maybe this should be in update()?
@@ -573,12 +581,41 @@ void Synth::draw() {
     drawSidePanels(0.0, recorderCompositeFbo.getWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
     drawMiddlePanel(recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight(), scale);
     recorderCompositeFbo.end();
-    ofPixels pixels;
-    recorderCompositeFbo.readToPixels(pixels);
-    recorder.addFrame(pixels);
+    
+    TS_START("Synth::draw readToPixels");
+    
+    int width = recorderCompositeFbo.getWidth();
+    int height = recorderCompositeFbo.getHeight();
+    
+    // Bind FBO for reading
+    recorderCompositeFbo.bind();
+    
+    // Start async read into current PBO (non-blocking)
+    recorderPbos[recorderPboWriteIndex].bind(GL_PIXEL_PACK_BUFFER);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    recorderPbos[recorderPboWriteIndex].unbind(GL_PIXEL_PACK_BUFFER);
+    
+    recorderCompositeFbo.unbind();
+    
+    // Read from previous PBO (should be ready now) - but only after first frame
+    if (recorderFrameCount > 0) {
+      int readIndex = (recorderPboWriteIndex + 1) % NUM_PBOS;
+      recorderPbos[readIndex].bind(GL_PIXEL_PACK_BUFFER);
+      void* ptr = recorderPbos[readIndex].map(GL_READ_ONLY);
+      if (ptr) {
+        memcpy(recorderPixels.getData(), ptr, width * height * 3);
+        recorderPbos[readIndex].unmap();
+      }
+      recorderPbos[readIndex].unbind(GL_PIXEL_PACK_BUFFER);
+      recorder.addFrame(recorderPixels);
+    }
+    
+    recorderPboWriteIndex = (recorderPboWriteIndex + 1) % NUM_PBOS;
+    recorderFrameCount++;
+    
+    TS_STOP("Synth::draw readToPixels");
   }
 #endif
-  TSGL_STOP("Synth::draw");
 }
 
 void Synth::setAudioDataSourceMod(std::weak_ptr<AudioDataSourceMod> mod) {
@@ -593,12 +630,26 @@ void Synth::drawGui() {
 void Synth::toggleRecording() {
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {
+    // Flush the last pending frame from PBO before stopping
+    if (recorderFrameCount > 0) {
+      int readIndex = (recorderPboWriteIndex + NUM_PBOS - 1) % NUM_PBOS;
+      recorderPbos[readIndex].bind(GL_PIXEL_PACK_BUFFER);
+      void* ptr = recorderPbos[readIndex].map(GL_READ_ONLY);
+      if (ptr) {
+        memcpy(recorderPixels.getData(), ptr, 1920 * 1080 * 3);
+        recorderPbos[readIndex].unmap();
+        recorder.addFrame(recorderPixels);
+      }
+      recorderPbos[readIndex].unbind(GL_PIXEL_PACK_BUFFER);
+    }
+    
     recorder.stop();
+    
     // Stop audio segment recording
     if (auto audioMod = audioDataSourceModPtr.lock()) {
       audioMod->stopSegmentRecording();
     }
-    ofSetWindowTitle("");
+    
   } else {
     std::string timestamp = ofGetTimestampString();
     recorder.setOutputPath(Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+timestamp+".mp4"));
@@ -607,8 +658,12 @@ void Synth::toggleRecording() {
       audioMod->startSegmentRecording(
         Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/audio-"+timestamp+".wav"));
     }
+    
+    // Reset PBO state for new recording
+    recorderPboWriteIndex = 0;
+    recorderFrameCount = 0;
+    
     recorder.startCustomRecord();
-    ofSetWindowTitle("[Recording]");
   }
 #endif
 }
