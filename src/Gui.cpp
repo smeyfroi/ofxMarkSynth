@@ -12,6 +12,7 @@
 #include "imnodes.h"
 #include "ImGuiUtil.hpp"
 #include "NodeRenderUtil.hpp"
+#include "util/HelpContent.hpp"
 
 
 
@@ -72,6 +73,11 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
     ofLogWarning("Gui") << "Failed to load Arial Unicode.ttf, using default font";
   }
   
+  // Use ImGui's default monospace font for help window
+  ImFontConfig monoConfig;
+  monoConfig.SizePixels = 13.0f;
+  monoFont = io.Fonts->AddFontDefault(&monoConfig);
+  
   ImGuiStyle& style = ImGui::GetStyle();
   style.WindowRounding = 4.f;
   
@@ -99,6 +105,7 @@ void Gui::draw() {
   drawLog();
   drawSynthControls();
   drawNodeEditor();
+  drawHelpWindow();
   
   imgui.end();
   imgui.draw();
@@ -989,6 +996,26 @@ void Gui::drawSnapshotControls() {
       }
     }
   }
+}
+
+void Gui::drawHelpWindow() {
+  if (!showHelpWindow) return;
+  
+  ImGui::SetNextWindowSize(ImVec2(420, 400), ImGuiCond_FirstUseEver);
+  
+  if (ImGui::Begin("Keyboard Shortcuts", &showHelpWindow)) {
+    // Use monospace font if available
+    if (monoFont) {
+      ImGui::PushFont(monoFont);
+    }
+    
+    ImGui::TextUnformatted(HELP_CONTENT);
+    
+    if (monoFont) {
+      ImGui::PopFont();
+    }
+  }
+  ImGui::End();
 }
 
 

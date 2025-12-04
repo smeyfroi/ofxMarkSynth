@@ -32,12 +32,14 @@ public:
   void exit();
   void draw();
   void markNodeEditorDirty() { nodeEditorDirty = true; }
+  void toggleHelpWindow() { showHelpWindow = !showHelpWindow; }
 
 private:
   void drawDockspace();
   void buildInitialDockLayout(ImGuiID dockspaceId);
   void drawLog();
   void drawSynthControls();
+  void drawHelpWindow();
   
   void drawIntentControls();
   void drawLayerControls();
@@ -74,6 +76,10 @@ private:
   float timerPausedTime { 0.0f };
   float timerTotalPausedDuration { 0.0f };
   bool timerPaused { false };
+  
+  // Help window
+  bool showHelpWindow { false };
+  ImFont* monoFont { nullptr };
 };
 
 

@@ -632,6 +632,8 @@ bool Synth::keyPressed(int key) {
   
   if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return true; }
   
+  if (key == '?') { gui.toggleHelpWindow(); return true; }
+  
   if (key == OF_KEY_SPACE) {
     paused = not paused;
     // We don't need to pause Mods individually yet, but if we did:
