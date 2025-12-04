@@ -10,6 +10,47 @@ This document lists all resources that Mods require via the `ResourceManager` an
 - Get (internal): `resources.get<T>("name")`
 - Types must match exactly (e.g., `std::filesystem::path`, `glm::vec2`, `bool`).
 
+## Synth Resources
+
+The `Synth` class itself requires several resources for display layout, artefact management, and recording.
+
+### Required Resources
+
+| Resource Name | Type | Description |
+|---------------|------|-------------|
+| `compositePanelGapPx` | float | Gap in pixels between the composite panel and side panels |
+| `performanceArtefactRootPath` | std::filesystem::path | Base directory for saved artefacts (snapshots, node layouts, videos) |
+| `performanceConfigRootPath` | std::filesystem::path | Base directory of performance configs for PerformanceNavigator |
+
+### macOS-Only Resources
+
+| Resource Name | Type | Description |
+|---------------|------|-------------|
+| `recorderCompositeSize` | glm::vec2 | Size (width, height) of the FBO used for video recording |
+
+Example:
+```cpp
+ofxMarkSynth::ResourceManager resources;
+
+// Required for all platforms
+resources.add("compositePanelGapPx", 10.0f);
+resources.add("performanceArtefactRootPath", std::filesystem::path(ofToDataPath("artefacts")));
+resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("performance-configs")));
+
+// Required on macOS for video recording
+resources.add("recorderCompositeSize", glm::vec2(1920, 1080));
+
+auto synth = std::make_shared<ofxMarkSynth::Synth>(
+  "MySynth",
+  ofxMarkSynth::ModConfig{},
+  /*startPaused*/ false,
+  /*compositeSize*/ glm::vec2(1920, 1920),
+  resources
+);
+```
+
+---
+
 ## Resource Requirements by Mod
 
 ### AudioDataSource
@@ -100,26 +141,6 @@ resources.add("textSourcesPath", ofToDataPath("text"));
 
 ---
 
-### Performance Artefact Root
-Base directory for saved artefacts (snapshots, node layouts, videos).
-- `performanceArtefactRootPath` (std::filesystem::path)
-
-Example:
-```cpp
-ofxMarkSynth::ResourceManager resources;
-resources.add("performanceArtefactRootPath", std::filesystem::path(ofToDataPath("artefacts")));
-```
-
-### Performance Config Root
-Base directory of performance configs for PerformanceNavigator::loadFromFolder.
-- `performanceConfigRootPath` (std::filesystem::path)
-
-Example:
-```cpp
-ofxMarkSynth::ResourceManager resources;
-resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("performance-configs")));
-```
-
 ## Mods That Do Not Require Resources
 
 These Mods are constructed without `ResourceManager` dependencies:
@@ -135,6 +156,13 @@ These Mods are constructed without `ResourceManager` dependencies:
 
 ```cpp
 ofxMarkSynth::ResourceManager resources;
+
+// Synth resources (required)
+resources.add("compositePanelGapPx", 10.0f);
+resources.add("performanceArtefactRootPath", std::filesystem::path(ofToDataPath("artefacts")));
+resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("performance-configs")));
+resources.add("recorderCompositeSize", glm::vec2(1920, 1080));  // macOS only
+
 // Add required resources for the Mods you will create
 resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
 // Audio file playback requires all 5 resources
