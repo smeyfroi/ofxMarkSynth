@@ -37,6 +37,7 @@ public:
   static constexpr int SOURCE_RANDOM_DARK = 3; // RGBA float color as vec4
   static constexpr int SOURCE_RANDOM_LIGHT = 4; // RGBA float color as vec4
   static constexpr int SOURCE_DARKEST = 10; // RGBA float color as vec4
+  static constexpr int SOURCE_LIGHTEST = 11; // RGBA float color as vec4
   static constexpr int SOURCE_FIELD = 1; // SOM as float field in RG pixels converted from RGB
 
   void onIterationsParameterChanged(float& value);

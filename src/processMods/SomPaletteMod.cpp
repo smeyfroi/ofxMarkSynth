@@ -28,6 +28,7 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig
     { "RandomLight", SOURCE_RANDOM_LIGHT },
     { "RandomDark", SOURCE_RANDOM_DARK },
     { "Darkest", SOURCE_DARKEST },
+    { "Lightest", SOURCE_LIGHTEST },
     { "FieldTexture", SOURCE_FIELD }
   };
 }
@@ -116,6 +117,7 @@ void SomPaletteMod::update() {
   emit(SOURCE_RANDOM_LIGHT, createRandomLightVec4(randomDistrib(randomGen)));
   emit(SOURCE_RANDOM_DARK, createRandomDarkVec4(randomDistrib(randomGen)));
   emit(SOURCE_DARKEST, createVec4(0));
+  emit(SOURCE_LIGHTEST, createVec4(SomPalette::size - 1));
   
   // convert RGB -> RG (float2), upload into FBO texture, emit FBO
   const ofPixels& pixelsRef = somPalette.getPixelsRef();

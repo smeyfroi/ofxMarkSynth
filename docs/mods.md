@@ -357,6 +357,7 @@ Self-organizing map that learns color palettes from 3D color input.
 - `RandomDark` (vec4): Random dark color
 - `RandomLight` (vec4): Random light color
 - `Darkest` (vec4): Darkest palette color
+- `Lightest` (vec4): Lightest palette color
 - `Field` (texture): 2D palette texture (16×16)
 
 **Key Parameters**:
