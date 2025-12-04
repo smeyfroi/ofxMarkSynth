@@ -119,7 +119,8 @@ resources { std::move(resources_) }
   }
   
 #ifdef TARGET_MAC
-  recorderCompositeFbo.allocate(1920, 1080, GL_RGB);
+  recorderCompositeSize = *resources.get<glm::vec2>("recorderCompositeSize");
+  recorderCompositeFbo.allocate(recorderCompositeSize.x, recorderCompositeSize.y, GL_RGB);
   recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/12000);
   recorder.setOverWrite(true);
 //  recorder.setFFmpegPathToAddonsPath(); // use ffmpeg in the ofxFfmpegVideoRecorder addon
@@ -129,11 +130,11 @@ resources { std::move(resources_) }
 //  recorder.setAudioConfig(1024, 44100); // **********
   
   // Allocate PBOs for async pixel readback
-  size_t pboSize = 1920 * 1080 * 3;  // RGB bytes
+  size_t pboSize = recorderCompositeSize.x * recorderCompositeSize.y * 3;  // RGB bytes
   for (int i = 0; i < NUM_PBOS; i++) {
     recorderPbos[i].allocate(pboSize, GL_DYNAMIC_READ);
   }
-  recorderPixels.allocate(1920, 1080, OF_PIXELS_RGB);
+  recorderPixels.allocate(recorderCompositeSize.x, recorderCompositeSize.y, OF_PIXELS_RGB);
 #endif
   
   of::random::seed(0);
@@ -636,7 +637,7 @@ void Synth::toggleRecording() {
       recorderPbos[readIndex].bind(GL_PIXEL_PACK_BUFFER);
       void* ptr = recorderPbos[readIndex].map(GL_READ_ONLY);
       if (ptr) {
-        memcpy(recorderPixels.getData(), ptr, 1920 * 1080 * 3);
+        memcpy(recorderPixels.getData(), ptr, recorderCompositeSize.x * recorderCompositeSize.y * 3);
         recorderPbos[readIndex].unmap();
         recorder.addFrame(recorderPixels);
       }
