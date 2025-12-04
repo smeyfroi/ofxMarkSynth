@@ -121,13 +121,11 @@ resources { std::move(resources_) }
 #ifdef TARGET_MAC
   recorderCompositeSize = *resources.get<glm::vec2>("recorderCompositeSize");
   recorderCompositeFbo.allocate(recorderCompositeSize.x, recorderCompositeSize.y, GL_RGB);
-  recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/12000);
+  recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/8000);
   recorder.setOverWrite(true);
-//  recorder.setFFmpegPathToAddonsPath(); // use ffmpeg in the ofxFfmpegVideoRecorder addon
-  recorder.setFFmpegPath("/opt/homebrew/bin/ffmpeg");
+  recorder.setFFmpegPath(resources.get<std::filesystem::path>("ffmpegBinaryPath")->string());
 //  recorder.setInputPixelFormat(ofPixelFormat::OF_PIXELS_RGB);
   recorder.setVideoCodec("h264_videotoolbox"); // hw accelerated in macos. hevc_videotoolbox is higher quality but slower and less compatible
-//  recorder.setAudioConfig(1024, 44100); // **********
   
   // Allocate PBOs for async pixel readback
   size_t pboSize = recorderCompositeSize.x * recorderCompositeSize.y * 3;  // RGB bytes
