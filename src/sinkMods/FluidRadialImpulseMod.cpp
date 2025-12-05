@@ -34,6 +34,11 @@ FluidRadialImpulseMod::FluidRadialImpulseMod(Synth* synthPtr, const std::string&
 void FluidRadialImpulseMod::initParameters() {
   parameters.add(impulseRadiusParameter);
   parameters.add(impulseStrengthParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float FluidRadialImpulseMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void FluidRadialImpulseMod::update() {

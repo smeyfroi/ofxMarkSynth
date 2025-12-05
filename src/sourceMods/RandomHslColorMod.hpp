@@ -17,6 +17,7 @@ class RandomHslColorMod : public Mod {
 
 public:
   RandomHslColorMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void applyIntent(const Intent& intent, float strength) override;
   
@@ -58,6 +59,7 @@ private:
   ParamController<float> minAlphaController { minAlphaParameter };
   ofParameter<float> maxAlphaParameter { "MaxAlpha", 1.0, 0.0, 1.0 };
   ParamController<float> maxAlphaController { maxAlphaParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 };
 
 

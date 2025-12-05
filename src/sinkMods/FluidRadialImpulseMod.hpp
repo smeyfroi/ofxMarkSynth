@@ -19,6 +19,7 @@ class FluidRadialImpulseMod : public Mod {
 
 public:
   FluidRadialImpulseMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
@@ -36,6 +37,7 @@ private:
   ParamController<float> impulseRadiusController { impulseRadiusParameter };
   ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.01, 0.0, 0.3 };
   ParamController<float> impulseStrengthController { impulseStrengthParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   std::vector<glm::vec2> newPoints;
   

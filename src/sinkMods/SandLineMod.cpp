@@ -40,6 +40,11 @@ void SandLineMod::initParameters() {
   parameters.add(alphaMultiplierParameter);
   parameters.add(stdDevAlongParameter);
   parameters.add(stdDevPerpendicularParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float SandLineMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
@@ -155,7 +160,7 @@ void SandLineMod::applyIntent(const Intent& intent, float strength) {
   colorController.updateIntent(color, strength);
   
   // Structure → Alpha Multiplier
-  alphaMultiplierController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), alphaMultiplierController), strength);
+//  alphaMultiplierController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), alphaMultiplierController), strength);
   
   // Inverse Structure → Std Dev Along
   stdDevAlongController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), stdDevAlongController), strength);

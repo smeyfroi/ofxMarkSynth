@@ -955,14 +955,17 @@ SomPaletteMod
 
 ## Parameter Modulation via Intent System
 
-Many Mods support the **Intent System** for expressive real-time control. The Intent system maps external controllers to abstract dimensions:
+Many Mods support the **Intent System** for expressive real-time control. The Intent system maps external controllers to five abstract dimensions (all normalized 0.0-1.0):
 
-- **Chaos**: Randomness, entropy, disorder
-- **Structure**: Order, organization, geometry
-- **Tempo**: Speed, rhythm, pace
-- **Energy**: Intensity, force, magnitude
+- **Energy**: Speed, motion, intensity, magnitude
+- **Density**: Quantity, opacity, detail level
+- **Structure**: Organization, brightness, pattern regularity
+- **Chaos**: Randomness, variance, noise
+- **Granularity**: Scale, resolution, feature size
 
 Mods with `AgencyFactor` parameters can control their responsiveness to global Intent changes. Controllers can be mapped to Mod parameters through the `ParamController` system, enabling smooth interpolation and complex mappings.
+
+For detailed Intent mappings per Mod, see [intent-mappings.md](intent-mappings.md).
 
 ---
 

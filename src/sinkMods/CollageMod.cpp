@@ -37,6 +37,11 @@ void CollageMod::initParameters() {
   parameters.add(colorParameter);
   parameters.add(saturationParameter);
   parameters.add(outlineParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float CollageMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void CollageMod::update() {

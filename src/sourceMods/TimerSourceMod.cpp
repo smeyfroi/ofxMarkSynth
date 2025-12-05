@@ -47,6 +47,11 @@ void TimerSourceMod::initParameters() {
   parameters.add(enabledParameter);
   parameters.add(oneShotParameter);
   parameters.add(timeToNextParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float TimerSourceMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void TimerSourceMod::update() {

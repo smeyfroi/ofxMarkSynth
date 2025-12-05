@@ -22,6 +22,7 @@ class SomPaletteMod : public Mod {
 public:
   SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig config);
   ~SomPaletteMod();
+  float getAgency() const override;
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
@@ -50,6 +51,7 @@ private:
 //  IntentParamController<float> learningRateController { learningRateParameter };
   ofParameter<float> iterationsParameter { "Iterations", 2000.0, 100.0, 10000.0 };
 //  IntentParamController<float> iterationsController { iterationsParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   ContinuousSomPalette somPalette { 16, 16, 0.02 };
 

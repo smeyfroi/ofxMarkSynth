@@ -18,6 +18,7 @@ class ParticleFieldMod : public Mod {
   
 public:
   ParticleFieldMod(Synth* synthPtr, const std::string& name, ModConfig config, float field1Bias_ = 0.0, float field2Bias_ = 0.0);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const ofTexture& value) override;
   void receive(int sinkId, const glm::vec4& v) override;
@@ -36,6 +37,7 @@ protected:
   
 private:
   ofxParticleField::ParticleField particleField;
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   std::unique_ptr<ParamController<float>> minWeightControllerPtr;
   std::unique_ptr<ParamController<float>> maxWeightControllerPtr;

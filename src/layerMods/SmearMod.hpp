@@ -23,6 +23,7 @@ public:
 
 public:
   SmearMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const float& value) override;
@@ -62,6 +63,7 @@ private:
   ofParameter<float> ghostBlendParameter { "GhostBlend8", 0.5, 0.0, 1.0 };
   ParamController<float> ghostBlendController { ghostBlendParameter }; // only for strategy 8
   ofParameter<glm::vec2> foldPeriodParameter { "FoldPeriod9", glm::vec2 { 8.0f, 8.0f }, glm::vec2 { 0.0, 0.0 }, glm::vec2 { 64.0f, 64.0f } }; // only for strategy 9
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   SmearShader smearShader;
   

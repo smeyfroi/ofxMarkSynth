@@ -50,7 +50,8 @@
         "TextFilename": "text.txt",
         "ParseWords": "0",
         "Randomness": "0",
-        "Loop": "1"
+        "Loop": "1",
+        "AgencyFactor": "1"
       }
     },
 
@@ -60,7 +61,8 @@
         "Interval": "1",
         "Enabled": "1",
         "OneShot": "0",
-        "TimeToNext": "0"
+        "TimeToNext": "0",
+        "AgencyFactor": "1"
       }
     },
 
@@ -69,7 +71,8 @@
       "config": {
         "CreatedPerUpdate": "1",
         "Min": "0",
-        "Max": "1"
+        "Max": "1",
+        "AgencyFactor": "1"
       }
     },
 
@@ -84,14 +87,16 @@
         "MinBrightness": "0",
         "MaxBrightness": "1",
         "MinAlpha": "0",
-        "MaxAlpha": "1"
+        "MaxAlpha": "1",
+        "AgencyFactor": "1"
       }
     },
 
     "ExampleRandomVecSource": {
       "type": "RandomVecSource",
       "config": {
-        "CreatedPerUpdate": "1"
+        "CreatedPerUpdate": "1",
+        "AgencyFactor": "1"
       }
     },
 
@@ -149,7 +154,8 @@
         "Strategy": "0",
         "MaxVertices": "3",
         "MaxVertexProximity": "0.07",
-        "MinVertexProximity": "0.01"
+        "MinVertexProximity": "0.01",
+        "AgencyFactor": "1"
       }
     },
 
@@ -157,7 +163,8 @@
       "type": "PixelSnapshot",
       "config": {
         "SnapshotsPerUpdate": "0.0333333",
-        "Size": "1024"
+        "Size": "1024",
+        "AgencyFactor": "1"
       }
     },
 
@@ -177,14 +184,16 @@
         "BorderWidth7": "0.05",
         "GridLevels5": "1",
         "GhostBlend8": "0.5",
-        "FoldPeriod9": "8, 8"
+        "FoldPeriod9": "8, 8",
+        "AgencyFactor": "1"
       }
     },
 
     "ExampleSomPalette": {
       "type": "SomPalette",
       "config": {
-        "Iterations": "2000"
+        "Iterations": "2000",
+        "AgencyFactor": "1"
       }
     },
 
@@ -196,7 +205,8 @@
         "Colour": "1, 1, 1, 1",
         "Saturation": "1.5",
         "Outline": "1",
-        "Strategy": "1"
+        "Strategy": "1",
+        "AgencyFactor": "1"
       }
     },
 
@@ -249,7 +259,8 @@
         "chromaticAberrationStrength": "0.02",
         "chromaticAberrationEdgeThickness": "0.3",
         "blurRefractionBlurRadius": "1.5",
-        "blurRefractionStrength": "0.015"
+        "blurRefractionStrength": "0.015",
+        "AgencyFactor": "1"
       }
     },
 
@@ -257,7 +268,8 @@
       "type": "FluidRadialImpulse",
       "config": {
         "Impulse Radius": "0.001",
-        "Impulse Strength": "0.01"
+        "Impulse Strength": "0.01",
+        "AgencyFactor": "1"
       }
     },
 
@@ -287,7 +299,8 @@
         "jitterSmoothing": "0.1",
         "speedThreshold": "2",
         "minWeight": "0.5",
-        "maxWeight": "2"
+        "maxWeight": "2",
+        "AgencyFactor": "1"
       }
     },
 
@@ -324,7 +337,8 @@
         "Colour": "1, 1, 1, 1",
         "AlphaMultiplier": "0.05",
         "StdDevAlong": "0.5",
-        "StdDevPerpendicular": "0.01"
+        "StdDevPerpendicular": "0.01",
+        "AgencyFactor": "1"
       }
     },
 
@@ -359,7 +373,8 @@
     "ExampleFade": {
       "type": "Fade",
       "config": {
-        "Alpha": "0.01"
+        "Alpha": "0.01",
+        "AgencyFactor": "1"
       }
     }
   }

@@ -20,6 +20,7 @@ class PixelSnapshotMod : public Mod {
 
 public:
   PixelSnapshotMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
@@ -35,6 +36,7 @@ private:
   ofParameter<float> snapshotsPerUpdateParameter { "SnapshotsPerUpdate", 1.0/30.0, 0.0, 1.0 };
   ofParameter<float> sizeParameter { "Size", 1024, 128, 8096 }; // must be smaller than the source layer
   ParamController<float> sizeController { sizeParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   ofFbo snapshotFbo; // Scratchpad FBO for GPU-based cropping operation
   const ofTexture& createSnapshot(const ofFbo& sourceFbo);

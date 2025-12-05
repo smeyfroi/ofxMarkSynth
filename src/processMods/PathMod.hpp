@@ -17,6 +17,7 @@ class PathMod : public Mod {
 
 public:
   PathMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
@@ -37,6 +38,7 @@ private:
   ParamController<float> maxVertexProximityController { maxVertexProximityParameter };
   ofParameter<float> minVertexProximityParameter { "MinVertexProximity", 0.01, 0.0, 1.0 };
   ParamController<float> minVertexProximityController { minVertexProximityParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   std::deque<glm::vec2> newVecs;
   std::vector<glm::vec2> findCloseNewPoints() const;

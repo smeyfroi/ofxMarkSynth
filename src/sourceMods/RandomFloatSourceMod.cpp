@@ -36,6 +36,11 @@ void RandomFloatSourceMod::initParameters() {
   parameters.add(floatsPerUpdateParameter);
   parameters.add(minParameter);
   parameters.add(maxParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float RandomFloatSourceMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void RandomFloatSourceMod::update() {

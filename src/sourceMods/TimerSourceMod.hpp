@@ -20,6 +20,7 @@ class TimerSourceMod : public Mod {
 
 public:
   TimerSourceMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   
   void update() override;
   void receive(int sinkId, const float& value) override;
@@ -47,6 +48,7 @@ private:
   ofParameter<bool> enabledParameter { "Enabled", true };
   ofParameter<bool> oneShotParameter { "OneShot", false };
   ofParameter<float> timeToNextParameter { "TimeToNext", 0.0f, 0.0f, 10.0f };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   float nextFireTime { 0.0f };
   bool hasFired { false };

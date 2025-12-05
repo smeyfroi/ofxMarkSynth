@@ -31,6 +31,11 @@ vecDimensions { vecDimensions_ }
 
 void RandomVecSourceMod::initParameters() {
   parameters.add(vecsPerUpdateParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float RandomVecSourceMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void RandomVecSourceMod::update() {

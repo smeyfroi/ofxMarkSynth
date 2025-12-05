@@ -48,7 +48,12 @@ void DividedAreaMod::initParameters() {
   parameters.add(minorLineColorParameter);
   parameters.add(majorLineColorParameter);
   parameters.add(maxUnconstrainedLinesParameter);
+  parameters.add(agencyFactorParameter);
   addFlattenedParameterGroup(parameters, dividedArea.getParameterGroup());
+}
+
+float DividedAreaMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void DividedAreaMod::addConstrainedLinesThroughPointPairs(float width) {

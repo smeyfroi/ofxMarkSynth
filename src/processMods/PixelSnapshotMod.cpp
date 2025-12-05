@@ -29,6 +29,11 @@ PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, Mod
 void PixelSnapshotMod::initParameters() {
   parameters.add(snapshotsPerUpdateParameter);
   parameters.add(sizeParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float PixelSnapshotMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void PixelSnapshotMod::update() {

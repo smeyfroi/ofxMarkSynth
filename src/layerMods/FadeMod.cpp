@@ -27,6 +27,11 @@ FadeMod::FadeMod(Synth* synthPtr, const std::string& name, ModConfig config)
 
 void FadeMod::initParameters() {
   parameters.add(alphaMultiplierParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float FadeMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void FadeMod::update() {

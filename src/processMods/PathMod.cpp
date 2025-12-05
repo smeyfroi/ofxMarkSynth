@@ -35,6 +35,11 @@ void PathMod::initParameters() {
   parameters.add(maxVerticesParameter);
   parameters.add(minVertexProximityParameter);
   parameters.add(maxVertexProximityParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float PathMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 std::vector<glm::vec2> PathMod::findCloseNewPoints() const {

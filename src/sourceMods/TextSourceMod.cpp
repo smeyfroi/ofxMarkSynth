@@ -34,12 +34,17 @@ TextSourceMod::~TextSourceMod() {
   parseModeParameter.removeListener(this, &TextSourceMod::onParseModeChanged);
 }
 
+float TextSourceMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
+}
+
 void TextSourceMod::initParameters() {
   // Add all parameters to GUI
   parameters.add(textFilenameParameter);
   parameters.add(parseModeParameter);
   parameters.add(randomnessParameter);
   parameters.add(loopParameter);
+  parameters.add(agencyFactorParameter);
   
   // Register listeners for file/mode changes
   textFilenameParameter.addListener(this, &TextSourceMod::onTextFilenameChanged);

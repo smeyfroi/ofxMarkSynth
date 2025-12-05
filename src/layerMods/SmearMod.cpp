@@ -54,6 +54,11 @@ void SmearMod::initParameters() {
   parameters.add(gridLevelsParameter);
   parameters.add(ghostBlendParameter);
   parameters.add(foldPeriodParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float SmearMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void SmearMod::update() {

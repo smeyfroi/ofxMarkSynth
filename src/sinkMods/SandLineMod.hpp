@@ -22,6 +22,7 @@ class SandLineMod : public Mod {
 
 public:
   SandLineMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
@@ -50,6 +51,7 @@ private:
   ParamController<float> stdDevAlongController { stdDevAlongParameter };
   ofParameter<float> stdDevPerpendicularParameter { "StdDevPerpendicular", 0.01, 0.0, 0.1 };
   ParamController<float> stdDevPerpendicularController { stdDevPerpendicularParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   std::vector<glm::vec2> newPoints;
 };

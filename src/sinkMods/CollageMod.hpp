@@ -20,6 +20,7 @@ class CollageMod : public Mod {
 
 public:
   CollageMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const ofPath& path) override;
   void receive(int sinkId, const ofTexture& texture) override;
@@ -45,6 +46,7 @@ protected:
   ofParameter<float> outlineParameter { "Outline", 1.0f, 0.0f, 1.0f }; // float for lerp between 0.0 and 1.0
   ParamController<float> outlineController { outlineParameter };
   ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 };
 
 

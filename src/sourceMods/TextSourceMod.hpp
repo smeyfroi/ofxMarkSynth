@@ -34,6 +34,7 @@ public:
   TextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
                 const std::string& textSourcesPath);
   ~TextSourceMod();
+  float getAgency() const override;
   
   void receive(int sinkId, const float& value) override;
   void applyIntent(const Intent& intent, float strength) override;
@@ -59,6 +60,7 @@ private:
   
   // ParamController for Intent-driven smooth transitions
   ParamController<float> randomnessController { randomnessParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   // Methods
   void loadFile();

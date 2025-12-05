@@ -55,6 +55,11 @@ void RandomHslColorMod::initParameters() {
   parameters.add(maxBrightnessParameter);
   parameters.add(minAlphaParameter);
   parameters.add(maxAlphaParameter);
+  parameters.add(agencyFactorParameter);
+}
+
+float RandomHslColorMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void RandomHslColorMod::update() {

@@ -31,6 +31,7 @@ ParticleFieldMod::ParticleFieldMod(Synth* synthPtr, const std::string& name, Mod
 
 void ParticleFieldMod::initParameters() {
   addFlattenedParameterGroup(parameters, particleField.getParameterGroup());
+  parameters.add(agencyFactorParameter);
   
   minWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("minWeight").cast<float>());
   maxWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxWeight").cast<float>());
@@ -39,6 +40,10 @@ void ParticleFieldMod::initParameters() {
     { parameters.get("minWeight").cast<float>().getName(), minWeightControllerPtr.get() },
     { parameters.get("maxWeight").cast<float>().getName(), maxWeightControllerPtr.get() }
   };
+}
+
+float ParticleFieldMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 void ParticleFieldMod::update() {

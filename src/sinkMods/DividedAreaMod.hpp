@@ -20,6 +20,7 @@ class DividedAreaMod : public Mod {
 
 public:
   DividedAreaMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  float getAgency() const override;
   void update() override;
   void receive(int sinkId, const glm::vec2& point) override;
   void receive(int sinkId, const ofPath& path) override;
@@ -58,6 +59,7 @@ private:
   ParamController<float> majorLineWidthController { majorLineWidthParameter };
   ofParameter<float> maxUnconstrainedLinesParameter { "MaxUnconstrainedLines", 3.0, 1.0, 10.0 };
   ParamController<float> maxUnconstrainedLinesController { maxUnconstrainedLinesParameter };
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   float strategyChangeInvalidUntilTimestamp = 0.0;
 
   std::vector<glm::vec2> newMajorAnchors;

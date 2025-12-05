@@ -43,7 +43,12 @@ void SomPaletteMod::onIterationsParameterChanged(float& value) {
 
 void SomPaletteMod::initParameters() {
   parameters.add(iterationsParameter);
+  parameters.add(agencyFactorParameter);
   iterationsParameter.addListener(this, &SomPaletteMod::onIterationsParameterChanged);
+}
+
+float SomPaletteMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
 }
 
 // Texture values have a range approximately -0.7 to 0.7
