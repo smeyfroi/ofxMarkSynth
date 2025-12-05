@@ -232,6 +232,95 @@ void Gui::drawSynthControls() {
 void Gui::drawIntentControls() {
   ImGui::SeparatorText("Intents");
   drawVerticalSliders(synthPtr->intentParameters);
+  
+  // Collapsible editor for tuning intent characteristics (collapsed by default)
+  if (ImGui::CollapsingHeader("Intent Characteristics")) {
+    drawIntentCharacteristicsEditor();
+  }
+}
+
+// Helper: convert influence (0..1) to color gradient green → amber → red
+static ImU32 influenceToColorU32(float influence) {
+  influence = ofClamp(influence, 0.0f, 1.0f);
+  if (influence < 0.5f) {
+    float t = influence * 2.0f; // 0..1 for first half
+    return IM_COL32(
+      static_cast<int>(ofLerp(100, 255, t)),   // R: 100→255
+      static_cast<int>(ofLerp(200, 180, t)),   // G: 200→180
+      static_cast<int>(ofLerp(100, 50, t)),    // B: 100→50
+      255);
+  } else {
+    float t = (influence - 0.5f) * 2.0f; // 0..1 for second half
+    return IM_COL32(
+      255,                                      // R: stays 255
+      static_cast<int>(ofLerp(180, 80, t)),    // G: 180→80
+      static_cast<int>(ofLerp(50, 80, t)),     // B: 50→80
+      255);
+  }
+}
+
+void Gui::drawIntentCharacteristicsEditor() {
+  float intentStrength = synthPtr->intentStrengthParameter.get();
+  constexpr float sliderWidth = 150.0f;
+  constexpr float activationThreshold = 0.001f;
+  
+  // Count active intents
+  int activeCount = 0;
+  for (const auto& ia : synthPtr->intentActivations) {
+    if (ia.activation > activationThreshold) activeCount++;
+  }
+  
+  // Show blended values only when multiple intents are active
+  if (activeCount > 1) {
+    const auto& active = synthPtr->activeIntent;
+    ImGui::TextColored(GREY_COLOR, "Blended: E:%.2f D:%.2f S:%.2f C:%.2f G:%.2f",
+                       active.getEnergy(), active.getDensity(),
+                       active.getStructure(), active.getChaos(),
+                       active.getGranularity());
+    ImGui::Separator();
+  }
+  
+  // Only show intents with activation > 0
+  for (size_t i = 0; i < synthPtr->intentActivations.size(); ++i) {
+    auto& ia = synthPtr->intentActivations[i];
+    if (ia.activation <= activationThreshold) continue;
+    
+    Intent& intent = *ia.intentPtr;
+    float influence = ia.activation * intentStrength;
+    ImU32 indicatorColor = influenceToColorU32(influence);
+    
+    // Format tree node label with activation value
+    char label[64];
+    std::snprintf(label, sizeof(label), "%s (%.2f)", intent.getName().c_str(), ia.activation);
+    
+    // Draw influence indicator before tree node
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    float indicatorSize = 8.0f;
+    drawList->AddRectFilled(
+      ImVec2(pos.x, pos.y + 4.0f),
+      ImVec2(pos.x + indicatorSize, pos.y + 4.0f + indicatorSize),
+      indicatorColor);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indicatorSize + 4.0f);
+    
+    if (ImGui::TreeNode(label)) {
+      ImGui::PushItemWidth(sliderWidth);
+      
+      // Render sliders for each characteristic
+      for (auto& param : intent.getParameterGroup()) {
+        if (param->type() == typeid(ofParameter<float>).name()) {
+          auto& fp = param->cast<float>();
+          float v = fp.get();
+          if (ImGui::SliderFloat(fp.getName().c_str(), &v, fp.getMin(), fp.getMax(), "%.2f")) {
+            fp.set(v);
+          }
+        }
+      }
+      
+      ImGui::PopItemWidth();
+      ImGui::TreePop();
+    }
+  }
 }
 
 void Gui::drawLayerControls() {

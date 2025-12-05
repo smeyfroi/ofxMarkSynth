@@ -42,6 +42,7 @@ private:
   void drawHelpWindow();
   
   void drawIntentControls();
+  void drawIntentCharacteristicsEditor();
   void drawLayerControls();
   void drawDisplayControls();
   void drawInternalState();
