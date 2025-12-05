@@ -46,6 +46,7 @@ private:
   void drawLayerControls();
   void drawDisplayControls();
   void drawInternalState();
+  void drawMemoryBank();
   void drawStatus();
   void drawNode(const ModPtr& modPtr, bool highlight = false);
   void drawNode(const DrawingLayerPtr& layerPtr);

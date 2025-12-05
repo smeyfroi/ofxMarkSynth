@@ -14,12 +14,20 @@ void ofApp::setup() {
   ResourceManager resources;
   resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
   resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  
   //  resources.add("compositeSize", COMPOSITE_SIZE);
   resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
   resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
   resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
+  
+  // Audio resources for AudioDataSource
+  resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
+  resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
+  resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
+  resources.add("audioChannels", AUDIO_CHANNELS);
+  resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("fingerprint2", ofxMarkSynth::ModConfig {
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("memory_collage", ofxMarkSynth::ModConfig {
   }, START_PAUSED, COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));

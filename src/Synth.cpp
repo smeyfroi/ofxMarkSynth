@@ -150,18 +150,35 @@ resources { std::move(resources_) }
   }
   
   sourceNameIdMap = {
-    { "CompositeFbo", SOURCE_COMPOSITE_FBO }
+    { "CompositeFbo", SOURCE_COMPOSITE_FBO },
+    { "Memory", SOURCE_MEMORY }
   };
   sinkNameIdMap = {
     { backgroundColorParameter.getName(), SINK_BACKGROUND_COLOR },
-    { "ResetRandomness", SINK_RESET_RANDOMNESS }
+    { "ResetRandomness", SINK_RESET_RANDOMNESS },
+    { "MemorySave", SINK_MEMORY_SAVE },
+    { "MemorySaveSlot", SINK_MEMORY_SAVE_SLOT },
+    { "MemoryEmit", SINK_MEMORY_EMIT },
+    { "MemoryEmitSlot", SINK_MEMORY_EMIT_SLOT },
+    { "MemoryEmitRandom", SINK_MEMORY_EMIT_RANDOM },
+    { "MemoryEmitRandomNew", SINK_MEMORY_EMIT_RANDOM_NEW },
+    { "MemoryEmitRandomOld", SINK_MEMORY_EMIT_RANDOM_OLD },
+    { memorySaveCentreParameter.getName(), SINK_MEMORY_SAVE_CENTRE },
+    { memorySaveWidthParameter.getName(), SINK_MEMORY_SAVE_WIDTH },
+    { memoryEmitCentreParameter.getName(), SINK_MEMORY_EMIT_CENTRE },
+    { memoryEmitWidthParameter.getName(), SINK_MEMORY_EMIT_WIDTH },
+    { "MemoryClearAll", SINK_MEMORY_CLEAR_ALL }
   };
+  
+  // Allocate memory bank (1024x1024 fragments from the composite)
+  memoryBank.allocate({ 1024, 1024 }, GL_RGBA8);
 }
 
 // TODO: fold this into loadFromConfig and the ctor?
 void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initDisplayParameterGroup();
   initFboParameterGroup();
+  initMemoryBankParameterGroup();
   
   initIntentParameterGroup();
   
@@ -355,15 +372,108 @@ void Synth::receive(int sinkId, const glm::vec4& v) {
 }
 
 void Synth::receive(int sinkId, const float& v) {
+  float now = ofGetElapsedTimef();
+  
+  auto emitMemoryWithRateLimit = [&](const ofTexture* tex, int sourceId) {
+    if (!tex) return;
+    if (now - lastMemoryEmitTime < memoryEmitMinIntervalParameter) return;
+    lastMemoryEmitTime = now;
+    emit(sourceId, *tex);
+  };
+  
   switch (sinkId) {
     case SINK_RESET_RANDOMNESS:
       {
         // Use bucketed onset value as seed for repeatability
         int seed = static_cast<int>(v * 10.0f); // Adjust multiplier for desired granularity
         of::random::seed(seed);
-        ofLogNotice("Synth") << "Reset seed: " << seed;
+//        ofLogNotice("Synth") << "Reset seed: " << seed;
       }
       break;
+      
+    // Memory bank: save operations
+    case SINK_MEMORY_SAVE:
+      if (v > 0.5f) {
+        int slot = memoryBank.save(imageCompositeFbo,
+            memorySaveCentreController.value,
+            memorySaveWidthController.value);
+//        ofLogNotice("Synth") << "Memory saved to slot " << slot;
+      }
+      break;
+      
+    case SINK_MEMORY_SAVE_SLOT:
+      {
+        int slot = static_cast<int>(v) % MemoryBank::NUM_SLOTS;
+        memoryBank.saveToSlot(imageCompositeFbo, slot);
+//        ofLogNotice("Synth") << "Memory saved to slot " << slot;
+      }
+      break;
+      
+    // Memory bank: emit operations
+    case SINK_MEMORY_EMIT:
+      if (v > 0.5f) {
+        emitMemoryWithRateLimit(
+            memoryBank.select(memoryEmitCentreController.value,
+                              memoryEmitWidthController.value),
+            SOURCE_MEMORY);
+      }
+      break;
+      
+    case SINK_MEMORY_EMIT_SLOT:
+      {
+        int slot = static_cast<int>(v) % MemoryBank::NUM_SLOTS;
+        emitMemoryWithRateLimit(memoryBank.get(slot), SOURCE_MEMORY);
+      }
+      break;
+      
+    case SINK_MEMORY_EMIT_RANDOM:
+      if (v > 0.0f) {
+        emitMemoryWithRateLimit(memoryBank.selectRandom(), SOURCE_MEMORY);
+      }
+      break;
+      
+    case SINK_MEMORY_EMIT_RANDOM_NEW:
+      if (v > 0.5f) {
+        emitMemoryWithRateLimit(
+            memoryBank.selectWeightedRecent(memoryEmitCentreController.value,
+                                             memoryEmitWidthController.value),
+            SOURCE_MEMORY);
+      }
+      break;
+      
+    case SINK_MEMORY_EMIT_RANDOM_OLD:
+      if (v > 0.5f) {
+        emitMemoryWithRateLimit(
+            memoryBank.selectWeightedOld(memoryEmitCentreController.value,
+                                          memoryEmitWidthController.value),
+            SOURCE_MEMORY);
+      }
+      break;
+      
+    // Memory bank: parameter updates
+    case SINK_MEMORY_SAVE_CENTRE:
+      memorySaveCentreController.updateAuto(v, getAgency());
+      break;
+      
+    case SINK_MEMORY_SAVE_WIDTH:
+      memorySaveWidthController.updateAuto(v, getAgency());
+      break;
+      
+    case SINK_MEMORY_EMIT_CENTRE:
+      memoryEmitCentreController.updateAuto(v, getAgency());
+      break;
+      
+    case SINK_MEMORY_EMIT_WIDTH:
+      memoryEmitWidthController.updateAuto(v, getAgency());
+      break;
+      
+    case SINK_MEMORY_CLEAR_ALL:
+      if (v > 0.5f) {
+        memoryBank.clearAll();
+        ofLogNotice("Synth") << "Memory bank cleared";
+      }
+      break;
+      
     default:
       ofLogError("Synth") << "Float receive for unknown sinkId " << sinkId;
   }
@@ -376,6 +486,19 @@ void Synth::applyIntent(const Intent& intent, float intentStrength) {
 //  float brightness = ofLerp(0.0f, 0.15f, structure) * (1.0f - chaos * 0.5f);
 //  ofFloatColor target = ofFloatColor(brightness, brightness, brightness, 1.0f);
 //  backgroundColorController.updateIntent(target, intentStrength);
+  
+  // Memory bank intent mappings
+  // Chaos -> emit width (more chaos = wider/more random selection)
+  float emitWidth = ofLerp(0.2f, 1.0f, intent.getChaos());
+  memoryEmitWidthController.updateIntent(emitWidth, intentStrength);
+  
+  // Energy -> emit centre (high energy = recent memories)
+  float emitCentre = ofLerp(0.3f, 0.9f, intent.getEnergy());
+  memoryEmitCentreController.updateIntent(emitCentre, intentStrength);
+  
+  // Structure -> save width (more structure = more predictable/sequential saves)
+  float saveWidth = ofLerp(0.5f, 0.0f, intent.getStructure());
+  memorySaveWidthController.updateIntent(saveWidth, intentStrength);
 }
 
 void Synth::update() {
@@ -948,6 +1071,17 @@ void Synth::initDisplayParameterGroup() {
   displayParameters.add(brightnessParameter);
   displayParameters.add(hueShiftParameter);
   displayParameters.add(sideExposureParameter);
+}
+
+void Synth::initMemoryBankParameterGroup() {
+  memoryBankParameters.clear();
+  
+  memoryBankParameters.setName("MemoryBank");
+  memoryBankParameters.add(memorySaveCentreParameter);
+  memoryBankParameters.add(memorySaveWidthParameter);
+  memoryBankParameters.add(memoryEmitCentreParameter);
+  memoryBankParameters.add(memoryEmitWidthParameter);
+  memoryBankParameters.add(memoryEmitMinIntervalParameter);
 }
 
 void Synth::initParameters() {

@@ -969,5 +969,71 @@ For detailed Intent mappings per Mod, see [intent-mappings.md](intent-mappings.m
 
 ---
 
-**Document Version**: 1.2
-**Last Updated**: November 30, 2025
+---
+
+## Synth (Core)
+
+The Synth itself provides sources and sinks that can be used in the connection graph.
+
+### Existing Sources
+
+- `CompositeFbo` (ofFbo): The final composited drawing (all layers combined)
+
+### Memory Bank
+
+The Synth maintains a **Memory Bank** of 8 texture slots that store random crops captured from the full-resolution composite. These "memories" can be accumulated during a live performance and recalled later, bringing fine details that are normally invisible (due to downscaling for display) back into the visual mix.
+
+**Memory Bank Sources**:
+- `Memory` (ofTexture): Emits memory texture (selection depends on which sink triggered the emit)
+
+**Memory Bank Sinks**:
+
+*Save Operations*:
+- `MemorySave` (float): Trigger (>0.5) saves a crop using centre/width parameters
+- `MemorySaveSlot` (float): Value 0-7 saves to specific slot
+
+*Emit Operations*:
+- `MemoryEmit` (float): Trigger (>0.5) emits using centre/width parameters
+- `MemoryEmitSlot` (float): Value 0-7 emits from specific slot
+- `MemoryEmitRandom` (float): Trigger emits random memory
+- `MemoryEmitRandomNew` (float): Trigger emits with recency weighting
+- `MemoryEmitRandomOld` (float): Trigger emits with old-memory weighting
+
+*Parameter Updates*:
+- `MemorySaveCentre` (float): Centre of save slot selection (0-1)
+- `MemorySaveWidth` (float): Width/spread of save slot selection (0-1)
+- `MemoryEmitCentre` (float): Centre of emit slot selection (0-1)
+- `MemoryEmitWidth` (float): Width/spread of emit slot selection (0-1)
+
+*Management*:
+- `MemoryClearAll` (float): Trigger (>0.5) clears all memory slots
+
+**Intent Integration**:
+- Chaos → MemoryEmitWidth (more chaos = wider/more random selection)
+- Energy → MemoryEmitCentre (high energy = recent memories)
+- Structure → MemorySaveWidth (more structure = more predictable saves)
+
+**GUI**: The Memory Bank section shows thumbnails of all 8 slots with manual Save buttons.
+
+**Example Connections**:
+```
+# Auto-save every 30 seconds
+Timer.Tick -> Synth.MemorySave
+
+# Emit random memory on audio onset
+AudioData.Onset -> Synth.MemoryEmitRandom
+
+# Connect emitted memory to CollageMod
+Synth.Memory -> Collage.SnapshotTexture
+```
+
+**Use Cases**:
+- Recall earlier visual states during improvisation
+- Surface fine details from the high-res composite
+- Create temporal layering in performances
+- Build visual "memory palace" compositions
+
+---
+
+**Document Version**: 1.3
+**Last Updated**: December 5, 2025

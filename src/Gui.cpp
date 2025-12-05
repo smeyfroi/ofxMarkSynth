@@ -68,9 +68,15 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
     0,
   };
   
-  ImFont* font = imgui.addFont("Arial Unicode.ttf", 18.0f, &fontConfig, ranges, true);
-  if (!font) {
-    ofLogWarning("Gui") << "Failed to load Arial Unicode.ttf, using default font";
+  std::string fontPath = ofToDataPath("Arial Unicode.ttf", true);
+  ImFont* font = nullptr;
+  if (ofFile::doesFileExist(fontPath)) {
+    font = imgui.addFont("Arial Unicode.ttf", 18.0f, &fontConfig, ranges, true);
+    if (!font) {
+      ofLogWarning("Gui") << "Failed to load Arial Unicode.ttf despite file existing, using default font";
+    }
+  } else {
+    ofLogWarning("Gui") << "Font file Arial Unicode.ttf not found in data path, using default font";
   }
   
   // Use ImGui's default monospace font for help window and tooltips
@@ -225,6 +231,7 @@ void Gui::drawSynthControls() {
   drawLayerControls();
   drawDisplayControls();
   drawInternalState();
+  drawMemoryBank();
   drawStatus();
   
   ImGui::End();
@@ -411,6 +418,73 @@ void Gui::drawInternalState() {
   }
 
   ImGui::EndChild();
+}
+
+void Gui::drawMemoryBank() {
+  if (!ImGui::CollapsingHeader("Memories", ImGuiTreeNodeFlags_DefaultOpen)) return;
+  
+  constexpr float memThumbW = 64.0f;
+  constexpr float spacing = 4.0f;
+  constexpr float slotHeight = 100.0f; // thumbnail + label + button
+  
+  ImGui::Text("Filled: %d/%d", synthPtr->memoryBank.getFilledCount(), MemoryBank::NUM_SLOTS);
+  
+  // Scrollable horizontal region for thumbnails (no vertical scroll)
+  ImGui::BeginChild("MemoryBankSlots", ImVec2(0, slotHeight), false, 
+      ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar);
+  
+  // Horizontal layout of slots
+  for (int i = 0; i < MemoryBank::NUM_SLOTS; i++) {
+    ImGui::PushID(i);
+    
+    ImGui::BeginGroup();
+    {
+      // Slot number
+      ImGui::Text("%d", i);
+      
+      // Thumbnail or empty box
+      const ofTexture* tex = synthPtr->memoryBank.get(i);
+      if (tex && tex->isAllocated()) {
+        const auto& textureData = tex->getTextureData();
+        ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
+        ImGui::Image(imguiTexId, ImVec2(memThumbW, memThumbW));
+        
+        // Tooltip with larger preview on hover
+        if (ImGui::IsItemHovered()) {
+          ImGui::BeginTooltip();
+          constexpr float tooltipSize = 256.0f;
+          ImGui::Image(imguiTexId, ImVec2(tooltipSize, tooltipSize));
+          ImGui::EndTooltip();
+        }
+      } else {
+        // Draw empty placeholder
+        ImVec2 p = ImGui::GetCursorScreenPos();
+        ImGui::GetWindowDrawList()->AddRect(
+            p, ImVec2(p.x + memThumbW, p.y + memThumbW),
+            IM_COL32(128, 128, 128, 128));
+        ImGui::Dummy(ImVec2(memThumbW, memThumbW));
+      }
+      
+      // Save button
+      if (ImGui::Button("Save", ImVec2(memThumbW, 0))) {
+        synthPtr->memoryBank.saveToSlot(synthPtr->imageCompositeFbo, i);
+      }
+    }
+    ImGui::EndGroup();
+    
+    ImGui::PopID();
+    
+    if (i < MemoryBank::NUM_SLOTS - 1) {
+      ImGui::SameLine(0, spacing);
+    }
+  }
+  
+  ImGui::EndChild();
+  
+  // Clear all button
+  if (ImGui::Button("Clear All")) {
+    synthPtr->memoryBank.clearAll();
+  }
 }
 
 void Gui::drawStatus() {
