@@ -66,7 +66,6 @@ public:
   void switchToConfig(const std::string& filepath, bool useHibernation = true);
   void loadFirstPerformanceConfig();
   void setIntentPresets(const std::vector<IntentPtr>& presets);
-  void initIntentPresets();
   
   static void setArtefactRootPath(const std::filesystem::path& root);
   static std::string saveArtefactFilePath(const std::string& relative);

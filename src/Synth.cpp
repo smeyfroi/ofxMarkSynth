@@ -159,10 +159,6 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initDisplayParameterGroup();
   initFboParameterGroup();
   
-  // Initialize intents if not already set (e.g., from config)
-  if (intentActivations.empty()) {
-    initIntentPresets();
-  }
   initIntentParameterGroup();
   
   parameters = getParameterGroup();
@@ -858,19 +854,7 @@ void Synth::setIntentPresets(const std::vector<IntentPtr>& presets) {
   ofLogNotice("Synth") << "Set " << count << " intent presets from config";
 }
 
-void Synth::initIntentPresets() {
-  // Fader 0 should be a master control, then there are 7 others available
-  std::vector<IntentPtr> presets = {
-    Intent::createPreset("Calm", 0.2f, 0.3f, 0.7f, 0.1f, 0.1f),
-    Intent::createPreset("Energetic", 0.9f, 0.7f, 0.4f, 0.5f, 0.5f),
-    Intent::createPreset("Chaotic", 0.6f, 0.2f, 0.1f, 0.95f, 0.4f),
-    Intent::createPreset("Dense", 0.5f, 0.95f, 0.6f, 0.3f, 0.5f),
-    Intent::createPreset("Structured", 0.4f, 0.5f, 0.95f, 0.2f, 0.4f),
-    Intent::createPreset("Minimal", 0.1f, 0.1f, 0.8f, 0.05f, 0.1f),
-    Intent::createPreset("Maximum", 0.95f, 0.95f, 0.5f, 0.8f, 0.95f),
-  };
-  setIntentPresets(presets);
-}
+
 
 void Synth::updateIntentActivations() {
   float dt = ofGetLastFrameTime();
