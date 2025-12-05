@@ -14,6 +14,7 @@
 #include "TonemapShader.h"
 #include <unordered_map>
 #include <filesystem>
+#include <optional>
 #include "SaveToFileThread.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"
@@ -243,6 +244,19 @@ private:
 #endif
   
   std::vector<SaveToFileThread*> saveToFileThreads;
+  
+  // PBO-based async pixel readback for image saving
+  ofBufferObject imageSavePbo;  // Pre-allocated at construction, reused for all saves
+  bool imageSaveRequested { false };  // Set by saveImage(), cleared after glReadPixels issued
+  struct PendingImageSave {
+    GLsync fence { nullptr };
+    std::string timestamp;  // Captured at save request, filepath generated later
+    int framesSinceRequested { 0 };
+  };
+  std::optional<PendingImageSave> pendingImageSave;
+  void initiateImageSaveTransfer();  // Called from draw() after all rendering
+  void processPendingImageSave();
+  float saveStatusClearTime { 0.0f };
   
   std::shared_ptr<LoggerChannel> loggerChannelPtr;
   
