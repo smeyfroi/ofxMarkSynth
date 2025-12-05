@@ -8,6 +8,7 @@
 #include "ParticleSetMod.hpp"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
+#include "../IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {
@@ -130,48 +131,25 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Chaos * Energy → spin (small range around 0)
-  spinController.updateIntent(ofxMarkSynth::linearMap(intent.getEnergy() * intent.getChaos(), -0.05f, 0.05f), strength);
+  (im.C() * im.E()).lin(spinController, strength, -0.05f, 0.05f);
   
-  // Energy → color (with structure → brightness and density → alpha)
+  // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
-  color.setSaturation(intent.getEnergy() * intent.getChaos() * (1.0f - intent.getStructure()));
-  color.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.0f, 1.0f);
-  colorController.updateIntent(color, strength);
+  color.setSaturation((im.E() * im.C() * im.S().inv()).get());
+  color.a = im.D().get();
+  colorController.updateIntent(color, strength, "E->color, S->bright, E*C*(1-S)->sat, D->alpha");
   
-  // Energy → timeStep (exponential: more energy = faster time)
-  float timeStepI = exponentialMap(intent.getEnergy(), *timeStepControllerPtr);
-  timeStepControllerPtr->updateIntent(timeStepI, strength);
-  
-  // Inverse Granularity → velocityDamping (inverse: coarse = less damping)
-  float velocityDampingI = inverseMap(intent.getGranularity(), *velocityDampingControllerPtr);
-  velocityDampingControllerPtr->updateIntent(velocityDampingI, strength);
-  
-  // Structure → attractionStrength (linear: more structure = more attraction)
-  float attractionStrengthI = linearMap(intent.getStructure(), *attractionStrengthControllerPtr);
-  attractionStrengthControllerPtr->updateIntent(attractionStrengthI, strength);
-  
-  // Density → attractionRadius (inverse: more density = smaller radius)
-  float attractionRadiusI = inverseMap(intent.getDensity(), *attractionRadiusControllerPtr);
-  attractionRadiusControllerPtr->updateIntent(attractionRadiusI, strength);
-  
-  // Energy → forceScale (linear)
-  float forceScaleI = linearMap(intent.getEnergy(), *forceScaleControllerPtr);
-  forceScaleControllerPtr->updateIntent(forceScaleI, strength);
-  
-  // Density → connectionRadius (linear)
-  float connectionRadiusI = linearMap(intent.getDensity(), *connectionRadiusControllerPtr);
-  connectionRadiusControllerPtr->updateIntent(connectionRadiusI, strength);
-  
-  // Energy → colourMultiplier (linear)
-  float colourMultiplierI = linearMap(intent.getEnergy(), *colourMultiplierControllerPtr);
-  colourMultiplierControllerPtr->updateIntent(colourMultiplierI, strength);
-  
-  // Chaos → maxSpeed (linear: more chaos = faster particles)
-  float maxSpeedI = linearMap(intent.getChaos(), *maxSpeedControllerPtr);
-  maxSpeedControllerPtr->updateIntent(maxSpeedI, strength);
+  im.E().exp(*timeStepControllerPtr, strength);
+  im.G().inv().lin(*velocityDampingControllerPtr, strength);
+  im.S().lin(*attractionStrengthControllerPtr, strength);
+  im.D().inv().lin(*attractionRadiusControllerPtr, strength);
+  im.E().lin(*forceScaleControllerPtr, strength);
+  im.D().lin(*connectionRadiusControllerPtr, strength);
+  im.E().lin(*colourMultiplierControllerPtr, strength);
+  im.C().lin(*maxSpeedControllerPtr, strength);
 }
 
 

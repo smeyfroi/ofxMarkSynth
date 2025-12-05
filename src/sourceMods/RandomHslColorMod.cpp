@@ -7,6 +7,7 @@
 
 #include "RandomHslColorMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {
@@ -138,27 +139,24 @@ float RandomHslColorMod::randomHueFromCenterWidth(float center, float width) con
 }
 
 void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
-  // Density → number of colors per update (non-linear)
-  colorsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), colorsPerUpdateController, 2.0f), strength);
+  im.D().exp(colorsPerUpdateController, strength, 2.0f);
 
-  // Intent → Hue center/width (Energy shifts center; Chaos widens)
-  float targetCenter = ofLerp(0.6f, 0.08f, intent.getEnergy());
-  float targetWidth  = ofLerp(0.08f, 1.0f, intent.getChaos());
-  hueCenterController.updateIntent(targetCenter, strength);
-  hueWidthController.updateIntent(targetWidth, strength);
+  // Hue: E -> center (cool to warm), C -> width
+  float targetCenter = ofLerp(0.6f, 0.08f, im.E().get());
+  float targetWidth  = ofLerp(0.08f, 1.0f, im.C().get());
+  hueCenterController.updateIntent(targetCenter, strength, "E -> hue center");
+  hueWidthController.updateIntent(targetWidth, strength, "C -> hue width");
 
-  // Energy → saturation range (higher energy = more saturated)
-  minSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.2f, 0.8f), strength);
-  maxSaturationController.updateIntent(linearMap(intent.getEnergy(), 0.6f, 1.0f), strength);
+  im.E().lin(minSaturationController, strength, 0.2f, 0.8f);
+  im.E().lin(maxSaturationController, strength, 0.6f, 1.0f);
 
-  // Structure → brightness contrast (higher structure = wider brightness range)
-  minBrightnessController.updateIntent(inverseMap(intent.getStructure(), 0.4f, 0.1f), strength);
-  maxBrightnessController.updateIntent(linearMap(intent.getStructure(), 0.6f, 1.0f), strength);
+  im.S().inv().lin(minBrightnessController, strength, 0.1f, 0.4f);
+  im.S().lin(maxBrightnessController, strength, 0.6f, 1.0f);
 
-  // Density → alpha range (more density = more opaque)
-  minAlphaController.updateIntent(linearMap(intent.getDensity(), 0.2f, 0.8f), strength);
-  maxAlphaController.updateIntent(linearMap(intent.getDensity(), 0.6f, 1.0f), strength);
+  im.D().lin(minAlphaController, strength, 0.2f, 0.8f);
+  im.D().lin(maxAlphaController, strength, 0.6f, 1.0f);
 }
 
 

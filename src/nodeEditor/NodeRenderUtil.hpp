@@ -10,10 +10,15 @@
 #include "ofParameter.h"
 #include "Mod.hpp"
 
+struct ImFont;  // Forward declaration
+
 
 
 namespace ofxMarkSynth {
 namespace NodeRenderUtil {
+
+// Set the monospace font to use in tooltips (call from Gui setup)
+void setMonoFont(ImFont* font);
 
 
 

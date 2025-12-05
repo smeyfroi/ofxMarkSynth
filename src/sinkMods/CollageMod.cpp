@@ -9,6 +9,7 @@
 #include "CollageMod.hpp"
 #include "ofxFatline.h"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -182,24 +183,25 @@ void CollageMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void CollageMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
   ofFloatColor energetic = energyToColor(intent);
   ofFloatColor structured = structureToBrightness(intent);
   ofFloatColor mixed = energetic.getLerped(structured, 0.25f);
   ofFloatColor finalColor = densityToAlpha(intent, mixed);
-  colorController.updateIntent(finalColor, strength);
+  colorController.updateIntent(finalColor, strength, "E->color, S->bright, D->alpha");
 
-  float satEnergy = linearMap(intent.getEnergy(), 0.8f, 2.2f);
-  float satChaos = exponentialMap(intent.getChaos(), 0.9f, 2.8f, 2.0f);
-  float satStructure = inverseMap(intent.getStructure(), 0.8f, 1.6f);
+  float satEnergy = linearMap(im.E().get(), 0.8f, 2.2f);
+  float satChaos = exponentialMap(im.C().get(), 0.9f, 2.8f, 2.0f);
+  float satStructure = inverseMap(im.S().get(), 0.8f, 1.6f);
   float targetSaturation = std::clamp(satEnergy * satChaos * satStructure, 0.0f, 3.0f);
-  saturationController.updateIntent(targetSaturation, strength);
+  saturationController.updateIntent(targetSaturation, strength, "E*C*inv(S)->sat");
 
   if (strength > 0.01f) {
-    int strategy = (intent.getStructure() > 0.55f || intent.getGranularity() > 0.6f) ? 1 : 0;
+    int strategy = (im.S().get() > 0.55f || im.G().get() > 0.6f) ? 1 : 0;
     if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
-    bool outlineOn = intent.getChaos() < 0.6f;
-    outlineController.updateIntent(outlineOn ? 1.0f : 0.0f, strength);
+    bool outlineOn = im.C().get() < 0.6f;
+    outlineController.updateIntent(outlineOn ? 1.0f : 0.0f, strength, "C<.6->outline");
   }
 }
 

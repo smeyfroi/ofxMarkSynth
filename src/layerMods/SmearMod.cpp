@@ -7,6 +7,7 @@
 
 #include "SmearMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -148,53 +149,40 @@ void SmearMod::receive(int sinkId, const ofTexture& value) {
 }
 
 void SmearMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
-  float e = intent.getEnergy();
-  float d = intent.getDensity();
-  float s = intent.getStructure();
-  float c = intent.getChaos();
-  float g = intent.getGranularity();
+  im.E().exp(mixNewController, strength);
+  im.D().exp(alphaMultiplierController, strength);
+  im.E().exp(field1MultiplierController, strength, 2.0f);
+  im.C().exp(field2MultiplierController, strength, 3.0f);
+  im.C().exp(jumpAmountController, strength, 2.0f);
+  im.G().lin(borderWidthController, strength);
+  im.D().lin(ghostBlendController, strength);
 
-  // Energy -> MixNew
-  mixNewController.updateIntent(exponentialMap(e, mixNewController), strength);
-  // Density -> AlphaMultiplier
-  alphaMultiplierController.updateIntent(exponentialMap(d, alphaMultiplierController), strength);
-  // Energy -> Field multiplier 1
-  field1MultiplierController.updateIntent(exponentialMap(e, field1MultiplierController, 2.0f), strength);
-  // Chaos -> Field multiplier 2
-  field2MultiplierController.updateIntent(exponentialMap(c, field2MultiplierController, 3.0f), strength);
-  // Chaos -> JumpAmount
-  jumpAmountController.updateIntent(exponentialMap(c, jumpAmountController, 2.0f), strength);
-  // Granularity -> BorderWidth
-  borderWidthController.updateIntent(linearMap(g, borderWidthController), strength);
-  // Density -> GhostBlend
-  ghostBlendController.updateIntent(linearMap(d, ghostBlendController), strength);
-
-  // Structure → Strategy preference (more structure = more organized strategies)
   if (strength > 0.05f) {
+    float s = im.S().get();
+    float g = im.G().get();
+
     int strategy;
     if (s < 0.2f) {
-      strategy = 0; // Off for very low structure
+      strategy = 0;
     } else if (s < 0.4f) {
-      strategy = 2; // Per-cell random offset for low structure
+      strategy = 2;
     } else if (s < 0.6f) {
-      strategy = 4; // Per-cell rotation for mid structure
+      strategy = 4;
     } else if (s < 0.8f) {
-      strategy = 1; // Cell-quantized for mid-high structure
+      strategy = 1;
     } else {
-      strategy = 3; // Boundary teleport for high structure
+      strategy = 3;
     }
     if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
-    
-    // Structure → gridLevels
+
     int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
     if (gridLevelsParameter.get() != levels) gridLevelsParameter.set(levels);
-    
-    // Granularity → gridSize (fine granularity = larger grid cells)
+
     float gridVal = linearMap(1.0f - g, 8.0f, 64.0f);
     gridSizeParameter.set(glm::vec2 { gridVal, gridVal });
-    
-    // Granularity → foldPeriod
+
     float p = linearMap(g, 4.0f, 32.0f);
     foldPeriodParameter.set(glm::vec2 { p, p });
   }

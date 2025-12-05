@@ -9,6 +9,7 @@
 #include "cmath"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
+#include "../IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {
@@ -118,24 +119,21 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
 }
 
 void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
+  // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.5f);
-  color.setSaturation(intent.getEnergy() * intent.getChaos());
-  color.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.1f, 0.5f);
+  color.setSaturation(im.E().get() * im.C().get());
+  color.a = ofLerp(0.1f, 0.5f, im.D().get());
   auto particleBlocks = particleField.getParticleCount() / 64;
-  auto updateBlocks = std::max(1, static_cast<int>(particleBlocks * std::clamp(strength * intent.getDensity(), 0.01f, 1.0f)));
+  auto updateBlocks = std::max(1, static_cast<int>(particleBlocks * std::clamp(strength * im.D().get(), 0.01f, 1.0f)));
   particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
     return color;
   });
   
-  // Granularity → minWeight (inverse: fine granularity = lighter min weight = more responsive)
-  float minWeightI = inverseMap(intent.getGranularity(), *minWeightControllerPtr);
-  minWeightControllerPtr->updateIntent(minWeightI, strength);
-  
-  // Chaos → maxWeight (linear: more chaos = heavier max weight = greater mass variation)
-  float maxWeightI = linearMap(intent.getChaos(), *maxWeightControllerPtr);
-  maxWeightControllerPtr->updateIntent(maxWeightI, strength);
+  im.G().inv().lin(*minWeightControllerPtr, strength);
+  im.C().lin(*maxWeightControllerPtr, strength);
 }
 
 

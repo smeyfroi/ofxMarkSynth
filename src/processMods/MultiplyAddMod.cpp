@@ -6,6 +6,7 @@
 //
 
 #include "MultiplyAddMod.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -64,15 +65,14 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
 }
 
 void MultiplyAddMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Energy → multiply (higher energy = higher multiplier)
-  float multI = exponentialMap(intent.getEnergy(), multiplierController);
-  multiplierController.updateIntent(multI, strength);
+  im.E().exp(multiplierController, strength);
 
-  // Density + Granularity → add (combined influence on offset)
-  float combinedAdd = intent.getDensity() * 0.6f + intent.getGranularity() * 0.4f;
+  // Weighted blend: density (60%) + granularity (40%)
+  float combinedAdd = im.D().get() * 0.6f + im.G().get() * 0.4f;
   float addI = exponentialMap(combinedAdd, adderController);
-  adderController.updateIntent(addI, strength);
+  adderController.updateIntent(addI, strength, "D*.6+G -> exp");
 }
 
 

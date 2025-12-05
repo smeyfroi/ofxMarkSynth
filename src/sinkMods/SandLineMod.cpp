@@ -7,6 +7,7 @@
 
 #include "SandLineMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -144,29 +145,20 @@ void SandLineMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void SandLineMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Density + Granularity → Density
-  float densityI = exponentialMap(intent.getEnergy() * intent.getGranularity(), densityController);
-  densityController.updateIntent(densityI, strength);
-
-  // Granularity → Point Radius
-  float radiusI = exponentialMap(intent.getGranularity(), 0.5f, 16.0f, 3.0f);
-  pointRadiusController.updateIntent(radiusI, strength);
+  (im.E() * im.G()).exp(densityController, strength);
+  im.G().exp(pointRadiusController, strength, 0.5f, 16.0f, 3.0f);
   
+  // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
-  color.setSaturation(intent.getEnergy() * (1.0f - intent.getStructure()));
+  color.setSaturation((im.E() * im.S().inv()).get());
   color.a = 1.0f;
-  colorController.updateIntent(color, strength);
+  colorController.updateIntent(color, strength, "E->color, S->bright, E*(1-S)->sat");
   
-  // Structure → Alpha Multiplier
-//  alphaMultiplierController.updateIntent(ofxMarkSynth::linearMap(intent.getStructure(), alphaMultiplierController), strength);
-  
-  // Inverse Structure → Std Dev Along
-  stdDevAlongController.updateIntent(ofxMarkSynth::inverseMap(intent.getStructure(), stdDevAlongController), strength);
-  
-  // Chaos → Std Dev Perpendicular
-  stdDevPerpendicularController.updateIntent(ofxMarkSynth::linearMap(intent.getChaos(), stdDevPerpendicularController), strength);
+  im.S().inv().lin(stdDevAlongController, strength);
+  im.C().lin(stdDevPerpendicularController, strength);
 }
 
 

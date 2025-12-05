@@ -57,6 +57,7 @@ public:
   float wIntent = 0.0f;
   bool hasReceivedAutoValue = false;
   bool hasReceivedIntentValue = false;
+  std::string intentMappingDescription;  // e.g., "E×G → exp(2)"
   virtual void setAgency(float a) = 0; // ensure GUI reads controller-computed weights
   virtual void syncWithParameter() = 0; // sync controller value with parameter (after config load)
   virtual std::string getFormattedValue() const = 0; // formatted string showing component breakdown and final value
@@ -147,10 +148,14 @@ public:
     return getTimeSinceLastManualUpdate() < thresholdTime;
   }
   
-  void updateIntent(T newIntentValue, float newIntentStrength) {
+  void updateIntent(T newIntentValue, float newIntentStrength, 
+                    const std::string& mappingDesc = "") {
     intentValue = newIntentValue;
     intentStrength = newIntentStrength;
     hasReceivedIntentValue = true;
+    if (!mappingDesc.empty()) {
+      intentMappingDescription = mappingDesc;
+    }
     update();
   }
   
@@ -193,6 +198,10 @@ public:
       std::snprintf(buf, sizeof(buf), "Intent (%.0f%%): ", wIntent * 100.0f);
       result += buf;
       result += ParamFormat::formatSingleValue(intentSmoothed);
+      if (!intentMappingDescription.empty()) {
+        result += "\n  = ";
+        result += intentMappingDescription;
+      }
       result += "\n";
     }
     

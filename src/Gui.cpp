@@ -73,10 +73,11 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
     ofLogWarning("Gui") << "Failed to load Arial Unicode.ttf, using default font";
   }
   
-  // Use ImGui's default monospace font for help window
+  // Use ImGui's default monospace font for help window and tooltips
   ImFontConfig monoConfig;
   monoConfig.SizePixels = 13.0f;
   monoFont = io.Fonts->AddFontDefault(&monoConfig);
+  NodeRenderUtil::setMonoFont(monoFont);
   
   ImGuiStyle& style = ImGui::GetStyle();
   style.WindowRounding = 4.f;

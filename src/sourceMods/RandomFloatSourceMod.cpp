@@ -7,6 +7,7 @@
 
 #include "RandomFloatSourceMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {
@@ -64,17 +65,17 @@ const float RandomFloatSourceMod::createRandomFloat() const {
 }
 
 void RandomFloatSourceMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
-  // Density → floatsPerUpdate
-  floatsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), floatsPerUpdateController, 0.5f), strength);
+  im.D().exp(floatsPerUpdateController, strength, 0.5f);
   
-  // Energy → range width (higher energy = wider range, centered around midpoint)
+  // Energy expands range symmetrically around midpoint
   float currentMid = (minController.getManualMin() + maxController.getManualMax()) * 0.5f;
   float fullRange = maxController.getManualMax() - minController.getManualMin();
-  float targetRange = linearMap(intent.getEnergy(), 0.2f * fullRange, fullRange);
+  float targetRange = linearMap(im.E().get(), 0.2f * fullRange, fullRange);
   float halfRange = targetRange * 0.5f;
-  minController.updateIntent(std::max(minController.getManualMin(), currentMid - halfRange), strength);
-  maxController.updateIntent(std::min(maxController.getManualMax(), currentMid + halfRange), strength);
+  minController.updateIntent(std::max(minController.getManualMin(), currentMid - halfRange), strength, "E -> range");
+  maxController.updateIntent(std::min(maxController.getManualMax(), currentMid + halfRange), strength, "E -> range");
 }
 
 

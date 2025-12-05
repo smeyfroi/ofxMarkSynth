@@ -6,6 +6,7 @@
 //
 
 #include "FadeMod.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -88,12 +89,12 @@ void FadeMod::receive(int sinkId, const float& value) {
 }
 
 void FadeMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
-  // Density and Granularity (secondary) -> alpha multiplier
-  float alphaMultI = exponentialMap(intent.getDensity() * 0.8f +
-                                    intent.getGranularity() * 0.2f,
-                                    alphaMultiplierController);
-  alphaMultiplierController.updateIntent(alphaMultI, strength);
+  // Weighted blend: density (80%) + granularity (20%)
+  float densityGranularity = im.D().get() * 0.8f + im.G().get() * 0.2f;
+  float alphaMultI = exponentialMap(densityGranularity, alphaMultiplierController);
+  alphaMultiplierController.updateIntent(alphaMultI, strength, "D*.8+G -> exp");
 }
 
 

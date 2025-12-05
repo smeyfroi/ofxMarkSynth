@@ -7,6 +7,7 @@
 
 #include "RandomVecSourceMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -78,9 +79,9 @@ const glm::vec4 RandomVecSourceMod::createRandomVec4() const {
 }
 
 void RandomVecSourceMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
-  // Density → vectors per update
-  vecsPerUpdateController.updateIntent(exponentialMap(intent.getDensity(), vecsPerUpdateController, 2.0f), strength);
+  im.D().exp(vecsPerUpdateController, strength, 2.0f);
 }
 
 

@@ -9,6 +9,7 @@
 #include "LineGeom.h"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
+#include "../IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {
@@ -245,33 +246,27 @@ void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
 }
 
 void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Chaos → Angle variation
-  angleController.updateIntent(ofxMarkSynth::exponentialMap(intent.getChaos(), 0.0f, 0.5f), strength);
+  im.C().exp(angleController, strength, 0.0f, 0.5f, 2.0f);
+  im.G().exp(pathWidthController, strength, 0.7f);
   
-  // Granularity → pathWidth
-  float pathWidthI = exponentialMap(intent.getGranularity(), pathWidthController, 0.7f);
-  pathWidthController.updateIntent(pathWidthI, strength);
-  
+  // Minor color composition
   ofFloatColor minorColor = ofxMarkSynth::energyToColor(intent);
   minorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.7f, 1.0f);
-  minorLineColorController.updateIntent(minorColor, strength);
+  minorLineColorController.updateIntent(minorColor, strength, "E->color, D->alpha");
   
+  // Major color composition
   ofFloatColor majorColor = ofxMarkSynth::energyToColor(intent) * 0.7f;
   majorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.8f);
   majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
   majorColor.a = ofxMarkSynth::exponentialMap(intent.getDensity(), 0.0f, 1.0f, 0.5f);
-  majorLineColorController.updateIntent(majorColor, strength);
+  majorLineColorController.updateIntent(majorColor, strength, "E->color, S->bright/sat, D->alpha");
   
-  // Chaos → MaxUnconstrainedLines (more chaos = more divisions, exponential so high counts are rare)
-  float maxLinesI = exponentialMap(intent.getChaos(), 1.0f, 9.0f, 2.0f);
-  maxUnconstrainedLinesController.updateIntent(maxLinesI, strength);
+  im.C().exp(maxUnconstrainedLinesController, strength, 1.0f, 9.0f, 2.0f);
+  im.G().lin(majorLineWidthController, strength);
   
-  // Granularity → MajorLineWidth
-  float majorWidthI = linearMap(intent.getGranularity(), majorLineWidthController);
-  majorLineWidthController.updateIntent(majorWidthI, strength);
-  
-  // Structure → Strategy selection (0=pairs, 1=angles, 2=radiating)
+  // Strategy selection based on structure
   if (strength > 0.05f) {
     float s = intent.getStructure();
     int strategy = (s < 0.3f) ? 0 : (s < 0.7f ? 1 : 2);

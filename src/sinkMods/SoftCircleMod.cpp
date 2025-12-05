@@ -7,6 +7,7 @@
 
 #include "SoftCircleMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -145,18 +146,10 @@ void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
-  
-  // Energy → Radius
-  float radiusI = exponentialMap(intent.getEnergy(), radiusController);
-  radiusController.updateIntent(radiusI, strength);
-
-  // Energy → Color Multiplier
-  float multI = linearMap(intent.getDensity(), colorMultiplierParameter);
-  colorMultiplierController.updateIntent(multI, strength);
-
-  // Density → Alpha Multiplier
-  float alphaI = linearMap(intent.getDensity(), alphaMultiplierParameter);
-  alphaMultiplierController.updateIntent(alphaI, strength);
+  IntentMap im(intent);
+  im.E().exp(radiusController, strength);
+  im.D().lin(colorMultiplierController, strength);
+  im.D().lin(alphaMultiplierController, strength);
 }
 
 

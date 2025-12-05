@@ -14,6 +14,13 @@
 namespace ofxMarkSynth {
 namespace NodeRenderUtil {
 
+// Static mono font for tooltips
+static ImFont* monoFont = nullptr;
+
+void setMonoFont(ImFont* font) {
+  monoFont = font;
+}
+
 
 
 void drawVerticalSliders(ofParameterGroup& paramGroup) {
@@ -71,7 +78,11 @@ void addControllerTooltip(const ModPtr& modPtr, const std::string& paramName) {
   if (modPtr->sourceNameControllerPtrMap.contains(paramName)) {
     auto* controllerPtr = modPtr->sourceNameControllerPtrMap.at(paramName);
     if (ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("%s", controllerPtr->getFormattedValue().c_str());
+      ImGui::BeginTooltip();
+      if (monoFont) ImGui::PushFont(monoFont);
+      ImGui::TextUnformatted(controllerPtr->getFormattedValue().c_str());
+      if (monoFont) ImGui::PopFont();
+      ImGui::EndTooltip();
     }
   }
 }

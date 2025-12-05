@@ -7,6 +7,7 @@
 
 #include "TextMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 #include "Synth.hpp"
 
 
@@ -108,33 +109,29 @@ void TextMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void TextMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Granularity → Font Size (scale of features)
-  float fontSizeI = exponentialMap(intent.getGranularity(), fontSizeController);
-  fontSizeController.updateIntent(fontSizeI, strength);
+  im.G().exp(fontSizeController, strength);
   
-  // Energy → Color
+  // Color composition
   ofFloatColor colorI = energyToColor(intent);
-  colorI.a = linearMap(intent.getDensity(), 0.5f, 1.0f);
-  colorController.updateIntent(colorI, strength);
+  colorI.a = im.D().get() * 0.5f + 0.5f;
+  colorController.updateIntent(colorI, strength, "E->color, D->alpha");
   
-  // Density → Alpha
-  float alphaI = linearMap(intent.getDensity(), alphaParameter);
-  alphaController.updateIntent(alphaI, strength);
+  im.D().lin(alphaController, strength);
   
-  // Chaos → Position jitter (randomize position around current value)
-  float chaos = intent.getChaos();
+  // Position jitter when chaos > threshold
+  float chaos = im.C().get();
   if (chaos > 0.1f) {
     glm::vec2 basePos = positionController.value;
-    float jitterAmount = chaos * 0.15f; // max 15% of screen jitter at full chaos
+    float jitterAmount = chaos * 0.15f;
     glm::vec2 jitteredPos = basePos + glm::vec2(
       ofRandom(-jitterAmount, jitterAmount),
       ofRandom(-jitterAmount, jitterAmount)
     );
-    // Clamp to valid range
     jitteredPos.x = std::clamp(jitteredPos.x, 0.05f, 0.95f);
     jitteredPos.y = std::clamp(jitteredPos.y, 0.05f, 0.95f);
-    positionController.updateIntent(jitteredPos, strength * chaos);
+    positionController.updateIntent(jitteredPos, strength * chaos, "C->jitter");
   }
 }
 

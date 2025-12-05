@@ -8,6 +8,7 @@
 #include "TimerSourceMod.hpp"
 #include "Synth.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 #include "ofUtils.h"
 
 
@@ -153,11 +154,9 @@ void TimerSourceMod::receive(int sinkId, const float& value) {
 }
 
 void TimerSourceMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Map Energy intent to interval (inverse relationship: higher energy = shorter interval)
-  float energy = intent.getEnergy();
-  float mappedInterval = exponentialMap(1.0f - energy, intervalController, 0.5f);
-  intervalController.updateIntent(mappedInterval, strength);
+  im.E().inv().exp(intervalController, strength, 0.5f);
 }
 
 

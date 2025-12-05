@@ -5,6 +5,7 @@
 
 #include "TextSourceMod.hpp"
 #include "Synth.hpp"
+#include "../IntentMapper.hpp"
 #include "ofUtils.h"
 
 namespace ofxMarkSynth {
@@ -154,14 +155,9 @@ void TextSourceMod::receive(int sinkId, const float& value) {
 }
 
 void TextSourceMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Map Chaos dimension (0.0-1.0) directly to randomness (0.0-1.0)
-  // Low chaos → sequential, structured, predictable
-  // High chaos → random, chaotic, unpredictable
-  float chaos = intent.getChaos();
-  
-  // Use ParamController for smooth transitions between Intent states
-  randomnessController.updateIntent(chaos, strength);
+  im.C().lin(randomnessController, strength);
   randomnessController.update();
 }
 

@@ -7,6 +7,7 @@
 
 #include "ClusterMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 #include "Parameter.hpp"
 
 
@@ -83,9 +84,8 @@ void ClusterMod::receive(int sinkId, const float& v) {
 }
 
 void ClusterMod::applyIntent(const Intent& intent, float strength) {
-  // Chaos -> number of clusters
-  float targetClusters = linearMap(intent.getChaos(), *clustersControllerPtr);
-  clustersControllerPtr->updateIntent(static_cast<float>(targetClusters), strength);
+  IntentMap im(intent);
+  im.C().lin(*clustersControllerPtr, strength);
 }
 
 

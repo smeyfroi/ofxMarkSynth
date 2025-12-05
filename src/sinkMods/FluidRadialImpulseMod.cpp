@@ -7,6 +7,7 @@
 
 #include "FluidRadialImpulseMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -85,15 +86,14 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
 
-  // Granularity → Impulse Radius
-  float impulseRadiusI = linearMap(intent.getGranularity(), impulseRadiusController);
-  impulseRadiusController.updateIntent(impulseRadiusI, strength);
+  im.G().lin(impulseRadiusController, strength);
   
-  // Energy and Chaos (secondary) → Impulse Strength
+  // Weighted blend: energy (80%) + chaos (20%)
   float impulseStrengthI = linearMap(intent.getEnergy(), impulseStrengthController.getManualMin(), impulseStrengthController.getManualMax() * 0.8f) +
       linearMap(intent.getChaos(), 0.0f, impulseStrengthController.getManualMax() * 0.2f);
-  impulseStrengthController.updateIntent(impulseStrengthI, strength);
+  impulseStrengthController.updateIntent(impulseStrengthI, strength, "E*.8+C -> lin");
 }
 
 

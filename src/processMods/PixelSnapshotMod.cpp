@@ -7,6 +7,7 @@
 
 #include "PixelSnapshotMod.hpp"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -88,11 +89,12 @@ bool PixelSnapshotMod::keyPressed(int key) {
 }
 
 void PixelSnapshotMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Inverse Structure + Granularity → Size (less structure & fine granularity = larger snapshots)
-  float combinedFactor = (1.0f - intent.getStructure()) * 0.6f + intent.getGranularity() * 0.4f;
+  // Weighted blend: inverse structure (60%) + granularity (40%)
+  float combinedFactor = im.S().inv().get() * 0.6f + im.G().get() * 0.4f;
   float sizeI = linearMap(combinedFactor, sizeController);
-  sizeController.updateIntent(sizeI, strength);
+  sizeController.updateIntent(sizeI, strength, "(1-S)*.6+G -> lin");
 }
 
 

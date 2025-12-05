@@ -8,6 +8,7 @@
 #include "PathMod.hpp"
 #include "ofxConvexHull.h"
 #include "IntentMapping.hpp"
+#include "../IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {
@@ -162,26 +163,19 @@ bool PathMod::keyPressed(int key) {
 }
 
 void PathMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
   
-  // Inverse Density → Min Vertex Proximity
-  float minVertexProximityI = inverseExponentialMap(intent.getDensity(), minVertexProximityController);
-  minVertexProximityController.updateIntent(minVertexProximityI, strength);
+  im.D().inv().exp(minVertexProximityController, strength);
+  im.G().lin(maxVertexProximityController, strength);
+  im.D().lin(maxVerticesController, strength);
   
-  // Granularity → Max Vertex Proximity
-  float maxVertexProximityI = linearMap(intent.getGranularity(), maxVertexProximityController);
-  maxVertexProximityController.updateIntent(maxVertexProximityI, strength);
-  
-  // Density → maxVertices (more density = more complex paths)
-  float maxVerticesI = linearMap(intent.getDensity(), maxVerticesController);
-  maxVerticesController.updateIntent(maxVerticesI, strength);
-  
-  // Chaos + Structure → Strategy selection
+  // Strategy selection based on chaos + structure
   if (strength > 0.05f) {
-    if (intent.getChaos() > 0.6f && intent.getStructure() < 0.4f) {
+    if (im.C().get() > 0.6f && im.S().get() < 0.4f) {
       strategyParameter = 2; // horizontals - chaotic, unstructured
-    } else if (intent.getStructure() > 0.7f) {
+    } else if (im.S().get() > 0.7f) {
       strategyParameter = 3; // convex hull - highly structured
-    } else if (intent.getStructure() < 0.3f) {
+    } else if (im.S().get() < 0.3f) {
       strategyParameter = 0; // polypath - low structure
     } else {
       strategyParameter = 1; // bounds - middle ground

@@ -7,6 +7,7 @@
 
 #include "FluidMod.hpp"
 #include "Intent.hpp"
+#include "IntentMapper.hpp"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
 
@@ -74,22 +75,11 @@ void FluidMod::update() {
 void FluidMod::applyIntent(const Intent& intent, float strength) {
   if (!fluidSimulation.isSetup()) return;
   
-  // Energy → dt
-  float dtI = exponentialMap(intent.getEnergy(), *dtControllerPtr);
-  dtControllerPtr->updateIntent(dtI, strength);
-  
-  // Chaos → Vorticity
-  float vorticityI = linearMap(intent.getChaos(), *vorticityControllerPtr);
-  vorticityControllerPtr->updateIntent(vorticityI, strength);
-  
-  // Inverse Density → Value Dissipation
-  float valueDissipationI = inverseMap(intent.getDensity(), *valueDissipationControllerPtr);
-  valueDissipationControllerPtr->updateIntent(valueDissipationI, strength);
-  
-  // Inverse Granularity → Velocity Dissipation
-  float velocityDissipationI = inverseExponentialMap(intent.getGranularity(),
-                                                     *velocityDissipationControllerPtr);
-  velocityDissipationControllerPtr->updateIntent(velocityDissipationI, strength);
+  IntentMap im(intent);
+  im.E().exp(*dtControllerPtr, strength);
+  im.C().lin(*vorticityControllerPtr, strength);
+  im.D().inv().lin(*valueDissipationControllerPtr, strength);
+  im.G().inv().exp(*velocityDissipationControllerPtr, strength);
 }
 
 
