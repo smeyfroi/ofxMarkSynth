@@ -465,9 +465,9 @@ void Gui::drawMemoryBank() {
         ImGui::Dummy(ImVec2(memThumbW, memThumbW));
       }
       
-      // Save button
+      // Save button - deferred to avoid GL state issues during ImGui rendering
       if (ImGui::Button("Save", ImVec2(memThumbW, 0))) {
-        synthPtr->memoryBank.saveToSlot(synthPtr->imageCompositeFbo, i);
+        synthPtr->memoryBank.requestSaveToSlot(i);
       }
     }
     ImGui::EndGroup();

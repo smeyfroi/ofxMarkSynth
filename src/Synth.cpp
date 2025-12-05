@@ -394,10 +394,9 @@ void Synth::receive(int sinkId, const float& v) {
     // Memory bank: save operations
     case SINK_MEMORY_SAVE:
       if (v > 0.5f) {
-        int slot = memoryBank.save(imageCompositeFbo,
+        memoryBank.save(imageCompositeFbo,
             memorySaveCentreController.value,
             memorySaveWidthController.value);
-//        ofLogNotice("Synth") << "Memory saved to slot " << slot;
       }
       break;
       
@@ -564,6 +563,9 @@ void Synth::update() {
   updateSidePanels();
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
+  
+  // Process any deferred memory bank saves (requested from GUI)
+  memoryBank.processPendingSave(imageCompositeFbo);
   
   if (!paused) {
     emit(Synth::SOURCE_COMPOSITE_FBO, imageCompositeFbo);

@@ -37,6 +37,15 @@ public:
     /// Save a random crop to a specific slot (for manual GUI saves)
     void saveToSlot(const ofFbo& source, int slot);
     
+    /// Request a deferred save (for use during GUI rendering)
+    void requestSaveToSlot(int slot) { pendingSaveSlot = slot; }
+    
+    /// Process any pending save request (call from update, not draw)
+    void processPendingSave(const ofFbo& source);
+    
+    /// Check if there's a pending save
+    bool hasPendingSave() const { return pendingSaveSlot >= 0; }
+    
     /// Select and return a memory texture using centre/width
     /// @return Pointer to texture, or nullptr if no memories exist
     const ofTexture* select(float centre, float width) const;
@@ -73,6 +82,7 @@ private:
     int filledCount { 0 };
     glm::vec2 memorySize { 1024, 1024 };
     bool allocated { false };
+    int pendingSaveSlot { -1 };
     
     /// Capture a random crop from source into the destination FBO
     void captureRandomCrop(ofFbo& dest, const ofFbo& source);

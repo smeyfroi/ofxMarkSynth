@@ -68,6 +68,13 @@ void MemoryBank::saveToSlot(const ofFbo& source, int slot) {
     }
 }
 
+void MemoryBank::processPendingSave(const ofFbo& source) {
+    if (pendingSaveSlot >= 0) {
+        saveToSlot(source, pendingSaveSlot);
+        pendingSaveSlot = -1;
+    }
+}
+
 void MemoryBank::captureRandomCrop(ofFbo& dest, const ofFbo& source) {
     // Calculate random position for crop
     float sourceW = source.getWidth();
