@@ -156,7 +156,7 @@ private:
   void initDisplayParameterGroup();
   void initFboParameterGroup();
   void initIntentParameterGroup();
-  std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns; // named accessors for GUI
+  std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
   
   bool paused;
   

@@ -2,7 +2,6 @@
 
 #include "ofMain.h"
 #include "ofxMarkSynth.h"
-#include "ofxGui.h"
 
 const std::filesystem::path FFMPEG_BINARY_PATH { "/opt/homebrew/bin/ffmpeg" };
 

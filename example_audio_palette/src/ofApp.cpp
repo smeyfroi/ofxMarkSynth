@@ -1,6 +1,5 @@
 #include "ofApp.h"
 #include "ofxTimeMeasurements.h"
-#include "ModFactory.hpp"
 
 void ofApp::setup() {
   ofDisableArbTex();
@@ -10,21 +9,26 @@ void ofApp::setup() {
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
   ofxMarkSynth::ResourceManager resources;
+  resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
+  resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  
+  //  resources.add("compositeSize", COMPOSITE_SIZE);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
+  
+  // Audio resources for AudioDataSource
   resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
   resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
   resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
   resources.add("audioChannels", AUDIO_CHANNELS);
   resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Sandline", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  synthPtr = std::make_shared<ofxMarkSynth::Synth>("audio_palette", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
-  synthPtr->configureGui(nullptr); // nullptr == no imgui window
-
-  // No imgui; we manage an ofxGui here instead
-  parameters.add(synthPtr->getParameterGroup());
-  gui.setup(parameters);
+  synthPtr->configureGui(guiWindowPtr);
 }
 
 //--------------------------------------------------------------
@@ -35,8 +39,13 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
   synthPtr->draw();
-  if (guiVisible) gui.draw();
 }
+
+// >>> imgui
+void ofApp::drawGui(ofEventArgs& args){
+  synthPtr->drawGui();
+}
+// <<< imgui
 
 //--------------------------------------------------------------
 void ofApp::exit(){
@@ -45,7 +54,6 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) guiVisible = not guiVisible;
   if (synthPtr->keyPressed(key)) return;
 }
 
