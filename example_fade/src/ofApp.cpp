@@ -11,7 +11,7 @@ void ofApp::setup() {
   const glm::vec2 SYNTH_COMPOSITE_SIZE = { 1080, 1080 }; // drawing layers are scaled down to this size to fit into the window height
   const bool START_PAUSED = false;
   
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Fade", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Fade", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
   
   synthPtr->loadFromConfig(ofToDataPath("example_fade.json"));

@@ -14,7 +14,7 @@ void ofApp::setup() {
   resources.add("audioChannels", AUDIO_CHANNELS);
   resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Audio", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Audio", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("example_audio.json"));

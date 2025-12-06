@@ -13,7 +13,7 @@ void ofApp::setup() {
   resources.add("fontPath", FONT_PATH);
   resources.add("textSourcesPath", ofToDataPath("text"));
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Timer Text Example", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Timer Text Example", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
   
   synthPtr->loadFromConfig(ofToDataPath("example_timer_text.json"));

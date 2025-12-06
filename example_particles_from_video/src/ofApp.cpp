@@ -16,7 +16,7 @@ void ofApp::setup() {
   resources.add("saveRecording", SAVE_RECORDING);
   resources.add("recordingPath", RECORDING_PATH);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Video Particles", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Video Particles", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));

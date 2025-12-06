@@ -12,7 +12,7 @@ void ofApp::setup() {
   ofxMarkSynth::ResourceManager resources;
   resources.add("fontPath", FONT_PATH);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Text", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Text", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));

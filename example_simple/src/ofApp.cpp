@@ -7,7 +7,7 @@ void ofApp::setup() {
   ofSetFrameRate(30);
   TIME_SAMPLE_SET_FRAMERATE(30);
 
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Simple", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Simple", ofxMarkSynth::ModConfig {
   }, false, ofGetWindowSize());
   
   synthPtr->loadFromConfig(ofToDataPath("example_simple.json"));

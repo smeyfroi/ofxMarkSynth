@@ -40,7 +40,7 @@ resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("p
 // Required on macOS for video recording
 resources.add("recorderCompositeSize", glm::vec2(1920, 1080));
 
-auto synth = std::make_shared<ofxMarkSynth::Synth>(
+auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
   ofxMarkSynth::ModConfig{},
   /*startPaused*/ false,
@@ -172,7 +172,7 @@ resources.add("audioBufferSize", 256);
 resources.add("audioChannels", 1);
 resources.add("audioSampleRate", 48000);
 
-auto synth = std::make_shared<ofxMarkSynth::Synth>(
+auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
   ofxMarkSynth::ModConfig{},
   /*startPaused*/ false,

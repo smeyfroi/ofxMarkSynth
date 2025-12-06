@@ -8,7 +8,7 @@ void ofApp::setup() {
   ofSetFrameRate(FRAME_RATE);
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
-  synthPtr = std::make_shared<ofxMarkSynth::Synth>("Points", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("Points", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));

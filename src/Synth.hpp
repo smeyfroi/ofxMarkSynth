@@ -31,9 +31,9 @@
 
 namespace ofxMarkSynth {
 
+
+
 class AudioDataSourceMod;
-
-
 
 const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
 
@@ -47,6 +47,7 @@ class Synth : public Mod {
 public:
   // The composite is the middle (square) section, scaled to fit the window height
   Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
+  static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources = {});
   void drawGui();
   void shutdown() override;
   
@@ -325,10 +326,6 @@ ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModCon
   addMod(modPtr);
   return modPtr;
 }
-
-
-
-
 
 
 
