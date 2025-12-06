@@ -22,7 +22,7 @@ saveRecording { false }
   motionFromVideo.load(sourceVideoFilePath, mute);
   
   sourceNameIdMap = {
-    { "FlowFbo", SOURCE_FLOW_FBO },
+    { "FlowField", SOURCE_FLOW_FIELD },
     { "PointVelocity", SOURCE_POINT_VELOCITY },
     { "Point", SOURCE_POINT }
   };
@@ -36,7 +36,7 @@ recordingDir { recordingDir_ }
   motionFromVideo.initialiseCamera(deviceID, size);
   
   sourceNameIdMap = {
-    { "FlowFbo", SOURCE_FLOW_FBO },
+    { "FlowField", SOURCE_FLOW_FIELD },
     { "PointVelocity", SOURCE_POINT_VELOCITY }
   };
 }
@@ -74,7 +74,7 @@ void VideoFlowSourceMod::update() {
   motionFromVideo.update();
   
   if (motionFromVideo.isReady()) {
-    emit(SOURCE_FLOW_FBO, motionFromVideo.getMotionFbo());
+    emit(SOURCE_FLOW_FIELD, motionFromVideo.getMotionFbo().getTexture());
   }
   
   // TODO: make this a separate process Mod that can sample a texture
