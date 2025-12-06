@@ -14,8 +14,8 @@ namespace ofxMarkSynth {
 
 
 
-FadeMod::FadeMod(Synth* synthPtr, const std::string& name, ModConfig config)
-: Mod { synthPtr, name, std::move(config) }
+FadeMod::FadeMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
+: Mod { std::move(synthPtr), name, std::move(config) }
 {
   sinkNameIdMap = {
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER }

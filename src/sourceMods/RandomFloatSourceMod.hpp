@@ -16,7 +16,7 @@ namespace ofxMarkSynth {
 class RandomFloatSourceMod : public Mod {
 
 public:
-  RandomFloatSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, std::pair<float, float> minRange = {0.0, 1.0}, std::pair<float, float> maxRange = {0.0, 1.0}, unsigned long randomSeed = 0);
+  RandomFloatSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, std::pair<float, float> minRange = {0.0, 1.0}, std::pair<float, float> maxRange = {0.0, 1.0}, unsigned long randomSeed = 0);
   float getAgency() const override;
   void update() override;
   void applyIntent(const Intent& intent, float strength) override;

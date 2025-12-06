@@ -13,7 +13,7 @@
 namespace ofxMarkSynth {
 
 
-RandomHslColorMod::RandomHslColorMod(Synth* synthPtr, const std::string& name, ModConfig config)
+RandomHslColorMod::RandomHslColorMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : colorCount { 0.0f },
 Mod { synthPtr, name, std::move(config) }
 {

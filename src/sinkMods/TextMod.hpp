@@ -21,7 +21,7 @@ namespace ofxMarkSynth {
 class TextMod : public Mod {
 
 public:
-  TextMod(Synth* synthPtr, const std::string& name, ModConfig config, 
+  TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, 
           const std::filesystem::path& fontPath);
   
   void update() override;

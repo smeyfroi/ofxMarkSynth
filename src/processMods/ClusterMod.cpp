@@ -16,7 +16,7 @@ namespace ofxMarkSynth {
 
 
 
-ClusterMod::ClusterMod(Synth* synthPtr, const std::string& name, ModConfig config)
+ClusterMod::ClusterMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {

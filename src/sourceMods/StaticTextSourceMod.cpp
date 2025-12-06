@@ -14,7 +14,7 @@ namespace ofxMarkSynth {
 
 
 
-StaticTextSourceMod::StaticTextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config)
+StaticTextSourceMod::StaticTextSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {

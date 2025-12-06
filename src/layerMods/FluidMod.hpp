@@ -18,7 +18,7 @@ namespace ofxMarkSynth {
 class FluidMod : public Mod {
 
 public:
-  FluidMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  FluidMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void setup();

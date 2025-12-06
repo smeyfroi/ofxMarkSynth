@@ -16,7 +16,7 @@ namespace ofxMarkSynth {
 class PathMod : public Mod {
 
 public:
-  PathMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  PathMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void draw() override;

@@ -16,7 +16,7 @@ namespace ofxMarkSynth {
 class RandomHslColorMod : public Mod {
 
 public:
-  RandomHslColorMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  RandomHslColorMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void applyIntent(const Intent& intent, float strength) override;

@@ -21,7 +21,7 @@
 //class AddTextureMod : public Mod {
 //
 //public:
-//  AddTextureMod(Synth* synthPtr, const std::string& name, ModConfig config);
+//  AddTextureMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
 //  void update() override;
 //  void receive(int sinkId, const float& v) override;
 //  void receive(int sinkId, const ofFloatPixels& pixels) override;

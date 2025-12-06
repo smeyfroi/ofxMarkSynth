@@ -13,6 +13,7 @@
 #include "NodeEditorLayoutSerializer.hpp"
 #include "ofParameter.h"
 #include "ParamController.h"
+#include <memory>
 
 
 
@@ -103,7 +104,7 @@ class Intent;
 class Mod : public std::enable_shared_from_this<Mod> {
   
 public:
-  Mod(Synth* synth, const std::string& name, ModConfig config);
+  Mod(std::shared_ptr<Synth> synth, const std::string& name, ModConfig config);
   virtual ~Mod() = default;
   virtual void shutdown() {};
   virtual void doneModLoad() {}
@@ -147,7 +148,7 @@ public:
 protected:
   std::string name;
   
-  Synth* synthPtr; // parent Synth
+  std::weak_ptr<Synth> synthPtr; // parent Synth (may be expired)
   
   ModConfig config;
   ofParameterGroup parameters;
@@ -167,6 +168,7 @@ protected:
   void disableDrawingLayer();
   void disableDrawingLayer(const std::string& layerName);
   
+  std::shared_ptr<Synth> getSynth() const;
   void syncControllerAgencies();
   
 private:

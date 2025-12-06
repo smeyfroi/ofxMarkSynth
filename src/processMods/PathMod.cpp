@@ -14,7 +14,7 @@
 namespace ofxMarkSynth {
 
 
-PathMod::PathMod(Synth* synthPtr, const std::string& name, ModConfig config)
+PathMod::PathMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {

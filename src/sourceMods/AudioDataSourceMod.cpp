@@ -14,7 +14,7 @@ namespace ofxMarkSynth {
 
 
 
-AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
+AudioDataSourceMod::AudioDataSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
                                        const std::filesystem::path& sourceAudioPath,
                                        const std::string& outDeviceName,
                                        int bufferSize,
@@ -27,7 +27,7 @@ AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name,
   initialise();
 }
 
-AudioDataSourceMod::AudioDataSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
+AudioDataSourceMod::AudioDataSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
                                        const std::string& micDeviceName,
                                        bool recordAudio, const std::filesystem::path& recordingPath)
 : Mod { synthPtr, name, std::move(config) }

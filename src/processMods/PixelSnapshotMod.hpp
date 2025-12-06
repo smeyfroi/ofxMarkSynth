@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class PixelSnapshotMod : public Mod {
 
 public:
-  PixelSnapshotMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  PixelSnapshotMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void draw() override;

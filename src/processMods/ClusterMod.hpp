@@ -20,7 +20,7 @@ namespace ofxMarkSynth {
 class ClusterMod : public Mod {
 
 public:
-  ClusterMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  ClusterMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const glm::vec2& v) override;

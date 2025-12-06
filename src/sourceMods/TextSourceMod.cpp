@@ -10,7 +10,7 @@
 
 namespace ofxMarkSynth {
 
-TextSourceMod::TextSourceMod(Synth* synthPtr, const std::string& name, 
+TextSourceMod::TextSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, 
                              ModConfig config, const std::string& textSourcesPath_)
 : Mod { synthPtr, name, std::move(config) },
   textSourcesPath { textSourcesPath_ }

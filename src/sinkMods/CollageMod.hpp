@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class CollageMod : public Mod {
 
 public:
-  CollageMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const ofPath& path) override;

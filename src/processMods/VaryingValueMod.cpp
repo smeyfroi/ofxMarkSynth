@@ -12,7 +12,7 @@
 //
 //
 //
-//VaryingValueMod::VaryingValueMod(Synth* synthPtr, const std::string& name, ModConfig config)
+//VaryingValueMod::VaryingValueMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 //: Mod { synthPtr, name, std::move(config) }
 //{
 //  sinkNameIdMap = {

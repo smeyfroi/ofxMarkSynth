@@ -34,8 +34,8 @@ void connectSourceToSinks(ModPtr sourceModPtr, std::initializer_list<Connections
 
 
 
-Mod::Mod(Synth* synthPtr_, const std::string& name_, ModConfig config_)
-: synthPtr { synthPtr_ },
+Mod::Mod(std::shared_ptr<Synth> synthPtr_, const std::string& name_, ModConfig config_)
+: synthPtr { std::move(synthPtr_) },
 name { name_ },
 id { nextId },
 config { std::move(config_) }
@@ -110,8 +110,19 @@ void Mod::connect(int sourceId, ModPtr sinkModPtr, int sinkId) {
   }
 }
 
+std::shared_ptr<Synth> Mod::getSynth() const {
+  auto synth = synthPtr.lock();
+  if (!synth) {
+    ofLogError("Mod") << "Synth expired for Mod '" << name << "'";
+  }
+  return synth;
+}
+
 float Mod::getAgency() const {
-  return synthPtr->getAgency();
+  if (auto synth = getSynth()) {
+    return synth->getAgency();
+  }
+  return 0.0f;
 }
 
 int Mod::getSourceId(const std::string& sourceName) {

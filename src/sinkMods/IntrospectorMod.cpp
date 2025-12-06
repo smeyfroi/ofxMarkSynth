@@ -11,7 +11,7 @@
 namespace ofxMarkSynth {
 
 
-IntrospectorMod::IntrospectorMod(Synth* synthPtr, const std::string& name, ModConfig config)
+IntrospectorMod::IntrospectorMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   introspectorPtr = std::make_shared<Introspector>();

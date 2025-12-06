@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class TimerSourceMod : public Mod {
 
 public:
-  TimerSourceMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  TimerSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   
   void update() override;

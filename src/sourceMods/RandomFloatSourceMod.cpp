@@ -13,7 +13,7 @@
 namespace ofxMarkSynth {
 
 
-RandomFloatSourceMod::RandomFloatSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, std::pair<float, float> minRange, std::pair<float, float> maxRange, unsigned long randomSeed)
+RandomFloatSourceMod::RandomFloatSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, std::pair<float, float> minRange, std::pair<float, float> maxRange, unsigned long randomSeed)
 : Mod { synthPtr, name, std::move(config) }
 {
   ofSetRandomSeed(randomSeed);

@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 
 
-SoftCircleMod::SoftCircleMod(Synth* synthPtr, const std::string& name, ModConfig config)
+SoftCircleMod::SoftCircleMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   softCircleShader.load();

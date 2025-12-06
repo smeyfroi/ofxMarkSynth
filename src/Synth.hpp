@@ -46,10 +46,15 @@ class Synth : public Mod {
   
 public:
   // The composite is the middle (square) section, scaled to fit the window height
-  Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
   static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources = {});
   void drawGui();
   void shutdown() override;
+  
+protected:
+  // The composite is the middle (square) section, scaled to fit the window height
+  Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
+  
+public:
   
   template <typename ModT>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
@@ -315,14 +320,16 @@ private:
 
 template <typename ModT>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
-  auto modPtr = std::make_shared<ModT>(this, name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
+  auto self = std::static_pointer_cast<Synth>(shared_from_this());
+  auto modPtr = std::make_shared<ModT>(self, name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
   addMod(modPtr);
   return modPtr;
 }
 
 template <typename ModT, typename... Args>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
-  auto modPtr = std::make_shared<ModT>(this, name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
+  auto self = std::static_pointer_cast<Synth>(shared_from_this());
+  auto modPtr = std::make_shared<ModT>(self, name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
   addMod(modPtr);
   return modPtr;
 }

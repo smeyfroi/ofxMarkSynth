@@ -17,7 +17,7 @@ namespace ofxMarkSynth {
 
 
 
-CollageMod::CollageMod(Synth* synthPtr, const std::string& name, ModConfig config)
+CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {

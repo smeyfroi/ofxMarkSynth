@@ -15,7 +15,7 @@
 namespace ofxMarkSynth {
 
 
-DividedAreaMod::DividedAreaMod(Synth* synthPtr, const std::string& name, ModConfig config)
+DividedAreaMod::DividedAreaMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) },
 dividedArea({ { 1.0, 1.0 }, static_cast<int>(maxUnconstrainedLinesParameter.get()) }) // normalised area size
 {

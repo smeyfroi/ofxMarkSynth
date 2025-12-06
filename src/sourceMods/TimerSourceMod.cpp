@@ -17,7 +17,7 @@ namespace ofxMarkSynth {
 
 
 
-TimerSourceMod::TimerSourceMod(Synth* synthPtr, const std::string& name, ModConfig config)
+TimerSourceMod::TimerSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {

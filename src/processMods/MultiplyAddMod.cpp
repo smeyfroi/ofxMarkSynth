@@ -14,7 +14,7 @@ namespace ofxMarkSynth {
 
 
 
-MultiplyAddMod::MultiplyAddMod(Synth* synthPtr, const std::string& name, ModConfig config)
+MultiplyAddMod::MultiplyAddMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {

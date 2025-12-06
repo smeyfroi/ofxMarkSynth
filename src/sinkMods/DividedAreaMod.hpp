@@ -19,7 +19,7 @@ namespace ofxMarkSynth {
 class DividedAreaMod : public Mod {
 
 public:
-  DividedAreaMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  DividedAreaMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const glm::vec2& point) override;

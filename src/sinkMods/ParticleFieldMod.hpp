@@ -17,7 +17,7 @@ namespace ofxMarkSynth {
 class ParticleFieldMod : public Mod {
   
 public:
-  ParticleFieldMod(Synth* synthPtr, const std::string& name, ModConfig config, float field1Bias_ = 0.0, float field2Bias_ = 0.0);
+  ParticleFieldMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, float field1Bias_ = 0.0, float field2Bias_ = 0.0);
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const ofTexture& value) override;

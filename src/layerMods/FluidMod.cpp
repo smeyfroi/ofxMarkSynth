@@ -17,7 +17,7 @@ namespace ofxMarkSynth {
 
 
 
-FluidMod::FluidMod(Synth* synthPtr, const std::string& name, ModConfig config)
+FluidMod::FluidMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {

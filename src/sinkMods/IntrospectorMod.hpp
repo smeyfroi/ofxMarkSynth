@@ -21,7 +21,7 @@ namespace ofxMarkSynth {
 class IntrospectorMod : public Mod {
 
 public:
-  IntrospectorMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  IntrospectorMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   void update() override;
   void draw() override;
   void receive(int sinkId, const float& value) override;

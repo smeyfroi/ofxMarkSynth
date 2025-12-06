@@ -20,7 +20,7 @@ namespace ofxMarkSynth {
 class SomPaletteMod : public Mod {
   
 public:
-  SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig config);
+  SomPaletteMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   ~SomPaletteMod();
   void doneModLoad() override;
   float getAgency() const override;

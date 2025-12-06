@@ -31,7 +31,7 @@ namespace ofxMarkSynth {
  */
 class TextSourceMod : public Mod {
 public:
-  TextSourceMod(Synth* synthPtr, const std::string& name, ModConfig config,
+  TextSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
                 const std::string& textSourcesPath);
   ~TextSourceMod();
   float getAgency() const override;

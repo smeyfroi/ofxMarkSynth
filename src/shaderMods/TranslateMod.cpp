@@ -12,7 +12,7 @@
 //namespace ofxMarkSynth {
 //
 //
-//TranslateMod::TranslateMod(Synth* synthPtr, const std::string& name, ModConfig config)
+//TranslateMod::TranslateMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 //: Mod { synthPtr, name, std::move(config) }
 //{
 //  translateShader.load();

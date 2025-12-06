@@ -16,7 +16,7 @@ namespace ofxMarkSynth {
 
 
 
-TextMod::TextMod(Synth* synthPtr, const std::string& name, ModConfig config, 
+TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, 
                  const std::filesystem::path& fontPath_)
 : Mod { synthPtr, name, std::move(config) },
   fontPath { fontPath_ }

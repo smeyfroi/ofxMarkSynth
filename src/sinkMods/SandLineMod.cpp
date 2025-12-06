@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 
 
-SandLineMod::SandLineMod(Synth* synthPtr, const std::string& name, ModConfig config)
+SandLineMod::SandLineMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {

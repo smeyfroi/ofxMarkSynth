@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 
 
-ParticleSetMod::ParticleSetMod(Synth* synthPtr, const std::string& name, ModConfig config)
+ParticleSetMod::ParticleSetMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sinkNameIdMap = {

@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 
 
-VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute)
+VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute)
 : Mod { synthPtr, name, std::move(config) },
 saveRecording { false }
 {
@@ -28,7 +28,7 @@ saveRecording { false }
   };
 }
 
-VideoFlowSourceMod::VideoFlowSourceMod(Synth* synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording_, const std::filesystem::path& recordingDir_)
+VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording_, const std::filesystem::path& recordingDir_)
 : Mod { synthPtr, name, std::move(config) },
 saveRecording { saveRecording_ },
 recordingDir { recordingDir_ }

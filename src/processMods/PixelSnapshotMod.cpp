@@ -15,7 +15,7 @@ namespace ofxMarkSynth {
 
 
 
-PixelSnapshotMod::PixelSnapshotMod(Synth* synthPtr, const std::string& name, ModConfig config)
+PixelSnapshotMod::PixelSnapshotMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
   sourceNameIdMap = {
