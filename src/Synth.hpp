@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <filesystem>
 #include <optional>
+#include <memory>
 #include "SaveToFileThread.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"
@@ -266,7 +267,7 @@ private:
   ofPixels recorderPixels;           // Reusable pixel buffer
 #endif
   
-  std::vector<SaveToFileThread*> saveToFileThreads;
+  std::vector<std::unique_ptr<SaveToFileThread>> saveToFileThreads;
   
   // PBO-based async pixel readback for image saving
   ofBufferObject imageSavePbo;  // Pre-allocated at construction, reused for all saves

@@ -253,9 +253,9 @@ void Synth::shutdown() {
     
     glDeleteSync(pendingImageSave->fence);
     
-    SaveToFileThread* threadPtr = new SaveToFileThread();
+    auto threadPtr = std::make_unique<SaveToFileThread>();
     threadPtr->save(filepath, std::move(pixels));
-    saveToFileThreads.push_back(threadPtr);
+    saveToFileThreads.push_back(std::move(threadPtr));
     
     pendingImageSave.reset();
     ofLogNotice("Synth") << "Pending image save handed off to thread";
@@ -266,6 +266,7 @@ void Synth::shutdown() {
     thread->waitForThread(false);
     ofLogNotice("Synth") << "Done waiting for save thread to finish";
   });
+  saveToFileThreads.clear();
 }
 
 void Synth::unload() {
@@ -908,9 +909,9 @@ void Synth::processPendingImageSave() {
     glDeleteSync(pendingImageSave->fence);
     
     // Hand off to save thread
-    SaveToFileThread* threadPtr = new SaveToFileThread();
+    auto threadPtr = std::make_unique<SaveToFileThread>();
     threadPtr->save(filepath, std::move(pixels));
-    saveToFileThreads.push_back(threadPtr);
+    saveToFileThreads.push_back(std::move(threadPtr));
     
     // Extract filename for status
     std::string filename = filepath.substr(filepath.find_last_of("/") + 1);
