@@ -219,6 +219,15 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   }
 }
 
+void Synth::pruneSaveThreads() {
+  saveToFileThreads.erase(
+      std::remove_if(saveToFileThreads.begin(), saveToFileThreads.end(),
+                     [](const std::unique_ptr<SaveToFileThread>& thread) {
+                       return !thread->isThreadRunning();
+                     }),
+      saveToFileThreads.end());
+}
+
 void Synth::shutdown() {
   ofLogNotice("Synth") << "Synth::shutdown " << name;
   
@@ -264,6 +273,7 @@ void Synth::shutdown() {
     
     glDeleteSync(pendingImageSave->fence);
     
+    pruneSaveThreads();
     auto threadPtr = std::make_unique<SaveToFileThread>();
     threadPtr->save(filepath, std::move(pixels));
     saveToFileThreads.push_back(std::move(threadPtr));
@@ -920,6 +930,7 @@ void Synth::processPendingImageSave() {
     glDeleteSync(pendingImageSave->fence);
     
     // Hand off to save thread
+    pruneSaveThreads();
     auto threadPtr = std::make_unique<SaveToFileThread>();
     threadPtr->save(filepath, std::move(pixels));
     saveToFileThreads.push_back(std::move(threadPtr));

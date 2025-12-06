@@ -293,6 +293,8 @@ private:
   // Audio source mod for synchronized audio/video recording
   std::weak_ptr<AudioDataSourceMod> audioDataSourceModPtr;
   
+  void pruneSaveThreads();
+  
   // >>> Memory bank system
   MemoryBank memoryBank;
   void initMemoryBankParameterGroup();
