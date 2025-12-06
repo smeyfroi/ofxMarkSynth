@@ -661,7 +661,7 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 **Visual Characteristics**: Flowing • Organic motion • Vortex formation • Smooth blending
 
 **Sources**:
-- `VelocitiesTexture` (texture): Velocity field texture
+- `velocitiesTexture` (texture): Velocity field texture
 
 **Layers**:
 - Default layer: Visual simulation output

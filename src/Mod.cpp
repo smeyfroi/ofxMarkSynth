@@ -84,7 +84,7 @@ ofParameterGroup& Mod::getParameterGroup() {
     
     for (const auto& [k, v] : config) {
       if (!trySetParameterFromString(parameters, k, v)) {
-        ofLogError("Mod") << "Bad parameter: " << k;
+        ofLogError("Mod") << "Bad parameter: " << k << " not one of: " << parameters.toString();
       }
     }
     
@@ -139,14 +139,22 @@ float Mod::getAgency() const {
 
 int Mod::getSourceId(const std::string& sourceName) {
   if (!sourceNameIdMap.contains(sourceName)) {
-    ofLogError("Mod") << "Bad source name: " << sourceName;
+    std::vector<std::string> keys;
+    for (const auto& [key, _] : sourceNameIdMap) {
+      keys.push_back(key);
+    }
+    ofLogError("Mod") << "Bad source name: " << sourceName << " not one of: " << ofJoinString(keys, ", ");
   }
   return sourceNameIdMap.at(sourceName);
 }
 
 int Mod::getSinkId(const std::string& sinkName) {
   if (!sinkNameIdMap.contains(sinkName)) {
-    ofLogError("Mod") << "Bad sink name: " << sinkName;
+    std::vector<std::string> keys;
+    for (const auto& [key, _] : sinkNameIdMap) {
+      keys.push_back(key);
+    }
+    ofLogError("Mod") << "Bad sink name: " << sinkName << " not one of: " << ofJoinString(keys, ", ");
   }
   return sinkNameIdMap.at(sinkName);
 }
@@ -173,39 +181,39 @@ template void Mod::emit(int sourceId, const ofTexture& value);
 template void Mod::emit(int sourceId, const std::string& value);
 
 void Mod::receive(int sinkId, const glm::vec2& point) {
-  ofLogError("Mod") << "Bad receive of glm::vec2";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of glm::vec2";
 }
 
 void Mod::receive(int sinkId, const glm::vec3& point) {
-  ofLogError("Mod") << "Bad receive of glm::vec3";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of glm::vec3";
 }
 
 void Mod::receive(int sinkId, const glm::vec4& point) {
-  ofLogError("Mod") << "Bad receive of glm::vec4";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of glm::vec4";
 }
 
 void Mod::receive(int sinkId, const float& value) {
-  ofLogError("Mod") << "Float receive for unknown sinkId " << sinkId;
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") float receive for unknown sinkId " << sinkId;
 }
 
 void Mod::receive(int sinkId, const ofFloatPixels& pixels) {
-  ofLogError("Mod") << "Bad receive of ofFloatPixels";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of ofFloatPixels";
 }
 
 void Mod::receive(int sinkId, const ofPath& path) {
-  ofLogError("Mod") << "Bad receive of ofPath";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of ofPath";
 }
 
 void Mod::receive(int sinkId, const ofFbo& fbo) {
-  ofLogError("Mod") << "Bad receive of ofFbo";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of ofFbo";
 }
 
 void Mod::receive(int sinkId, const ofTexture& texture) {
-  ofLogError("Mod") << "Bad receive of ofTexture";
+  ofLogError("Mod") << name << " (" << typeid(*this).name() << ") bad receive of ofTexture";
 }
 
 void Mod::receive(int sinkId, const std::string& text) {
-  ofLogWarning("Mod") << name << " received string but doesn't handle it";
+  ofLogWarning("Mod") << name << " (" << typeid(*this).name() << ") received string but doesn't handle it";
 }
 
 void Mod::receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr) {
