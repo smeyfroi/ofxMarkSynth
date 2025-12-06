@@ -35,9 +35,7 @@ TimerSourceMod::TimerSourceMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "TriggerNow", SINK_TRIGGER_NOW }
   };
   
-  sourceNameControllerPtrMap = {
-    { intervalParameter.getName(), &intervalController }
-  };
+  registerControllerForSource(intervalParameter, intervalController);
   
   float now = ofGetElapsedTimef();
   nextFireTime = now + std::max(intervalController.value, MIN_INTERVAL);

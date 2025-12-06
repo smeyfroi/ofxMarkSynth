@@ -21,17 +21,15 @@ Mod { synthPtr, name, std::move(config) }
     { "Vec4", SOURCE_VEC4 }
   };
   
-  sourceNameControllerPtrMap = {
-    { colorsPerUpdateParameter.getName(), &colorsPerUpdateController },
-    { hueCenterParameter.getName(), &hueCenterController },
-    { hueWidthParameter.getName(), &hueWidthController },
-    { minSaturationParameter.getName(), &minSaturationController },
-    { maxSaturationParameter.getName(), &maxSaturationController },
-    { minBrightnessParameter.getName(), &minBrightnessController },
-    { maxBrightnessParameter.getName(), &maxBrightnessController },
-    { minAlphaParameter.getName(), &minAlphaController },
-    { maxAlphaParameter.getName(), &maxAlphaController }
-  };
+  registerControllerForSource(colorsPerUpdateParameter, colorsPerUpdateController);
+  registerControllerForSource(hueCenterParameter, hueCenterController);
+  registerControllerForSource(hueWidthParameter, hueWidthController);
+  registerControllerForSource(minSaturationParameter, minSaturationController);
+  registerControllerForSource(maxSaturationParameter, maxSaturationController);
+  registerControllerForSource(minBrightnessParameter, minBrightnessController);
+  registerControllerForSource(maxBrightnessParameter, maxBrightnessController);
+  registerControllerForSource(minAlphaParameter, minAlphaController);
+  registerControllerForSource(maxAlphaParameter, maxAlphaController);
   
   sinkNameIdMap = {
     { "ColorsPerUpdate", SINK_COLORS_PER_UPDATE },

@@ -28,15 +28,13 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
     { "ChangeLayer", SINK_CHANGE_LAYER }
   };
   
-  sourceNameControllerPtrMap = {
-    { mixNewParameter.getName(), &mixNewController },
-    { alphaMultiplierParameter.getName(), &alphaMultiplierController },
-    { field1MultiplierParameter.getName(), &field1MultiplierController },
-    { field2MultiplierParameter.getName(), &field2MultiplierController },
-    { jumpAmountParameter.getName(), &jumpAmountController },
-    { borderWidthParameter.getName(), &borderWidthController },
-    { ghostBlendParameter.getName(), &ghostBlendController }
-  };
+  registerControllerForSource(mixNewParameter, mixNewController);
+  registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
+  registerControllerForSource(field1MultiplierParameter, field1MultiplierController);
+  registerControllerForSource(field2MultiplierParameter, field2MultiplierController);
+  registerControllerForSource(jumpAmountParameter, jumpAmountController);
+  registerControllerForSource(borderWidthParameter, borderWidthController);
+  registerControllerForSource(ghostBlendParameter, ghostBlendController);
 }
 
 void SmearMod::initParameters() {

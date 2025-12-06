@@ -24,15 +24,14 @@ SandLineMod::SandLineMod(std::shared_ptr<Synth> synthPtr, const std::string& nam
     { colorParameter.getName(), SINK_POINT_COLOR }
   };
   
-  sourceNameControllerPtrMap = {
-    { densityParameter.getName(), &densityController },
-    { pointRadiusParameter.getName(), &pointRadiusController },
-    { colorParameter.getName(), &colorController },
-    { alphaMultiplierParameter.getName(), &alphaMultiplierController },
-    { stdDevAlongParameter.getName(), &stdDevAlongController },
-    { stdDevPerpendicularParameter.getName(), &stdDevPerpendicularController }
-  };
+  registerControllerForSource(densityParameter, densityController);
+  registerControllerForSource(pointRadiusParameter, pointRadiusController);
+  registerControllerForSource(colorParameter, colorController);
+  registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
+  registerControllerForSource(stdDevAlongParameter, stdDevAlongController);
+  registerControllerForSource(stdDevPerpendicularParameter, stdDevPerpendicularController);
 }
+
 
 void SandLineMod::initParameters() {
   parameters.add(densityParameter);

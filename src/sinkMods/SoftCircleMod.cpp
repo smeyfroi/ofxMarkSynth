@@ -30,13 +30,11 @@ SoftCircleMod::SoftCircleMod(std::shared_ptr<Synth> synthPtr, const std::string&
     { "ChangeLayer", SINK_CHANGE_LAYER }
   };
   
-  sourceNameControllerPtrMap = {
-    { radiusParameter.getName(), &radiusController },
-    { colorParameter.getName(), &colorController },
-    { colorMultiplierParameter.getName(), &colorMultiplierController },
-    { alphaMultiplierParameter.getName(), &alphaMultiplierController },
-    { softnessParameter.getName(), &softnessController }
-  };
+  registerControllerForSource(radiusParameter, radiusController);
+  registerControllerForSource(colorParameter, colorController);
+  registerControllerForSource(colorMultiplierParameter, colorMultiplierController);
+  registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
+  registerControllerForSource(softnessParameter, softnessController);
 }
 
 void SoftCircleMod::initParameters() {

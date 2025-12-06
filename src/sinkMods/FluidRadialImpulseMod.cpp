@@ -26,10 +26,8 @@ FluidRadialImpulseMod::FluidRadialImpulseMod(std::shared_ptr<Synth> synthPtr, co
     { impulseStrengthParameter.getName(), SINK_IMPULSE_STRENGTH }
   };
   
-  sourceNameControllerPtrMap = {
-    { impulseRadiusParameter.getName(), &impulseRadiusController },
-    { impulseStrengthParameter.getName(), &impulseStrengthController }
-  };
+  registerControllerForSource(impulseRadiusParameter, impulseRadiusController);
+  registerControllerForSource(impulseStrengthParameter, impulseStrengthController);
 }
 
 void FluidRadialImpulseMod::initParameters() {

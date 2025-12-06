@@ -35,20 +35,21 @@ SomPaletteMod::SomPaletteMod(std::shared_ptr<Synth> synthPtr, const std::string&
 }
 
 void SomPaletteMod::doneModLoad() {
-  if (!synthPtr) return;
+  auto synth = getSynth();
+  if (!synth) return;
   auto self = std::static_pointer_cast<SomPaletteMod>(shared_from_this());
   std::string baseName = getName();
   
-  synthPtr->addLiveTexturePtrFn(baseName + ": Active",
-                                [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+  synth->addLiveTexturePtrFn(baseName + ": Active",
+                             [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
     if (auto locked = weakSelf.lock()) {
       return locked->getActivePaletteTexturePtr();
     }
     return nullptr;
   });
   
-  synthPtr->addLiveTexturePtrFn(baseName + ": Next",
-                                [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+  synth->addLiveTexturePtrFn(baseName + ": Next",
+                             [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
     if (auto locked = weakSelf.lock()) {
       return locked->getNextPaletteTexturePtr();
     }

@@ -110,6 +110,18 @@ void Mod::connect(int sourceId, ModPtr sinkModPtr, int sinkId) {
   }
 }
 
+void Mod::registerControllerForSource(const std::string& sourceName, BaseParamController& controller) {
+  if (sourceName.empty()) {
+    ofLogError("Mod") << "Empty source name when registering controller in Mod '" << name << "'";
+    return;
+  }
+  if (sourceNameControllerPtrMap.contains(sourceName)) {
+    ofLogWarning("Mod") << "Controller already registered for source '" << sourceName
+                         << "' in Mod '" << name << "', overwriting";
+  }
+  sourceNameControllerPtrMap[sourceName] = &controller;
+}
+
 std::shared_ptr<Synth> Mod::getSynth() const {
   auto synth = synthPtr.lock();
   if (!synth) {

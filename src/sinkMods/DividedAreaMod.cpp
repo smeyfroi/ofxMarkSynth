@@ -31,14 +31,12 @@ dividedArea({ { 1.0, 1.0 }, static_cast<int>(maxUnconstrainedLinesParameter.get(
     { "ChangeLayer", SINK_CHANGE_LAYER }
   };
   
-  sourceNameControllerPtrMap = {
-    { angleParameter.getName(), &angleController },
-    { minorLineColorParameter.getName(), &minorLineColorController },
-    { majorLineColorParameter.getName(), &majorLineColorController },
-    { pathWidthParameter.getName(), &pathWidthController },
-    { majorLineWidthParameter.getName(), &majorLineWidthController },
-    { maxUnconstrainedLinesParameter.getName(), &maxUnconstrainedLinesController }
-  };
+  registerControllerForSource(angleParameter, angleController);
+  registerControllerForSource(minorLineColorParameter, minorLineColorController);
+  registerControllerForSource(majorLineColorParameter, majorLineColorController);
+  registerControllerForSource(pathWidthParameter, pathWidthController);
+  registerControllerForSource(majorLineWidthParameter, majorLineWidthController);
+  registerControllerForSource(maxUnconstrainedLinesParameter, maxUnconstrainedLinesController);
 }
 
 void DividedAreaMod::initParameters() {

@@ -25,9 +25,7 @@ vecDimensions { vecDimensions_ }
     { "Vec4", SOURCE_VEC4 }
   };
   
-  sourceNameControllerPtrMap = {
-    { vecsPerUpdateParameter.getName(), &vecsPerUpdateController }
-  };
+  registerControllerForSource(vecsPerUpdateParameter, vecsPerUpdateController);
 }
 
 void RandomVecSourceMod::initParameters() {

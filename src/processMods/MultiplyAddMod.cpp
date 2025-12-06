@@ -26,10 +26,8 @@ MultiplyAddMod::MultiplyAddMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "float", SOURCE_FLOAT }
   };
   
-  sourceNameControllerPtrMap = {
-    { multiplierParameter.getName(), &multiplierController },
-    { adderParameter.getName(), &adderController }
-  };
+  registerControllerForSource(multiplierParameter, multiplierController);
+  registerControllerForSource(adderParameter, adderController);
 }
 
 void MultiplyAddMod::initParameters() {

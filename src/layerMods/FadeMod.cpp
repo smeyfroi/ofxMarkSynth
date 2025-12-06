@@ -21,9 +21,7 @@ FadeMod::FadeMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER }
   };
   
-  sourceNameControllerPtrMap = {
-    { alphaMultiplierParameter.getName(), &alphaMultiplierController }
-  };
+  registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
 }
 
 void FadeMod::initParameters() {

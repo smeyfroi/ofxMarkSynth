@@ -37,10 +37,10 @@ void ParticleFieldMod::initParameters() {
   minWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("minWeight").cast<float>());
   maxWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxWeight").cast<float>());
   
-  sourceNameControllerPtrMap = {
-    { parameters.get("minWeight").cast<float>().getName(), minWeightControllerPtr.get() },
-    { parameters.get("maxWeight").cast<float>().getName(), maxWeightControllerPtr.get() }
-  };
+  auto& minWeightParam = parameters.get("minWeight").cast<float>();
+  auto& maxWeightParam = parameters.get("maxWeight").cast<float>();
+  registerControllerForSource(minWeightParam, *minWeightControllerPtr);
+  registerControllerForSource(maxWeightParam, *maxWeightControllerPtr);
 }
 
 float ParticleFieldMod::getAgency() const {

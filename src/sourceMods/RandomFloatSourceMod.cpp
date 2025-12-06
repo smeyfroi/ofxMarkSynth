@@ -26,11 +26,9 @@ RandomFloatSourceMod::RandomFloatSourceMod(std::shared_ptr<Synth> synthPtr, cons
     { "Float", SOURCE_FLOAT }
   };
   
-  sourceNameControllerPtrMap = {
-    { floatsPerUpdateParameter.getName(), &floatsPerUpdateController },
-    { minParameter.getName(), &minController },
-    { maxParameter.getName(), &maxController }
-  };
+  registerControllerForSource(floatsPerUpdateParameter, floatsPerUpdateController);
+  registerControllerForSource(minParameter, minController);
+  registerControllerForSource(maxParameter, maxController);
 }
 
 void RandomFloatSourceMod::initParameters() {

@@ -24,11 +24,9 @@ PathMod::PathMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
     { "Path", SOURCE_PATH }
   };
   
-  sourceNameControllerPtrMap = {
-    { maxVerticesParameter.getName(), &maxVerticesController },
-    { maxVertexProximityParameter.getName(), &maxVertexProximityController },
-    { minVertexProximityParameter.getName(), &minVertexProximityController }
-  };
+  registerControllerForSource(maxVerticesParameter, maxVerticesController);
+  registerControllerForSource(maxVertexProximityParameter, maxVertexProximityController);
+  registerControllerForSource(minVertexProximityParameter, minVertexProximityController);
 }
 
 void PathMod::initParameters() {

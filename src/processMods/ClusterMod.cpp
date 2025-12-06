@@ -33,9 +33,7 @@ void ClusterMod::initParameters() {
   parameters.add(agencyFactorParameter);
   clustersControllerPtr = std::make_unique<ParamController<float>>(pointClusters.clustersParameter);
   
-  sourceNameControllerPtrMap = {
-    { pointClusters.clustersParameter.getName(), clustersControllerPtr.get() }
-  };
+  registerControllerForSource(pointClusters.clustersParameter, *clustersControllerPtr);
 }
 
 float ClusterMod::getAgency() const {

@@ -24,10 +24,9 @@ TextSourceMod::TextSourceMod(std::shared_ptr<Synth> synthPtr, const std::string&
   };
   
   // Expose controller so UI can show contribution weights
-  sourceNameControllerPtrMap = {
-    { randomnessParameter.getName(), &randomnessController }
-  };
- }
+  registerControllerForSource(randomnessParameter, randomnessController);
+}
+
 
 TextSourceMod::~TextSourceMod() {
   // Clean up listeners to prevent memory leaks on mod destruction

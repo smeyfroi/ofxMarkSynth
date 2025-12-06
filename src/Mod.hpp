@@ -168,6 +168,12 @@ protected:
   void disableDrawingLayer();
   void disableDrawingLayer(const std::string& layerName);
   
+  void registerControllerForSource(const std::string& sourceName, BaseParamController& controller);
+  template <typename T>
+  void registerControllerForSource(ofParameter<T>& param, ParamController<T>& controller) {
+    registerControllerForSource(param.getName(), controller);
+  }
+  
   std::shared_ptr<Synth> getSynth() const;
   void syncControllerAgencies();
   

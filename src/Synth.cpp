@@ -71,7 +71,12 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recording";
 
 
 std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources) {
-  return std::make_shared<Synth>(name, std::move(config), startPaused, compositeSize, std::move(resources));
+  return std::shared_ptr<Synth>(
+      new Synth(name,
+                std::move(config),
+                startPaused,
+                compositeSize,
+                std::move(resources)));
 }
 
 

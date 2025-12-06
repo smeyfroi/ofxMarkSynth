@@ -22,9 +22,7 @@ PixelSnapshotMod::PixelSnapshotMod(std::shared_ptr<Synth> synthPtr, const std::s
     { "SnapshotTexture", SOURCE_SNAPSHOT_TEXTURE }
   };
   
-  sourceNameControllerPtrMap = {
-    { sizeParameter.getName(), &sizeController }
-  };
+  registerControllerForSource(sizeParameter, sizeController);
 }
 
 void PixelSnapshotMod::initParameters() {

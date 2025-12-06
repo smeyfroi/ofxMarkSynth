@@ -25,10 +25,8 @@ ParticleSetMod::ParticleSetMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { colorParameter.getName(), SINK_COLOR }
   };
   
-  sourceNameControllerPtrMap = {
-    { spinParameter.getName(), &spinController },
-    { colorParameter.getName(), &colorController }
-  };
+  registerControllerForSource(spinParameter, spinController);
+  registerControllerForSource(colorParameter, colorController);
 }
 
 float ParticleSetMod::getAgency() const {
@@ -50,18 +48,22 @@ void ParticleSetMod::initParameters() {
   colourMultiplierControllerPtr = std::make_unique<ParamController<float>>(parameters.get("colourMultiplier").cast<float>());
   maxSpeedControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxSpeed").cast<float>());
   
-  sourceNameControllerPtrMap = {
-    { spinParameter.getName(), &spinController },
-    { colorParameter.getName(), &colorController },
-    { parameters.get("timeStep").cast<float>().getName(), timeStepControllerPtr.get() },
-    { parameters.get("velocityDamping").cast<float>().getName(), velocityDampingControllerPtr.get() },
-    { parameters.get("attractionStrength").cast<float>().getName(), attractionStrengthControllerPtr.get() },
-    { parameters.get("attractionRadius").cast<float>().getName(), attractionRadiusControllerPtr.get() },
-    { parameters.get("forceScale").cast<float>().getName(), forceScaleControllerPtr.get() },
-    { parameters.get("connectionRadius").cast<float>().getName(), connectionRadiusControllerPtr.get() },
-    { parameters.get("colourMultiplier").cast<float>().getName(), colourMultiplierControllerPtr.get() },
-    { parameters.get("maxSpeed").cast<float>().getName(), maxSpeedControllerPtr.get() }
-  };
+  auto& timeStepParam = parameters.get("timeStep").cast<float>();
+  auto& velocityDampingParam = parameters.get("velocityDamping").cast<float>();
+  auto& attractionStrengthParam = parameters.get("attractionStrength").cast<float>();
+  auto& attractionRadiusParam = parameters.get("attractionRadius").cast<float>();
+  auto& forceScaleParam = parameters.get("forceScale").cast<float>();
+  auto& connectionRadiusParam = parameters.get("connectionRadius").cast<float>();
+  auto& colourMultiplierParam = parameters.get("colourMultiplier").cast<float>();
+  auto& maxSpeedParam = parameters.get("maxSpeed").cast<float>();
+  registerControllerForSource(timeStepParam, *timeStepControllerPtr);
+  registerControllerForSource(velocityDampingParam, *velocityDampingControllerPtr);
+  registerControllerForSource(attractionStrengthParam, *attractionStrengthControllerPtr);
+  registerControllerForSource(attractionRadiusParam, *attractionRadiusControllerPtr);
+  registerControllerForSource(forceScaleParam, *forceScaleControllerPtr);
+  registerControllerForSource(connectionRadiusParam, *connectionRadiusControllerPtr);
+  registerControllerForSource(colourMultiplierParam, *colourMultiplierControllerPtr);
+  registerControllerForSource(maxSpeedParam, *maxSpeedControllerPtr);
 }
 
 void ParticleSetMod::update() {

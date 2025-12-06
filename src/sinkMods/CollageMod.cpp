@@ -26,11 +26,9 @@ CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name,
     { colorParameter.getName(), SINK_COLOR }
   };
   
-  sourceNameControllerPtrMap = {
-    { colorParameter.getName(), &colorController },
-    { saturationParameter.getName(), &saturationController },
-    { outlineParameter.getName(), &outlineController }
-  };
+  registerControllerForSource(colorParameter, colorController);
+  registerControllerForSource(saturationParameter, saturationController);
+  registerControllerForSource(outlineParameter, outlineController);
 }
 
 void CollageMod::initParameters() {

@@ -16,8 +16,7 @@ namespace ofxMarkSynth {
 
 
 
-TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, 
-                 const std::filesystem::path& fontPath_)
+TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& fontPath_)
 : Mod { synthPtr, name, std::move(config) },
   fontPath { fontPath_ }
 {
@@ -29,12 +28,10 @@ TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
     { alphaParameter.getName(), SINK_ALPHA }
   };
   
-  sourceNameControllerPtrMap = {
-    { positionParameter.getName(), &positionController },
-    { fontSizeParameter.getName(), &fontSizeController },
-    { colorParameter.getName(), &colorController },
-    { alphaParameter.getName(), &alphaController }
-  };
+  registerControllerForSource(positionParameter, positionController);
+  registerControllerForSource(fontSizeParameter, fontSizeController);
+  registerControllerForSource(colorParameter, colorController);
+  registerControllerForSource(alphaParameter, alphaController);
 }
 
 void TextMod::initParameters() {
@@ -51,7 +48,7 @@ float TextMod::getAgency() const {
 
 void TextMod::update() {
   syncControllerAgencies();
-  // Update all parameter controllers
+
   positionController.update();
   fontSizeController.update();
   colorController.update();
@@ -169,8 +166,8 @@ void TextMod::renderText(const std::string& text) {
   float y = pos.y * fboPtr->getHeight();
   
   ofRectangle bounds = font.getStringBoundingBox(text, 0, 0);
-  x -= bounds.width * 0.5f;   // Center horizontally
-  y += bounds.height * 0.5f;  // Center vertically (OF text coords)
+  x -= bounds.width * 0.5f;
+  y += bounds.height * 0.5f;
   
   ofFloatColor finalColor = colorController.value;
   finalColor.a *= alphaController.value;
