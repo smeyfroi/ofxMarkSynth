@@ -51,8 +51,8 @@ struct DrawingLayer {
   DrawingLayer() : id(nextId++) {}
   DrawingLayer(const std::string& name_, FboPtr fboPtr_, bool clearOnUpdate_,
                ofBlendMode blendMode_, bool isDrawn_)
-    : id(nextId++), name(name_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
-      blendMode(blendMode_), isDrawn(isDrawn_) {}
+  : id(nextId++), name(name_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
+  blendMode(blendMode_), isDrawn(isDrawn_) {}
 private:
   inline static int nextId = -1000; // negative to avoid clashing with Mod ids
 };
@@ -106,6 +106,7 @@ public:
   Mod(Synth* synth, const std::string& name, ModConfig config);
   virtual ~Mod() = default;
   virtual void shutdown() {};
+  virtual void doneModLoad() {}
   virtual void update() {};
   virtual void draw() {};
   virtual bool keyPressed(int key) { return false; };
@@ -117,8 +118,9 @@ public:
   
   virtual float getAgency() const;
   virtual void applyIntent(const Intent& intent, float intentStrength) {};
-
+    
   int getSourceId(const std::string& sourceName);
+  
   int getSinkId(const std::string& sinkName);
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec2& point);
@@ -135,27 +137,27 @@ public:
   std::optional<DrawingLayerPtr> getCurrentNamedDrawingLayerPtr(const std::string& name);
   
   static constexpr int SINK_CHANGE_LAYER = -300;
-
+  
   // TODO: clean all this up
   friend class Gui;
   friend class NodeEditorLayout;
   friend class NodeEditorLayoutSerializer;
   std::map<std::string, BaseParamController*> sourceNameControllerPtrMap; // for the GUI to access
-
+  
 protected:
   std::string name;
   
   Synth* synthPtr; // parent Synth
-
+  
   ModConfig config;
   ofParameterGroup parameters;
   virtual void initParameters() = 0;
-
+  
   std::map<std::string, int> sourceNameIdMap;
   std::map<std::string, int> sinkNameIdMap;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
-
+  
   std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, int index);
   std::optional<std::string> getRandomLayerName();
   void changeDrawingLayer();
@@ -165,9 +167,8 @@ protected:
   void disableDrawingLayer();
   void disableDrawingLayer(const std::string& layerName);
   
-  // Sync controller agencies so GUI weights come from controllers, not recomputed
   void syncControllerAgencies();
-
+  
 private:
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
   std::unordered_map<std::string, int> currentDrawingLayerIndices; // index < 0 means don't draw

@@ -54,8 +54,14 @@ public:
   template <typename ModT, typename... Args>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
-  void addMod(ofxMarkSynth::ModPtr modPtr) { modPtrs.insert({ modPtr->getName(), modPtr }); }
+  void addMod(ofxMarkSynth::ModPtr modPtr) {
+    modPtrs.insert({ modPtr->getName(), modPtr });
+    if (modPtr) {
+      modPtr->doneModLoad();
+    }
+  }
   DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
+  
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
@@ -308,16 +314,17 @@ private:
 template <typename ModT>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
   auto modPtr = std::make_shared<ModT>(this, name, std::forward<ofxMarkSynth::ModConfig>(modConfig));
-  modPtrs.insert({ name, modPtr });
+  addMod(modPtr);
   return modPtr;
 }
 
 template <typename ModT, typename... Args>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args) {
   auto modPtr = std::make_shared<ModT>(this, name, std::forward<ofxMarkSynth::ModConfig>(modConfig), std::forward<Args>(args)...);
-  modPtrs.insert({ name, modPtr });
+  addMod(modPtr);
   return modPtr;
 }
+
 
 
 

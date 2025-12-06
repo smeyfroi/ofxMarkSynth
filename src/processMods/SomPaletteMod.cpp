@@ -7,6 +7,7 @@
 
 #include "SomPaletteMod.hpp"
 #include "IntentMapping.hpp"
+#include "Synth.hpp"
 
 
 namespace ofxMarkSynth {
@@ -16,7 +17,7 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig
 : Mod { synthPtr, name, std::move(config) }
 {
   somPalette.numIterations = iterationsParameter;
-//  somPalette.numIterations = iterationsController.value;
+  //  somPalette.numIterations = iterationsController.value;
   somPalette.setVisible(false);
   
   sinkNameIdMap = {
@@ -32,6 +33,29 @@ SomPaletteMod::SomPaletteMod(Synth* synthPtr, const std::string& name, ModConfig
     { "FieldTexture", SOURCE_FIELD }
   };
 }
+
+void SomPaletteMod::doneModLoad() {
+  if (!synthPtr) return;
+  auto self = std::static_pointer_cast<SomPaletteMod>(shared_from_this());
+  std::string baseName = getName();
+  
+  synthPtr->addLiveTexturePtrFn(baseName + ": Active",
+                                [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+    if (auto locked = weakSelf.lock()) {
+      return locked->getActivePaletteTexturePtr();
+    }
+    return nullptr;
+  });
+  
+  synthPtr->addLiveTexturePtrFn(baseName + ": Next",
+                                [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+    if (auto locked = weakSelf.lock()) {
+      return locked->getNextPaletteTexturePtr();
+    }
+    return nullptr;
+  });
+}
+
 
 SomPaletteMod::~SomPaletteMod() {
   iterationsParameter.removeListener(this, &SomPaletteMod::onIterationsParameterChanged);
@@ -55,33 +79,33 @@ float SomPaletteMod::getAgency() const {
 ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
   const int w = in.getWidth();
   const int h = in.getHeight();
-
+  
   ofFloatPixels out;
   out.allocate(w, h, 2);
-
+  
   const float* src = in.getData();
   float* dst = out.getData();
   const size_t n = static_cast<size_t>(w) * static_cast<size_t>(h);
-
+  
   // Orthonormal opponent axes:
   // e1 = ( 1, -1,  0) / sqrt(2)  -> red-green
   // e2 = ( 1,  1, -2) / sqrt(6)  -> blue-yellow
   constexpr float invSqrt2 = 0.7071067811865476f;
   constexpr float invSqrt6 = 0.4082482904638631f;
-
+  
   for (size_t i = 0; i < n; ++i) {
     float R = src[3*i + 0];
     float G = src[3*i + 1];
     float B = src[3*i + 2];
-
+    
     // center around neutral gray to make outputs zero-mean
     float r = R - 0.5f;
     float g = G - 0.5f;
     float b = B - 0.5f;
-
+    
     float u = (r - g) * invSqrt2;              // red-green
     float v = (r + g - 2.0f*b) * invSqrt6;     // blue-yellow
-
+    
     dst[2*i + 0] = u;
     dst[2*i + 1] = v;
   }
@@ -107,8 +131,8 @@ void SomPaletteMod::ensureFieldTexture(int w, int h) {
 
 void SomPaletteMod::update() {
   syncControllerAgencies();
-//  learningRateController.update();
-//  iterationsController.update();
+  //  learningRateController.update();
+  //  iterationsController.update();
   if (newVecs.empty()) return;
   
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v){
@@ -178,10 +202,10 @@ void SomPaletteMod::receive(int sinkId, const float& v) {
 }
 
 void SomPaletteMod::applyIntent(const Intent& intent, float strength) {
-//  float targetIterations = linearMap(intent.getStructure() * intent.getDensity(), 1000.0f, 20000.0f);
-//  iterationsParameter = static_cast<int>(ofLerp(iterationsParameter.get(), targetIterations, strength * 0.1f));
+  //  float targetIterations = linearMap(intent.getStructure() * intent.getDensity(), 1000.0f, 20000.0f);
+  //  iterationsParameter = static_cast<int>(ofLerp(iterationsParameter.get(), targetIterations, strength * 0.1f));
 }
-  
+
 const ofTexture* SomPaletteMod::getActivePaletteTexturePtr() const {
   return somPalette.getActiveTexturePtr();
 }

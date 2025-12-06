@@ -18,7 +18,7 @@ int Mod::nextId = 1000;
 
 void assignDrawingLayerPtrToMods(DrawingLayerPtr drawingLayerPtr, std::initializer_list<ModDrawingLayerNamePair> modFboNamePairs) {
   for (const auto& [modPtr, name] : modFboNamePairs) {
-      modPtr->receiveDrawingLayerPtr(name, drawingLayerPtr);
+    modPtr->receiveDrawingLayerPtr(name, drawingLayerPtr);
   }
 }
 
