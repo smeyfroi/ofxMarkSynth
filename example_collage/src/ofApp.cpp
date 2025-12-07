@@ -19,7 +19,7 @@ void ofApp::setup() {
   resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
   resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
 
-  synthPtr = ofxMarkSynth::Synth::create("fingerprint2", ofxMarkSynth::ModConfig {
+  synthPtr = ofxMarkSynth::Synth::create("example_collage", ofxMarkSynth::ModConfig {
   }, START_PAUSED, COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));

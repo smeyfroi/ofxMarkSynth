@@ -9,15 +9,21 @@ void ofApp::setup() {
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
   ofxMarkSynth::ResourceManager resources;
+  resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
+  resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  //  resources.add("compositeSize", COMPOSITE_SIZE);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
   resources.add("sourceVideoPath", SOURCE_VIDEO_PATH);
   resources.add("sourceVideoMute", SOURCE_VIDEO_MUTE);
   resources.add("cameraDeviceId", CAMERA_DEVICE_ID);
   resources.add("videoSize", VIDEO_SIZE);
   resources.add("saveRecording", SAVE_RECORDING);
-  resources.add("recordingPath", RECORDING_PATH);
+  resources.add("videoRecordingPath", VIDEO_RECORDING_PATH);
 
-  synthPtr = ofxMarkSynth::Synth::create("Video Particles", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  synthPtr = ofxMarkSynth::Synth::create("example_particles_from_video", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
