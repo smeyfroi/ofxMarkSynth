@@ -318,7 +318,7 @@ Common connection patterns:
 
 // Palette learning
 "Audio.Spectral3dPoint -> Palette.Vec3"
-"Palette.Random -> ParticleField.PointColor"
+"Palette.Random -> ParticleField.PointColour"
 
 // Fluid field driving particles
 "Fluid.VelocitiesTexture -> ParticleField.Field1Fbo"

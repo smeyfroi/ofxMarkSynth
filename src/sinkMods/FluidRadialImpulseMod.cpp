@@ -33,6 +33,7 @@ FluidRadialImpulseMod::FluidRadialImpulseMod(std::shared_ptr<Synth> synthPtr, co
 void FluidRadialImpulseMod::initParameters() {
   parameters.add(impulseRadiusParameter);
   parameters.add(impulseStrengthParameter);
+  parameters.add(dtParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -48,14 +49,15 @@ void FluidRadialImpulseMod::update() {
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  fboPtr->getSource().begin();
-  ofEnableBlendMode(OF_BLENDMODE_ADD);
   std::for_each(newPoints.begin(), newPoints.end(), [this, fboPtr](const auto& p) {
-    addRadialImpulseShader.render(p * fboPtr->getWidth(),
+    float dt = dtParameter.get();
+    
+    addRadialImpulseShader.render(*fboPtr,
+                                  p * fboPtr->getWidth(),
                                   impulseRadiusController.value * fboPtr->getWidth(),
-                                  impulseStrengthController.value);
+                                  impulseStrengthController.value,
+                                  dt);
   });
-  fboPtr->getSource().end();
   
   newPoints.clear();
 }

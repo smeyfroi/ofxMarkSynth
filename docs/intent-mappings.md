@@ -211,11 +211,13 @@ Strategy selection:
 - S >= 0.7 -> 2 (radiating)
 
 ### FluidRadialImpulseMod
-
+ 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | G | impulseRadius | lin |
 | E (80%) + C (20%) | impulseStrength | custom weighted |
+| (none) | dt | manual (UI-controlled time step) |
+
 
 ### ParticleFieldMod
 

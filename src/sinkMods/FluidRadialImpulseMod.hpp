@@ -35,8 +35,9 @@ protected:
 private:
   ofParameter<float> impulseRadiusParameter { "Impulse Radius", 0.001, 0.0, 0.3 };
   ParamController<float> impulseRadiusController { impulseRadiusParameter };
-  ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.01, 0.0, 0.3 };
+  ofParameter<float> impulseStrengthParameter { "Impulse Strength", 1.0, 0.0, 10.0 };
   ParamController<float> impulseStrengthController { impulseStrengthParameter };
+  ofParameter<float> dtParameter { "dt", 0.1, 0.001, 1.0 };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   std::vector<glm::vec2> newPoints;

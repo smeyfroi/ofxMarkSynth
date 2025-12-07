@@ -456,7 +456,7 @@ Particle system driven by two texture-based vector fields (like fluid velocities
 **Sinks**:
 - `Field1Fbo` (texture): Primary vector field (RG channels)
 - `Field2Fbo` (texture): Secondary vector field
-- `PointColor` (vec4): Update particle colors
+- `PointColour` (vec4): Update particle colors
 - `MinWeight` (float): Field 1 influence minimum
 - `MaxWeight` (float): Field 1 influence maximum
 
@@ -612,8 +612,10 @@ Adds radial velocity impulses to a fluid simulation layer.
 **Key Parameters**:
 - `Impulse Radius`: Size of force field (0.0-0.3)
 - `Impulse Strength`: Force magnitude (0.0-0.3)
-
+- `dt`: Time step scaling for impulses (0.0001-0.1)
+ 
 **Intent Integration**: Responds to Intent.
+
 
 **Use Cases**:
 - Create fluid ripples from audio onsets

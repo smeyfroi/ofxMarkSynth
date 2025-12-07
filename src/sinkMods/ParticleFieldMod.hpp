@@ -14,6 +14,7 @@
 namespace ofxMarkSynth {
 
 
+
 class ParticleFieldMod : public Mod {
   
 public:
@@ -38,10 +39,18 @@ protected:
 private:
   ofxParticleField::ParticleField particleField;
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
+  ofParameter<ofFloatColor> pointColorParameter {
+    "PointColour",
+    ofFloatColor { 1.0f, 1.0f, 1.0f, 0.3f },
+    ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f },
+    ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f }
+  };
   
   std::unique_ptr<ParamController<float>> minWeightControllerPtr;
   std::unique_ptr<ParamController<float>> maxWeightControllerPtr;
+  std::unique_ptr<ParamController<ofFloatColor>> pointColorControllerPtr;
 };
 
 
-}
+
+} // ofxMarkSynth

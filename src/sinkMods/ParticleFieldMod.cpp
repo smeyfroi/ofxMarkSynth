@@ -24,23 +24,26 @@ ParticleFieldMod::ParticleFieldMod(std::shared_ptr<Synth> synthPtr, const std::s
     { "Field1Texture", SINK_FIELD_1_FBO },
     { "Field2Texture", SINK_FIELD_2_FBO },
     { "ColourFieldTexture", SINK_COLOR_FIELD_FBO },
-    { "PointColour", SINK_POINT_COLOR },
-    { "MinWeight", SINK_MIN_WEIGHT },
-    { "MaxWeight", SINK_MAX_WEIGHT }
+    { pointColorParameter.getName(), SINK_POINT_COLOR },
+    { "minWeight", SINK_MIN_WEIGHT },
+    { "maxWeight", SINK_MAX_WEIGHT }
   };
 }
 
 void ParticleFieldMod::initParameters() {
   addFlattenedParameterGroup(parameters, particleField.getParameterGroup());
+  parameters.add(pointColorParameter);
   parameters.add(agencyFactorParameter);
   
   minWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("minWeight").cast<float>());
   maxWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxWeight").cast<float>());
+  pointColorControllerPtr = std::make_unique<ParamController<ofFloatColor>>(pointColorParameter);
   
   auto& minWeightParam = parameters.get("minWeight").cast<float>();
   auto& maxWeightParam = parameters.get("maxWeight").cast<float>();
   registerControllerForSource(minWeightParam, *minWeightControllerPtr);
   registerControllerForSource(maxWeightParam, *maxWeightControllerPtr);
+  registerControllerForSource(pointColorParameter, *pointColorControllerPtr);
 }
 
 float ParticleFieldMod::getAgency() const {
@@ -49,13 +52,28 @@ float ParticleFieldMod::getAgency() const {
 
 void ParticleFieldMod::update() {
   syncControllerAgencies();
-  minWeightControllerPtr->update();
-  maxWeightControllerPtr->update();
+  if (minWeightControllerPtr) minWeightControllerPtr->update();
+  if (maxWeightControllerPtr) maxWeightControllerPtr->update();
+  if (pointColorControllerPtr) pointColorControllerPtr->update();
   
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto drawingLayerPtr = drawingLayerPtrOpt.value();
   auto fboPtr = drawingLayerPtr->fboPtr;
+  
+  // Active recoloring based on blended PointColour value
+  if (pointColorControllerPtr && particleField.getParticleCount() > 0) {
+    auto particleBlocks = particleField.getParticleCount() / 64;
+    auto baseBlocks = std::max(1, std::min(particleBlocks / 100, 64));
+    float agency = getAgency();
+    if (agency < 0.0f) agency = 0.0f;
+    if (agency > 1.0f) agency = 1.0f;
+    auto updateBlocks = std::max(1, static_cast<int>(baseBlocks * agency));
+    ofFloatColor color = pointColorControllerPtr->value;
+    particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t) {
+      return color;
+    });
+  }
   
   particleField.update();
   
@@ -64,7 +82,7 @@ void ParticleFieldMod::update() {
 //  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofEnableBlendMode(OF_BLENDMODE_SCREEN);
   
-  particleField.draw(fboPtr->getSource(), !drawingLayerPtr->clearOnUpdate);
+  particleField.draw(fboPtr->getSource()); //, !drawingLayerPtr->clearOnUpdate);
 }
 
 void ParticleFieldMod::receive(int sinkId, const ofTexture& value) {
@@ -83,12 +101,9 @@ void ParticleFieldMod::receive(int sinkId, const ofTexture& value) {
 void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_POINT_COLOR: {
-      const auto color = ofFloatColor { v.r, v.g, v.b, v.a };
-      auto particleBlocks = particleField.getParticleCount() / 64;
-      auto updateBlocks = std::max(1, std::min(particleBlocks / 100, 64)); // update 1% of particles up to 64 blocks, min 1 block
-      particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
-        return color;
-      });
+      if (pointColorControllerPtr) {
+        pointColorControllerPtr->updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
+      }
       break;
     }
     default:
@@ -121,16 +136,14 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
 void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
-  // Color composition
-  ofFloatColor color = ofxMarkSynth::energyToColor(intent);
-  color.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.5f);
-  color.setSaturation(im.E().get() * im.C().get());
-  color.a = ofLerp(0.1f, 0.5f, im.D().get());
-  auto particleBlocks = particleField.getParticleCount() / 64;
-  auto updateBlocks = std::max(1, static_cast<int>(particleBlocks * std::clamp(strength * im.D().get(), 0.01f, 1.0f)));
-  particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t idx) {
-    return color;
-  });
+  // Color composition feeds PointColour controller as intent contribution
+  ofFloatColor intentColor = ofxMarkSynth::energyToColor(intent);
+  intentColor.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.5f);
+  intentColor.setSaturation(im.E().get() * im.C().get());
+  intentColor.a = ofLerp(0.1f, 0.5f, im.D().get());
+  if (pointColorControllerPtr) {
+    pointColorControllerPtr->updateIntent(intentColor, strength, "E,S,C,D → PointColour");
+  }
   
   im.G().inv().lin(*minWeightControllerPtr, strength);
   im.C().lin(*maxWeightControllerPtr, strength);
