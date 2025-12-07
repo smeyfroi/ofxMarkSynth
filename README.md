@@ -32,4 +32,5 @@ git clone https://github.com/mantissa/ofxTinyEXR.git
 git clone https://github.com/armadillu/ofxTimeMeasurements.git
 git clone https://github.com/NickHardeman/ofxFFmpegRecorder.git
 git clone https://github.com/Daandelange/ofxImGui.git
+git clone https://github.com/armadillu/ofxHistoryPlot.git
 ```
