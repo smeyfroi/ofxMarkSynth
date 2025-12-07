@@ -10,7 +10,7 @@ An art project for improvisational live music/drawing performances. Built around
 
 <img width="1958" height="1196" alt="Screenshot 2025-10-10 at 15 11 01" src="https://github.com/user-attachments/assets/df926036-70f4-439f-8d47-7909d05c190e" />
 
-Depends on the following external addons:
+Depends on C++ 20 and the following external addons:
 
 ```bash
 git clone https://github.com/smeyfroi/ofxRenderer.git
@@ -33,4 +33,6 @@ git clone https://github.com/armadillu/ofxTimeMeasurements.git
 git clone https://github.com/NickHardeman/ofxFFmpegRecorder.git
 git clone https://github.com/Daandelange/ofxImGui.git
 git clone https://github.com/armadillu/ofxHistoryPlot.git
+git clone https://github.com/borg/ofxGist.git
+git clone https://github.com/npisanti/ofxAudioFile.git
 ```
