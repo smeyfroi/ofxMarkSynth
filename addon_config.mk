@@ -28,7 +28,7 @@ common:
 	ADDON_DEPENDENCIES += ofxDividedArea ofxMotionFromVideo ofxParticleSet ofxParticleField
 	ADDON_DEPENDENCIES += ofxPlottable ofxPointClusters ofxSomPalette
 	ADDON_DEPENDENCIES += ofxConvexHull ofxTimeMeasurements ofxTinyEXR
-	ADDON_DEPENDENCIES += ofxFFmpegRecorder ofxFatLines ofxImGui
+	ADDON_DEPENDENCIES += ofxFFmpegRecorder ofxFatLines ofxImGui ofxHistoryPlot.git
 
 	# include search paths, this will be usually parsed from the file system
 	# but if the addon or addon libraries need special search paths they can be
