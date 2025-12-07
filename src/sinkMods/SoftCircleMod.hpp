@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <vector>
 #include "Mod.hpp"
 #include "ParamController.h"
 #include "SoftCircleShader.h"

@@ -7,7 +7,10 @@
 
 #pragma once
 
+#include <filesystem>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include "nlohmann/json.hpp"
 #include "glm/vec2.hpp"
 #include "ModFactory.hpp"

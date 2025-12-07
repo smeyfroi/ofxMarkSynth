@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <vector>
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxDividedArea.h"

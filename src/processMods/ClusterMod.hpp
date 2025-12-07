@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxPointClusters.h"

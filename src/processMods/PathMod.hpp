@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <deque>
+#include <vector>
 #include "Mod.hpp"
 #include "ParamController.h"
 

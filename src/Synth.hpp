@@ -12,10 +12,14 @@
 #include "ofxFFmpegRecorder.h"
 #endif
 #include "TonemapShader.h"
-#include <unordered_map>
 #include <filesystem>
-#include <optional>
+#include <functional>
+#include <map>
 #include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include "SaveToFileThread.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"

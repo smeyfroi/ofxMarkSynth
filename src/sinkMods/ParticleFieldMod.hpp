@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <memory>
 #include "Mod.hpp"
 #include "ofxParticleField.h"
 #include "ParamController.h"

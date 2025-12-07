@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <memory>
 #include "Mod.hpp"
 #include "FluidSimulation.h"
 #include "ParamController.h"

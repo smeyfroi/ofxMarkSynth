@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 #include "glm/vec2.hpp"
 #include "Mod.hpp"

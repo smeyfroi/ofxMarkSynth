@@ -5,6 +5,8 @@
 //  Created by Steve Meyfroidt on 21/05/2025.
 //
 
+#pragma once
+
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "PingPongFbo.h"

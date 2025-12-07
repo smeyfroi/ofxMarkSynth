@@ -9,6 +9,8 @@
 
 #include "ofLog.h"
 #include <mutex>
+#include <string>
+#include <vector>
 
 
 

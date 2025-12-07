@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include "Mod.hpp"
 #include "ofxAudioData.h"
 

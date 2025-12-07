@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <filesystem>
+#include <string>
 #include "Mod.hpp"
 #include "ofxMotionFromVideo.h"
 #ifdef TARGET_MAC

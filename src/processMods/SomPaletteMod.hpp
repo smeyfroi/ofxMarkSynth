@@ -7,10 +7,11 @@
 
 #pragma once
 
+#include <random>
+#include <vector>
 #include "ofxGui.h"
 #include "Mod.hpp"
 #include "ofxContinuousSomPalette.hpp"
-#include <random>
 //#include "ParamController.h"
 
 
