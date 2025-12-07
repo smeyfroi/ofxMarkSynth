@@ -62,9 +62,11 @@ const ofTexture& PixelSnapshotMod::createSnapshot(const ofFbo& sourceFbo) {
   
   snapshotFbo.begin();
   ofClear(0, 0, 0, 0);
+  ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_DISABLED);  // Direct copy without alpha blending
   ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
   sourceFbo.draw(-x, -y);  // Offset to crop
+  ofPopStyle();
   snapshotFbo.end();
 
   return snapshotFbo.getTexture();
@@ -73,9 +75,11 @@ const ofTexture& PixelSnapshotMod::createSnapshot(const ofFbo& sourceFbo) {
 void PixelSnapshotMod::draw() {
   if (!visible) return;
   ofClear(ofFloatColor(0.0, 0.0, 0.0, 1.0));
+  ofPushStyle();
   ofSetColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   snapshotFbo.draw(0.0, 0.0, 1.0, 1.0);
+  ofPopStyle();
 }
 
 bool PixelSnapshotMod::keyPressed(int key) {

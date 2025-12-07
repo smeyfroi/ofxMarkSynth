@@ -92,9 +92,11 @@ void MemoryBank::captureRandomCrop(ofFbo& dest, const ofFbo& source) {
     // Copy the subsection using the efficient drawSubsection method
     dest.begin();
     ofClear(0, 0, 0, 0);
+    ofPushStyle();
     ofEnableBlendMode(OF_BLENDMODE_DISABLED);
     ofSetColor(255);
     source.getTexture().drawSubsection(0, 0, destW, destH, x, y);
+    ofPopStyle();
     dest.end();
 }
 

@@ -93,9 +93,11 @@ void ParticleSetMod::update() {
   newPoints.clear();
   
   fboPtr->getSource().begin();
+  ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 //  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   particleSet.draw(glm::vec2(fboPtr->getWidth(), fboPtr->getHeight()));
+  ofPopStyle();
   fboPtr->getSource().end();
 }
 

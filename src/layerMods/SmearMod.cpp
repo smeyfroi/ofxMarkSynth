@@ -86,6 +86,7 @@ void SmearMod::update() {
     .ghostBlend = ghostBlendController.value,
     .foldPeriod = glm::vec2 { foldPeriodParameter->x, foldPeriodParameter->y }
   };
+  ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   // TODO: make this more forgiving
   if (field2Tex.isAllocated() && field1Tex.isAllocated()) {
@@ -98,6 +99,7 @@ void SmearMod::update() {
   } else {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier);
   }
+  ofPopStyle();
 }
 
 void SmearMod::receive(int sinkId, const float& value) {

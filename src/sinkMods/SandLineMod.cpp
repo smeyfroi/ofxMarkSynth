@@ -92,6 +92,7 @@ void SandLineMod::update() {
 
   float drawScale = fboPtr->getWidth();
   fboPtr->getSource().begin();
+  ofPushStyle();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
@@ -109,6 +110,7 @@ void SandLineMod::update() {
     }
     newPoints.erase(newPoints.begin(), iter);
   }
+  ofPopStyle();
   fboPtr->getSource().end();
 }
 

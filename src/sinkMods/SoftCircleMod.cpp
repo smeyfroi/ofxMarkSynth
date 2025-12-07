@@ -78,6 +78,7 @@ void SoftCircleMod::update() {
   
   fboPtr->getSource().begin();
   
+  ofPushStyle();
   if (falloff == 1) {
     // Dab: premultiplied alpha blend for proper compositing without halos
     glEnable(GL_BLEND);
@@ -93,6 +94,7 @@ void SoftCircleMod::update() {
     softCircleShader.render(p * fboPtr->getSize(), radius * fboPtr->getWidth(), color, softness, falloff);
   });
   
+  ofPopStyle();
   fboPtr->getSource().end();
   
   newPoints.clear();

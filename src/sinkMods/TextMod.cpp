@@ -172,11 +172,13 @@ void TextMod::renderText(const std::string& text) {
   ofFloatColor finalColor = colorController.value;
   finalColor.a *= alphaController.value;
   
+  ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   fboPtr->getSource().begin();
   ofSetColor(finalColor);
   font.drawString(text, x, y);
   fboPtr->getSource().end();
+  ofPopStyle();
 }
 
 

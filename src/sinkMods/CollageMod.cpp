@@ -69,6 +69,7 @@ void CollageMod::update() {
     // punch hole through existing outlines
     // TODO: punch hole on fatline as well to avoid the middle seam when the outlines fade. Or add the fatline into the stencil to draw the snapshot only within the fatline interior
     fboPtr1->getSource().begin();
+    ofPushStyle();
     ofScale(fboPtr1->getWidth(), fboPtr1->getHeight());
     path.setFilled(true);
     ofEnableBlendMode(OF_BLENDMODE_DISABLED);
@@ -89,10 +90,12 @@ void CollageMod::update() {
     
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);
     fatline.draw();
+    ofPopStyle();
     fboPtr1->getSource().end();
   }
 
   fboPtr0->getSource().begin();
+  ofPushStyle();
   ofScale(fboPtr0->getWidth(), fboPtr0->getHeight());
 
   // Close the path for drawing the fill
@@ -146,6 +149,7 @@ void CollageMod::update() {
     glDisable(GL_STENCIL_TEST);
   }
 
+  ofPopStyle();
   fboPtr0->getSource().end();
   path.clear();
 }
