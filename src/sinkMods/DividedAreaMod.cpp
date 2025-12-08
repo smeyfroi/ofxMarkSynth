@@ -251,8 +251,7 @@ void DividedAreaMod::drawOverlay() {
   
   fboPtr0->getSource().begin();
   const ofFloatColor majorDividerColor = majorLineColorController.value;
-  ofSetColor(majorDividerColor);
-  dividedArea.draw(0.0, majorLineWidthController.value, fboPtr0->getWidth(), compositeFbo);
+  dividedArea.draw(0.0, majorLineWidthController.value, fboPtr0->getWidth(), compositeFbo, majorDividerColor);
   fboPtr0->getSource().end();
 }
 
