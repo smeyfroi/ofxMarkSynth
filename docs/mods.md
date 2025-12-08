@@ -528,6 +528,14 @@ Divides the drawing space with lines using various geometric strategies.
 - `MajorLineWidth`: Major line width (pixels)
 - `MinorLineColour`, `MajorLineColour`: Line colors
 - `MaxUnconstrainedLines`: Maximum divisions
+- `majorLineStyle`: Drawing style for major (unconstrained) lines (0-6):
+  - 0: **Solid** - Simple flat-colored line
+  - 1: **Inner Glow** - Light edges, darker core
+  - 2: **Bloomed Additive** - Neon tube effect with core and halo (additive blending)
+  - 3: **Glow** - Additive gaussian falloff
+  - 4: **Refractive** - Glass-like distortion (requires background FBO)
+  - 5: **Blur/Refraction** - Screen-space blur with mild refraction (requires background FBO)
+  - 6: **Chromatic Aberration** - RGB channel split at edges (requires background FBO)
 
 **Intent Integration**: Responds to Structure dimension.
 
@@ -1040,5 +1048,5 @@ Synth.Memory -> Collage.SnapshotTexture
 
 ---
 
-**Document Version**: 1.3
-**Last Updated**: December 5, 2025
+**Document Version**: 1.4
+**Last Updated**: December 8, 2025
