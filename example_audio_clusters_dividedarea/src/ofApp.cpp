@@ -10,6 +10,11 @@ void ofApp::setup() {
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
   ofxMarkSynth::ResourceManager resources;
+  resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
+  resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
   resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
   resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
   resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);

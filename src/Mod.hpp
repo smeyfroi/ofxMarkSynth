@@ -55,11 +55,12 @@ struct DrawingLayer {
   bool clearOnUpdate;
   ofBlendMode blendMode;
   bool isDrawn;
+  bool isOverlay;
   DrawingLayer() : id(nextId++) {}
   DrawingLayer(const std::string& name_, FboPtr fboPtr_, bool clearOnUpdate_,
-               ofBlendMode blendMode_, bool isDrawn_)
+               ofBlendMode blendMode_, bool isDrawn_, bool isOverlay_ = false)
   : id(nextId++), name(name_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
-  blendMode(blendMode_), isDrawn(isDrawn_) {}
+  blendMode(blendMode_), isDrawn(isDrawn_), isOverlay(isOverlay_) {}
 private:
   inline static int nextId = -1000; // negative to avoid clashing with Mod ids
 };
@@ -116,8 +117,10 @@ public:
   virtual void doneModLoad() {}
   virtual void update() {};
   virtual void draw() {};
+  virtual void drawOverlay() {};
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
+  
   virtual std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   int getId() const;
   void setName(const std::string& name_) { name = name_; }
@@ -125,7 +128,7 @@ public:
   
   virtual float getAgency() const;
   virtual void applyIntent(const Intent& intent, float intentStrength) {};
-    
+  
   int getSourceId(const std::string& sourceName);
   
   int getSinkId(const std::string& sinkName);

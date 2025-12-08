@@ -10,9 +10,12 @@
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
 #include "../IntentMapper.hpp"
+#include "Synth.hpp"
+
 
 
 namespace ofxMarkSynth {
+
 
 
 DividedAreaMod::DividedAreaMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
@@ -25,8 +28,8 @@ dividedArea({ { 1.0, 1.0 }, static_cast<int>(maxUnconstrainedLinesParameter.get(
     { "MinorPath", SINK_MINOR_PATH },
     { minorLineColorParameter.getName(), SINK_MINOR_LINES_COLOR },
     { majorLineColorParameter.getName(), SINK_MAJOR_LINES_COLOR },
-    { "BackgroundFbo", SINK_BACKGROUND_SOURCE },
     { "ChangeAngle", SINK_CHANGE_ANGLE },
+    
     { "ChangeStrategy", SINK_CHANGE_STRATEGY },
     { "ChangeLayer", SINK_CHANGE_LAYER }
   };
@@ -119,27 +122,8 @@ void DividedAreaMod::update() {
     }
   }
   
-//  const float maxLineWidth = 160.0;
-//  const float minLineWidth = 110.0;
-
-  // draw unconstrained
-  auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
-  if (drawingLayerPtrOpt0) {
-    auto fboPtr0 = drawingLayerPtrOpt0.value()->fboPtr;
-    
-    // need a background for the refraction effect
-    if (backgroundFbo.isAllocated()) {
-      fboPtr0->getSource().begin();
-      const ofFloatColor majorDividerColor = majorLineColorController.value;
-      // TODO: bring back the flat coloured major lines?
-      //    dividedArea.draw({},
-      //                     { minLineWidth, maxLineWidth, majorDividerColor },
-      //                     fboPtr0->getWidth());
-      ofSetColor(majorDividerColor);
-      dividedArea.draw(0.0, majorLineWidthController.value, fboPtr0->getWidth(), backgroundFbo);
-      fboPtr0->getSource().end();
-    }
-  }
+  //  const float maxLineWidth = 160.0;
+  //  const float minLineWidth = 110.0;
   
   // draw constrained
   auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
@@ -147,8 +131,8 @@ void DividedAreaMod::update() {
   auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
   fboPtr1->getSource().begin();
   dividedArea.drawInstanced(fboPtr1->getWidth());
-//    ofSetColor(minorDividerColor);
-//    dividedArea.draw(0.0, 0.0, 10.0, fboPtr1->getWidth());
+  //    ofSetColor(minorDividerColor);
+  //    dividedArea.draw(0.0, 0.0, 10.0, fboPtr1->getWidth());
   fboPtr1->getSource().end();
 }
 
@@ -197,14 +181,14 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
       }
       break;
     case SINK_CHANGE_ANGLE:
-      {
-        if (v > 0.4) { // FIXME: temp until connections have weights
-          float newAngle = v;
-          ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
-          angleController.updateAuto(newAngle, getAgency());
-          angleParameter = newAngle;
-        }
+    {
+      if (v > 0.4) { // FIXME: temp until connections have weights
+        float newAngle = v;
+        ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
+        angleController.updateAuto(newAngle, getAgency());
+        angleParameter = newAngle;
       }
+    }
       break;
     case SINK_CHANGE_STRATEGY:
     {
@@ -233,16 +217,6 @@ void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
   }
 }
 
-void DividedAreaMod::receive(int sinkId, const ofFbo& v) {
-  switch (sinkId) {
-    case SINK_BACKGROUND_SOURCE:
-      backgroundFbo = v;
-      break;
-    default:
-      ofLogError("DividedAreaMod") << "ofFbo receive for unknown sinkId " << sinkId;
-  }
-}
-
 void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
@@ -258,18 +232,28 @@ void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   ofFloatColor majorColor = ofxMarkSynth::energyToColor(intent) * 0.7f;
   majorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.8f);
   majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
-  majorColor.a = ofxMarkSynth::exponentialMap(intent.getDensity(), 0.0f, 1.0f, 0.5f);
-  majorLineColorController.updateIntent(majorColor, strength, "E->color, S->bright/sat, D->alpha");
-  
-  im.C().exp(maxUnconstrainedLinesController, strength, 1.0f, 9.0f, 2.0f);
-  im.G().lin(majorLineWidthController, strength);
-  
-  // Strategy selection based on structure
-  if (strength > 0.05f) {
-    float s = intent.getStructure();
-    int strategy = (s < 0.3f) ? 0 : (s < 0.7f ? 1 : 2);
-    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
+  majorLineColorController.updateIntent(majorColor, strength, "E,S->hsv");
+}
+
+void DividedAreaMod::drawOverlay() {
+  auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
+  if (!drawingLayerPtrOpt0) return;
+  auto drawingLayerPtr = drawingLayerPtrOpt0.value();
+  if (!drawingLayerPtr->isOverlay) {
+    ofLogError("DividedAreaMod") << "Drawing layer '" << MAJOR_LINES_LAYERPTR_NAME
+    << "' for DividedAreaMod should be configured as overlay (isOverlay=true).";
   }
+  auto fboPtr0 = drawingLayerPtr->fboPtr;
+  auto synth = getSynth();
+  if (!synth) return;
+  const ofFbo& compositeFbo = synth->getCompositeFbo();
+  if (!compositeFbo.isAllocated()) return;
+  
+  fboPtr0->getSource().begin();
+  const ofFloatColor majorDividerColor = majorLineColorController.value;
+  ofSetColor(majorDividerColor);
+  dividedArea.draw(0.0, majorLineWidthController.value, fboPtr0->getWidth(), compositeFbo);
+  fboPtr0->getSource().end();
 }
 
 

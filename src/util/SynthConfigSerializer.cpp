@@ -105,7 +105,12 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
         isDrawn = layerJson["isDrawn"];
       }
       
-      auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn);
+      bool isOverlay = false;
+      if (layerJson.contains("isOverlay") && layerJson["isOverlay"].is_boolean()) {
+        isOverlay = layerJson["isOverlay"];
+      }
+      
+      auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay);
       layers[name] = layerPtr;
       ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << "(size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
     }

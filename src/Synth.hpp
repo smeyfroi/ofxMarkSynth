@@ -51,15 +51,14 @@ class Synth : public Mod {
 public:
   // The composite is the middle (square) section, scaled to fit the window height
   static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources = {});
-  void drawGui();
-  void shutdown() override;
   
 protected:
   // The composite is the middle (square) section, scaled to fit the window height
   Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
   
 public:
-  
+  void drawGui();
+  void shutdown() override;
   template <typename ModT>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
   template <typename ModT, typename... Args>
@@ -71,7 +70,7 @@ public:
       modPtr->doneModLoad();
     }
   }
-  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true);
+  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true, bool isOverlay = false);
   
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
@@ -101,6 +100,7 @@ public:
   void receive(int sinkId, const float& v) override;
   void update() override;
   glm::vec2 getSize() const { return compositeSize; }
+  const ofFbo& getCompositeFbo() const { return imageCompositeFbo; }
   void draw() override;
   
   void setAudioDataSourceMod(std::weak_ptr<AudioDataSourceMod> mod);
@@ -245,6 +245,8 @@ private:
   bool guiVisible { true };
   bool initialLoadCallbackEmitted { false };
   
+  std::shared_ptr<LoggerChannel> loggerChannelPtr;
+
   // >>> Hibernation system
   enum class HibernationState {
     ACTIVE,        // Normal operation
@@ -278,7 +280,8 @@ private:
 #endif
   
   std::vector<std::unique_ptr<SaveToFileThread>> saveToFileThreads;
-  
+  void pruneSaveThreads();
+
   // PBO-based async pixel readback for image saving
   ofBufferObject imageSavePbo;  // Pre-allocated at construction, reused for all saves
   bool imageSaveRequested { false };  // Set by saveImage(), cleared after glReadPixels issued
@@ -292,12 +295,8 @@ private:
   void processPendingImageSave();
   float saveStatusClearTime { 0.0f };
   
-  std::shared_ptr<LoggerChannel> loggerChannelPtr;
-  
   // Audio source mod for synchronized audio/video recording
   std::weak_ptr<AudioDataSourceMod> audioDataSourceModPtr;
-  
-  void pruneSaveThreads();
   
   // >>> Memory bank system
   MemoryBank memoryBank;

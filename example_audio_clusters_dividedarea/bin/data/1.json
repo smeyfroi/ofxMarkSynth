@@ -9,7 +9,7 @@
     "backgroundColor": "0.1, 0.05, 0.3, 1",
     "backgroundMultiplier": 0.2
   },
-
+  
   "drawingLayers": {
     "foreground": {
       "size": [768, 768],
@@ -30,9 +30,20 @@
       "useStencil": false,
       "numSamples": 4,
       "isDrawn": true
+    },
+    "linesOverlay": {
+      "size": [768, 768],
+      "internalFormat": "GL_RGBA",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": true,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 4,
+      "isDrawn": true,
+      "isOverlay": true
     }
   },
-
+  
   "mods": {
     "Audio": {
       "type": "AudioDataSource",
@@ -74,7 +85,7 @@
       },
       "layers": {
         "default": ["lines"],
-        "major-lines": ["lines"]
+        "major-lines": ["linesOverlay"]
       }
     }
   },
@@ -83,8 +94,6 @@
     "Audio.PitchRmsPoint -> Cluster.Point",
     "Cluster.ClusterCentre -> Point.Point",
     "Cluster.ClusterCentre -> Divided Area.MajorAnchor",
-    "Cluster.ClusterCentre -> Divided Area.MinorAnchor",
-    ".CompositeFbo -> Divided Area.BackgroundFbo"
+    "Cluster.ClusterCentre -> Divided Area.MinorAnchor"
   ]
 }
-

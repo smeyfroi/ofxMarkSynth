@@ -321,11 +321,11 @@ void Synth::unload() {
   // Rebuild of groups happens when reloading config (configureGui/init* called then)
 }
 
-DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn) {
+DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay) {
   auto fboPtr = std::make_shared<PingPongFbo>();
   fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
-  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn);
+  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn, isOverlay);
   drawingLayerPtrs.insert({ name, drawingLayerPtr });
   return drawingLayerPtr;
 }
@@ -624,31 +624,68 @@ void Synth::updateSidePanels() {
 }
 
 void Synth::updateCompositeImage() {
+  struct LayerInfo {
+    DrawingLayerPtr layer;
+    float finalAlpha;
+  };
+  std::vector<LayerInfo> baseLayers;
+  std::vector<LayerInfo> overlayLayers;
+  
+  size_t i = 0;
+  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this, &i, &baseLayers, &overlayLayers](const auto& pair) {
+    const auto& [name, dlptr] = pair;
+    if (!dlptr->isDrawn) return;
+    float layerAlpha = fboParameters.getFloat(i);
+    ++i;
+    if (layerAlpha == 0.0f) return;
+    
+    float finalAlpha = layerAlpha;
+    if (hibernationState != HibernationState::ACTIVE) {
+      finalAlpha *= hibernationAlpha;
+    }
+    
+    if (dlptr->isOverlay) {
+      overlayLayers.push_back({ dlptr, finalAlpha });
+    } else {
+      baseLayers.push_back({ dlptr, finalAlpha });
+    }
+  });
+  
+  // 1) Base composite (background + base layers)
   imageCompositeFbo.begin();
   {
     ofFloatColor backgroundColor = backgroundColorController.value;
-    backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0;
+    backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0f;
     ofClear(backgroundColor);
     
-    size_t i = 0;
-    std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this, &i](const auto& pair) {
-      const auto& [name, dlptr] = pair;
-      if (!dlptr->isDrawn) return;
-      ofEnableBlendMode(dlptr->blendMode);
-      float layerAlpha = fboParameters.getFloat(i);
-      ++i;
-      if (layerAlpha == 0.0) return;
-      
-      float finalAlpha = layerAlpha;
-      if (hibernationState != HibernationState::ACTIVE) {
-        finalAlpha *= hibernationAlpha;
-      }
-      
-      ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, finalAlpha });
-      dlptr->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-    });
+    for (const auto& info : baseLayers) {
+      ofEnableBlendMode(info.layer->blendMode);
+      ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, info.finalAlpha });
+      info.layer->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+    }
   }
   imageCompositeFbo.end();
+  
+  // 2) Overlay mods render into their own FBOs, sampling current composite
+  if (!paused) {
+    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
+      const auto& [name, modPtr] = pair;
+      modPtr->drawOverlay();
+    });
+  }
+  
+  // 3) Composite overlay layers on top
+  if (!overlayLayers.empty()) {
+    imageCompositeFbo.begin();
+    {
+      for (const auto& info : overlayLayers) {
+        ofEnableBlendMode(info.layer->blendMode);
+        ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, info.finalAlpha });
+        info.layer->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
+      }
+    }
+    imageCompositeFbo.end();
+  }
 }
 
 void Synth::updateCompositeSideImages() {

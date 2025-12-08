@@ -49,9 +49,8 @@ void FluidRadialImpulseMod::update() {
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
-  std::for_each(newPoints.begin(), newPoints.end(), [this, fboPtr](const auto& p) {
-    float dt = dtParameter.get();
-    
+  float dt = dtParameter.get();
+  std::for_each(newPoints.begin(), newPoints.end(), [this, dt, fboPtr](const auto& p) {
     addRadialImpulseShader.render(*fboPtr,
                                   p * fboPtr->getWidth(),
                                   impulseRadiusController.value * fboPtr->getWidth(),

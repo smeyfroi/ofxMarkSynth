@@ -515,8 +515,11 @@ Divides the drawing space with lines using various geometric strategies.
 - `MinorPath` (ofPath): Path for line generation
 - `MinorLineColour` (vec4): Minor line color
 - `MajorLineColour` (vec4): Major line color
-- `BackgroundFbo` (texture): Source for refraction on major lines
 - `ChangeAngle`, `ChangeStrategy`, `ChangeLayer`: Control commands
+
+**Notes**:
+- Uses the Synth composite as its refraction background.
+- For refractive/unconstrained lines, assign a drawing layer with `isOverlay: true` and map it to the `major-lines` layer key.
 
 **Key Parameters**:
 - `Strategy`: 0=point pairs, 1=point angles, 2=radiating
@@ -932,7 +935,7 @@ AudioDataSourceMod
 DividedAreaMod (Strategy: radiating)
 
 PixelSnapshotMod
-  └─ SnapshotTexture → DividedAreaMod.BackgroundFbo (refraction)
+  └─ SnapshotTexture → CollageMod.SnapshotTexture (textured fills behind DividedArea lines)
 
 SomPaletteMod
   └─ RandomDark → DividedAreaMod.MinorLinesColour
