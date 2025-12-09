@@ -40,7 +40,7 @@ protected:
 private:
   ofParameter<float> mixNewParameter { "MixNew", 0.9, 0.3, 1.0 };
   ParamController<float> mixNewController { mixNewParameter };
-  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.998, 0.994, 0.999 };
+  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.998, 0.99, 0.999 };
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
 //  ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
   ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
@@ -53,7 +53,7 @@ private:
 //  ofParameter<glm::vec2> field2BiasParameter { "Field2Bias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
   ofParameter<glm::vec2> field2BiasParameter { "Field2Bias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
   
-  ofParameter<glm::vec2> gridSizeParameter { "GridSize", glm::vec2 { 8.0, 8.0 }, glm::vec2 { 2.0, 2.0 }, glm::vec2 { 128.0, 128.0 } };
+  ofParameter<glm::vec2> gridSizeParameter { "GridSize", glm::vec2 { 8.0, 8.0 }, glm::vec2 { 2.0, 2.0 }, glm::vec2 { 1024.0, 1024.0 } };
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 9 }; // 0: Off; 1: Cell-quantized; 2: Per-cell random offset; 3: Boundary teleport; 4. Per-cell rotation/reflection; 5. Multi-res grid snap; 6. Voronoi partition teleport; 7. Border kill-band; 8. Dual-sample ghosting on border cross; 9. Piecewise mirroring/folding
   ofParameter<float> jumpAmountParameter { "JumpAmount2", 0.5, 0.0, 1.0 };
   ParamController<float> jumpAmountController { jumpAmountParameter }; // only for strategy 2
