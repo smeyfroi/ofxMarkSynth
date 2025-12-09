@@ -95,9 +95,9 @@ void SmearMod::update() {
                        field2Tex, field2MultiplierController.value, field2BiasParameter,
                        gridParameters);
   } else if (field1Tex.isAllocated()) {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Tex, field1MultiplierController.value, field1BiasParameter);
+    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Tex, field1MultiplierController.value, field1BiasParameter, gridParameters);
   } else {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier);
+    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, gridParameters);
   }
   ofPopStyle();
 }

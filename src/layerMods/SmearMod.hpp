@@ -44,7 +44,7 @@ private:
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
 //  ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
   ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
-  ofParameter<float> field1MultiplierParameter { "Field1Multiplier", 0.001, 0.0, 0.05 };
+  ofParameter<float> field1MultiplierParameter { "Field1Multiplier", 0.01, 0.0, 1.0 };
   ParamController<float> field1MultiplierController { field1MultiplierParameter };
 //  ofParameter<glm::vec2> field1BiasParameter { "Field1Bias", glm::vec2 { -0.5, -0.5 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
   ofParameter<glm::vec2> field1BiasParameter { "Field1Bias", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -1.0, -1.0 }, glm::vec2 { 1.0, 1.0 } };
