@@ -537,6 +537,9 @@ void Synth::update() {
   // Update hibernation fade even when paused
   updateHibernation();
   
+  // Update crossfade transition
+  updateTransition();
+  
   // When paused, skip Mod updates but still update composites if hibernating
   if (paused && hibernationState == HibernationState::ACTIVE) {
     return;
@@ -750,19 +753,40 @@ void Synth::drawSidePanels(float xleft, float xright, float w, float h) {
 
 void Synth::drawMiddlePanel(float w, float h, float scale) {
   ofPushMatrix();
-  {
-    ofTranslate((w - imageCompositeFbo.getWidth() * scale) / 2.0, (h - imageCompositeFbo.getHeight() * scale) / 2.0);
-    
-    ofPushMatrix();
+  ofTranslate((w - imageCompositeFbo.getWidth() * scale) / 2.0, (h - imageCompositeFbo.getHeight() * scale) / 2.0);
+  ofScale(scale, scale);
+  
+  if (transitionState == TransitionState::CROSSFADING && transitionSnapshotFbo.isAllocated() && transitionBlendFbo.isAllocated()) {
+    // Blend snapshot and live composite into blend FBO
+    transitionBlendFbo.begin();
     {
-      ofScale(scale, scale);
-      ofSetColor(255);
-      tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
+      ofClear(0, 0, 0, 255);
+      ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+      
+      // Draw old snapshot (fading out)
+      ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f - transitionAlpha });
+      transitionSnapshotFbo.draw(0.0, 0.0);
+      
+      // Draw live composite (fading in)
+      ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, transitionAlpha });
       imageCompositeFbo.draw(0.0, 0.0);
-      tonemapShader.end();
+      
+      ofEnableBlendMode(OF_BLENDMODE_DISABLED);
     }
-    ofPopMatrix();
+    transitionBlendFbo.end();
+    
+    // Draw blended result to screen with tonemap
+    tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
+    ofSetColor(255);
+    transitionBlendFbo.draw(0.0, 0.0);
+    tonemapShader.end();
+  } else {
+    tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
+    ofSetColor(255);
+    imageCompositeFbo.draw(0.0, 0.0);
+    tonemapShader.end();
   }
+  
   ofPopMatrix();
 }
 
@@ -1097,6 +1121,47 @@ std::string Synth::getHibernationStateString() const {
   return "Unknown";
 }
 
+// Config transition crossfade system
+
+void Synth::captureSnapshot() {
+  float w = imageCompositeFbo.getWidth();
+  float h = imageCompositeFbo.getHeight();
+  
+  // Allocate snapshot FBO if needed
+  if (!transitionSnapshotFbo.isAllocated() || 
+      transitionSnapshotFbo.getWidth() != w ||
+      transitionSnapshotFbo.getHeight() != h) {
+    transitionSnapshotFbo.allocate(w, h, GL_RGB16F);
+  }
+  
+  // Allocate blend FBO if needed
+  if (!transitionBlendFbo.isAllocated() || 
+      transitionBlendFbo.getWidth() != w ||
+      transitionBlendFbo.getHeight() != h) {
+    transitionBlendFbo.allocate(w, h, GL_RGB16F);
+  }
+  
+  transitionSnapshotFbo.begin();
+  ofSetColor(255);
+  imageCompositeFbo.draw(0, 0);
+  transitionSnapshotFbo.end();
+}
+
+void Synth::updateTransition() {
+  if (transitionState != TransitionState::CROSSFADING) return;
+  
+  float elapsed = ofGetElapsedTimef() - transitionStartTime;
+  float duration = crossfadeDurationParameter.get();
+  
+  if (elapsed >= duration) {
+    transitionAlpha = 1.0f;
+    transitionState = TransitionState::NONE;
+  } else {
+    float t = elapsed / duration;
+    transitionAlpha = glm::smoothstep(0.0f, 1.0f, t);
+  }
+}
+
 void Synth::initFboParameterGroup() {
   fboParameters.clear();
   
@@ -1155,6 +1220,7 @@ void Synth::initParameters() {
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
   parameters.add(hibernationFadeDurationParameter);
+  parameters.add(crossfadeDurationParameter);
   
   // initialise Mod parameters but do not add them to Synth parameters
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
@@ -1245,74 +1311,42 @@ bool Synth::loadFromConfig(const std::string& filepath) {
   return success;
 }
 
-void Synth::switchToConfig(const std::string& filepath, bool useHibernation) {
-  pendingConfigPath = filepath;
-  pendingUseHibernation = useHibernation;
-  hasPendingConfigSwitch = true;
-
-  if (useHibernation) {
-    if (hibernationState == HibernationState::ACTIVE) {
-      ofAddListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
-      startHibernation();
-      return;
-    } else if (hibernationState == HibernationState::FADING_OUT) {
-      ofAddListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
-      return;
-    } else if (hibernationState == HibernationState::HIBERNATED) {
-      // Perform immediately while black
-    }
+void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
+  // Capture snapshot before unload (if crossfading)
+  if (useCrossfade) {
+    captureSnapshot();
   }
-
-  // Immediate switch (no hibernation or already hibernated)
+  
+  // Emit unload event
   {
     ConfigUnloadEvent willEv;
     willEv.previousConfigPath = currentConfigPath;
     ofNotifyEvent(configWillUnloadEvent, willEv, this);
   }
+  
+  // Unload and reload
   unload();
-  loadFromConfig(pendingConfigPath);
+  loadFromConfig(filepath);
   initParameters();
   initFboParameterGroup();
   initIntentParameterGroup();
   gui.markNodeEditorDirty();
+  
+  // Emit load event
   {
     ConfigLoadedEvent didEv;
     didEv.newConfigPath = currentConfigPath;
     ofNotifyEvent(configDidLoadEvent, didEv, this);
   }
+  
   ofLogNotice("Synth") << "Switched to config: " << currentConfigPath;
-  if (useHibernation && hibernationState == HibernationState::HIBERNATED) {
-    cancelHibernation();
+  
+  // Begin crossfade transition
+  if (useCrossfade) {
+    transitionState = TransitionState::CROSSFADING;
+    transitionStartTime = ofGetElapsedTimef();
+    transitionAlpha = 0.0f;
   }
-  hasPendingConfigSwitch = false;
-}
-
-void Synth::onHibernationCompleteForSwitch(HibernationCompleteEvent& args) {
-  ofRemoveListener(hibernationCompleteEvent, this, &Synth::onHibernationCompleteForSwitch);
-  if (!hasPendingConfigSwitch) return;
-
-  {
-    ConfigUnloadEvent willEv;
-    willEv.previousConfigPath = currentConfigPath;
-    ofNotifyEvent(configWillUnloadEvent, willEv, this);
-  }
-  unload();
-  loadFromConfig(pendingConfigPath);
-  initParameters();
-  initFboParameterGroup();
-  initIntentParameterGroup();
-  gui.markNodeEditorDirty();
-  {
-    ConfigLoadedEvent didEv;
-    didEv.newConfigPath = currentConfigPath;
-    ofNotifyEvent(configDidLoadEvent, didEv, this);
-  }
-  ofLogNotice("Synth") << "Switched to config: " << currentConfigPath;
-
-  if (pendingUseHibernation) {
-    cancelHibernation();
-  }
-  hasPendingConfigSwitch = false;
 }
 
 void Synth::loadFirstPerformanceConfig() {

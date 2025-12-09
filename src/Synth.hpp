@@ -81,7 +81,7 @@ public:
   
   bool loadFromConfig(const std::string& filepath);
   void unload();
-  void switchToConfig(const std::string& filepath, bool useHibernation = true);
+  void switchToConfig(const std::string& filepath, bool useCrossfade = true);
   void loadFirstPerformanceConfig();
   void setIntentPresets(const std::vector<IntentPtr>& presets);
   
@@ -198,11 +198,20 @@ private:
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
   
-  // Switch-to-config support
-  void onHibernationCompleteForSwitch(HibernationCompleteEvent& args);
-  bool hasPendingConfigSwitch { false };
-  std::string pendingConfigPath;
-  bool pendingUseHibernation { true };
+  // >>> Config transition crossfade system
+  enum class TransitionState {
+    NONE,           // No transition in progress
+    CROSSFADING     // Crossfading from snapshot to live
+  };
+  TransitionState transitionState { TransitionState::NONE };
+  ofFbo transitionSnapshotFbo;  // Holds captured frame from old config
+  ofFbo transitionBlendFbo;     // Used for blending during crossfade
+  float transitionStartTime { 0.0f };
+  float transitionAlpha { 0.0f };  // 0.0 = all snapshot, 1.0 = all live
+  ofParameter<float> crossfadeDurationParameter { "Crossfade Duration", 2.0, 0.5, 10.0 };
+  void updateTransition();
+  void captureSnapshot();
+  // <<<
   
   // Intent system
   IntentActivations intentActivations;

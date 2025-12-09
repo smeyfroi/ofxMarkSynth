@@ -126,7 +126,7 @@ void PerformanceNavigator::loadFirstConfigIfAvailable() {
   ofLogNotice("PerformanceNavigator") << "Loading first config (no hibernation): " << getConfigName(currentIndex);
   
   if (synth) {
-    synth->switchToConfig(configPath, false);  // No hibernation for first load
+    synth->switchToConfig(configPath, false);  // No crossfade for first load
   }
 }
 
@@ -137,7 +137,7 @@ void PerformanceNavigator::loadCurrentConfig() {
   ofLogNotice("PerformanceNavigator") << "Loading config: " << getConfigName(currentIndex);
   
   if (synth) {
-    synth->switchToConfig(configPath, true);  // Use hibernation fade
+    synth->switchToConfig(configPath, true);  // Use crossfade transition
   }
 }
 

@@ -270,6 +270,11 @@ bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::share
     ofLogNotice("SynthConfigSerializer") << "  Base manual bias: " << synthJson["baseManualBias"].get<float>();
   }
   
+  if (synthJson.contains("crossfadeDuration") && synthJson["crossfadeDuration"].is_number()) {
+    synth->crossfadeDurationParameter.set(synthJson["crossfadeDuration"].get<float>());
+    ofLogNotice("SynthConfigSerializer") << "  Crossfade duration: " << synthJson["crossfadeDuration"].get<float>();
+  }
+  
   return true;
 }
 
