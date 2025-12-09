@@ -9,8 +9,16 @@ void ofApp::setup() {
   ofSetFrameRate(FRAME_RATE);
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
   
-  synthPtr = ofxMarkSynth::Synth::create("Points", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
+  ofxMarkSynth::ResourceManager resources;
+  resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
+  resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  //  resources.add("compositeSize", COMPOSITE_SIZE);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
+
+  synthPtr = ofxMarkSynth::Synth::create("example_collage", ofxMarkSynth::ModConfig {
+  }, START_PAUSED, COMPOSITE_SIZE, resources);
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
