@@ -87,7 +87,8 @@ void SmearMod::update() {
     .foldPeriod = glm::vec2 { foldPeriodParameter->x, foldPeriodParameter->y }
   };
   ofPushStyle();
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  // Shader already mixes history; disable GL blending to avoid interference
+  ofEnableBlendMode(OF_BLENDMODE_DISABLED);
   // TODO: make this more forgiving
   if (field2Tex.isAllocated() && field1Tex.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,
