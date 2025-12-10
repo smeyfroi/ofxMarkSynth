@@ -15,6 +15,32 @@
     "_comment_crossfadeDuration": "crossfadeDuration: Duration (0.5-10.0s) of crossfade transition when switching configs"
   },
 
+  "drawingLayers": {
+    "_comment": "Drawing layers are FBOs that mods can draw to. They are composited in order.",
+    "ExampleLayer": {
+      "size": [1080, 1080],
+      "internalFormat": "GL_RGBA32F",
+      "wrap": "GL_CLAMP_TO_EDGE",
+      "clearOnUpdate": false,
+      "blendMode": "OF_BLENDMODE_ALPHA",
+      "useStencil": false,
+      "numSamples": 0,
+      "isDrawn": true,
+      "isOverlay": false,
+      "alpha": 1.0,
+      "_comment_size": "size: [width, height] dimensions of the FBO",
+      "_comment_internalFormat": "internalFormat: GL_RGBA, GL_RGB, GL_RGBA32F, GL_RGB32F, GL_RG32F, GL_RGBA16F, GL_RGB16F, GL_RG16F, GL_RGBA8, GL_RGB8",
+      "_comment_wrap": "wrap: GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT",
+      "_comment_clearOnUpdate": "clearOnUpdate: true to clear the FBO each frame, false to accumulate",
+      "_comment_blendMode": "blendMode: OF_BLENDMODE_DISABLED, OF_BLENDMODE_ALPHA, OF_BLENDMODE_ADD, OF_BLENDMODE_SUBTRACT, OF_BLENDMODE_MULTIPLY, OF_BLENDMODE_SCREEN",
+      "_comment_useStencil": "useStencil: true to enable stencil buffer",
+      "_comment_numSamples": "numSamples: MSAA samples (0 = disabled)",
+      "_comment_isDrawn": "isDrawn: true to include in final composite",
+      "_comment_isOverlay": "isOverlay: true to render after base layers (can sample current composite)",
+      "_comment_alpha": "alpha: Initial alpha (0.0-1.0) for this layer in the composite. Controllable via GUI slider."
+    }
+  },
+
   "mods": {
 
     "_comment_source_mods": "=== SOURCE MODS ===",

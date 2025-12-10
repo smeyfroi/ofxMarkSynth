@@ -169,6 +169,7 @@ private:
   
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
+  std::unordered_map<std::string, float> initialLayerAlphas;
   
   void initDisplayParameterGroup();
   void initFboParameterGroup();

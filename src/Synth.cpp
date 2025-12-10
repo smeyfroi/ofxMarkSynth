@@ -302,6 +302,7 @@ void Synth::unload() {
 
   // 2) Clear drawing layers
   drawingLayerPtrs.clear();
+  initialLayerAlphas.clear();
 
   // 3) Clear GUI live texture hooks
   liveTexturePtrFns.clear();
@@ -1169,7 +1170,12 @@ void Synth::initFboParameterGroup() {
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
     if (!fcptr->isDrawn) return;
-    auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, 1.0, 0.0, 1.0);
+    float initialAlpha = 1.0f;
+    auto it = initialLayerAlphas.find(fcptr->name);
+    if (it != initialLayerAlphas.end()) {
+      initialAlpha = it->second;
+    }
+    auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, initialAlpha, 0.0f, 1.0f);
     fboParamPtrs.push_back(fboParam);
     fboParameters.add(*fboParam);
   });
