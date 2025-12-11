@@ -23,6 +23,7 @@ void setMonoFont(ImFont* font);
 
 
 void drawVerticalSliders(ofParameterGroup& paramGroup);
+void drawVerticalSliders(ofParameterGroup& paramGroup, const std::vector<std::shared_ptr<ofParameter<bool>>>& toggleParams);
 void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter);
 void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter);
 void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter);

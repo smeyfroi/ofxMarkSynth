@@ -232,8 +232,10 @@ std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& n
   if (index < 0) return std::nullopt;
   if (!namedDrawingLayerPtrs.contains(name)) return std::nullopt;
   auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
-  if (index >= drawingLayerPtrs.size()) return std::nullopt;
-  return drawingLayerPtrs[index];
+  if (index >= static_cast<int>(drawingLayerPtrs.size())) return std::nullopt;
+  auto layerPtr = drawingLayerPtrs[index];
+  if (layerPtr->pauseState == DrawingLayer::PauseState::PAUSED) return std::nullopt;
+  return layerPtr;
 }
 
 std::optional<DrawingLayerPtr> Mod::getCurrentNamedDrawingLayerPtr(const std::string& name) {

@@ -170,9 +170,11 @@ private:
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
   std::unordered_map<std::string, float> initialLayerAlphas;
+  std::unordered_map<std::string, bool> initialLayerPaused;
   
   void initDisplayParameterGroup();
   void initFboParameterGroup();
+  void initLayerPauseParameterGroup();
   void initIntentParameterGroup();
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
   
@@ -233,12 +235,15 @@ private:
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   ofParameterGroup fboParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
+  ofParameterGroup layerPauseParameters;
+  std::vector<std::shared_ptr<ofParameter<bool>>> layerPauseParamPtrs;
   ofParameterGroup displayParameters;
   ofParameter<ofFloatColor> backgroundColorParameter { "BackgroundColour", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
   ofParameter<float> backgroundMultiplierParameter { "BackgroundMultiplier", 0.1, 0.0, 1.0 };
   ofParameter<int> toneMapTypeParameter { "Tone map", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
   ofParameter<float> exposureParameter { "Exposure", 1.0, 0.0, 4.0 };
+  ofParameter<float> layerPauseFadeDurationSecParameter { "Layer Pause Fade", 0.5, 0.0, 10.0 };
   ofParameter<float> gammaParameter { "Gamma", 2.2, 0.1, 5.0 };
   ofParameter<float> whitePointParameter { "White Pt", 11.2, 1.0, 20.0 }; // for Reinhard Extended
   ofParameter<float> contrastParameter { "Contrast", 1.03, 0.9, 1.1 };
@@ -266,10 +271,12 @@ private:
   HibernationState hibernationState { HibernationState::ACTIVE };
   float hibernationAlpha { 1.0f };  // 1.0 = fully visible, 0.0 = fully black
   float hibernationStartTime { 0.0f };
-  ofParameter<float> hibernationFadeDurationParameter { "Hibernate Duration", 2.0, 0.5, 10.0 };
-  void startHibernation();
-  void cancelHibernation();
-  void updateHibernation();
+   ofParameter<float> hibernationFadeDurationParameter { "Hibernate Duration", 2.0, 0.5, 10.0 };
+   void startHibernation();
+   void cancelHibernation();
+   void updateHibernation();
+   void updateLayerPauseStates();
+
   bool isHibernating() const { return hibernationState != HibernationState::ACTIVE; }
   std::string getHibernationStateString() const;
   HibernationState getHibernationState() const { return hibernationState; }

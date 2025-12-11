@@ -56,6 +56,13 @@ struct DrawingLayer {
   ofBlendMode blendMode;
   bool isDrawn;
   bool isOverlay;
+
+  enum class PauseState { ACTIVE, FADING_OUT, PAUSED, FADING_IN };
+  PauseState pauseState { PauseState::ACTIVE };
+  float pauseAlpha { 1.0f };              // 1 = fully visible, 0 = fully hidden
+  float pauseFadeStartTime { 0.0f };      // seconds
+  float pauseAlphaAtFadeStart { 1.0f };   // alpha when current fade started
+
   DrawingLayer() : id(nextId++) {}
   DrawingLayer(const std::string& name_, FboPtr fboPtr_, bool clearOnUpdate_,
                ofBlendMode blendMode_, bool isDrawn_, bool isOverlay_ = false)

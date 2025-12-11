@@ -115,6 +115,12 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
         alpha = layerJson["alpha"];
       }
       synth->initialLayerAlphas[name] = alpha;
+
+      bool paused = false;
+      if (layerJson.contains("paused") && layerJson["paused"].is_boolean()) {
+        paused = layerJson["paused"];
+      }
+      synth->initialLayerPaused[name] = paused;
       
       auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay);
       layers[name] = layerPtr;

@@ -333,7 +333,7 @@ void Gui::drawIntentCharacteristicsEditor() {
 
 void Gui::drawLayerControls() {
   ImGui::SeparatorText("Layers");
-  drawVerticalSliders(synthPtr->fboParameters);
+  drawVerticalSliders(synthPtr->fboParameters, synthPtr->layerPauseParamPtrs);
 }
 
 void Gui::drawDisplayControls() {

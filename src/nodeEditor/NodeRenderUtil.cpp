@@ -24,6 +24,12 @@ void setMonoFont(ImFont* font) {
 
 
 void drawVerticalSliders(ofParameterGroup& paramGroup) {
+  const std::vector<std::shared_ptr<ofParameter<bool>>> empty;
+  drawVerticalSliders(paramGroup, empty);
+}
+
+void drawVerticalSliders(ofParameterGroup& paramGroup,
+                         const std::vector<std::shared_ptr<ofParameter<bool>>>& toggleParams) {
   if (paramGroup.size() == 0) return;
   
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
@@ -41,6 +47,10 @@ void drawVerticalSliders(ofParameterGroup& paramGroup) {
     
     for (int i = 0; i < paramGroup.size(); ++i) {
       const auto& name = paramGroup[i].getName();
+      std::shared_ptr<ofParameter<bool>> toggleParam;
+      if (i < static_cast<int>(toggleParams.size())) {
+        toggleParam = toggleParams[i];
+      }
       
       ImGui::TableSetColumnIndex(i);
       ImGui::PushID(i);
@@ -56,6 +66,20 @@ void drawVerticalSliders(ofParameterGroup& paramGroup) {
         paramGroup[i].cast<float>().set(v);
       }
       ImGui::SetItemTooltip("%s", name.c_str());
+      
+      // Optional pause toggle directly under the slider
+      if (toggleParam) {
+        float checkSize = ImGui::GetFrameHeight();
+        float xPadCheck = (colW - checkSize) * 0.5f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad + xPadCheck);
+        bool b = toggleParam->get();
+        if (ImGui::Checkbox(("##pause_" + name).c_str(), &b)) {
+          toggleParam->set(b);
+        }
+        ImGui::SetItemTooltip("Pause layer %s", name.c_str());
+        // Reset X so label below is still centered in column
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPadCheck);
+      }
       
       ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad);
       ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + colW);
