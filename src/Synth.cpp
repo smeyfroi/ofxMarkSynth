@@ -1012,7 +1012,7 @@ void Synth::processPendingImageSave() {
     
   } else if (result == GL_WAIT_FAILED || pendingImageSave->framesSinceRequested > 300) {
     // Timeout or error - abandon save
-    ofLogError("Synth") << "Failed to fetch pixels for image save (frames waited: " 
+    ofLogError("Synth") << "Failed to fetch pixels for image save (frames waited: "
                         << pendingImageSave->framesSinceRequested << ")";
     glDeleteSync(pendingImageSave->fence);
     saveStatus = "Save failed";
@@ -1089,7 +1089,7 @@ bool Synth::keyReleased(int key) {
 
 void Synth::startHibernation() {
   if (hibernationState == HibernationState::ACTIVE) {
-    ofLogNotice("Synth") << "Starting hibernation, fade duration: " 
+    ofLogNotice("Synth") << "Starting hibernation, fade duration: "
                          << hibernationFadeDurationParameter.get() << "s";
     hibernationState = HibernationState::FADING_OUT;
     hibernationStartTime = ofGetElapsedTimef();
@@ -1145,14 +1145,14 @@ void Synth::captureSnapshot() {
   float h = imageCompositeFbo.getHeight();
   
   // Allocate snapshot FBO if needed
-  if (!transitionSnapshotFbo.isAllocated() || 
+  if (!transitionSnapshotFbo.isAllocated() ||
       transitionSnapshotFbo.getWidth() != w ||
       transitionSnapshotFbo.getHeight() != h) {
     transitionSnapshotFbo.allocate(w, h, GL_RGB16F);
   }
   
   // Allocate blend FBO if needed
-  if (!transitionBlendFbo.isAllocated() || 
+  if (!transitionBlendFbo.isAllocated() ||
       transitionBlendFbo.getWidth() != w ||
       transitionBlendFbo.getHeight() != h) {
     transitionBlendFbo.allocate(w, h, GL_RGB16F);
@@ -1447,11 +1447,18 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   
   // Unload and reload
   unload();
-  loadFromConfig(filepath);
+  bool loadOk = loadFromConfig(filepath);
+  if (!loadOk) {
+    ofLogError("Synth") << "switchToConfig: load failed, leaving Synth unloaded and paused";
+    paused = true;  // Ensure no further mod activity
+    transitionState = TransitionState::NONE;  // Cancel any pending transition
+    return;
+  }
+  
   initParameters();
   initFboParameterGroup();
   initIntentParameterGroup();
-  gui.markNodeEditorDirty();
+  gui.onConfigLoaded();
   
   // Emit load event
   {

@@ -102,6 +102,17 @@ void Gui::exit() {
   imgui.exit();
 }
 
+void Gui::onConfigLoaded() {
+  // Reset node editor model and related GUI state for the new config
+  nodeEditorModel = NodeEditorModel{};
+  nodeEditorDirty = true;
+  layoutComputed = false;
+  layoutAutoLoadAttempted = false;
+  snapshotsLoaded = false;
+  highlightedMods.clear();
+}
+
+
 void Gui::draw() {
   TS_START("Gui::draw");
   TSGL_START("Gui::draw");
@@ -644,7 +655,13 @@ void Gui::drawNode(const DrawingLayerPtr& layerPtr) {
 }
 
 void Gui::drawNodeEditor() {
-  // Rebuild node model if dirty
+  if (!synthPtr || (synthPtr->modPtrs.empty() && synthPtr->drawingLayerPtrs.empty())) {
+    ImGui::Begin("NodeEditor");
+    ImGui::TextUnformatted("No synth configuration loaded.");
+    ImGui::End();
+    return;
+  }
+
   if (nodeEditorDirty) {
     nodeEditorModel.buildFromSynth(synthPtr);
     nodeEditorDirty = false;
@@ -652,9 +669,9 @@ void Gui::drawNodeEditor() {
     layoutAutoLoadAttempted = false; // Reset auto-load on rebuild
     snapshotsLoaded = false; // Reload snapshots on rebuild
   }
-
+ 
   ImGui::Begin("NodeEditor");
-  
+
   // Auto-load saved layout on first draw (if it exists)
   if (!layoutAutoLoadAttempted) {
     layoutAutoLoadAttempted = true;
@@ -719,12 +736,9 @@ void Gui::drawNodeEditor() {
     }
   }
   
-  // Draw snapshot controls
   drawSnapshotControls();
   
-  // Draw the node editor
   ImNodes::BeginNodeEditor();
-  
   ImNodesIO& io = ImNodes::GetIO();
   io.EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt; // Option-drag to pan
 
@@ -794,7 +808,6 @@ void Gui::drawNodeEditor() {
   }
   
   ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
-
   ImNodes::EndNodeEditor();
   
   // Sync positions from imnodes back to model after every frame to capture manual dragging

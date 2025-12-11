@@ -32,8 +32,8 @@ public:
   void setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindow> windowPtr);
   void exit();
   void draw();
-  void markNodeEditorDirty() { nodeEditorDirty = true; }
   void toggleHelpWindow() { showHelpWindow = !showHelpWindow; }
+  void onConfigLoaded(); // a Synth config is successfully loaded
 
 private:
   void drawDockspace();
