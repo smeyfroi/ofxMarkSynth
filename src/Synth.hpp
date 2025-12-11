@@ -70,7 +70,7 @@ public:
       modPtr->doneModLoad();
     }
   }
-  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true, bool isOverlay = false);
+  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true, bool isOverlay = false, const std::string& description = "");
   
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);

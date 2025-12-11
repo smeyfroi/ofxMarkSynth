@@ -51,6 +51,7 @@ using FboPtr = std::shared_ptr<PingPongFbo>;
 struct DrawingLayer {
   int id;
   std::string name;
+  std::string description;
   FboPtr fboPtr;
   bool clearOnUpdate;
   ofBlendMode blendMode;
@@ -65,8 +66,9 @@ struct DrawingLayer {
 
   DrawingLayer() : id(nextId++) {}
   DrawingLayer(const std::string& name_, FboPtr fboPtr_, bool clearOnUpdate_,
-               ofBlendMode blendMode_, bool isDrawn_, bool isOverlay_ = false)
-  : id(nextId++), name(name_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
+               ofBlendMode blendMode_, bool isDrawn_, bool isOverlay_ = false,
+               const std::string& description_ = "")
+  : id(nextId++), name(name_), description(description_), fboPtr(fboPtr_), clearOnUpdate(clearOnUpdate_),
   blendMode(blendMode_), isDrawn(isDrawn_), isOverlay(isOverlay_) {}
 private:
   inline static int nextId = -1000; // negative to avoid clashing with Mod ids

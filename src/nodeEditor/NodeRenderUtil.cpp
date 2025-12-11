@@ -16,13 +16,18 @@ namespace NodeRenderUtil {
 
 // Static mono font for tooltips
 static ImFont* monoFont = nullptr;
-
+// Optional external tooltip map for sliders (e.g. layer descriptions)
+static const std::unordered_map<std::string, std::string>* externalTooltipMap = nullptr;
+ 
 void setMonoFont(ImFont* font) {
   monoFont = font;
 }
-
-
-
+ 
+void setLayerTooltipMap(const std::unordered_map<std::string, std::string>* tooltipMap) {
+  externalTooltipMap = tooltipMap;
+}
+ 
+ 
 void drawVerticalSliders(ofParameterGroup& paramGroup) {
   const std::vector<std::shared_ptr<ofParameter<bool>>> empty;
   drawVerticalSliders(paramGroup, empty);
@@ -65,7 +70,11 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
       if (ImGui::VSliderFloat("##v", sliderSize, &v, 0.0f, 1.0f, "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
         paramGroup[i].cast<float>().set(v);
       }
-      ImGui::SetItemTooltip("%s", name.c_str());
+      if (externalTooltipMap && externalTooltipMap->contains(name)) {
+        ImGui::SetItemTooltip("%s", externalTooltipMap->at(name).c_str());
+      } else {
+        ImGui::SetItemTooltip("%s", name.c_str());
+      }
       
       // Optional pause toggle directly under the slider
       if (toggleParam) {

@@ -344,7 +344,18 @@ void Gui::drawIntentCharacteristicsEditor() {
 
 void Gui::drawLayerControls() {
   ImGui::SeparatorText("Layers");
+  
+  // Build tooltip map from layer name to description (if available)
+  std::unordered_map<std::string, std::string> layerTooltips;
+  for (const auto& [name, layerPtr] : synthPtr->drawingLayerPtrs) {
+    if (!layerPtr || !layerPtr->isDrawn) continue;
+    if (!layerPtr->description.empty()) {
+      layerTooltips[layerPtr->name] = layerPtr->description;
+    }
+  }
+  NodeRenderUtil::setLayerTooltipMap(&layerTooltips);
   drawVerticalSliders(synthPtr->fboParameters, synthPtr->layerPauseParamPtrs);
+  NodeRenderUtil::setLayerTooltipMap(nullptr);
 }
 
 void Gui::drawDisplayControls() {
@@ -789,8 +800,9 @@ void Gui::drawNodeEditor() {
           int layerNodeId = layerPtr->id;
           int alpha = 64;
           auto currentLayerPtr = modPtr->getCurrentNamedDrawingLayerPtr(layerName);
-          if (currentLayerPtr && currentLayerPtr->get()->id == layerPtr->id) alpha = 255;
+          bool isCurrent = currentLayerPtr && currentLayerPtr->get()->id == layerPtr->id;
           bool isConnectedToSelection = ImNodes::IsNodeSelected(sourceModId) || ImNodes::IsNodeSelected(layerNodeId);
+          if (isCurrent || isConnectedToSelection) alpha = 255;
           if (isConnectedToSelection) {
             ImNodes::PushColorStyle(ImNodesCol_Link, IM_COL32(255, 255, 100, alpha));
           } else {

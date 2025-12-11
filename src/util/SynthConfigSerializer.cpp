@@ -122,7 +122,12 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
       }
       synth->initialLayerPaused[name] = paused;
       
-      auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay);
+      std::string description;
+      if (layerJson.contains("description") && layerJson["description"].is_string()) {
+        description = layerJson["description"].get<std::string>();
+      }
+      
+      auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
       layers[name] = layerPtr;
       ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << "(size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
     }

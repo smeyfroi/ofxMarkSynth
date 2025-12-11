@@ -323,11 +323,11 @@ void Synth::unload() {
   // Rebuild of groups happens when reloading config (configureGui/init* called then)
 }
 
-DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay) {
+DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
   auto fboPtr = std::make_shared<PingPongFbo>();
   fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
   fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
-  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn, isOverlay);
+  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn, isOverlay, description);
   drawingLayerPtrs.insert({ name, drawingLayerPtr });
   return drawingLayerPtr;
 }

@@ -20,6 +20,9 @@ namespace NodeRenderUtil {
 // Set the monospace font to use in tooltips (call from Gui setup)
 void setMonoFont(ImFont* font);
 
+// Optional map from parameter name to tooltip text (e.g. layer descriptions)
+void setLayerTooltipMap(const std::unordered_map<std::string, std::string>* tooltipMap);
+
 
 
 void drawVerticalSliders(ofParameterGroup& paramGroup);
