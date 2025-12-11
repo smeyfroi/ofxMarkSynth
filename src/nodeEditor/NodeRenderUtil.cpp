@@ -76,16 +76,16 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
         ImGui::SetItemTooltip("%s", name.c_str());
       }
       
-      // Optional pause toggle directly under the slider
+      // Optional run toggle directly under the slider (checked = running)
       if (toggleParam) {
         float checkSize = ImGui::GetFrameHeight();
         float xPadCheck = (colW - checkSize) * 0.5f;
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad + xPadCheck);
-        bool b = toggleParam->get();
-        if (ImGui::Checkbox(("##pause_" + name).c_str(), &b)) {
-          toggleParam->set(b);
+        bool isRunning = !toggleParam->get();  // underlying param is 'paused'
+        if (ImGui::Checkbox(("##run_" + name).c_str(), &isRunning)) {
+          toggleParam->set(!isRunning);
         }
-        ImGui::SetItemTooltip("Pause layer %s", name.c_str());
+        ImGui::SetItemTooltip("Enable/disable layer %s", name.c_str());
         // Reset X so label below is still centered in column
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPadCheck);
       }

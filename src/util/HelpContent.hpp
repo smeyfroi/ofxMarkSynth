@@ -12,7 +12,7 @@ namespace ofxMarkSynth {
 constexpr const char* HELP_CONTENT = R"(GENERAL
 Space           Pause / Resume
 H               Toggle hibernation (fade out)
-1-8             Toggle pause for layers 1-8
+1-8             Toggle on/off for layers 1-8
 
 RECORDING & SAVING
 S               Save HDR image
