@@ -28,6 +28,7 @@
       "isDrawn": true,
       "isOverlay": false,
       "alpha": 1.0,
+      "paused": false,
       "_comment_size": "size: [width, height] dimensions of the FBO",
       "_comment_internalFormat": "internalFormat: GL_RGBA, GL_RGB, GL_RGBA32F, GL_RGB32F, GL_RG32F, GL_RGBA16F, GL_RGB16F, GL_RG16F, GL_RGBA8, GL_RGB8",
       "_comment_wrap": "wrap: GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT",
@@ -37,7 +38,8 @@
       "_comment_numSamples": "numSamples: MSAA samples (0 = disabled)",
       "_comment_isDrawn": "isDrawn: true to include in final composite",
       "_comment_isOverlay": "isOverlay: true to render after base layers (can sample current composite)",
-      "_comment_alpha": "alpha: Initial alpha (0.0-1.0) for this layer in the composite. Controllable via GUI slider."
+      "_comment_alpha": "alpha: Initial alpha (0.0-1.0) for this layer in the composite. Controllable via GUI slider.",
+      "_comment_paused": "paused: true to start this layer in a paused (faded-out) state; it will still render its FBO when unpaused, fading to and from its alpha value."
     }
   },
 
