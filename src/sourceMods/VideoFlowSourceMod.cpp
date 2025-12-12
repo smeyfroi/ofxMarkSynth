@@ -8,6 +8,7 @@
 #include "VideoFlowSourceMod.hpp"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
+#include "../IntentMapper.hpp"
 
 
 
@@ -26,6 +27,8 @@ saveRecording { false }
     { "PointVelocity", SOURCE_POINT_VELOCITY },
     { "Point", SOURCE_POINT }
   };
+
+  registerControllerForSource(pointSamplesPerUpdateParameter, pointSamplesPerUpdateController);
 }
 
 VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording_, const std::filesystem::path& recordingDir_)
@@ -39,6 +42,8 @@ recordingDir { recordingDir_ }
     { "FlowField", SOURCE_FLOW_FIELD },
     { "PointVelocity", SOURCE_POINT_VELOCITY }
   };
+
+  registerControllerForSource(pointSamplesPerUpdateParameter, pointSamplesPerUpdateController);
 }
 
 VideoFlowSourceMod::~VideoFlowSourceMod() {
@@ -66,27 +71,39 @@ void VideoFlowSourceMod::initRecorder() {
 #endif
 
 void VideoFlowSourceMod::initParameters() {
+  parameters.add(pointSamplesPerUpdateParameter);
+  parameters.add(agencyFactorParameter);
   addFlattenedParameterGroup(parameters, motionFromVideo.getParameterGroup());
 }
 
 void VideoFlowSourceMod::update() {
   syncControllerAgencies();
+  pointSamplesPerUpdateController.update();
   motionFromVideo.update();
-  
+
   if (motionFromVideo.isReady()) {
     emit(SOURCE_FLOW_FIELD, motionFromVideo.getMotionFbo().getTexture());
   }
-  
+
   // TODO: make this a separate process Mod that can sample a texture
-  // TODO: make the number of samples a parameter
   if (motionFromVideo.isReady()) {
-    for (int i = 0; i < 100; i++) {
+    int pointSamplesPerUpdate = static_cast<int>(pointSamplesPerUpdateController.value);
+    for (int i = 0; i < pointSamplesPerUpdate; i++) {
       if (auto vec = motionFromVideo.trySampleMotion()) {
         emit(SOURCE_POINT_VELOCITY, vec.value());
         emit(SOURCE_POINT, glm::vec2 { vec.value() });
       }
     }
   }
+}
+
+float VideoFlowSourceMod::getAgency() const {
+  return Mod::getAgency() * agencyFactorParameter;
+}
+
+void VideoFlowSourceMod::applyIntent(const Intent& intent, float strength) {
+  IntentMap im(intent);
+  im.D().exp(pointSamplesPerUpdateController, strength, 0.5f);
 }
 
 void VideoFlowSourceMod::draw() {

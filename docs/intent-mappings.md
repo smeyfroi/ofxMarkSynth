@@ -66,7 +66,7 @@ Mods with Intent support have an **AgencyFactor** parameter (default 1.0, range 
 | StaticTextSourceMod | No | — | — |
 | TextSourceMod | Yes | Yes | C |
 | TimerSourceMod | Yes | Yes | E |
-| VideoFlowSourceMod | No | — | — |
+| VideoFlowSourceMod | Yes | Yes | D |
 
 ## Source Mods - Detail
 
@@ -108,6 +108,12 @@ Mods with Intent support have an **AgencyFactor** parameter (default 1.0, range 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | 1-E | Interval | exp(0.5) — higher energy = shorter interval |
+
+### VideoFlowSourceMod
+
+| Dimension | Parameter | Function |
+|-----------|-----------|----------|
+| D | PointSamplesPerUpdate | exp(0.5) |
 
 ---
 
@@ -348,7 +354,7 @@ Strategy selection:
 **AgencyFactor support**: 16 Mods (all Mods we updated with per-Mod agency control)
 
 **Mods without Intent**:
-- AudioDataSourceMod, StaticTextSourceMod, VideoFlowSourceMod (source)
+- AudioDataSourceMod, StaticTextSourceMod (source)
 - VaryingValueMod (commented out)
 - IntrospectorMod (sink)
 - AddTextureMod, TranslateMod (commented out)

@@ -137,6 +137,8 @@
       "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath')",
       "_params_from": "ofxMotionFromVideo",
       "config": {
+        "PointSamplesPerUpdate": "100",
+        "AgencyFactor": "1",
         "xFlowSampleThresholdNeg": "-0.05",
         "xFlowSampleThresholdPos": "0.05",
         "yFlowSampleThresholdNeg": "-0.05",

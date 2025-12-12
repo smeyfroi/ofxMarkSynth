@@ -64,8 +64,12 @@ Extracts motion flow data from video (file or camera).
 - `Point` (vec2): Sampled motion point positions
 
 **Key Parameters**:
+- `PointSamplesPerUpdate`: Number of motion point samples emitted per frame (0-500)
 - Motion detection sensitivity
 - Flow field resolution
+- `AgencyFactor`: Scales how strongly Intent affects this Mod
+
+**Intent Integration**: Density (D) increases `PointSamplesPerUpdate` via exp(0.5).
 
 **Use Cases**:
 - Drive particles with video motion
