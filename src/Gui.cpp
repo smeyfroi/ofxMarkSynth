@@ -399,44 +399,41 @@ void Gui::drawInternalState() {
   
   ImGui::SeparatorText("State");
   
-  // Calculate required height: text + image + padding
-  const float contentHeight = ImGui::GetTextLineHeightWithSpacing() + thumbW + ImGui::GetStyle().ItemSpacing.y + 20.0f;
+  // Calculate total width needed for horizontal scrolling
+  const float itemWidth = thumbW + 8.0f;
+  const float totalWidth = itemWidth * synthPtr->liveTexturePtrFns.size();
+  const float innerHeight = ImGui::GetTextLineHeightWithSpacing() + thumbW;
+  const float panelHeight = innerHeight + ImGui::GetStyle().ScrollbarSize + 4.0f;
   
-  ImGui::BeginChild("tex_scroll", ImVec2(0, contentHeight), true, ImGuiWindowFlags_HorizontalScrollbar);
+  // Set exact content size to prevent any vertical overflow
+  ImGui::SetNextWindowContentSize(ImVec2(totalWidth, innerHeight));
+  ImGui::BeginChild("tex_scroll", ImVec2(0, panelHeight), true, ImGuiWindowFlags_HorizontalScrollbar);
 
-  if (ImGui::BeginTable("##textures", synthPtr->liveTexturePtrFns.size(),
-                        ImGuiTableFlags_SizingFixedFit |
-                        ImGuiTableFlags_ScrollX |
-                        ImGuiTableFlags_NoHostExtendX)) {
-    
-    // Set up columns with fixed width
-    for (size_t i = 0; i < synthPtr->liveTexturePtrFns.size(); ++i) {
-      ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, thumbW + 8.0f);
+  constexpr float spacing = 8.0f;
+  int index = 0;
+  for (const auto& tex : synthPtr->liveTexturePtrFns) {
+    if (index > 0) {
+      ImGui::SameLine(0, spacing);
     }
     
-    ImGui::TableNextRow();
-
-    int colIndex = 0;
-    for (const auto& tex : synthPtr->liveTexturePtrFns) {
-      ImGui::TableSetColumnIndex(colIndex++);
-      
+    ImGui::BeginGroup();
+    {
       ImGui::Text("%s", tex.first.c_str());
       const ofTexture* texturePtr = tex.second();
       if (!texturePtr || !texturePtr->isAllocated()) {
         ImGui::Dummy(ImVec2(thumbW, thumbW));
-        continue;
+      } else {
+        const auto& textureData = texturePtr->getTextureData();
+        assert(textureData.textureTarget == GL_TEXTURE_2D);
+        ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
+        ImGui::PushID(tex.first.c_str());
+        ImGui::Image(imguiTexId, thumbSize);
+        ImGui::PopID();
       }
-
-      const auto& textureData = texturePtr->getTextureData();
-      assert(textureData.textureTarget == GL_TEXTURE_2D);
-      ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
-
-      ImGui::PushID(tex.first.c_str());
-      ImGui::Image(imguiTexId, thumbSize);
-      ImGui::PopID();
     }
-
-    ImGui::EndTable();
+    ImGui::EndGroup();
+    
+    ++index;
   }
 
   ImGui::EndChild();
@@ -449,8 +446,6 @@ void Gui::drawMemoryBank() {
   constexpr float spacing = 4.0f;
   constexpr float slotHeight = 100.0f; // thumbnail + label + button
   
-  ImGui::Text("Filled: %d/%d", synthPtr->memoryBank.getFilledCount(), MemoryBank::NUM_SLOTS);
-  
   // Scrollable horizontal region for thumbnails (no vertical scroll)
   ImGui::BeginChild("MemoryBankSlots", ImVec2(0, slotHeight), false, 
       ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollbar);
@@ -461,9 +456,6 @@ void Gui::drawMemoryBank() {
     
     ImGui::BeginGroup();
     {
-      // Slot number
-      ImGui::Text("%d", i);
-      
       // Thumbnail or empty box
       const ofTexture* tex = synthPtr->memoryBank.get(i);
       if (tex && tex->isAllocated()) {
@@ -488,7 +480,8 @@ void Gui::drawMemoryBank() {
       }
       
       // Save button - deferred to avoid GL state issues during ImGui rendering
-      if (ImGui::Button("Save", ImVec2(memThumbW, 0))) {
+      const std::string saveLabel = "Save " + std::to_string(i);
+      if (ImGui::Button(saveLabel.c_str(), ImVec2(memThumbW, 0))) {
         synthPtr->memoryBank.requestSaveToSlot(i);
       }
     }
@@ -501,12 +494,22 @@ void Gui::drawMemoryBank() {
     }
   }
   
-  ImGui::EndChild();
-  
-  // Clear all button
-  if (ImGui::Button("Clear All")) {
-    synthPtr->memoryBank.clearAll();
+  // Place "Clear All" at far right of the scrolling list, vertically centered
+  ImGui::SameLine(0, spacing * 4.0f);
+  ImGui::BeginGroup();
+  {
+    const float clearButtonHeight = ImGui::GetFrameHeight();
+    const float topPad = (slotHeight - clearButtonHeight) * 0.5f;
+    if (topPad > 0.0f) {
+      ImGui::Dummy(ImVec2(0.0f, topPad));
+    }
+    if (ImGui::Button("Clear All", ImVec2(memThumbW, 0))) {
+      synthPtr->memoryBank.clearAll();
+    }
   }
+  ImGui::EndGroup();
+  
+  ImGui::EndChild();
 }
 
 void Gui::drawStatus() {
