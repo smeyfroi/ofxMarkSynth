@@ -14,26 +14,13 @@ namespace ofxMarkSynth {
 
 
 
-AudioDataSourceMod::AudioDataSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
-                                       const std::filesystem::path& sourceAudioPath,
-                                       const std::string& outDeviceName,
-                                       int bufferSize,
-                                       int nChannels,
-                                       int sampleRate)
+AudioDataSourceMod::AudioDataSourceMod(std::shared_ptr<Synth> synthPtr,
+                                       const std::string& name,
+                                       ModConfig config,
+                                       std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient)
 : Mod { synthPtr, name, std::move(config) }
+, audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(
-      sourceAudioPath, outDeviceName, bufferSize, nChannels, sampleRate);
-  initialise();
-}
-
-AudioDataSourceMod::AudioDataSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
-                                       const std::string& micDeviceName,
-                                       bool recordAudio, const std::filesystem::path& recordingPath)
-: Mod { synthPtr, name, std::move(config) }
-{
-  std::filesystem::create_directory(recordingPath);
-  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(micDeviceName, recordAudio, recordingPath);
   initialise();
 }
 
@@ -59,17 +46,6 @@ void AudioDataSourceMod::initialise() {
   };
 }
 
-void AudioDataSourceMod::startSegmentRecording(const std::string& filepath) {
-  audioAnalysisClientPtr->startSegmentRecording(filepath);
-}
-
-void AudioDataSourceMod::stopSegmentRecording() {
-  audioAnalysisClientPtr->stopSegmentRecording();
-}
-
-bool AudioDataSourceMod::isSegmentRecording() const {
-  return audioAnalysisClientPtr->isSegmentRecording();
-}
 
 void AudioDataSourceMod::initParameters() {
   parameters.add(minPitchParameter);
@@ -270,8 +246,6 @@ void AudioDataSourceMod::draw() {
 }
 
 void AudioDataSourceMod::shutdown() {
-  audioAnalysisClientPtr->stopRecording();
-  audioAnalysisClientPtr->closeStream();
 }
 
 

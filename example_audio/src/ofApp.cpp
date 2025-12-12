@@ -1,6 +1,6 @@
 #include "ofApp.h"
-#include <memory>
 #include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 void ofApp::setup() {
   ofSetBackgroundColor(0);
@@ -16,6 +16,10 @@ void ofApp::setup() {
 
   synthPtr = ofxMarkSynth::Synth::create("Audio", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_audio") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
 
   synthPtr->loadFromConfig(ofToDataPath("example_audio.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
@@ -38,7 +42,9 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-  synthPtr->shutdown();
+  if (synthPtr) {
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

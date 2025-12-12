@@ -1,4 +1,3 @@
-//
 //  AudioDataSourceMod.hpp
 //  example_audio
 //
@@ -7,36 +6,28 @@
 
 #pragma once
 
-#include <filesystem>
 #include "Mod.hpp"
 #include "ofxAudioData.h"
+#include <memory>
+
+namespace ofxAudioAnalysisClient {
+class LocalGistClient;
+}
 
 namespace ofxMarkSynth {
-
 
 class AudioDataSourceMod : public Mod {
 
 public:
-  AudioDataSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
-                     const std::filesystem::path& sourceAudioPath,
-                     const std::string& outDeviceName,
-                     int bufferSize,
-                     int nChannels,
-                     int sampleRate);
-  AudioDataSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
-                     const std::string& micDeviceName,
-                     bool recordAudio,
-                     const std::filesystem::path& recordingPath);
-  void initialise();
+  AudioDataSourceMod(std::shared_ptr<Synth> synthPtr,
+                     const std::string& name,
+                     ModConfig config,
+                     std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient);
+
   void shutdown() override;
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
-  
-  // Segment recording - for synchronized audio/video recording
-  void startSegmentRecording(const std::string& filepath);
-  void stopSegmentRecording();
-  bool isSegmentRecording() const;
 
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
   static constexpr int SOURCE_POLAR_PITCH_RMS_POINTS = 2;
@@ -56,11 +47,13 @@ protected:
   void initParameters() override;
 
 private:
+  void initialise();
+
   std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClientPtr;
   std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
   std::shared_ptr<ofxAudioData::Plots> audioDataPlotsPtr;
   float lastUpdated = 0.0;
-  
+
   // https://en.wikipedia.org/wiki/Template:Vocal_and_instrumental_pitch_ranges
   ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 100.0 };
   ofParameter<float> maxPitchParameter { "MaxPitch", 800.0, 500.0, 3000.0 }; // C8 is ~4400.0 Hz
@@ -72,7 +65,7 @@ private:
   ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 100.0, 0.0, 500.0 };
   ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 5.0, 0.0, 15.0 };
   ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 15.0, 2.0, 80.0 };
-  
+
   float getNormalisedAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();
   void emitPolarPitchRmsPoints();
@@ -83,6 +76,5 @@ private:
 
   bool tuningVisible { false };
 };
-
 
 } // ofxMarkSynth

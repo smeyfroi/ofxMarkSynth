@@ -1,6 +1,6 @@
 # SYNTH-RESOURCES.md — ofxMarkSynth Resource Manager Guide
 
-This document lists all resources that Mods require via the `ResourceManager` and shows how to provide them.
+This document lists all resources that `Synth` and Mods require via the `ResourceManager` and shows how to provide them.
 
 ## Overview
 
@@ -28,6 +28,24 @@ The `Synth` class itself requires several resources for display layout, artefact
 |---------------|------|-------------|
 | `recorderCompositeSize` | glm::vec2 | Size (width, height) of the FBO used for video recording |
 
+### Audio (Required)
+
+Audio is mandatory. `Synth::create()` returns `nullptr` if you don’t provide a valid audio configuration.
+
+Choose one configuration:
+- File playback:
+  - `sourceAudioPath` (std::filesystem::path)
+  - `audioOutDeviceName` (std::string)
+  - `audioBufferSize` (int)
+  - `audioChannels` (int)
+  - `audioSampleRate` (int)
+- Microphone input:
+  - `micDeviceName` (std::string)
+  - `recordAudio` (bool)
+  - `audioRecordingPath` (std::filesystem::path)
+
+Note: `AudioDataSourceMod` reads from the Synth-owned audio analysis client; it does not own the stream or recording lifecycle.
+
 Example:
 ```cpp
 ofxMarkSynth::ResourceManager resources;
@@ -54,35 +72,8 @@ auto synth = ofxMarkSynth::Synth::create(
 ## Resource Requirements by Mod
 
 ### AudioDataSource
-Provides audio features from a file or microphone.
 
-Choose one configuration:
-- File playback:
-  - `sourceAudioPath` (std::filesystem::path)
-  - `audioOutDeviceName` (std::string)
-  - `audioBufferSize` (int)
-  - `audioChannels` (int)
-  - `audioSampleRate` (int)
-- Microphone input:
-  - `micDeviceName` (std::string)
-  - `recordAudio` (bool)
-  - `audioRecordingPath` (std::filesystem::path)
-
-Example:
-```cpp
-ofxMarkSynth::ResourceManager resources;
-// File playback (all audio config required)
-resources.add("sourceAudioPath", std::filesystem::path("audio/track.wav"));
-resources.add("audioOutDeviceName", std::string("Apple Inc.: MacBook Pro Speakers"));
-resources.add("audioBufferSize", 256);
-resources.add("audioChannels", 1);
-resources.add("audioSampleRate", 48000);
-
-// OR microphone
-resources.add("micDeviceName", std::string("Built-in Microphone"));
-resources.add("recordAudio", true);
-resources.add("audioRecordingPath", std::filesystem::path("recordings/"));
-```
+`AudioDataSourceMod` does not read audio resources directly. It consumes the Synth-owned audio analysis client created from the Synth audio resources.
 
 ---
 
@@ -145,7 +136,7 @@ resources.add("textSourcesPath", ofToDataPath("text"));
 
 These Mods are constructed without `ResourceManager` dependencies:
 
-- Source Mods: `StaticTextSource`, `TimerSource`, `RandomFloatSource`, `RandomHslColor`, `RandomVecSource`
+- Source Mods: `AudioDataSource`, `StaticTextSource`, `TimerSource`, `RandomFloatSource`, `RandomHslColor`, `RandomVecSource`
 - Process Mods: `Cluster`, `Fluid`, `FluidRadialImpulse`, `MultiplyAdd`, `ParticleField`, `ParticleSet`, `Path`, `PixelSnapshot`, `Smear`, `SoftCircle`
 - Sink Mods: `Collage`, `DividedArea`, `Introspector`, `SandLine`, `SomPalette`
 - Layer Mods: `Fade`
@@ -163,14 +154,15 @@ resources.add("performanceArtefactRootPath", std::filesystem::path(ofToDataPath(
 resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("performance-configs")));
 resources.add("recorderCompositeSize", glm::vec2(1920, 1080));  // macOS only
 
-// Add required resources for the Mods you will create
-resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
-// Audio file playback requires all 5 resources
+// Audio resources (required)
 resources.add("sourceAudioPath", std::filesystem::path("audio/music.wav"));
 resources.add("audioOutDeviceName", std::string("Apple Inc.: MacBook Pro Speakers"));
 resources.add("audioBufferSize", 256);
 resources.add("audioChannels", 1);
 resources.add("audioSampleRate", 48000);
+
+// Add required resources for the Mods you will create
+resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
 
 auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
@@ -188,7 +180,8 @@ auto synth = ofxMarkSynth::Synth::create(
 
 ## Notes
 
-- Missing required resources cause Mod creation to fail; errors are logged.
+- Missing required resources cause Synth/Mod creation to fail; errors are logged.
+- Audio is mandatory: missing/invalid audio config makes `Synth::create()` return `nullptr`.
 - Use the exact types expected by each Mod.
 - Paths should be `std::filesystem::path` for portability.
 - `ResourceManager` stores values internally as `std::shared_ptr<T>`; lifetime is managed for you.

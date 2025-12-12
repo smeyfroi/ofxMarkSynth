@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include <stdexcept>
 #include "ofxTimeMeasurements.h"
 
 void ofApp::setup() {
@@ -16,8 +17,20 @@ void ofApp::setup() {
   resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
   resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
 
+  // Audio resources (Synth-owned)
+  resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
+  resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
+  resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
+  resources.add("audioChannels", AUDIO_CHANNELS);
+  resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
+
   synthPtr = ofxMarkSynth::Synth::create("fingerprint2", ofxMarkSynth::ModConfig {
   }, START_PAUSED, COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_particles") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
+
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window

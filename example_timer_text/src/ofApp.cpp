@@ -1,6 +1,5 @@
-#include "ofApp.h"
-#include <memory>
 #include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 void ofApp::setup() {
   ofDisableArbTex();
@@ -10,12 +9,28 @@ void ofApp::setup() {
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
 
   ofxMarkSynth::ResourceManager resources;
+  resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
+  resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
+
   resources.add("fontPath", FONT_PATH);
   resources.add("textSourcesPath", ofToDataPath("text"));
 
-  synthPtr = ofxMarkSynth::Synth::create("Timer Text Example", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
-  
+  // Audio resources (Synth-owned)
+  resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
+  resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
+  resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
+  resources.add("audioChannels", AUDIO_CHANNELS);
+  resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
+
+  synthPtr = ofxMarkSynth::Synth::create("Timer Text Example", ofxMarkSynth::ModConfig { }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_timer_text") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
+
   synthPtr->loadFromConfig(ofToDataPath("example_timer_text.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
@@ -37,6 +52,9 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+  if (synthPtr) {
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

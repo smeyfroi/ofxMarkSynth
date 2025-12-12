@@ -1,6 +1,7 @@
 #include "ofApp.h"
-#include "ofxTimeMeasurements.h"
 #include "ModFactory.hpp"
+#include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 void ofApp::setup() {
   ofDisableArbTex();
@@ -20,6 +21,10 @@ void ofApp::setup() {
 
   synthPtr = ofxMarkSynth::Synth::create("Sandline", ofxMarkSynth::ModConfig {
   }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_sandlines") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
 
   synthPtr->loadFromConfig(ofToDataPath("2.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
@@ -44,8 +49,10 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-  ofRemoveListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);
-  synthPtr->shutdown();
+  if (synthPtr) {
+    ofRemoveListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

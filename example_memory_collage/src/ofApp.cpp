@@ -1,5 +1,6 @@
 #include "ofApp.h"
 #include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 using namespace ofxMarkSynth;
 
@@ -29,6 +30,10 @@ void ofApp::setup() {
 
   synthPtr = ofxMarkSynth::Synth::create("memory_collage", ofxMarkSynth::ModConfig {
   }, START_PAUSED, COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_memory_collage") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
   synthPtr->configureGui(guiWindowPtr);
@@ -52,7 +57,9 @@ void ofApp::drawGui(ofEventArgs& args){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-  synthPtr->shutdown();
+  if (synthPtr) {
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

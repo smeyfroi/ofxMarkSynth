@@ -1,19 +1,34 @@
 #include "ofApp.h"
 #include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 void ofApp::setup() {
   ofDisableArbTex();
   glEnable(GL_PROGRAM_POINT_SIZE);
   ofSetBackgroundColor(0);
-  ofSetFrameRate(30);
-  TIME_SAMPLE_SET_FRAMERATE(30);
+  ofSetFrameRate(FRAME_RATE);
+  TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
 
-  const glm::vec2 SYNTH_COMPOSITE_SIZE = { 1080, 1080 }; // drawing layers are scaled down to this size to fit into the window height
-  const bool START_PAUSED = false;
-  
-  synthPtr = ofxMarkSynth::Synth::create("Fade", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE);
-  
+  ofxMarkSynth::ResourceManager resources;
+  resources.add("performanceConfigRootPath", PERFORMANCE_CONFIG_ROOT_PATH);
+  resources.add("performanceArtefactRootPath", PERFORMANCE_ARTEFACT_ROOT_PATH);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
+
+  // Audio resources (Synth-owned)
+  resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
+  resources.add("audioOutDeviceName", AUDIO_OUT_DEVICE_NAME);
+  resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
+  resources.add("audioChannels", AUDIO_CHANNELS);
+  resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
+
+  synthPtr = ofxMarkSynth::Synth::create("Fade", ofxMarkSynth::ModConfig { }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_fade") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
+
   synthPtr->loadFromConfig(ofToDataPath("example_fade.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
@@ -35,6 +50,9 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+  if (synthPtr) {
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

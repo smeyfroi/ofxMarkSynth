@@ -21,9 +21,13 @@ Source Mods generate data from various inputs (audio, video, random generation, 
 
 ### AudioDataSourceMod
 
-Extracts musical features from audio (file or microphone) and emits them as points or scalars.
+Extracts musical features from the Synth-owned audio analysis client and emits them as points or scalars.
 
-**Purpose**: Convert audio signals into visual data streams for drawing.
+**Purpose**: Convert audio analysis features into visual data streams for drawing.
+
+**Audio Ownership**:
+- Audio input (file or microphone) is configured at Synth creation time via `ResourceManager` (see `docs/SYNTH-RESOURCES.md`).
+- `AudioDataSourceMod` does not open/close the stream or manage segment recording; `Synth::toggleRecording()` controls audio segment recording.
 
 **Sources**:
 - `PitchRmsPoint` (vec2): Pitch on X, loudness (RMS) on Y
@@ -777,7 +781,7 @@ Below are example configurations that combine Mods to create expressive visual p
 **Aesthetic**: Textural, organic, grainy visualization of music
 
 ```
-AudioDataSourceMod (audio file)
+AudioDataSourceMod (Synth audio input)
   └─ PitchRmsPoint → SandLineMod
   └─ RmsScalar → SandLineMod.PointRadius
 
@@ -795,7 +799,7 @@ FadeMod (slow fade for accumulation)
 **Aesthetic**: Organic, physics-based motion with fluid dynamics
 
 ```
-AudioDataSourceMod (microphone)
+AudioDataSourceMod (Synth audio input)
   └─ Onset1 → RandomVecSourceMod.trigger
 
 RandomVecSourceMod

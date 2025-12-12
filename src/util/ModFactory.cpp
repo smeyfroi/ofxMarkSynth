@@ -65,30 +65,20 @@ std::vector<std::string> ModFactory::getRegisteredTypes() {
 void ModFactory::initializeBuiltinTypes() {
 
   registerType("AudioDataSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto sourceAudioPathPtr = r.get<std::filesystem::path>("sourceAudioPath");
-    auto micDeviceNamePtr = r.get<std::string>("micDeviceName");
-    auto recordAudioPtr = r.get<bool>("recordAudio");
-    auto recordingPathPtr = r.get<std::filesystem::path>("audioRecordingPath");
-    
-    if (sourceAudioPathPtr && !sourceAudioPathPtr->empty()) {
-      auto outDeviceNamePtr = r.get<std::string>("audioOutDeviceName");
-      auto bufferSizePtr = r.get<int>("audioBufferSize");
-      auto nChannelsPtr = r.get<int>("audioChannels");
-      auto sampleRatePtr = r.get<int>("audioSampleRate");
-      
-      if (!outDeviceNamePtr || !bufferSizePtr || !nChannelsPtr || !sampleRatePtr) {
-        ofLogError("ModFactory") << "AudioDataSourceMod with 'sourceAudioPath' also requires 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate' resources";
-        return nullptr;
-      }
-      
-      return std::make_shared<AudioDataSourceMod>(s, n, std::move(c),
-          *sourceAudioPathPtr, *outDeviceNamePtr, *bufferSizePtr, *nChannelsPtr, *sampleRatePtr);
-    } else if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
-      return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), *micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);
-    }
-    ofLogError("ModFactory") << "AudioDataSourceMod requires ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate') or ('micDeviceName', 'recordAudio', 'audioRecordingPath') resources";
+  (void)r;
+  if (!s) {
+    ofLogError("ModFactory") << "AudioDataSource requires a valid Synth";
     return nullptr;
-  });
+  }
+
+  const auto& audioClient = s->getAudioAnalysisClient();
+  if (!audioClient) {
+    ofLogError("ModFactory") << "AudioDataSource requires Synth-owned audio client";
+    return nullptr;
+  }
+
+  return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), audioClient);
+});
   
   registerType("StaticTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<StaticTextSourceMod>(s, n, std::move(c));

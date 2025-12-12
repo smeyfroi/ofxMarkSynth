@@ -1,6 +1,7 @@
 #include "ofApp.h"
-#include "ofxTimeMeasurements.h"
 #include "ModFactory.hpp"
+#include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 void ofApp::setup() {
   ofDisableArbTex();
@@ -25,6 +26,10 @@ void ofApp::setup() {
 
   synthPtr = ofxMarkSynth::Synth::create("example_collage", ofxMarkSynth::ModConfig {
   }, START_PAUSED, COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_smear") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
@@ -47,7 +52,9 @@ void ofApp::draw(){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-  synthPtr->shutdown();
+  if (synthPtr) {
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

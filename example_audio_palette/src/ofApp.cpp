@@ -1,5 +1,6 @@
 #include "ofApp.h"
 #include "ofxTimeMeasurements.h"
+#include <stdexcept>
 
 void ofApp::setup() {
   ofDisableArbTex();
@@ -26,6 +27,10 @@ void ofApp::setup() {
 
   synthPtr = ofxMarkSynth::Synth::create("audio_palette", ofxMarkSynth::ModConfig {
   }, START_PAUSED, COMPOSITE_SIZE, resources);
+  if (!synthPtr) {
+    ofLogError("example_audio_palette") << "Failed to create Synth";
+    throw std::runtime_error("Failed to create Synth");
+  }
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
   synthPtr->configureGui(guiWindowPtr);
@@ -49,7 +54,9 @@ void ofApp::drawGui(ofEventArgs& args){
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-  synthPtr->shutdown();
+  if (synthPtr) {
+    synthPtr->shutdown();
+  }
 }
 
 //--------------------------------------------------------------

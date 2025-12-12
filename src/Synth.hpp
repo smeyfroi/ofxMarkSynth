@@ -31,92 +31,108 @@
 #include "util/PerformanceNavigator.hpp"
 #include "util/MemoryBank.hpp"
 
-
+namespace ofxAudioAnalysisClient {
+class LocalGistClient;
+}
 
 namespace ofxMarkSynth {
-
-
-
-class AudioDataSourceMod;
 
 const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
 
 using DrawingLayerPtrMap = std::map<std::string, DrawingLayerPtr>;
 using ModPtrMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 
-
-
 class Synth : public Mod {
-  
+
 public:
   // The composite is the middle (square) section, scaled to fit the window height
   static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources = {});
-  
+
 protected:
   // The composite is the middle (square) section, scaled to fit the window height
-  Synth(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources = {});
-  
+  Synth(const std::string& name,
+        ModConfig config,
+        bool startPaused,
+        glm::vec2 compositeSize_,
+        std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient,
+        ResourceManager resources = {});
+
 public:
   void drawGui();
   void shutdown() override;
+
   template <typename ModT>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig);
+
   template <typename ModT, typename... Args>
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
+
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
+
   void addMod(ofxMarkSynth::ModPtr modPtr) {
     modPtrs.insert({ modPtr->getName(), modPtr });
     if (modPtr) {
       modPtr->doneModLoad();
     }
   }
-  DrawingLayerPtr addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn = true, bool isOverlay = false, const std::string& description = "");
-  
+
+  DrawingLayerPtr addDrawingLayer(std::string name,
+                                 glm::vec2 size,
+                                 GLint internalFormat,
+                                 int wrap,
+                                 bool clearOnUpdate,
+                                 ofBlendMode blendMode,
+                                 bool useStencil,
+                                 int numSamples,
+                                 bool isDrawn = true,
+                                 bool isOverlay = false,
+                                 const std::string& description = "");
+
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
-  
+
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
-  
+
   bool loadFromConfig(const std::string& filepath);
   bool saveModsToCurrentConfig();
   void unload();
   void switchToConfig(const std::string& filepath, bool useCrossfade = true);
   void loadFirstPerformanceConfig();
   void setIntentPresets(const std::vector<IntentPtr>& presets);
-  
+
   static void setArtefactRootPath(const std::filesystem::path& root);
   static std::string saveArtefactFilePath(const std::string& relative);
   static void setConfigRootPath(const std::filesystem::path& root);
   static std::string saveConfigFilePath(const std::string& relative);
-  
+
   float getAgency() const override { return agencyParameter; }
   void setAgency(float agency) { agencyParameter = agency; }
   float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
   float getBaseManualBias() const { return baseManualBiasParameter; }
   float getHibernationFadeDurationSec() const { return hibernationFadeDurationParameter; }
-  
+
+  const std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient>& getAudioAnalysisClient() const { return audioAnalysisClientPtr; }
+
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
   void update() override;
   glm::vec2 getSize() const { return compositeSize; }
   const ofFbo& getCompositeFbo() const { return imageCompositeFbo; }
   void draw() override;
-  
-  void setAudioDataSourceMod(std::weak_ptr<AudioDataSourceMod> mod);
-  
+
   void toggleRecording();
   void saveImage();
   bool keyPressed(int key) override;
   bool keyReleased(int key);
-  
+
   static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SOURCE_MEMORY = 10;
-  
+
   static constexpr int SINK_BACKGROUND_COLOR = 100;
   static constexpr int SINK_RESET_RANDOMNESS = 200;
-  
+
   // Memory bank sinks
   static constexpr int SINK_MEMORY_SAVE = 300;
   static constexpr int SINK_MEMORY_SAVE_SLOT = 301;
@@ -130,78 +146,82 @@ public:
   static constexpr int SINK_MEMORY_EMIT_CENTRE = 309;
   static constexpr int SINK_MEMORY_EMIT_WIDTH = 310;
   static constexpr int SINK_MEMORY_CLEAR_ALL = 311;
-  
+
   class HibernationCompleteEvent : public ofEventArgs {
   public:
     float fadeDuration;
     std::string synthName;
   };
   ofEvent<HibernationCompleteEvent> hibernationCompleteEvent;
-  
+
   class ConfigUnloadEvent : public ofEventArgs {
   public:
     std::string previousConfigPath;
   };
+
   class ConfigLoadedEvent : public ofEventArgs {
   public:
     std::string newConfigPath;
   };
+
   ofEvent<ConfigUnloadEvent> configWillUnloadEvent;
   ofEvent<ConfigLoadedEvent> configDidLoadEvent;
-  
+
   friend class Gui;
   friend class NodeEditorModel;
   friend class NodeEditorLayout;
   friend class SynthConfigSerializer;
   friend class PerformanceNavigator;
-  
+
 protected:
   void initParameters() override;
-  
+
 private:
   static std::filesystem::path artefactRootPath;
   static bool artefactRootPathSet;
   static std::filesystem::path configRootPath;
   static bool configRootPathSet;
-  
+
   ResourceManager resources;
+  std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClientPtr;
+
   Gui gui;
   PerformanceNavigator performanceNavigator { this };
-  
+
   ModPtrMap modPtrs;
   DrawingLayerPtrMap drawingLayerPtrs;
   std::unordered_map<std::string, float> initialLayerAlphas;
   std::unordered_map<std::string, bool> initialLayerPaused;
-  
+
   void initDisplayParameterGroup();
   void initFboParameterGroup();
   void initLayerPauseParameterGroup();
   void initIntentParameterGroup();
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
-  
+
   bool paused;
-  
+
   TonemapShader tonemapShader;
   glm::vec2 compositeSize;
   float compositeScale;
   ofFbo imageCompositeFbo;
   void updateCompositeImage();
-  
+
   float sidePanelWidth, sidePanelHeight;
   PingPongFbo leftPanelFbo, rightPanelFbo;
   ofFbo leftPanelCompositeFbo, rightPanelCompositeFbo;
   void updateCompositeSideImages();
-  
+
   float leftSidePanelLastUpdate { 0.0 };
   float rightSidePanelLastUpdate { 0.0 };
   float leftSidePanelTimeoutSecs { 7.0 };
   float rightSidePanelTimeoutSecs { 11.0 };
   void updateSidePanels();
-  
+
   void drawMiddlePanel(float w, float h, float scale);
   void drawSidePanels(float xleft, float xright, float w, float h);
   void drawDebugViews();
-  
+
   // >>> Config transition crossfade system
   enum class TransitionState {
     NONE,           // No transition in progress
@@ -216,7 +236,7 @@ private:
   void updateTransition();
   void captureSnapshot();
   // <<<
-  
+
   // Intent system
   IntentActivations intentActivations;
   Intent activeIntent { "Active", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
@@ -230,7 +250,7 @@ private:
   void updateIntentActivations();
   void computeActiveIntent();
   void applyIntentToAllMods();
-  
+
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
@@ -255,12 +275,12 @@ private:
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
   ofxLabel pauseStatus;
-  
+
   std::string currentConfigPath;
-  
+
   bool guiVisible { true };
   bool initialLoadCallbackEmitted { false };
-  
+
   std::shared_ptr<LoggerChannel> loggerChannelPtr;
 
   // >>> Hibernation system
@@ -272,23 +292,23 @@ private:
   HibernationState hibernationState { HibernationState::ACTIVE };
   float hibernationAlpha { 1.0f };  // 1.0 = fully visible, 0.0 = fully black
   float hibernationStartTime { 0.0f };
-   ofParameter<float> hibernationFadeDurationParameter { "Hibernate Duration", 2.0, 0.5, 10.0 };
-   void startHibernation();
-   void cancelHibernation();
-   void updateHibernation();
-   void updateLayerPauseStates();
+  ofParameter<float> hibernationFadeDurationParameter { "Hibernate Duration", 2.0, 0.5, 10.0 };
+  void startHibernation();
+  void cancelHibernation();
+  void updateHibernation();
+  void updateLayerPauseStates();
 
   bool isHibernating() const { return hibernationState != HibernationState::ACTIVE; }
   std::string getHibernationStateString() const;
   HibernationState getHibernationState() const { return hibernationState; }
   float getHibernationStartTime() const { return hibernationStartTime; }
   // <<<
-  
+
 #ifdef TARGET_MAC
   ofxFFmpegRecorder recorder;
   glm::vec2 recorderCompositeSize;
   ofFbo recorderCompositeFbo;
-  
+
   // PBO-based async pixel readback for video recording
   static constexpr int NUM_PBOS { 2 };
   ofBufferObject recorderPbos[NUM_PBOS];
@@ -296,7 +316,7 @@ private:
   int recorderFrameCount { 0 };      // Frames captured since recording started
   ofPixels recorderPixels;           // Reusable pixel buffer
 #endif
-  
+
   std::vector<std::unique_ptr<SaveToFileThread>> saveToFileThreads;
   void pruneSaveThreads();
 
@@ -312,34 +332,29 @@ private:
   void initiateImageSaveTransfer();  // Called from draw() after all rendering
   void processPendingImageSave();
   float saveStatusClearTime { 0.0f };
-  
-  // Audio source mod for synchronized audio/video recording
-  std::weak_ptr<AudioDataSourceMod> audioDataSourceModPtr;
-  
+
   // >>> Memory bank system
   MemoryBank memoryBank;
   void initMemoryBankParameterGroup();
-  
+
   // Memory save parameters
   ofParameterGroup memoryBankParameters;
   ofParameter<float> memorySaveCentreParameter { "MemorySaveCentre", 1.0, 0.0, 1.0 };
   ofParameter<float> memorySaveWidthParameter { "MemorySaveWidth", 0.0, 0.0, 1.0 };
   ParamController<float> memorySaveCentreController { memorySaveCentreParameter };
   ParamController<float> memorySaveWidthController { memorySaveWidthParameter };
-  
+
   // Memory emit parameters
   ofParameter<float> memoryEmitCentreParameter { "MemoryEmitCentre", 0.5, 0.0, 1.0 };
   ofParameter<float> memoryEmitWidthParameter { "MemoryEmitWidth", 1.0, 0.0, 1.0 };
   ParamController<float> memoryEmitCentreController { memoryEmitCentreParameter };
   ParamController<float> memoryEmitWidthController { memoryEmitWidthParameter };
-  
+
   // Emit rate limiting
   float lastMemoryEmitTime { 0.0f };
   ofParameter<float> memoryEmitMinIntervalParameter { "MemoryEmitMinInterval", 0.1, 0.0, 2.0 };
   // <<<
 };
-
-
 
 template <typename ModT>
 ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig) {
@@ -356,7 +371,5 @@ ofxMarkSynth::ModPtr Synth::addMod(const std::string& name, ofxMarkSynth::ModCon
   addMod(modPtr);
   return modPtr;
 }
-
-
 
 } // ofxMarkSynth

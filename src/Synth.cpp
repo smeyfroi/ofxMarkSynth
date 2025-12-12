@@ -12,7 +12,7 @@
 #include "Gui.hpp"
 #include "util/SynthConfigSerializer.hpp"
 #include "ofxImGui.h"
-#include "sourceMods/AudioDataSourceMod.hpp"
+#include "ofxAudioAnalysisClient.h"
 #include "nlohmann/json.hpp"
 #include <fstream>
 
@@ -71,23 +71,68 @@ constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recording";
 // Also: ModSnapshotManager uses "mod-snapshots" and NodeEditorLayoutManager uses "node-layouts"
 
 
+static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnalysisClient(const ResourceManager& resources) {
+  auto sourceAudioPathPtr = resources.get<std::filesystem::path>("sourceAudioPath");
+  if (sourceAudioPathPtr && !sourceAudioPathPtr->empty()) {
+    auto outDeviceNamePtr = resources.get<std::string>("audioOutDeviceName");
+    auto bufferSizePtr = resources.get<int>("audioBufferSize");
+    auto nChannelsPtr = resources.get<int>("audioChannels");
+    auto sampleRatePtr = resources.get<int>("audioSampleRate");
+
+    if (!outDeviceNamePtr || !bufferSizePtr || !nChannelsPtr || !sampleRatePtr) {
+      ofLogError("Synth")
+          << "Missing required audio resources for file playback: sourceAudioPath requires audioOutDeviceName, audioBufferSize, audioChannels, audioSampleRate";
+      return nullptr;
+    }
+
+    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(
+        *sourceAudioPathPtr, *outDeviceNamePtr, *bufferSizePtr, *nChannelsPtr, *sampleRatePtr);
+  }
+
+  auto micDeviceNamePtr = resources.get<std::string>("micDeviceName");
+  auto recordAudioPtr = resources.get<bool>("recordAudio");
+  auto recordingPathPtr = resources.get<std::filesystem::path>("audioRecordingPath");
+  if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
+    std::error_code ec;
+    std::filesystem::create_directories(*recordingPathPtr, ec);
+    if (ec) {
+      ofLogWarning("Synth") << "Failed to create audioRecordingPath: " << *recordingPathPtr << " (" << ec.message() << ")";
+    }
+
+    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(*micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);
+  }
+
+  ofLogError("Synth")
+      << "Missing required audio source resources: provide either (sourceAudioPath + audioOutDeviceName + audioBufferSize + audioChannels + audioSampleRate) or (micDeviceName + recordAudio + audioRecordingPath)";
+  return nullptr;
+}
+
+
 
 std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources) {
+  auto audioClient = createAudioAnalysisClient(resources);
+  if (!audioClient) {
+    ofLogError("Synth") << "Synth::create: failed to create audio source";
+    return nullptr;
+  }
+
   return std::shared_ptr<Synth>(
       new Synth(name,
                 std::move(config),
                 startPaused,
                 compositeSize,
+                std::move(audioClient),
                 std::move(resources)));
 }
 
 
 
-Synth::Synth(const std::string& name_, ModConfig config, bool startPaused, glm::vec2 compositeSize_, ResourceManager resources_) :
+Synth::Synth(const std::string& name_, ModConfig config, bool startPaused, glm::vec2 compositeSize_, std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient, ResourceManager resources_) :
 Mod(nullptr, name_, std::move(config)),
 paused { startPaused },
 compositeSize { compositeSize_ },
-resources { std::move(resources_) }
+resources { std::move(resources_) },
+audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -249,6 +294,12 @@ void Synth::shutdown() {
   }
 #endif
   
+  if (audioAnalysisClientPtr) {
+    audioAnalysisClientPtr->stopSegmentRecording();
+    audioAnalysisClientPtr->stopRecording();
+    audioAnalysisClientPtr->closeStream();
+  }
+
   // Complete any pending PBO image save before waiting for threads
   if (pendingImageSave) {
     ofLogNotice("Synth") << "Waiting for pending image save PBO transfer";
@@ -872,9 +923,6 @@ void Synth::draw() {
   initiateImageSaveTransfer();  // Issue glReadPixels here, after all rendering complete
 }
 
-void Synth::setAudioDataSourceMod(std::weak_ptr<AudioDataSourceMod> mod) {
-  audioDataSourceModPtr = mod;
-}
 
 void Synth::drawGui() {
   if (!guiVisible) return;
@@ -899,17 +947,16 @@ void Synth::toggleRecording() {
     
     recorder.stop();
     
-    // Stop audio segment recording
-    if (auto audioMod = audioDataSourceModPtr.lock()) {
-      audioMod->stopSegmentRecording();
+    if (audioAnalysisClientPtr) {
+      audioAnalysisClientPtr->stopSegmentRecording();
     }
     
   } else {
     std::string timestamp = ofGetTimestampString();
     recorder.setOutputPath(Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+timestamp+".mp4"));
     // Start audio segment recording with matching timestamp
-    if (auto audioMod = audioDataSourceModPtr.lock()) {
-      audioMod->startSegmentRecording(
+    if (audioAnalysisClientPtr) {
+      audioAnalysisClientPtr->startSegmentRecording(
         Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/audio-"+timestamp+".wav"));
     }
     
