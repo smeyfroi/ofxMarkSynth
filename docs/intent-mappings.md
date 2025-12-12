@@ -45,13 +45,13 @@ All dimensions are normalized to 0.0-1.0.
 
 ## AgencyFactor
 
-All Mods with Intent support have an **AgencyFactor** parameter (default 1.0, range 0.0-1.0).
+Most Mods with Intent support have an **AgencyFactor** (or **Agency Factor**) parameter (default 1.0, range 0.0-1.0).
 
 - **1.0**: Full Intent influence (default)
 - **0.5**: Intent effect is halved
 - **0.0**: Intent has no effect (Mod uses only its base parameters)
 
-AgencyFactor is multiplied with the global agency value, allowing per-Mod control of how much the Intent system affects that Mod's behavior. Configure via `"AgencyFactor": "0.5"` in synth config JSON.
+The per-Mod agency factor (usually `AgencyFactor`, sometimes `Agency Factor`) is multiplied with the global agency value, controlling how much Intent affects that Mod. Configure via `"Agency": "0.5"` in synth config JSON (prefix-matching works for both spellings).
 
 ---
 
@@ -74,40 +74,40 @@ AgencyFactor is multiplied with the global agency value, allowing per-Mod contro
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| D | floatsPerUpdate | exp(0.5) |
-| E | min, max | custom: E controls range width (20-100% of full range) |
+| D | CreatedPerUpdate | exp(0.5) |
+| E | Min, Max | custom: E controls range width (20-100% of full range) |
 
 ### RandomHslColorMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| D | colorsPerUpdate | exp(2.0) |
-| E | hueCenter | lerp(0.6 -> 0.08) cool to warm |
-| C | hueWidth | lerp(0.08 -> 1.0) |
-| E | minSaturation | lin(0.2 -> 0.8) |
-| E | maxSaturation | lin(0.6 -> 1.0) |
-| S | minBrightness | inv(0.4 -> 0.1) |
-| S | maxBrightness | lin(0.6 -> 1.0) |
-| D | minAlpha | lin(0.2 -> 0.8) |
-| D | maxAlpha | lin(0.6 -> 1.0) |
+| D | CreatedPerUpdate | exp(2.0) |
+| E | HueCenter | lerp(0.6 -> 0.08) cool to warm |
+| C | HueWidth | lerp(0.08 -> 1.0) |
+| E | MinSaturation | lin(0.2 -> 0.8) |
+| E | MaxSaturation | lin(0.6 -> 1.0) |
+| S | MinBrightness | inv(0.4 -> 0.1) |
+| S | MaxBrightness | lin(0.6 -> 1.0) |
+| D | MinAlpha | lin(0.2 -> 0.8) |
+| D | MaxAlpha | lin(0.6 -> 1.0) |
 
 ### RandomVecSourceMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| D | vecsPerUpdate | exp(2.0) |
+| D | CreatedPerUpdate | exp(2.0) |
 
 ### TextSourceMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| C | randomness | direct (0=sequential, 1=random) |
+| C | Randomness | direct (0=sequential, 1=random) |
 
 ### TimerSourceMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| 1-E | interval | exp(0.5) — higher energy = shorter interval |
+| 1-E | Interval | exp(0.5) — higher energy = shorter interval |
 
 ---
 
@@ -115,8 +115,8 @@ AgencyFactor is multiplied with the global agency value, allowing per-Mod contro
 
 | Mod | Intent | AgencyFactor | Primary Dimensions |
 |-----|--------|--------------|-------------------|
-| ClusterMod | Yes | — | C |
-| MultiplyAddMod | Yes | — | E, D, G |
+| ClusterMod | Yes | Yes | C |
+| MultiplyAddMod | Yes | Yes | E, D, G |
 | PathMod | Yes | Yes | D, G, C, S |
 | PixelSnapshotMod | Yes | Yes | S, G |
 | SomPaletteMod | Yes* | Yes | — (empty implementation) |
@@ -134,17 +134,17 @@ AgencyFactor is multiplied with the global agency value, allowing per-Mod contro
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E | multiplier | exp |
-| D*0.6 + G*0.4 | adder | exp |
+| E | Multiplier | exp |
+| D*0.6 + G*0.4 | Adder | exp |
 
 ### PathMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| 1-D | minVertexProximity | invExp |
-| G | maxVertexProximity | lin |
-| D | maxVertices | lin |
-| C, S | strategy | conditional (see below) |
+| 1-D | MinVertexProximity | invExp |
+| G | MaxVertexProximity | lin |
+| D | MaxVertices | lin |
+| C, S | Strategy | conditional (see below) |
 
 Strategy selection:
 - C > 0.6 AND S < 0.4 -> 2 (horizontals)
@@ -156,7 +156,7 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| (1-S)*0.6 + G*0.4 | size | lin |
+| (1-S)*0.6 + G*0.4 | Size | lin |
 
 ---
 
@@ -169,7 +169,7 @@ Strategy selection:
 | FluidRadialImpulseMod | Yes | Yes | G, E, C |
 | IntrospectorMod | No | — | — |
 | ParticleFieldMod | Yes | Yes | E, S, C, D, G |
-| ParticleSetMod | Yes | — | E, C, S, D, G |
+| ParticleSetMod | Yes | Yes | E, C, S, D, G |
 | SandLineMod | Yes | Yes | E, G, S, C, D |
 | SoftCircleMod | Yes | — | E, D |
 | TextMod | Yes | — | G, E, D, C |
@@ -180,30 +180,30 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E | color | energyToColor, mixed |
-| S | color.brightness | structureToBrightness (25% mix) |
-| D | color.alpha | densityToAlpha(0.3 -> 1.0) |
-| E | saturation (part 1) | lin(0.8 -> 2.2) |
-| C | saturation (part 2) | exp(0.9 -> 2.8) |
-| 1-S | saturation (part 3) | inv(0.8 -> 1.6) |
-| S or G | strategy | 1 if S>0.55 or G>0.6, else 0 |
-| 1-C | outline | 1.0 if C<0.6, else 0.0 |
+| E | Colour | energyToColor, mixed |
+| S | Colour.brightness | structureToBrightness (25% mix) |
+| D | Colour.alpha | densityToAlpha(0.3 -> 1.0) |
+| E | Saturation (part 1) | lin(0.8 -> 2.2) |
+| C | Saturation (part 2) | exp(0.9 -> 2.8) |
+| 1-S | Saturation (part 3) | inv(0.8 -> 1.6) |
+| S or G | Strategy | 1 if S>0.55 or G>0.6, else 0 |
+| 1-C | Outline | 1.0 if C<0.6, else 0.0 |
 
 ### DividedAreaMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| C | angle | exp(0.0 -> 0.5) |
-| G | pathWidth | exp(0.7) |
-| E | minorLineColor | energyToColor |
-| D | minorLineColor.alpha | lin(0.7 -> 1.0) |
-| E | majorLineColor | energyToColor * 0.7 |
-| S | majorLineColor.brightness | structureToBrightness * 0.8 |
-| E*S | majorLineColor.saturation | * 0.5 |
-| D | majorLineColor.alpha | exp(0.5)(0.0 -> 1.0) |
-| C | maxUnconstrainedLines | exp(2.0)(1 -> 9) |
-| G | majorLineWidth | lin |
-| S | strategy | conditional (see below) |
+| C | Angle | exp(0.0 -> 0.5) |
+| G | PathWidth | exp(0.7) |
+| E | MinorLineColour | energyToColor |
+| D | MinorLineColour.alpha | lin(0.7 -> 1.0) |
+| E | MajorLineColour | energyToColor * 0.7 |
+| S | MajorLineColour.brightness | structureToBrightness * 0.8 |
+| E*S | MajorLineColour.saturation | * 0.5 |
+| D | MajorLineColour.alpha | exp(0.5)(0.0 -> 1.0) |
+| C | MaxUnconstrainedLines | exp(2.0)(1 -> 9) |
+| G | MajorLineWidth | lin |
+| S | Strategy | conditional (see below) |
 
 Strategy selection:
 - S < 0.3 -> 0 (pairs)
@@ -214,8 +214,8 @@ Strategy selection:
  
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| G | impulseRadius | lin |
-| E (80%) + C (20%) | impulseStrength | custom weighted |
+| G | Impulse Radius | lin |
+| E (80%) + C (20%) | Impulse Strength | custom weighted |
 | (none) | dt | manual (UI-controlled time step) |
 
 
@@ -223,10 +223,10 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E | color | energyToColor |
-| S | color.brightness | structureToBrightness * 0.5 |
-| E*C | color.saturation | direct |
-| D | color.alpha | lin(0.1 -> 0.5) |
+| E | PointColour | energyToColor |
+| S | PointColour.brightness | structureToBrightness * 0.5 |
+| E*C | PointColour.saturation | direct |
+| D | PointColour.alpha | lin(0.1 -> 0.5) |
 | 1-G | minWeight | inv |
 | C | maxWeight | lin |
 
@@ -234,11 +234,11 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E*C | spin | lin(-0.05 -> 0.05) |
-| E | color | energyToColor |
-| S | color.brightness | structureToBrightness |
-| E*C*(1-S) | color.saturation | direct |
-| D | color.alpha | lin(0.0 -> 1.0) |
+| E*C | Spin | lin(-0.05 -> 0.05) |
+| E | Colour | energyToColor |
+| S | Colour.brightness | structureToBrightness |
+| E*C*(1-S) | Colour.saturation | direct |
+| D | Colour.alpha | lin(0.0 -> 1.0) |
 | E | timeStep | exp |
 | 1-G | velocityDamping | inv |
 | S | attractionStrength | lin |
@@ -252,33 +252,33 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E*G | density | exp |
-| G | pointRadius | exp(3.0)(0.5 -> 16.0) |
-| E | color | energyToColor |
-| S | color.brightness | structureToBrightness |
-| E*(1-S) | color.saturation | direct |
-| 1-S | stdDevAlong | inv |
-| C | stdDevPerpendicular | lin |
+| E*G | Density | exp |
+| G | PointRadius | exp(3.0)(0.5 -> 16.0) |
+| E | Colour | energyToColor |
+| S | Colour.brightness | structureToBrightness |
+| E*(1-S) | Colour.saturation | direct |
+| 1-S | StdDevAlong | inv |
+| C | StdDevPerpendicular | lin |
 
 ### SoftCircleMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E | radius | exp |
-| D | colorMultiplier | lin |
-| D | alphaMultiplier | lin |
+| E | Radius | exp |
+| D | ColourMultiplier | lin |
+| D | AlphaMultiplier | lin |
 
 ### TextMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| G | fontSize | exp |
-| E | color | energyToColor |
-| D | color.alpha | lin(0.5 -> 1.0) |
-| D | alpha | lin |
+| G | FontSize | exp |
+| E | Colour | energyToColor |
+| D | Colour.alpha | lin(0.5 -> 1.0) |
+| D | Alpha | lin |
 | 1-G | DrawDurationSec | exp |
 | D | AlphaFactor | exp |
-| C | position | jitter (max 15% when C>0.1) |
+| C | Position | jitter (max 15% when C>0.1) |
 
 ---
 
@@ -287,7 +287,7 @@ Strategy selection:
 | Mod | Intent | AgencyFactor | Primary Dimensions |
 |-----|--------|--------------|-------------------|
 | FadeMod | Yes | Yes | D, G |
-| FluidMod | Yes | — | E, C, D, G |
+| FluidMod | Yes | Yes | E, C, D, G |
 | SmearMod | Yes | Yes | E, D, C, G, S |
 
 ## Layer Mods - Detail
@@ -296,32 +296,32 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| D*0.8 + G*0.2 | alphaMultiplier | exp |
+| D*0.8 + G*0.2 | Alpha | exp |
 
 ### FluidMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | E | dt | exp |
-| C | vorticity | lin |
-| 1-D | valueDissipation | inv |
-| 1-G | velocityDissipation | invExp |
+| C | Vorticity | lin |
+| 1-D | Value Dissipation | inv |
+| 1-G | Velocity Dissipation | invExp |
 
 ### SmearMod
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| E | mixNew | exp |
-| D | alphaMultiplier | exp |
-| E | field1Multiplier | exp(2.0) |
-| C | field2Multiplier | exp(3.0) |
-| C | jumpAmount | exp(2.0) |
-| G | borderWidth | lin |
-| D | ghostBlend | lin |
-| S | strategy | conditional (see below) |
-| S | gridLevels | lin + 1 (1-5) |
-| 1-G | gridSize | lin(8 -> 64) |
-| G | foldPeriod | lin(4 -> 32) |
+| E | MixNew | exp |
+| D | AlphaMultiplier | exp |
+| E | Field1Multiplier | exp(2.0) |
+| C | Field2Multiplier | exp(3.0) |
+| C | JumpAmount | exp(2.0) |
+| G | BorderWidth | lin |
+| D | GhostBlend | lin |
+| S | Strategy | conditional (see below) |
+| S | GridLevels | lin + 1 (1-5) |
+| 1-G | GridSize | lin(8 -> 64) |
+| G | FoldPeriod | lin(4 -> 32) |
 
 Strategy selection:
 - S < 0.2 -> 0 (Off)

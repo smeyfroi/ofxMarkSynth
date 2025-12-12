@@ -59,7 +59,7 @@ Extracts motion flow data from video (file or camera).
 **Purpose**: Convert video motion into drawing data.
 
 **Sources**:
-- `FlowFbo` (texture): Optical flow field as texture
+- `FlowField` (texture): Optical flow field as texture
 - `PointVelocity` (vec2): Motion vectors at sampled points
 - `Point` (vec2): Sampled motion point positions
 
@@ -275,10 +275,10 @@ Groups 2D points into clusters using k-means algorithm and outputs cluster cente
 
 **Sinks**:
 - `Vec2` (vec2): Input points to cluster
-- `ChangeClusterNum` (float): Adjust number of clusters
+- `ChangeClusterCount` (float): Adjust number of clusters
 
 **Sources**:
-- `ClusterCentreVec2` (vec2): Cluster center positions
+- `ClusterCentre` (vec2): Cluster center positions
 
 **Key Parameters**:
 - Cluster count (adjustable via sink)
@@ -358,7 +358,7 @@ Self-organizing map that learns color palettes from 3D color input.
 - `RandomLight` (vec4): Random light color
 - `Darkest` (vec4): Darkest palette color
 - `Lightest` (vec4): Lightest palette color
-- `Field` (texture): 2D palette texture (16×16)
+- `FieldTexture` (texture): 2D palette texture (16×16)
 
 **Key Parameters**:
 - `Iterations`: Training iterations (100-10000)
@@ -385,7 +385,7 @@ Draws soft, alpha-blended circles with Gaussian falloff.
 **Visual Characteristics**: Soft, glowing, ethereal • Organic edges • Overlapping creates luminosity
 
 **Sinks**:
-- `Points` (vec2): Circle center positions
+- `Point` (vec2): Circle center positions
 - `Radius` (float): Circle size
 - `Colour` (vec4): Circle color
 - `ColourMultiplier` (float): Color intensity multiplier
@@ -436,7 +436,7 @@ Physics-based particle system with attraction, connections, and trails.
 - `attractionRadius`: Range of attraction
 - `connectionRadius`: Distance for drawing connections
 - `maxSpeed`: Velocity cap
-- `AgencyFactor`: Intent responsiveness
+- `Agency Factor`: Intent responsiveness
 
 **Intent Integration**: Full Intent with agency control.
 
@@ -454,11 +454,11 @@ Particle system driven by two texture-based vector fields (like fluid velocities
 **Visual Characteristics**: Field-guided motion • Smooth, flowing trajectories • Complex patterns
 
 **Sinks**:
-- `Field1Fbo` (texture): Primary vector field (RG channels)
-- `Field2Fbo` (texture): Secondary vector field
+- `Field1Texture` (texture): Primary vector field (RG channels)
+- `Field2Texture` (texture): Secondary vector field
 - `PointColour` (vec4): Update particle colors
-- `MinWeight` (float): Field 1 influence minimum
-- `MaxWeight` (float): Field 1 influence maximum
+- `minWeight` (float): Field 1 influence minimum
+- `maxWeight` (float): Field 1 influence maximum
 
 **Key Parameters**:
 - Field weights control blend between two fields
@@ -622,14 +622,14 @@ Adds radial velocity impulses to a fluid simulation layer.
 **Visual Characteristics**: Fluid distortion • Ripple effects • Dynamic flow patterns
 
 **Sinks**:
-- `Points` (vec2): Impulse centers
-- `ImpulseRadius` (float): Impulse size
-- `ImpulseStrength` (float): Force magnitude
+- `Point` (vec2): Impulse centers
+- `Impulse Radius` (float): Impulse size
+- `Impulse Strength` (float): Force magnitude
 
 **Key Parameters**:
 - `Impulse Radius`: Size of force field (0.0-0.3)
-- `Impulse Strength`: Force magnitude (0.0-0.3)
-- `dt`: Time step scaling for impulses (0.0001-0.1)
+- `Impulse Strength`: Force magnitude (0.0-10.0)
+- `dt`: Time step scaling for impulses (0.001-1.0)
  
 **Intent Integration**: Responds to Intent.
 
@@ -650,8 +650,8 @@ Visualizes data points and horizontal lines for debugging.
 **Visual Characteristics**: Debug overlay • Non-persistent (separate FBO) • Colored traces
 
 **Sinks**:
-- `Points` (vec2): Points to visualize
-- `HorizontalLines1`, `HorizontalLines2`, `HorizontalLines3` (float): Y-positions for lines
+- `Point` (vec2): Points to visualize
+- `HorizontalLine1`, `HorizontalLine2`, `HorizontalLine3` (float): Y-positions for lines
 
 **Key Parameters**:
 - `PointSize`: Visualization point size (0.0-4.0)
@@ -688,10 +688,10 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 
 **Key Parameters**:
 - `dt`: Time step (simulation speed)
-- `vorticity`: Vortex formation strength
-- `valueDissipation`: Color/value fade rate
-- `velocityDissipation`: Motion decay rate
-- `AgencyFactor`: Intent responsiveness
+- `Vorticity`: Vortex formation strength
+- `Value Dissipation`: Color/value fade rate
+- `Velocity Dissipation`: Motion decay rate
+- `Agency Factor`: Intent responsiveness
 
 **Intent Integration**: Full Intent support with agency.
 
@@ -709,7 +709,7 @@ Gradually fades layer content over time using alpha blending.
 **Visual Characteristics**: Gradual fade • Trails • Temporal blending
 
 **Sinks**:
-- `AlphaMultiplier` (float): Override fade rate
+- `Alpha` (float): Override fade rate
 
 **Key Parameters**:
 - `Alpha`: Per-frame alpha multiplier (0.0-0.1)
@@ -732,8 +732,8 @@ Applies displacement-based smearing using vector fields with various spatial str
 **Sinks**:
 - `Vec2` (vec2): Direct displacement offset
 - `Float` (float): Scalar multiplier for displacement
-- `Field1Tex` (texture): Primary displacement field (RG channels)
-- `Field2Tex` (texture): Secondary displacement field
+- `Field1Texture` (texture): Primary displacement field (RG channels)
+- `Field2Texture` (texture): Secondary displacement field
 
 **Key Parameters**:
 - `MixNew`: Blend with previous frame (0.3-1.0)
@@ -798,7 +798,7 @@ RandomVecSourceMod
   └─ Vec2 → ParticleSetMod.Point
 
 FluidMod (generates velocity field)
-  └─ VelocitiesTexture → ParticleFieldMod.Field1Fbo
+  └─ velocitiesTexture → ParticleFieldMod.Field1Texture
 
 ParticleFieldMod (particles follow fluid)
 
@@ -818,7 +818,7 @@ AudioDataSourceMod
   └─ PolarPitchRmsPoint → ClusterMod.Vec2
 
 ClusterMod (reduces to 5-8 clusters)
-  └─ ClusterCentreVec2 → DividedAreaMod.MajorAnchor
+  └─ ClusterCentre → DividedAreaMod.MajorAnchor
 
 DividedAreaMod (Strategy: point angles)
   └─ Major lines divide space geometrically
@@ -868,7 +868,7 @@ SmearMod (Strategy: boundary teleport)
 
 ```
 AudioDataSourceMod
-  └─ PitchRmsPoint → SoftCircleMod.Points
+  └─ PitchRmsPoint → SoftCircleMod.Point
   └─ ComplexSpectralDifferenceScalar → MultiplyAddMod.Float
 
 MultiplyAddMod (scale spectral change to radius)
@@ -890,7 +890,7 @@ FadeMod (medium fade rate)
 ```
 VideoFlowSourceMod (camera input)
   └─ PointVelocity → ParticleSetMod.PointVelocity
-  └─ FlowFbo → SmearMod.Field1Tex
+  └─ FlowField → SmearMod.Field1Texture
 
 ParticleSetMod (particles follow camera motion)
 
@@ -914,12 +914,12 @@ AudioDataSourceMod
   └─ Onset1 → RandomVecSourceMod.trigger
 
 RandomVecSourceMod
-  └─ Vec2 → FluidRadialImpulseMod.Points
+  └─ Vec2 → FluidRadialImpulseMod.Point
 
 FluidRadialImpulseMod (adds energy to fluid)
 
 FluidMod (creates flowing patterns)
-  └─ VelocitiesTexture → SmearMod.Field1Tex
+  └─ velocitiesTexture → SmearMod.Field1Texture
 
 SoftCircleMod (draws on fluid layer)
 
@@ -941,10 +941,10 @@ AudioDataSourceMod
   └─ Spectral2dPoint → ClusterMod.Vec2
 
 ClusterMod (8 clusters)
-  └─ ClusterCentreVec2 → DividedAreaMod.MinorAnchor
+  └─ ClusterCentre → DividedAreaMod.MinorAnchor
 
 AudioDataSourceMod
-  └─ Onset1 → ClusterMod.ChangeClusterNum
+  └─ Onset1 → ClusterMod.ChangeClusterCount
 
 DividedAreaMod (Strategy: radiating)
 

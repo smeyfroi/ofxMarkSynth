@@ -152,7 +152,7 @@
       "config": {
         "Max Source Points": "2000",
         "Clusters": "5",
-        "AgencyFactor": "1"
+        "Agency": "1"
       }
     },
 
@@ -167,7 +167,7 @@
         "Value Iterations": "1",
         "Velocity Iterations": "1",
         "Pressure Iterations": "25",
-        "AgencyFactor": "1"
+        "Agency": "1"
       }
     },
 
@@ -176,7 +176,7 @@
       "config": {
         "Multiplier": "1",
         "Adder": "0",
-        "AgencyFactor": "1"
+        "Agency": "1"
       }
     },
 
@@ -300,7 +300,8 @@
       "type": "FluidRadialImpulse",
       "config": {
         "Impulse Radius": "0.001",
-        "Impulse Strength": "0.01",
+        "Impulse Strength": "1.0",
+        "dt": "0.1",
         "AgencyFactor": "1"
       }
     },
@@ -312,9 +313,9 @@
         "PointFade": "30",
         "Colour": "255, 255, 0, 255",
         "HorizontalLineFade": "30",
-        "HorizontalLine1Colour": "0, 0, 139, 255",
-        "HorizontalLine2Colour": "169, 169, 169, 255",
-        "HorizontalLine3Colour": "0, 100, 0, 255"
+        "HorizontalLine1Color": "0, 0, 139, 255",
+        "HorizontalLine2Color": "169, 169, 169, 255",
+        "HorizontalLine3Color": "0, 100, 0, 255"
       }
     },
 
@@ -332,6 +333,7 @@
         "speedThreshold": "2",
         "minWeight": "0.5",
         "maxWeight": "2",
+        "PointColour": "1, 1, 1, 0.3",
         "AgencyFactor": "1"
       }
     },
@@ -357,7 +359,7 @@
         "maxSpeed": "10",
         "sortNeighborWindow": "256",
         "lineFadeExponent": "1",
-        "AgencyFactor": "1"
+        "Agency": "1"
       }
     },
 
@@ -396,6 +398,10 @@
         "FontSize": "0.05",
         "Colour": "1, 1, 1, 1",
         "Alpha": "1",
+        "DrawDurationSec": "1.0",
+        "AlphaFactor": "0.2",
+        "MaxDrawEvents": "8",
+        "MinFontPx": "8",
         "AgencyFactor": "1"
       }
     },
