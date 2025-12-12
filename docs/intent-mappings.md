@@ -276,6 +276,8 @@ Strategy selection:
 | E | color | energyToColor |
 | D | color.alpha | lin(0.5 -> 1.0) |
 | D | alpha | lin |
+| 1-G | DrawDurationSec | exp |
+| D | AlphaFactor | exp |
 | C | position | jitter (max 15% when C>0.1) |
 
 ---

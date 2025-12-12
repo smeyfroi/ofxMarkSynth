@@ -580,25 +580,31 @@ Composites texture snapshots within path boundaries.
 
 #### TextMod
 
-Renders text strings using TrueType fonts.
+Draws text by spawning time-based "draw events".
 
-**Visual Characteristics**: Typographic • Clear letterforms • Positioned text
+Each received `Text` creates a new draw event that snapshots the current text, colour, position, and font size, then repeatedly draws into the assigned drawing layer for `DrawDurationSec`, fading in with smoothstep easing. Multiple events can overlap (piled-on) up to `MaxDrawEvents`.
+
+For accumulating layers (`clearOnUpdate=false`), TextMod uses incremental alpha so the fade-in stays stable over time instead of building up too quickly. For clearing layers (`clearOnUpdate=true`), it draws the absolute eased alpha each frame.
+
+**Visual Characteristics**: Typographic • Clear letterforms • Positioned text • Fade-in transitions
 
 **Sinks**:
-- `Text` (string): Text content to display
-- `Position` (vec2): Text position (normalized 0-1)
-- `FontSize` (float): Size multiplier
-- `Colour` (vec4): Text color
-- `Alpha` (float): Opacity
+- `Text` (string): Starts a new draw event
+- `Position` (vec2): Text position (normalized 0-1, used for newly created events)
+- `FontSize` (float): Size multiplier (used for newly created events)
+- `Colour` (vec4): Text color (used for newly created events)
+- `Alpha` (float): Base opacity multiplier (used for newly created events)
+- `DrawDurationSec` (float): Duration of new draw events (seconds)
+- `AlphaFactor` (float): Opacity contribution of new draw events (0-1)
 
 **Key Parameters**:
-- `Position`: Text location (0-1 normalized coordinates)
-- `FontSize`: Size as proportion of canvas (0.01-0.5)
-- `Colour`: RGBA color
-- `Alpha`: Transparency (0.0-1.0)
+- `DrawDurationSec`: Draw-event duration (0.1-10s)
+- `AlphaFactor`: Draw-event opacity contribution (0.0-1.0)
+- `MaxDrawEvents`: Maximum concurrent draw events (oldest dropped)
+- `MinFontPx`: Minimum font size in pixels
 - `AgencyFactor`: Intent responsiveness
 
-**Intent Integration**: Full Intent support with agency.
+**Intent Integration**: Full Intent support with agency (including draw-event envelope).
 
 **Use Cases**:
 - Display lyrics synchronized to music
