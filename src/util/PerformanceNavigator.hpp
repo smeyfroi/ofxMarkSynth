@@ -52,6 +52,13 @@ public:
   
   // Load first config if available (call after Synth is fully initialized)
   void loadFirstConfigIfAvailable();
+
+  // Select config by filename stem (case-sensitive), e.g. "movement1-a" or "movement1-a.json".
+  // Returns false if not found.
+  bool selectConfigByName(const std::string& name);
+
+  // Convenience accessor for current config full path.
+  std::string getCurrentConfigPath() const;
   
   // Hold management (called from key/mouse events)
   void beginHold(HoldAction action, HoldSource source, int jumpIndex = -1);

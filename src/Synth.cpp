@@ -116,13 +116,21 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
     return nullptr;
   }
 
-  return std::shared_ptr<Synth>(
+  auto synth = std::shared_ptr<Synth>(
       new Synth(name,
                 std::move(config),
                 startPaused,
                 compositeSize,
                 std::move(audioClient),
                 std::move(resources)));
+
+  // Safe place to load startup config: synth is now owned by a shared_ptr.
+  if (synth && synth->pendingStartupConfigPath && !synth->pendingStartupConfigPath->empty()) {
+    synth->loadFromConfig(*synth->pendingStartupConfigPath);
+    synth->pendingStartupConfigPath.reset();
+  }
+
+  return synth;
 }
 
 
@@ -229,7 +237,24 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   if (resources.has("performanceConfigRootPath")) {
     auto pathPtr = resources.get<std::filesystem::path>("performanceConfigRootPath");
     if (pathPtr) {
-      performanceNavigator.loadFromFolder(*pathPtr/"synth");
+      performanceNavigator.loadFromFolder(*pathPtr / "synth");
+    }
+  }
+
+  // Optional: pick a startup config by name (stem, not path) from the performance folder list.
+  // This is meant for rapid iteration when developing performance config sequences.
+  // NOTE: do not call loadFromConfig() here; shared_from_this() is not valid in the constructor.
+  if (resources.has("startupPerformanceConfigName")) {
+    auto startupNamePtr = resources.get<std::string>("startupPerformanceConfigName");
+    if (startupNamePtr && !startupNamePtr->empty()) {
+      if (performanceNavigator.selectConfigByName(*startupNamePtr)) {
+        const std::string configPath = performanceNavigator.getCurrentConfigPath();
+        if (!configPath.empty()) {
+          pendingStartupConfigPath = configPath;
+        }
+      } else {
+        ofLogError("Synth") << "startupPerformanceConfigName not found in performance list: " << *startupNamePtr;
+      }
     }
   }
   

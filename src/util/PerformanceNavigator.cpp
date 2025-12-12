@@ -121,13 +121,40 @@ void PerformanceNavigator::jumpTo(int index) {
 
 void PerformanceNavigator::loadFirstConfigIfAvailable() {
   if (!hasConfigs() || currentIndex != 0) return;
-  
+
   const std::string& configPath = configs[currentIndex];
   ofLogNotice("PerformanceNavigator") << "Loading first config (no hibernation): " << getConfigName(currentIndex);
-  
+
   if (synth) {
     synth->switchToConfig(configPath, false);  // No crossfade for first load
   }
+}
+
+bool PerformanceNavigator::selectConfigByName(const std::string& name) {
+  if (!hasConfigs()) return false;
+
+  std::string trimmed = ofTrim(name);
+  if (trimmed.empty()) return false;
+
+  std::filesystem::path p(trimmed);
+  std::string stem = p.stem().string();
+  if (stem.empty()) stem = trimmed;
+
+  for (int i = 0; i < static_cast<int>(configs.size()); ++i) {
+    if (getConfigName(i) == stem) {
+      currentIndex = i;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+std::string PerformanceNavigator::getCurrentConfigPath() const {
+  if (currentIndex < 0 || currentIndex >= static_cast<int>(configs.size())) {
+    return "";
+  }
+  return configs[currentIndex];
 }
 
 void PerformanceNavigator::loadCurrentConfig() {

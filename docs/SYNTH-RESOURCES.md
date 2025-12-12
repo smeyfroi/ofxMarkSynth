@@ -22,6 +22,12 @@ The `Synth` class itself requires several resources for display layout, artefact
 | `performanceArtefactRootPath` | std::filesystem::path | Base directory for saved artefacts (snapshots, node layouts, videos) |
 | `performanceConfigRootPath` | std::filesystem::path | Base directory of performance configs for PerformanceNavigator |
 
+### Optional Resources
+
+| Resource Name | Type | Description |
+|---------------|------|-------------|
+| `startupPerformanceConfigName` | std::string | Config filename stem from `performanceConfigRootPath/synth` to load on startup (no crossfade). If not found, logs an error and leaves the Synth unloaded. |
+
 ### macOS-Only Resources
 
 | Resource Name | Type | Description |

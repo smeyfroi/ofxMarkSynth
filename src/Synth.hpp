@@ -276,6 +276,7 @@ private:
   ofxLabel pauseStatus;
 
   std::string currentConfigPath;
+  std::optional<std::string> pendingStartupConfigPath;
 
   bool guiVisible { true };
   bool initialLoadCallbackEmitted { false };
