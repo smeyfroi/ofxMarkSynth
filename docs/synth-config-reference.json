@@ -152,7 +152,7 @@
       "config": {
         "Max Source Points": "2000",
         "Clusters": "5",
-        "Agency": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -167,7 +167,7 @@
         "Value Iterations": "1",
         "Velocity Iterations": "1",
         "Pressure Iterations": "25",
-        "Agency": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -176,7 +176,7 @@
       "config": {
         "Multiplier": "1",
         "Adder": "0",
-        "Agency": "1"
+        "AgencyFactor": "1"
       }
     },
 
@@ -359,7 +359,7 @@
         "maxSpeed": "10",
         "sortNeighborWindow": "256",
         "lineFadeExponent": "1",
-        "Agency": "1"
+        "AgencyFactor": "1"
       }
     },
 

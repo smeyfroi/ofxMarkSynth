@@ -39,7 +39,7 @@ private:
   std::unique_ptr<ParamController<float>> vorticityControllerPtr;
   std::unique_ptr<ParamController<float>> valueDissipationControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDissipationControllerPtr;
-  ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
 };
 

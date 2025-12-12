@@ -45,13 +45,13 @@ All dimensions are normalized to 0.0-1.0.
 
 ## AgencyFactor
 
-Most Mods with Intent support have an **AgencyFactor** (or **Agency Factor**) parameter (default 1.0, range 0.0-1.0).
+Mods with Intent support have an **AgencyFactor** parameter (default 1.0, range 0.0-1.0).
 
 - **1.0**: Full Intent influence (default)
 - **0.5**: Intent effect is halved
 - **0.0**: Intent has no effect (Mod uses only its base parameters)
 
-The per-Mod agency factor (usually `AgencyFactor`, sometimes `Agency Factor`) is multiplied with the global agency value, controlling how much Intent affects that Mod. Configure via `"Agency": "0.5"` in synth config JSON (prefix-matching works for both spellings).
+`AgencyFactor` is multiplied with the global agency value, controlling how much Intent affects that Mod. Configure via `"AgencyFactor": "0.5"` in synth config JSON.
 
 ---
 

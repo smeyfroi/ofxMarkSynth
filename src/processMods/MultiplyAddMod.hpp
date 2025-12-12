@@ -39,7 +39,7 @@ private:
   ParamController<float> multiplierController { multiplierParameter };
   ofParameter<float> adderParameter { "Adder", 0.0, -1.0, 1.0 };
   ParamController<float> adderController { adderParameter };
-  ofParameter<float> agencyFactorParameter { "Agency Factor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 };
 
 

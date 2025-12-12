@@ -256,7 +256,7 @@ Applies linear transformation (multiply + add) to float values.
 **Key Parameters**:
 - `Multiplier`: Scale factor (-2.0 to 2.0)
 - `Adder`: Offset value (-1.0 to 1.0)
-- `Agency Factor`: Intent responsiveness (0.0-1.0)
+- `AgencyFactor`: Intent responsiveness (0.0-1.0)
 
 **Intent Integration**: Full Intent system support with configurable agency.
 
@@ -282,7 +282,7 @@ Groups 2D points into clusters using k-means algorithm and outputs cluster cente
 
 **Key Parameters**:
 - Cluster count (adjustable via sink)
-- `Agency Factor`: Intent responsiveness
+- `AgencyFactor`: Intent responsiveness
 
 **Intent Integration**: Structure dimension affects clustering behavior.
 
@@ -436,7 +436,7 @@ Physics-based particle system with attraction, connections, and trails.
 - `attractionRadius`: Range of attraction
 - `connectionRadius`: Distance for drawing connections
 - `maxSpeed`: Velocity cap
-- `Agency Factor`: Intent responsiveness
+- `AgencyFactor`: Intent responsiveness
 
 **Intent Integration**: Full Intent with agency control.
 
@@ -691,7 +691,7 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 - `Vorticity`: Vortex formation strength
 - `Value Dissipation`: Color/value fade rate
 - `Velocity Dissipation`: Motion decay rate
-- `Agency Factor`: Intent responsiveness
+- `AgencyFactor`: Intent responsiveness
 
 **Intent Integration**: Full Intent support with agency.
 
