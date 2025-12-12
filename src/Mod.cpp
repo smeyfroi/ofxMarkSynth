@@ -77,17 +77,45 @@ bool trySetParameterFromString(ofParameterGroup& group, const std::string& name,
   return false;
 }
 
+using ParamValueMap = Mod::ParamValueMap;
+
+static void serializeParameterGroup(const ofParameterGroup& group, ParamValueMap& out, const std::string& prefix = "") {
+  for (const auto& param : group) {
+    std::string fullName = prefix.empty() ? param->getName() : prefix + "." + param->getName();
+
+    if (param->type() == typeid(ofParameterGroup).name()) {
+      serializeParameterGroup(param->castGroup(), out, fullName);
+    } else {
+      out[fullName] = param->toString();
+    }
+  }
+}
+
+static ParamValueMap serializeParameterGroup(const ofParameterGroup& group) {
+  ParamValueMap out;
+  serializeParameterGroup(group, out);
+  return out;
+}
+
 ofParameterGroup& Mod::getParameterGroup() {
   if (parameters.getName().empty()) {
     parameters.setName(name);
     initParameters();
-    
+
+    if (!defaultParameterValuesCaptured) {
+      defaultParameterValues = serializeParameterGroup(parameters);
+      defaultParameterValuesCaptured = true;
+    }
+
     for (const auto& [k, v] : config) {
+      if (!k.empty() && k[0] == '_') {
+        continue;
+      }
       if (!trySetParameterFromString(parameters, k, v)) {
         ofLogError("Mod") << "Bad parameter: " << k << " not one of: " << parameters.toString();
       }
     }
-    
+
     // Sync all registered ParamControllers with their current parameter values,
     // possibly loaded from config after the controller was created.
     for (auto& [name, controllerPtr] : sourceNameControllerPtrMap) {
@@ -97,6 +125,15 @@ ofParameterGroup& Mod::getParameterGroup() {
     }
   }
   return parameters;
+}
+
+ParamValueMap Mod::getCurrentParameterValues() {
+  return serializeParameterGroup(getParameterGroup());
+}
+
+const ParamValueMap& Mod::getDefaultParameterValues() {
+  getParameterGroup(); // Ensure init has run.
+  return defaultParameterValues;
 }
 
 void Mod::connect(int sourceId, ModPtr sinkModPtr, int sinkId) {

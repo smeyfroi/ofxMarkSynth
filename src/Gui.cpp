@@ -741,6 +741,21 @@ void Gui::drawNodeEditor() {
       ofLogError("Gui") << "Failed to load node layout";
     }
   }
+
+  ImGui::SameLine();
+  ImGui::Text("|");
+
+  ImGui::SameLine();
+  if (ImGui::Button((std::string(SAVE_ICON) + " Save Mods").c_str())) {
+    if (synthPtr->saveModsToCurrentConfig()) {
+      ofLogNotice("Gui") << "Saved Mods config to: " << synthPtr->currentConfigPath;
+    } else {
+      ofLogError("Gui") << "Failed to save Mods config";
+    }
+  }
+  if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip("Overwrite current config file (mods.config only)");
+  }
   
   // Run animated layout if enabled and not yet computed
   if (animateLayout && !layoutComputed) {

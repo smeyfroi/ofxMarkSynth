@@ -80,6 +80,7 @@ public:
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
   
   bool loadFromConfig(const std::string& filepath);
+  bool saveModsToCurrentConfig();
   void unload();
   void switchToConfig(const std::string& filepath, bool useCrossfade = true);
   void loadFirstPerformanceConfig();

@@ -146,17 +146,30 @@ bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<S
   
   try {
     for (const auto& [name, modJson] : j["mods"].items()) {
+      // Convention: underscore-prefixed keys are comments/metadata.
+      if (!name.empty() && name[0] == '_') {
+        continue;
+      }
+
+      if (!modJson.is_object()) {
+        ofLogWarning("SynthConfigSerializer") << "Mod entry '" << name << "' is not an object, skipping";
+        continue;
+      }
+
       if (!modJson.contains("type") || !modJson["type"].is_string()) {
         ofLogError("SynthConfigSerializer") << "Mod '" << name << "' missing type field";
         continue;
       }
-      
+
       std::string type = modJson["type"];
-      
+
       // Parse config map
       ModConfig config;
       if (modJson.contains("config") && modJson["config"].is_object()) {
         for (const auto& [key, value] : modJson["config"].items()) {
+          if (!key.empty() && key[0] == '_') {
+            continue;
+          }
           if (value.is_string()) {
             config[key] = value.get<std::string>();
           } else if (value.is_number()) {

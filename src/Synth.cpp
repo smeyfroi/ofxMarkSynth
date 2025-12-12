@@ -13,6 +13,8 @@
 #include "util/SynthConfigSerializer.hpp"
 #include "ofxImGui.h"
 #include "sourceMods/AudioDataSourceMod.hpp"
+#include "nlohmann/json.hpp"
+#include <fstream>
 
 
 
@@ -1430,6 +1432,124 @@ bool Synth::loadFromConfig(const std::string& filepath) {
   }
   
   return success;
+}
+
+bool Synth::saveModsToCurrentConfig() {
+  if (currentConfigPath.empty()) {
+    ofLogError("Synth") << "saveModsToCurrentConfig: no config loaded";
+    return false;
+  }
+
+  const std::filesystem::path filepath = currentConfigPath;
+  if (!std::filesystem::exists(filepath)) {
+    ofLogError("Synth") << "saveModsToCurrentConfig: file does not exist: " << filepath;
+    return false;
+  }
+
+  try {
+    nlohmann::ordered_json j;
+    {
+      std::ifstream inFile(filepath);
+      if (!inFile.is_open()) {
+        ofLogError("Synth") << "saveModsToCurrentConfig: failed to open for read: " << filepath;
+        return false;
+      }
+      inFile >> j;
+    }
+
+    if (!j.contains("mods") || !j["mods"].is_object()) {
+      ofLogError("Synth") << "saveModsToCurrentConfig: missing 'mods' object";
+      return false;
+    }
+
+    for (auto& [modName, modJson] : j["mods"].items()) {
+      if (!modName.empty() && modName[0] == '_') {
+        continue;
+      }
+
+      if (!modJson.is_object()) {
+        continue;
+      }
+
+      auto it = modPtrs.find(modName);
+      if (it == modPtrs.end() || !it->second) {
+        continue;
+      }
+
+      const ModPtr& modPtr = it->second;
+      const auto currentValues = modPtr->getCurrentParameterValues();
+      const auto& defaultValues = modPtr->getDefaultParameterValues();
+
+      if (!modJson.contains("config") || !modJson["config"].is_object()) {
+        modJson["config"] = nlohmann::ordered_json::object();
+      }
+
+      nlohmann::ordered_json& configJson = modJson["config"];
+
+      // 1) Update any keys that already exist in the file.
+      for (auto cfgIt = configJson.begin(); cfgIt != configJson.end(); ++cfgIt) {
+        const std::string key = cfgIt.key();
+        if (!key.empty() && key[0] == '_') {
+          continue;
+        }
+
+        auto valIt = currentValues.find(key);
+        if (valIt != currentValues.end()) {
+          cfgIt.value() = valIt->second;
+        }
+      }
+
+      // 2) Add missing keys only when non-default.
+      for (const auto& [key, value] : currentValues) {
+        if (!key.empty() && key[0] == '_') {
+          continue;
+        }
+
+        if (configJson.contains(key)) {
+          continue;
+        }
+
+        auto defIt = defaultValues.find(key);
+        if (defIt == defaultValues.end()) {
+          continue;
+        }
+
+        if (value != defIt->second) {
+          configJson[key] = value;
+        }
+      }
+    }
+
+    const std::filesystem::path tmpPath = filepath.string() + ".tmp";
+    {
+      std::ofstream outFile(tmpPath);
+      if (!outFile.is_open()) {
+        ofLogError("Synth") << "saveModsToCurrentConfig: failed to open for write: " << tmpPath;
+        return false;
+      }
+      outFile << j.dump(2);
+    }
+
+    // Replace original file.
+    std::error_code ec;
+    std::filesystem::rename(tmpPath, filepath, ec);
+    if (ec) {
+      std::error_code removeEc;
+      std::filesystem::remove(filepath, removeEc);
+      ec.clear();
+      std::filesystem::rename(tmpPath, filepath, ec);
+    }
+    if (ec) {
+      ofLogError("Synth") << "saveModsToCurrentConfig: failed to replace file: " << ec.message();
+      return false;
+    }
+
+    ofLogNotice("Synth") << "Saved mod params to config: " << filepath;
+    return true;
+  } catch (const std::exception& e) {
+    ofLogError("Synth") << "saveModsToCurrentConfig: exception: " << e.what();
+    return false;
+  }
 }
 
 void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {

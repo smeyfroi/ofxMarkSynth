@@ -120,6 +120,8 @@ class Intent;
 class Mod : public std::enable_shared_from_this<Mod> {
   
 public:
+  using ParamValueMap = std::unordered_map<std::string, std::string>;
+
   Mod(std::shared_ptr<Synth> synth, const std::string& name, ModConfig config);
   virtual ~Mod() = default;
   virtual void shutdown() {};
@@ -129,6 +131,11 @@ public:
   virtual void drawOverlay() {};
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
+
+  // Flatten current parameters (including nested groups) to strings.
+  ParamValueMap getCurrentParameterValues();
+  // Flattened parameter defaults captured right after initParameters().
+  const ParamValueMap& getDefaultParameterValues();
   
   virtual std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   int getId() const;
@@ -196,6 +203,9 @@ protected:
   void syncControllerAgencies();
   
 private:
+  ParamValueMap defaultParameterValues;
+  bool defaultParameterValuesCaptured { false };
+
   NamedDrawingLayerPtrs namedDrawingLayerPtrs; // named FBOs provided by the Synth that can be drawn on
   std::unordered_map<std::string, int> currentDrawingLayerIndices; // index < 0 means don't draw
   int id;
