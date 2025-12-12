@@ -145,12 +145,38 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   if (sidePanelWidth > 0.0) {
     sidePanelHeight = ofGetWindowHeight();
     leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-    leftPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
     rightPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-    rightPanelCompositeFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
   }
 
-  tonemapShader.load();
+  tonemapCrossfadeShader.load();
+
+  crossfadeQuadMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
+  crossfadeQuadMesh.getVertices() = {
+    { 0.0f, 0.0f, 0.0f },
+    { compositeSize.x, 0.0f, 0.0f },
+    { compositeSize.x, compositeSize.y, 0.0f },
+    { 0.0f, compositeSize.y, 0.0f },
+  };
+  crossfadeQuadMesh.getTexCoords() = {
+    { 0.0f, 0.0f },
+    { 1.0f, 0.0f },
+    { 1.0f, 1.0f },
+    { 0.0f, 1.0f },
+  };
+
+  unitQuadMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
+  unitQuadMesh.getVertices() = {
+    { 0.0f, 0.0f, 0.0f },
+    { 1.0f, 0.0f, 0.0f },
+    { 1.0f, 1.0f, 0.0f },
+    { 0.0f, 1.0f, 0.0f },
+  };
+  unitQuadMesh.getTexCoords() = {
+    { 0.0f, 0.0f },
+    { 1.0f, 0.0f },
+    { 1.0f, 1.0f },
+    { 0.0f, 1.0f },
+  };
   
   if (resources.has("performanceArtefactRootPath")) {
     auto p = resources.get<std::filesystem::path>("performanceArtefactRootPath");
@@ -372,7 +398,7 @@ void Synth::unload() {
   // 5) Clear current config path
   currentConfigPath.clear();
 
-  // Note: Keep displayParameters, imageCompositeFbo, side panel FBOs, and tonemapShader
+  // Note: Keep displayParameters, imageCompositeFbo, side panel FBOs, and tonemapCrossfadeShader
   // Rebuild of groups happens when reloading config (configureGui/init* called then)
 }
 
@@ -643,7 +669,6 @@ void Synth::update() {
   TSGL_START("Synth-updateComposites");
   TS_START("Synth-updateComposites");
   updateCompositeImage();
-  updateCompositeSideImages();
   updateSidePanels();
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
@@ -751,64 +776,44 @@ void Synth::updateCompositeImage() {
   }
 }
 
-void Synth::updateCompositeSideImages() {
-  if (sidePanelWidth <= 0.0) return;
-  
-  float leftCycleElapsed = (ofGetElapsedTimef() - leftSidePanelLastUpdate) / leftSidePanelTimeoutSecs;
-  float rightCycleElapsed = (ofGetElapsedTimef() - rightSidePanelLastUpdate) / rightSidePanelTimeoutSecs;
-
-  // old panels fade out; new panels fade in
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-
-  // Easing helper
-  auto easeIn = [](float x){ return x * x * x; };
-
-  ofFloatColor backgroundColor = backgroundColorController.value;
-  backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0;
-
-  leftPanelCompositeFbo.begin();
-  {
-    ofClear(backgroundColor);
-    float alphaIn = easeIn(leftCycleElapsed); // drop quickly, then ease
-    
-    float alphaOut = 1.0f - alphaIn;
-    if (hibernationState != HibernationState::ACTIVE) {
-      alphaOut *= hibernationAlpha;
-      alphaIn *= hibernationAlpha;
-    }
-    
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaOut });
-    leftPanelFbo.getTarget().draw(0.0, 0.0);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
-    leftPanelFbo.getSource().draw(0.0, 0.0);
-  }
-  leftPanelCompositeFbo.end();
-
-  rightPanelCompositeFbo.begin();
-  {
-    ofClear(backgroundColor);
-    float alphaIn = easeIn(rightCycleElapsed);
-    
-    float alphaOut = 1.0f - alphaIn;
-    if (hibernationState != HibernationState::ACTIVE) {
-      alphaOut *= hibernationAlpha;
-      alphaIn *= hibernationAlpha;
-    }
-    
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaOut });
-    rightPanelFbo.getTarget().draw(0.0, 0.0);
-    ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, alphaIn });
-    rightPanelFbo.getSource().draw(0.0, 0.0);
-  }
-  rightPanelCompositeFbo.end();
-}
-
 void Synth::drawSidePanels(float xleft, float xright, float w, float h) {
-  ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f });
-  tonemapShader.begin(toneMapTypeParameter, sideExposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
-  leftPanelCompositeFbo.draw(xleft, 0.0, w, h);
-  rightPanelCompositeFbo.draw(xright, 0.0, w, h);
-  tonemapShader.end();
+  const auto easeIn = [](float x) { return x * x * x; };
+
+  const auto drawPanel = [&](PingPongFbo& panelFbo, float lastUpdateTime, float timeoutSecs, float x) {
+    if (timeoutSecs <= 0.0f) return;
+
+    float cycleElapsed = (ofGetElapsedTimef() - lastUpdateTime) / timeoutSecs;
+    float alphaIn = easeIn(ofClamp(cycleElapsed, 0.0f, 1.0f));
+
+    const auto& oldTexData = panelFbo.getTarget().getTexture().getTextureData();
+    const auto& newTexData = panelFbo.getSource().getTexture().getTextureData();
+
+    tonemapCrossfadeShader.begin(toneMapTypeParameter,
+                                sideExposureParameter,
+                                gammaParameter,
+                                whitePointParameter,
+                                contrastParameter,
+                                saturationParameter,
+                                brightnessParameter,
+                                hueShiftParameter,
+                                alphaIn,
+                                oldTexData.bFlipTexture,
+                                newTexData.bFlipTexture,
+                                panelFbo.getTarget().getTexture(),
+                                panelFbo.getSource().getTexture());
+
+    ofPushMatrix();
+    ofTranslate(x, 0.0f);
+    ofScale(w, h);
+    ofSetColor(255);
+    unitQuadMesh.draw();
+    ofPopMatrix();
+
+    tonemapCrossfadeShader.end();
+  };
+
+  drawPanel(leftPanelFbo, leftSidePanelLastUpdate, leftSidePanelTimeoutSecs, xleft);
+  drawPanel(rightPanelFbo, rightSidePanelLastUpdate, rightSidePanelTimeoutSecs, xright);
 }
 
 void Synth::drawMiddlePanel(float w, float h, float scale) {
@@ -816,35 +821,47 @@ void Synth::drawMiddlePanel(float w, float h, float scale) {
   ofTranslate((w - imageCompositeFbo.getWidth() * scale) / 2.0, (h - imageCompositeFbo.getHeight() * scale) / 2.0);
   ofScale(scale, scale);
   
-  if (transitionState == TransitionState::CROSSFADING && transitionSnapshotFbo.isAllocated() && transitionBlendFbo.isAllocated()) {
-    // Blend snapshot and live composite into blend FBO
-    transitionBlendFbo.begin();
-    {
-      ofClear(0, 0, 0, 255);
-      ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-      
-      // Draw old snapshot (fading out)
-      ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f - transitionAlpha });
-      transitionSnapshotFbo.draw(0.0, 0.0);
-      
-      // Draw live composite (fading in)
-      ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, transitionAlpha });
-      imageCompositeFbo.draw(0.0, 0.0);
-      
-      ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-    }
-    transitionBlendFbo.end();
-    
-    // Draw blended result to screen with tonemap
-    tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
+  if (transitionState == TransitionState::CROSSFADING && transitionSnapshotFbo.isAllocated()) {
+    const auto& snapshotTexData = transitionSnapshotFbo.getTexture().getTextureData();
+    const auto& liveTexData = imageCompositeFbo.getTexture().getTextureData();
+
+    tonemapCrossfadeShader.begin(toneMapTypeParameter,
+                                exposureParameter,
+                                gammaParameter,
+                                whitePointParameter,
+                                contrastParameter,
+                                saturationParameter,
+                                brightnessParameter,
+                                hueShiftParameter,
+                                transitionAlpha,
+                                snapshotTexData.bFlipTexture,
+                                liveTexData.bFlipTexture,
+                                transitionSnapshotFbo.getTexture(),
+                                imageCompositeFbo.getTexture());
+
     ofSetColor(255);
-    transitionBlendFbo.draw(0.0, 0.0);
-    tonemapShader.end();
+    crossfadeQuadMesh.draw();
+    tonemapCrossfadeShader.end();
   } else {
-    tonemapShader.begin(toneMapTypeParameter, exposureParameter, gammaParameter, whitePointParameter, contrastParameter, saturationParameter, brightnessParameter, hueShiftParameter);
+    const auto& texData = imageCompositeFbo.getTexture().getTextureData();
+
+    tonemapCrossfadeShader.begin(toneMapTypeParameter,
+                                exposureParameter,
+                                gammaParameter,
+                                whitePointParameter,
+                                contrastParameter,
+                                saturationParameter,
+                                brightnessParameter,
+                                hueShiftParameter,
+                                1.0f,
+                                texData.bFlipTexture,
+                                texData.bFlipTexture,
+                                imageCompositeFbo.getTexture(),
+                                imageCompositeFbo.getTexture());
+
     ofSetColor(255);
-    imageCompositeFbo.draw(0.0, 0.0);
-    tonemapShader.end();
+    crossfadeQuadMesh.draw();
+    tonemapCrossfadeShader.end();
   }
   
   ofPopMatrix();
@@ -1200,16 +1217,12 @@ void Synth::captureSnapshot() {
     transitionSnapshotFbo.allocate(w, h, GL_RGB16F);
   }
   
-  // Allocate blend FBO if needed
-  if (!transitionBlendFbo.isAllocated() ||
-      transitionBlendFbo.getWidth() != w ||
-      transitionBlendFbo.getHeight() != h) {
-    transitionBlendFbo.allocate(w, h, GL_RGB16F);
-  }
-  
   transitionSnapshotFbo.begin();
-  ofSetColor(255);
-  imageCompositeFbo.draw(0, 0);
+  {
+    ofClear(0, 0, 0, 255);
+    ofSetColor(255);
+    imageCompositeFbo.draw(0, 0);
+  }
   transitionSnapshotFbo.end();
 }
 

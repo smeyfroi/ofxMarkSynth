@@ -3425,7 +3425,7 @@
 			"fileEncoding": "4",
 			"isa": "PBXFileReference",
 			"lastKnownFileType": "sourcecode.cpp.h",
-			"name": "TonemapShader.h",
+			"name": "TonemapCrossfadeShader.h",
 			"sourceTree": "<group>"
 		},
 		"C6E0EE64-C16A-496F-A2BC-C5BB8AAA4D85": {

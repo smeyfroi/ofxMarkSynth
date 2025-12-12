@@ -11,7 +11,7 @@
 #ifdef TARGET_MAC
 #include "ofxFFmpegRecorder.h"
 #endif
-#include "TonemapShader.h"
+#include "TonemapCrossfadeShader.h"
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -201,7 +201,9 @@ private:
 
   bool paused;
 
-  TonemapShader tonemapShader;
+  TonemapCrossfadeShader tonemapCrossfadeShader;
+  ofMesh crossfadeQuadMesh;
+  ofMesh unitQuadMesh;
   glm::vec2 compositeSize;
   float compositeScale;
   ofFbo imageCompositeFbo;
@@ -209,8 +211,6 @@ private:
 
   float sidePanelWidth, sidePanelHeight;
   PingPongFbo leftPanelFbo, rightPanelFbo;
-  ofFbo leftPanelCompositeFbo, rightPanelCompositeFbo;
-  void updateCompositeSideImages();
 
   float leftSidePanelLastUpdate { 0.0 };
   float rightSidePanelLastUpdate { 0.0 };
@@ -229,10 +229,9 @@ private:
   };
   TransitionState transitionState { TransitionState::NONE };
   ofFbo transitionSnapshotFbo;  // Holds captured frame from old config
-  ofFbo transitionBlendFbo;     // Used for blending during crossfade
   float transitionStartTime { 0.0f };
   float transitionAlpha { 0.0f };  // 0.0 = all snapshot, 1.0 = all live
-  ofParameter<float> crossfadeDurationParameter { "Crossfade Duration", 2.0, 0.5, 10.0 };
+  ofParameter<float> crossfadeDurationParameter { "Crossfade Duration", 2.5, 0.5, 10.0 };
   void updateTransition();
   void captureSnapshot();
   // <<<
