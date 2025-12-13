@@ -1094,6 +1094,27 @@ void Gui::drawPerformanceNavigator() {
   ImGui::TextColored(GREY_COLOR, "(hold arrow keys or buttons)");
 }
 
+bool Gui::loadSnapshotSlot(int slotIndex) {
+  if (!synthPtr) return false;
+
+  if (!snapshotsLoaded) {
+    snapshotManager.loadFromFile(synthPtr->getName());
+    snapshotsLoaded = true;
+  }
+
+  if (slotIndex < 0 || slotIndex >= ModSnapshotManager::NUM_SLOTS) return false;
+  if (!snapshotManager.isSlotOccupied(slotIndex)) return false;
+
+  auto snapshot = snapshotManager.getSlot(slotIndex);
+  if (!snapshot) return false;
+
+  auto affected = snapshotManager.apply(synthPtr, *snapshot);
+  highlightedMods = affected;
+  highlightStartTime = ofGetElapsedTimef();
+  ofLogNotice("Gui") << "Loaded snapshot from slot " << (slotIndex + 1);
+  return true;
+}
+
 void Gui::drawSnapshotControls() {
   ImGui::Separator();
   
@@ -1200,14 +1221,8 @@ void Gui::drawSnapshotControls() {
   for (int i = 0; i < ModSnapshotManager::NUM_SLOTS; ++i) {
     ImGuiKey key = static_cast<ImGuiKey>(ImGuiKey_F1 + i);
     if (ImGui::IsKeyPressed(key) && !ImGui::GetIO().WantTextInput) {
-      if (snapshotManager.isSlotOccupied(i)) {
-        auto snapshot = snapshotManager.getSlot(i);
-        if (snapshot) {
-          auto affected = snapshotManager.apply(synthPtr, *snapshot);
-          highlightedMods = affected;
-          highlightStartTime = ofGetElapsedTimef();
-          ofLogNotice("Gui") << "Loaded snapshot from slot " << (i + 1) << " via F" << (i + 1);
-        }
+      if (synthPtr) {
+        synthPtr->loadModSnapshotSlot(i);
       }
     }
   }

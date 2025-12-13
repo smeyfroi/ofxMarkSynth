@@ -130,6 +130,9 @@ public:
   bool keyPressed(int key) override;
   bool keyReleased(int key);
 
+  bool loadModSnapshotSlot(int slotIndex);
+  bool toggleLayerPauseSlot(int layerIndex);
+
   static constexpr int SOURCE_COMPOSITE_FBO = 1;
   static constexpr int SOURCE_MEMORY = 10;
 

@@ -35,6 +35,8 @@ public:
   void toggleHelpWindow() { showHelpWindow = !showHelpWindow; }
   void onConfigLoaded(); // a Synth config is successfully loaded
 
+  bool loadSnapshotSlot(int slotIndex);
+
 private:
   void drawDockspace();
   void buildInitialDockLayout(ImGuiID dockspaceId);

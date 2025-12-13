@@ -1190,6 +1190,18 @@ bool Synth::keyReleased(int key) {
   return false;
 }
 
+bool Synth::loadModSnapshotSlot(int slotIndex) {
+  return gui.loadSnapshotSlot(slotIndex);
+}
+
+bool Synth::toggleLayerPauseSlot(int layerIndex) {
+  if (layerIndex < 0 || layerIndex >= static_cast<int>(layerPauseParamPtrs.size())) return false;
+
+  auto& p = layerPauseParamPtrs[layerIndex];
+  p->set(!p->get());
+  return true;
+}
+
 // Hibernation system implementation
 
 void Synth::startHibernation() {
