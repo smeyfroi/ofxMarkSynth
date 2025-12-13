@@ -124,6 +124,7 @@ public:
 
   void toggleRecording();
   void saveImage();
+  void requestSaveAllMemories();
   bool keyPressed(int key) override;
   bool keyReleased(int key);
 
@@ -334,6 +335,8 @@ private:
   float saveStatusClearTime { 0.0f };
 
   // >>> Memory bank system
+  bool globalMemoryBankLoaded { false };
+  bool memorySaveAllRequested { false };
   MemoryBank memoryBank;
   void initMemoryBankParameterGroup();
 

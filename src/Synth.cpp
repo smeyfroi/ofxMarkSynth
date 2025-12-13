@@ -700,6 +700,16 @@ void Synth::update() {
   
   // Process any deferred memory bank saves (requested from GUI)
   memoryBank.processPendingSave(imageCompositeFbo);
+
+  if (memorySaveAllRequested) {
+    memorySaveAllRequested = false;
+    if (!configRootPathSet) {
+      ofLogWarning("Synth") << "Cannot save global memory bank: config root not set";
+    } else {
+      const std::filesystem::path folder = configRootPath / "memory" / "global";
+      memoryBank.saveAllToFolder(folder);
+    }
+  }
   
   if (!paused) {
     emit(Synth::SOURCE_COMPOSITE_FBO, imageCompositeFbo);
@@ -1017,6 +1027,10 @@ void Synth::saveImage() {
   
   // Just set flag - actual GL work happens at end of draw() to avoid mid-frame stalls
   imageSaveRequested = true;
+}
+
+void Synth::requestSaveAllMemories() {
+  memorySaveAllRequested = true;
 }
 
 void Synth::initiateImageSaveTransfer() {
@@ -1512,6 +1526,16 @@ bool Synth::loadFromConfig(const std::string& filepath) {
   if (success) {
     currentConfigPath = filepath;
     ofLogNotice("Synth") << "Successfully loaded config from: " << filepath;
+
+    if (!globalMemoryBankLoaded) {
+      if (!configRootPathSet) {
+        ofLogWarning("Synth") << "Cannot load global memory bank: config root not set";
+      } else {
+        const std::filesystem::path folder = configRootPath / "memory" / "global";
+        memoryBank.loadAllFromFolder(folder);
+        globalMemoryBankLoaded = true;
+      }
+    }
   } else {
     ofLogError("Synth") << "Failed to load config from: " << filepath;
   }

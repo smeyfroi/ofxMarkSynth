@@ -11,6 +11,8 @@
 #include "ofFbo.h"
 #include "ofTexture.h"
 #include <array>
+#include <filesystem>
+#include <vector>
 
 
 
@@ -65,11 +67,19 @@ public:
     /// Check if a slot contains a memory
     bool isOccupied(int slot) const;
     
-    /// Number of filled slots (0 to NUM_SLOTS)
-    int getFilledCount() const { return filledCount; }
+    /// Number of occupied slots (0 to NUM_SLOTS)
+    int getFilledCount() const { return occupiedCount; }
     
     /// Get the configured memory size
     glm::vec2 getMemorySize() const { return memorySize; }
+    
+    /// Save all occupied slots as PNGs.
+    /// Empty slots remove their PNG (to avoid stale files).
+    bool saveAllToFolder(const std::filesystem::path& folder) const;
+    
+    /// Load any slot PNGs found in the folder (slot-<i>.png).
+    /// Supports holes: missing files leave empty slots.
+    bool loadAllFromFolder(const std::filesystem::path& folder);
     
     /// Clear a specific slot (does not reallocate, just marks as empty)
     void clear(int slot);
@@ -79,7 +89,13 @@ public:
     
 private:
     std::array<ofFbo, NUM_SLOTS> slots;
-    int filledCount { 0 };
+    std::array<bool, NUM_SLOTS> occupied { false, false, false, false, false, false, false, false };
+    int occupiedCount { 0 };
+    
+    // Slot indices ordered from oldest -> most recent.
+    // Used to preserve "centre" semantics even with holes.
+    std::vector<int> saveOrder;
+    
     glm::vec2 memorySize { 1024, 1024 };
     bool allocated { false };
     int pendingSaveSlot { -1 };
@@ -87,13 +103,12 @@ private:
     /// Capture a random crop from source into the destination FBO
     void captureRandomCrop(ofFbo& dest, const ofFbo& source);
     
-    /// Map centre/width to a slot index
-    /// @param maxSlot Maximum slot index (inclusive) - for save this is filledCount, for emit it's filledCount-1
-    int selectSlotIndex(float centre, float width, int maxSlot) const;
+    /// Map centre/width to an index in [0, maxIndex]
+    int selectSlotIndex(float centre, float width, int maxIndex) const;
     
     /// Map centre/width with weighting toward one end
     /// @param preferRecent If true, weight toward higher indices (recent); if false, toward lower (old)
-    int selectSlotIndexWeighted(float centre, float width, bool preferRecent) const;
+    int selectSlotIndexWeighted(float centre, float width, bool preferRecent, int maxIndex) const;
 };
 
 

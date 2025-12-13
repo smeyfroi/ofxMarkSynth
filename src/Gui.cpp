@@ -498,13 +498,21 @@ void Gui::drawMemoryBank() {
   ImGui::SameLine(0, spacing * 4.0f);
   ImGui::BeginGroup();
   {
-    const float clearButtonHeight = ImGui::GetFrameHeight();
-    const float topPad = (slotHeight - clearButtonHeight) * 0.5f;
+    const float buttonHeight = ImGui::GetFrameHeight();
+    const float buttonsHeight = buttonHeight * 2.0f + ImGui::GetStyle().ItemSpacing.y;
+    const float topPad = (slotHeight - buttonsHeight) * 0.5f;
     if (topPad > 0.0f) {
       ImGui::Dummy(ImVec2(0.0f, topPad));
     }
+
     if (ImGui::Button("Clear All", ImVec2(memThumbW, 0))) {
       synthPtr->memoryBank.clearAll();
+    }
+
+    ImGui::Dummy(ImVec2(0.0f, ImGui::GetStyle().ItemSpacing.y));
+
+    if (ImGui::Button("Save All", ImVec2(memThumbW, 0))) {
+      synthPtr->requestSaveAllMemories();
     }
   }
   ImGui::EndGroup();
