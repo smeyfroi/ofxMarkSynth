@@ -354,7 +354,7 @@ void Gui::drawLayerControls() {
     }
   }
   NodeRenderUtil::setLayerTooltipMap(&layerTooltips);
-  drawVerticalSliders(synthPtr->fboParameters, synthPtr->layerPauseParamPtrs);
+  drawVerticalSliders(synthPtr->layerAlphaParameters, synthPtr->layerPauseParamPtrs);
   NodeRenderUtil::setLayerTooltipMap(nullptr);
 }
 

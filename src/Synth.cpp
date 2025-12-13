@@ -413,8 +413,8 @@ void Synth::unload() {
   liveTexturePtrFns.clear();
 
   // 4) Clear parameter groups related to config
-  fboParamPtrs.clear();
-  fboParameters.clear();
+  layerAlphaParamPtrs.clear();
+  layerAlphaParameters.clear();
 
   intentActivationParameters.clear();
   intentParameters.clear();
@@ -757,7 +757,7 @@ void Synth::updateCompositeImage() {
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this, &i, &baseLayers, &overlayLayers](const auto& pair) {
     const auto& [name, dlptr] = pair;
     if (!dlptr->isDrawn) return;
-    float layerAlpha = fboParameters.getFloat(i);
+    float layerAlpha = layerAlphaParameters.getFloat(i);
     ++i;
     if (layerAlpha == 0.0f) return;
     
@@ -1281,10 +1281,10 @@ void Synth::updateTransition() {
 }
 
 void Synth::initFboParameterGroup() {
-  fboParameters.clear();
-  fboParamPtrs.clear();
+  layerAlphaParameters.clear();
+  layerAlphaParamPtrs.clear();
   
-  fboParameters.setName("Layers");
+  layerAlphaParameters.setName("Layers");
   std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
     const auto& [name, fcptr] = pair;
     if (!fcptr->isDrawn) return;
@@ -1294,8 +1294,8 @@ void Synth::initFboParameterGroup() {
       initialAlpha = it->second;
     }
     auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, initialAlpha, 0.0f, 1.0f);
-    fboParamPtrs.push_back(fboParam);
-    fboParameters.add(*fboParam);
+    layerAlphaParamPtrs.push_back(fboParam);
+    layerAlphaParameters.add(*fboParam);
   });
 }
 

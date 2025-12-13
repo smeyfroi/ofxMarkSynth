@@ -92,7 +92,9 @@ public:
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
   ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
-
+  
+  ofParameterGroup& getLayerAlphaParameters() { return layerAlphaParameters; };
+  
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
 
   bool loadFromConfig(const std::string& filepath);
@@ -198,6 +200,7 @@ private:
   void initFboParameterGroup();
   void initLayerPauseParameterGroup();
   void initIntentParameterGroup();
+  
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
 
   bool paused;
@@ -254,8 +257,8 @@ private:
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
-  ofParameterGroup fboParameters;
-  std::vector<std::shared_ptr<ofParameter<float>>> fboParamPtrs;
+  ofParameterGroup layerAlphaParameters;
+  std::vector<std::shared_ptr<ofParameter<float>>> layerAlphaParamPtrs;
   ofParameterGroup layerPauseParameters;
   std::vector<std::shared_ptr<ofParameter<bool>>> layerPauseParamPtrs;
   ofParameterGroup displayParameters;
