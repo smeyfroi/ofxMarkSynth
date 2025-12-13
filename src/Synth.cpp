@@ -1686,6 +1686,7 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   
   initParameters();
   initFboParameterGroup();
+  initLayerPauseParameterGroup();
   initIntentParameterGroup();
   gui.onConfigLoaded();
   
