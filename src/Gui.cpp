@@ -270,7 +270,10 @@ void Gui::drawIntentSlotSliders() {
       ImGui::PushID(i);
       ImGui::BeginGroup();
 
-      if (i < (int)synthPtr->intentActivationParameters.size() && synthPtr->intentActivationParameters[i]) {
+      const bool hasIntentParam =
+        i < (int)synthPtr->intentActivationParameters.size() && synthPtr->intentActivationParameters[i];
+
+      if (hasIntentParam) {
         auto& param = *synthPtr->intentActivationParameters[i];
         float v = param.get();
         if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
@@ -278,14 +281,30 @@ void Gui::drawIntentSlotSliders() {
         }
         ImGui::SetItemTooltip("%s", param.getName().c_str());
       } else {
+        ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.45f, 0.45f, 1.0f));
+
         ImGui::BeginDisabled();
         float v = 0.0f;
         ImGui::VSliderFloat("##v", sliderSize, &v, 0.0f, 1.0f, "", ImGuiSliderFlags_NoInput);
         ImGui::EndDisabled();
+
+        ImGui::PopStyleColor(6);
+        ImGui::PopStyleVar();
+
         ImGui::SetItemTooltip("No intent assigned to slot %d", i + 1);
       }
 
-      ImGui::Text("%d", i + 1);
+      if (hasIntentParam) {
+        ImGui::Text("%d", i + 1);
+      } else {
+        ImGui::TextDisabled("--");
+      }
       ImGui::EndGroup();
       ImGui::PopID();
     }
@@ -302,7 +321,7 @@ void Gui::drawIntentSlotSliders() {
       }
       ImGui::SetItemTooltip("%s", param.getName().c_str());
 
-      ImGui::TextUnformatted("STR");
+      ImGui::TextUnformatted("M");
     }
     ImGui::EndGroup();
     ImGui::PopID();
