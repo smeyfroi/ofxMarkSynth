@@ -45,6 +45,7 @@ private:
   void drawHelpWindow();
   
   void drawIntentControls();
+  void drawIntentSlotSliders();
   void drawIntentCharacteristicsEditor();
   void drawLayerControls();
   void drawDisplayControls();

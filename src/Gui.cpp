@@ -248,10 +248,75 @@ void Gui::drawSynthControls() {
   ImGui::End();
 }
 
+void Gui::drawIntentSlotSliders() {
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
+
+  const ImVec2 sliderSize(24, 140);
+  const float colW = sliderSize.x + 0.0f;
+
+  constexpr int kActivationSlots = 7;
+  constexpr int kTotalSlots = 8; // 7 intent slots + master
+
+  if (ImGui::BeginTable("IntentSliders", kTotalSlots,
+                        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
+    for (int i = 0; i < kTotalSlots; ++i) {
+      ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, colW);
+    }
+    ImGui::TableNextRow();
+
+    // Intent activation slots (1..7) stay left-aligned.
+    for (int i = 0; i < kActivationSlots; ++i) {
+      ImGui::TableSetColumnIndex(i);
+      ImGui::PushID(i);
+      ImGui::BeginGroup();
+
+      if (i < (int)synthPtr->intentActivationParameters.size() && synthPtr->intentActivationParameters[i]) {
+        auto& param = *synthPtr->intentActivationParameters[i];
+        float v = param.get();
+        if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
+          param.set(v);
+        }
+        ImGui::SetItemTooltip("%s", param.getName().c_str());
+      } else {
+        ImGui::BeginDisabled();
+        float v = 0.0f;
+        ImGui::VSliderFloat("##v", sliderSize, &v, 0.0f, 1.0f, "", ImGuiSliderFlags_NoInput);
+        ImGui::EndDisabled();
+        ImGui::SetItemTooltip("No intent assigned to slot %d", i + 1);
+      }
+
+      ImGui::Text("%d", i + 1);
+      ImGui::EndGroup();
+      ImGui::PopID();
+    }
+
+    // Master intent strength is always the rightmost slot.
+    ImGui::TableSetColumnIndex(kTotalSlots - 1);
+    ImGui::PushID(kTotalSlots - 1);
+    ImGui::BeginGroup();
+    {
+      auto& param = synthPtr->intentStrengthParameter;
+      float v = param.get();
+      if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
+        param.set(v);
+      }
+      ImGui::SetItemTooltip("%s", param.getName().c_str());
+
+      ImGui::TextUnformatted("STR");
+    }
+    ImGui::EndGroup();
+    ImGui::PopID();
+
+    ImGui::EndTable();
+  }
+
+  ImGui::PopStyleVar();
+}
+
 void Gui::drawIntentControls() {
   ImGui::SeparatorText("Intents");
-  drawVerticalSliders(synthPtr->intentParameters);
-  
+  drawIntentSlotSliders();
+
   // Collapsible editor for tuning intent characteristics (collapsed by default)
   if (ImGui::CollapsingHeader("Intent Characteristics")) {
     drawIntentCharacteristicsEditor();

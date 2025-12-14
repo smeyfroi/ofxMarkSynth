@@ -1337,12 +1337,15 @@ void Synth::initLayerPauseParameterGroup() {
 
 void Synth::initIntentParameterGroup() {
   intentParameters.clear();
-  
+
   intentParameters.setName("Intent");
-  intentParameters.add(intentStrengthParameter);
+
   // Don't recreate intents here - they should be set via setIntentPresets() or initIntentPresets()
   // Just add the existing activation parameters to the group
   for (auto& p : intentActivationParameters) intentParameters.add(*p);
+
+  // Keep master intent strength at the end so it appears rightmost in the GUI.
+  intentParameters.add(intentStrengthParameter);
 }
 
 void Synth::initDisplayParameterGroup() {
