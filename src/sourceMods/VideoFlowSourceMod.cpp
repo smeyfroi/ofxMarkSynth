@@ -9,6 +9,7 @@
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
 #include "../IntentMapper.hpp"
+#include "../util/TimeStringUtil.h"
 
 
 
@@ -16,11 +17,18 @@ namespace ofxMarkSynth {
 
 
 
-VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute)
+VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute, const std::string& startPosition)
 : Mod { synthPtr, name, std::move(config) },
 saveRecording { false }
 {
   motionFromVideo.load(sourceVideoFilePath, mute);
+  
+  if (!startPosition.empty()) {
+    int seconds = parseTimeStringToSeconds(startPosition);
+    if (seconds > 0) {
+      motionFromVideo.setPositionSeconds(seconds);
+    }
+  }
   
   sourceNameIdMap = {
     { "FlowField", SOURCE_FLOW_FIELD },
