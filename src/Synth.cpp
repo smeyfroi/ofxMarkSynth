@@ -11,6 +11,7 @@
 #include "ofUtils.h"
 #include "Gui.hpp"
 #include "util/SynthConfigSerializer.hpp"
+#include "util/TimeStringUtil.h"
 #include "ofxImGui.h"
 #include "ofxAudioAnalysisClient.h"
 #include "nlohmann/json.hpp"
@@ -78,6 +79,7 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
     auto bufferSizePtr = resources.get<int>("audioBufferSize");
     auto nChannelsPtr = resources.get<int>("audioChannels");
     auto sampleRatePtr = resources.get<int>("audioSampleRate");
+    auto sourceAudioStartPositionPtr = resources.get<std::string>("sourceAudioStartPosition");
 
     if (!outDeviceNamePtr || !bufferSizePtr || !nChannelsPtr || !sampleRatePtr) {
       ofLogError("Synth")
@@ -85,8 +87,17 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
       return nullptr;
     }
 
-    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(
+    auto client = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(
         *sourceAudioPathPtr, *outDeviceNamePtr, *bufferSizePtr, *nChannelsPtr, *sampleRatePtr);
+    
+    if (sourceAudioStartPositionPtr && !sourceAudioStartPositionPtr->empty()) {
+      int seconds = parseTimeStringToSeconds(*sourceAudioStartPositionPtr);
+      if (seconds > 0) {
+        client->setPositionSeconds(seconds);
+      }
+    }
+    
+    return client;
   }
 
   auto micDeviceNamePtr = resources.get<std::string>("micDeviceName");
