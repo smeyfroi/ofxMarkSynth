@@ -45,6 +45,7 @@ Choose one configuration:
   - `audioBufferSize` (int)
   - `audioChannels` (int)
   - `audioSampleRate` (int)
+  - `sourceAudioStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"` (e.g., `"1:30"` for 1 minute 30 seconds).
 - Microphone input:
   - `micDeviceName` (std::string)
   - `recordAudio` (bool)
@@ -90,6 +91,7 @@ Choose one configuration:
 - Video file:
   - `sourceVideoPath` (std::filesystem::path)
   - `sourceVideoMute` (bool)
+  - `sourceVideoStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"` (e.g., `"1:30"` for 1 minute 30 seconds).
 - Camera input:
   - `cameraDeviceId` (int)
   - `videoSize` (glm::vec2)  // width, height

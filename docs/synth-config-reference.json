@@ -51,7 +51,8 @@
 
     "ExampleAudioDataSource": {
       "type": "AudioDataSource",
-      "_requires": "ResourceManager with ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate') OR ('micDeviceName', 'recordAudio', 'audioRecordingPath')",
+      "_requires": "ResourceManager with ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate', optional 'sourceAudioStartPosition') OR ('micDeviceName', 'recordAudio', 'audioRecordingPath')",
+      "_comment_sourceAudioStartPosition": "sourceAudioStartPosition: Optional start timestamp in MM:SS format (e.g. '1:30' for 1 minute 30 seconds)",
       "config": {
         "MinPitch": "50",
         "MaxPitch": "800",
@@ -134,7 +135,8 @@
 
     "ExampleVideoFlowSource": {
       "type": "VideoFlowSource",
-      "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath')",
+      "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute', optional 'sourceVideoStartPosition') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath')",
+      "_comment_sourceVideoStartPosition": "sourceVideoStartPosition: Optional start timestamp in MM:SS format (e.g. '1:30' for 1 minute 30 seconds)",
       "_params_from": "ofxMotionFromVideo",
       "config": {
         "PointSamplesPerUpdate": "100",
