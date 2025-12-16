@@ -49,7 +49,6 @@ public:
   static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources = {});
 
 protected:
-  // The composite is the middle (square) section, scaled to fit the window height
   Synth(const std::string& name,
         ModConfig config,
         bool startPaused,
@@ -260,6 +259,7 @@ private:
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
+  
   ofParameterGroup layerAlphaParameters;
   std::vector<std::shared_ptr<ofParameter<float>>> layerAlphaParamPtrs;
   ofParameterGroup layerPauseParameters;
