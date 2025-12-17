@@ -400,7 +400,9 @@ void Gui::drawIntentCharacteristicsEditor() {
       indicatorColor);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indicatorSize + 4.0f);
     
-    if (ImGui::TreeNode(label)) {
+    // Use stable ID based on index so tree state persists when activation values change
+    ImGui::PushID(static_cast<int>(i));
+    if (ImGui::TreeNode("##intent", "%s", label)) {
       ImGui::PushItemWidth(sliderWidth);
       
       // Render sliders for each characteristic
@@ -417,6 +419,7 @@ void Gui::drawIntentCharacteristicsEditor() {
       ImGui::PopItemWidth();
       ImGui::TreePop();
     }
+    ImGui::PopID();
   }
 }
 
