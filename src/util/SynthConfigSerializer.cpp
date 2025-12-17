@@ -386,6 +386,33 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
   parseConnections(j, synth);
   parseIntents(j, synth);
   
+  // Apply initial intent configuration (must be after parseIntents creates the activations)
+  if (j.contains("synth") && j["synth"].contains("initialIntent")) {
+    const auto& intentConfig = j["synth"]["initialIntent"];
+    
+    if (intentConfig.contains("strength") && intentConfig["strength"].is_number()) {
+      synth->setIntentStrength(intentConfig["strength"]);
+      ofLogNotice("SynthConfigSerializer") << "Set intent strength: " << intentConfig["strength"].get<float>();
+    }
+    
+    if (intentConfig.contains("activations") && intentConfig["activations"].is_array()) {
+      const auto& activations = intentConfig["activations"];
+      size_t intentCount = synth->getIntentCount();
+      
+      for (size_t i = 0; i < activations.size(); ++i) {
+        if (i >= intentCount) {
+          ofLogWarning("SynthConfigSerializer") << "intent.activations[" << i
+              << "] ignored: only " << intentCount << " intents defined";
+          break;
+        }
+        if (activations[i].is_number()) {
+          synth->setIntentActivation(i, activations[i]);
+          ofLogNotice("SynthConfigSerializer") << "Set intent[" << i << "] activation: " << activations[i].get<float>();
+        }
+      }
+    }
+  }
+  
   ofLogNotice("SynthConfigSerializer") << "Successfully loaded config";
   return true;
 }

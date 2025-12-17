@@ -1504,7 +1504,23 @@ void Synth::setIntentPresets(const std::vector<IntentPtr>& presets) {
   ofLogNotice("Synth") << "Set " << count << " intent presets from config";
 }
 
+void Synth::setIntentStrength(float value) {
+    intentStrengthParameter.set(ofClamp(value, 0.0f, 1.0f));
+}
 
+void Synth::setIntentActivation(size_t index, float value) {
+    if (index >= intentActivations.size()) {
+        ofLogWarning("Synth") << "setIntentActivation: index " << index
+                              << " out of range (have " << intentActivations.size() << " intents)";
+        return;
+    }
+    float clamped = ofClamp(value, 0.0f, 1.0f);
+    intentActivations[index].activation = clamped;
+    intentActivations[index].targetActivation = clamped;
+    if (index < intentActivationParameters.size()) {
+        intentActivationParameters[index]->set(clamped);
+    }
+}
 
 void Synth::updateIntentActivations() {
   float dt = ofGetLastFrameTime();

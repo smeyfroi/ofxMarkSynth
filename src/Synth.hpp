@@ -102,6 +102,9 @@ public:
   void switchToConfig(const std::string& filepath, bool useCrossfade = true);
   void loadFirstPerformanceConfig();
   void setIntentPresets(const std::vector<IntentPtr>& presets);
+  void setIntentStrength(float value);
+  void setIntentActivation(size_t index, float value);
+  size_t getIntentCount() const { return intentActivations.size(); }
 
   static void setArtefactRootPath(const std::filesystem::path& root);
   static std::string saveArtefactFilePath(const std::string& relative);

@@ -9,10 +9,17 @@
     "backgroundColor": "0, 0, 0, 1",
     "backgroundMultiplier": 0.1,
     "crossfadeDuration": 2.0,
+    "initialIntent": {
+      "strength": 0.0,
+      "activations": []
+    },
     "_comment_agency": "agency: 0.0 = fully manual control, 1.0 = fully autonomous",
     "_comment_manualBiasDecaySec": "manualBiasDecaySec: Time (0.1-5.0s) for manual control influence to decay after releasing controls",
     "_comment_baseManualBias": "baseManualBias: Minimum manual control influence (0.0-0.5) that persists after decay",
-    "_comment_crossfadeDuration": "crossfadeDuration: Duration (0.5-10.0s) of crossfade transition when switching configs"
+    "_comment_crossfadeDuration": "crossfadeDuration: Duration (0.5-10.0s) of crossfade transition when switching configs",
+    "_comment_initialIntent": "initialIntent: Initial intent configuration applied on load",
+    "_comment_initialIntent_strength": "initialIntent.strength: Global intent multiplier (0.0-1.0), scales all intent effects. Default 0.0",
+    "_comment_initialIntent_activations": "initialIntent.activations: Array of initial activation values (0.0-1.0) for each intent by index. Unspecified intents default to 0.0. Extra values are ignored with a warning."
   },
 
   "drawingLayers": {
