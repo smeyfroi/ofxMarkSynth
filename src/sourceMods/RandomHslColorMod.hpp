@@ -13,6 +13,24 @@
 namespace ofxMarkSynth {
 
 
+/// Generates random colors in HSL space with configurable hue, saturation,
+/// brightness, and alpha ranges.
+///
+/// Hue values are normalised to the range 0-1, mapping to the color wheel:
+///   0.00 = Red
+///   0.08 = Orange
+///   0.17 = Yellow
+///   0.33 = Green
+///   0.50 = Cyan
+///   0.58 = Azure
+///   0.67 = Blue
+///   0.75 = Violet
+///   0.83 = Magenta
+///   0.92 = Rose
+///   1.00 = Red (wraps)
+///
+/// HueCenter sets the midpoint of the random hue range; HueWidth controls the
+/// spread around that center. Both values wrap at 0 and 1.
 class RandomHslColorMod : public Mod {
 
 public:

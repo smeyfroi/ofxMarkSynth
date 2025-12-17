@@ -155,6 +155,21 @@ Generates random colors using HSB (Hue, Saturation, Brightness) color space with
 - `MinBrightness`, `MaxBrightness`: Brightness bounds (HSB model)
 - `MinAlpha`, `MaxAlpha`: Opacity bounds
 
+**Hue Color Wheel Reference** (normalised 0-1):
+| Value | Color   |
+|-------|---------|
+| 0.00  | Red     |
+| 0.08  | Orange  |
+| 0.17  | Yellow  |
+| 0.33  | Green   |
+| 0.50  | Cyan    |
+| 0.58  | Azure   |
+| 0.67  | Blue    |
+| 0.75  | Violet  |
+| 0.83  | Magenta |
+| 0.92  | Rose    |
+| 1.00  | Red (wraps) |
+
 **Intent Integration**: Responds to Chaos dimension.
 
 **Use Cases**:
