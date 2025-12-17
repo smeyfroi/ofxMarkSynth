@@ -992,6 +992,14 @@ void Synth::drawGui() {
   gui.draw();
 }
 
+bool Synth::isRecording() const {
+#ifdef TARGET_MAC
+  return recorder.isRecording();
+#else
+  return false;
+#endif
+}
+
 void Synth::toggleRecording() {
 #ifdef TARGET_MAC
   if (recorder.isRecording()) {

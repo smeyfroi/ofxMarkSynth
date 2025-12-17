@@ -124,6 +124,8 @@ public:
   void draw() override;
 
   void toggleRecording();
+  bool isRecording() const;
+  const std::string& getCurrentConfigPath() const { return currentConfigPath; }
   void saveImage();
   void requestSaveAllMemories();
   bool keyPressed(int key) override;
