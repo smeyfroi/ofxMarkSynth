@@ -290,7 +290,7 @@ Strategy selection:
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | E | Radius | exp |
-| D | ColourMultiplier | lin |
+| D | ColourMultiplier | exp(4.0) [1.0, 1.4] — flat at low D, accelerates toward 1.4 |
 | D | AlphaMultiplier | lin |
 
 ### TextMod
