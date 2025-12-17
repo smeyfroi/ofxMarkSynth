@@ -55,6 +55,25 @@ Mods with Intent support have an **AgencyFactor** parameter (default 1.0, range 
 
 ---
 
+## Node Editor Visual Feedback
+
+The Node Editor provides visual cues to indicate which Mods are actively responding to agency:
+
+### Agency Meter
+Each Mod node displays a small progress bar in its title bar:
+- **Active (colored bar)**: Shown when the Mod has `agency > 0` AND has received automatic values through connections. The bar level indicates the effective agency value.
+- **Inactive (subtle grey)**: Shown when the Mod is not responding to agency (either agency is 0, or no parameters have received automatic values).
+
+### Title Bar Color
+Mod nodes change their title bar color based on agency state:
+- **Default blue**: Standard Mod nodes not actively responding to agency
+- **Purple-blue tint**: Mods actively responding to agency (color shifts towards red/purple to match the red agency indicator on MIDI controllers)
+- **Green**: Highlighted Mods (e.g., after loading a snapshot)
+
+This visual distinction helps identify at a glance which parts of the synth graph are under autonomous Synth control versus manual control.
+
+---
+
 ## Source Mods - Overview
 
 | Mod | Intent | AgencyFactor | Primary Dimensions |

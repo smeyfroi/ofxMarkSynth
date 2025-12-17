@@ -666,17 +666,46 @@ constexpr int FBO_PARAMETER_ID = 0;
 void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   int modId = modPtr->getId();
   
+  // Check if any controller has received auto values (i.e., Mod responds to agency)
+  bool hasReceivedAuto = false;
+  for (const auto& [name, controllerPtr] : modPtr->sourceNameControllerPtrMap) {
+    if (controllerPtr && controllerPtr->hasReceivedAutoValue) {
+      hasReceivedAuto = true;
+      break;
+    }
+  }
+  float agency = modPtr->getAgency();
+  bool isAgencyActive = agency > 0.0f && hasReceivedAuto;
+  
+  // Apply title bar color based on state
+  int colorStylesPushed = 0;
   if (highlight) {
     ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(50, 200, 100, 255));
     ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(70, 220, 120, 255));
     ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(90, 240, 140, 255));
+    colorStylesPushed = 3;
+  } else if (isAgencyActive) {
+    // Blue-purple tint for agency-active nodes (veering towards red)
+    ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(70, 50, 120, 255));
+    ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, IM_COL32(90, 60, 140, 255));
+    ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, IM_COL32(110, 70, 160, 255));
+    colorStylesPushed = 3;
   }
   
   ImNodes::BeginNode(modId);
 
   ImNodes::BeginNodeTitleBar();
   ImGui::TextUnformatted(modPtr->getName().c_str());
-  ImGui::ProgressBar(modPtr->getAgency(), ImVec2(64.0f, 4.0f), "");
+  
+  if (isAgencyActive) {
+    ImGui::ProgressBar(agency, ImVec2(64.0f, 4.0f), "");
+  } else {
+    // Subtle placeholder that blends with the title bar
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(35, 50, 70, 100));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(35, 50, 70, 100));
+    ImGui::ProgressBar(0.0f, ImVec2(64.0f, 4.0f), "");
+    ImGui::PopStyleColor(2);
+  }
   ImNodes::EndNodeTitleBar();
   
   // Input attributes (sinks)
@@ -710,10 +739,8 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   
   ImNodes::EndNode();
   
-  // Pop highlight colors
-  if (highlight) {
-    ImNodes::PopColorStyle();
-    ImNodes::PopColorStyle();
+  // Pop title bar color styles
+  for (int i = 0; i < colorStylesPushed; ++i) {
     ImNodes::PopColorStyle();
   }
 }
