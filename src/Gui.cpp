@@ -87,12 +87,6 @@ void Gui::setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindo
   
   ImGuiStyle& style = ImGui::GetStyle();
   style.WindowRounding = 4.f;
-  
-  // Initialize performance timer
-  timerStartTime = ofGetElapsedTimef();
-  timerPausedTime = 0.0f;
-  timerTotalPausedDuration = 0.0f;
-  timerPaused = false;
 }
 
 void Gui::exit() {
@@ -615,44 +609,32 @@ void Gui::drawStatus() {
     ImGui::TextColored(GREY_COLOR, "Config: None");
   }
   
-  // Performance timer display
-  float currentTime = ofGetElapsedTimef();
-  float elapsedTime;
+  // Performance timer display - delegated to PerformanceNavigator
+  auto& nav = synthPtr->performanceNavigator;
+  int minutes = nav.getElapsedMinutes();
+  int seconds = nav.getElapsedSeconds();
+  int splitMinutes = nav.getSplitElapsedMinutes();
+  int splitSeconds = nav.getSplitElapsedSeconds();
   
-  if (timerPaused) {
-    elapsedTime = timerPausedTime - timerStartTime - timerTotalPausedDuration;
-  } else {
-    elapsedTime = currentTime - timerStartTime - timerTotalPausedDuration;
-  }
-  
-  int minutes = static_cast<int>(elapsedTime) / 60;
-  int seconds = static_cast<int>(elapsedTime) % 60;
-  
-  ImGui::Text("Timer: %02d:%02d", minutes, seconds);
+  ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d", minutes, seconds, splitMinutes, splitSeconds);
   ImGui::SameLine();
   
   // Pause/Resume button
-  if (timerPaused) {
+  if (nav.isTimerPaused()) {
     if (ImGui::SmallButton(PLAY_ICON)) {
-      timerTotalPausedDuration += (currentTime - timerPausedTime);
-      timerPaused = false;
+      nav.resumeTimer();
     }
   } else {
     if (ImGui::SmallButton(PAUSE_ICON)) {
-      timerPausedTime = currentTime;
-      timerPaused = true;
+      nav.pauseTimer();
     }
   }
   
   ImGui::SameLine();
   
-  // Reset button - sets timer back to 00:00
+  // Reset button - sets main timer back to 00:00
   if (ImGui::SmallButton(RESET_ICON)) {
-    timerStartTime = currentTime;
-    timerTotalPausedDuration = 0.0f;
-    if (timerPaused) {
-      timerPausedTime = currentTime;  // Keep paused at 00:00
-    }
+    nav.resetTimer();
   }
   
   // FPS counter on same line with spacing

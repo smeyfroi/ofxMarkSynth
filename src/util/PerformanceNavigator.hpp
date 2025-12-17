@@ -80,6 +80,22 @@ public:
   static constexpr uint64_t HOLD_THRESHOLD_MS = 400;
   static constexpr uint64_t COOLDOWN_MS = 500;  // Cooldown after successful action
   
+  // Timer for performance cueing (main timer)
+  void resetTimer();
+  void pauseTimer();
+  void resumeTimer();
+  void toggleTimerPause();
+  bool isTimerPaused() const { return timerPaused; }
+  float getElapsedTimeSec() const;
+  int getElapsedMinutes() const;
+  int getElapsedSeconds() const;
+  
+  // Split timer (resets on config load, shares pause state with main timer)
+  void resetSplitTimer();
+  float getSplitElapsedTimeSec() const;
+  int getSplitElapsedMinutes() const;
+  int getSplitElapsedSeconds() const;
+  
 private:
   Synth* synth;
   std::vector<std::string> configs;      // Full paths
@@ -96,6 +112,17 @@ private:
   
   // Load first config on init
   void loadCurrentConfig();
+  
+  // Timer state (main timer)
+  float timerStartTime { 0.0f };
+  float timerPausedTime { 0.0f };
+  float timerTotalPausedDuration { 0.0f };
+  bool timerPaused { false };
+  
+  // Split timer state (resets on config load, shares timerPaused with main timer)
+  float splitTimerStartTime { 0.0f };
+  float splitTimerPausedTime { 0.0f };
+  float splitTimerTotalPausedDuration { 0.0f };
 };
 
 

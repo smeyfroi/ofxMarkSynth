@@ -77,12 +77,6 @@ private:
   float highlightStartTime { 0.0f };
   static constexpr float HIGHLIGHT_DURATION { 1.5f };  // seconds
   
-  // Timer for performance cueing
-  float timerStartTime { 0.0f };
-  float timerPausedTime { 0.0f };
-  float timerTotalPausedDuration { 0.0f };
-  bool timerPaused { false };
-  
   // Help window
   bool showHelpWindow { false };
   ImFont* monoFont { nullptr };

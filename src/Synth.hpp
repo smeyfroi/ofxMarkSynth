@@ -115,6 +115,8 @@ public:
   float getHibernationFadeDurationSec() const { return hibernationFadeDurationParameter; }
 
   const std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient>& getAudioAnalysisClient() const { return audioAnalysisClientPtr; }
+  PerformanceNavigator& getPerformanceNavigator() { return performanceNavigator; }
+  const PerformanceNavigator& getPerformanceNavigator() const { return performanceNavigator; }
 
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;

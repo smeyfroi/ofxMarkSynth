@@ -19,6 +19,8 @@ namespace ofxMarkSynth {
 
 PerformanceNavigator::PerformanceNavigator(Synth* synth_)
 : synth(synth_)
+, timerStartTime(ofGetElapsedTimef())
+, splitTimerStartTime(ofGetElapsedTimef())
 {}
 
 bool PerformanceNavigator::keyPressed(int key) {
@@ -163,6 +165,9 @@ void PerformanceNavigator::loadCurrentConfig() {
   const std::string& configPath = configs[currentIndex];
   ofLogNotice("PerformanceNavigator") << "Loading config: " << getConfigName(currentIndex);
   
+  // Reset split timer when loading a new config
+  resetSplitTimer();
+  
   if (synth) {
     synth->switchToConfig(configPath, true);  // Use crossfade transition
   }
@@ -273,6 +278,85 @@ float PerformanceNavigator::getHoldProgress() const {
   uint64_t elapsed = ofGetElapsedTimeMillis() - holdStartTime;
   float progress = static_cast<float>(elapsed) / static_cast<float>(HOLD_THRESHOLD_MS);
   return std::min(progress, 1.0f);
+}
+
+void PerformanceNavigator::resetTimer() {
+  float currentTime = ofGetElapsedTimef();
+  timerStartTime = currentTime;
+  timerTotalPausedDuration = 0.0f;
+  splitTimerStartTime = currentTime;
+  splitTimerTotalPausedDuration = 0.0f;
+  if (timerPaused) {
+    timerPausedTime = currentTime;
+    splitTimerPausedTime = currentTime;
+  }
+}
+
+void PerformanceNavigator::pauseTimer() {
+  if (!timerPaused) {
+    float currentTime = ofGetElapsedTimef();
+    timerPausedTime = currentTime;
+    splitTimerPausedTime = currentTime;
+    timerPaused = true;
+  }
+}
+
+void PerformanceNavigator::resumeTimer() {
+  if (timerPaused) {
+    float currentTime = ofGetElapsedTimef();
+    float pausedDuration = currentTime - timerPausedTime;
+    timerTotalPausedDuration += pausedDuration;
+    splitTimerTotalPausedDuration += pausedDuration;
+    timerPaused = false;
+  }
+}
+
+void PerformanceNavigator::toggleTimerPause() {
+  if (timerPaused) {
+    resumeTimer();
+  } else {
+    pauseTimer();
+  }
+}
+
+float PerformanceNavigator::getElapsedTimeSec() const {
+  float currentTime = ofGetElapsedTimef();
+  if (timerPaused) {
+    return timerPausedTime - timerStartTime - timerTotalPausedDuration;
+  }
+  return currentTime - timerStartTime - timerTotalPausedDuration;
+}
+
+int PerformanceNavigator::getElapsedMinutes() const {
+  return static_cast<int>(getElapsedTimeSec()) / 60;
+}
+
+int PerformanceNavigator::getElapsedSeconds() const {
+  return static_cast<int>(getElapsedTimeSec()) % 60;
+}
+
+void PerformanceNavigator::resetSplitTimer() {
+  splitTimerStartTime = ofGetElapsedTimef();
+  splitTimerTotalPausedDuration = 0.0f;
+  if (timerPaused) {
+    splitTimerPausedTime = splitTimerStartTime;
+  }
+}
+
+float PerformanceNavigator::getSplitElapsedTimeSec() const {
+  float currentTime = ofGetElapsedTimef();
+  if (timerPaused) {
+    return splitTimerPausedTime - splitTimerStartTime - splitTimerTotalPausedDuration;
+  }
+  return currentTime - splitTimerStartTime - splitTimerTotalPausedDuration;
+}
+
+int PerformanceNavigator::getSplitElapsedMinutes() const {
+  return static_cast<int>(getSplitElapsedTimeSec()) / 60;
+}
+
+int PerformanceNavigator::getSplitElapsedSeconds() const {
+  return static_cast<int>(getSplitElapsedTimeSec()) % 60;
 }
 
 
