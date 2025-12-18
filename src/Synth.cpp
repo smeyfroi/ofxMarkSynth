@@ -1726,12 +1726,38 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   
   // Unload and reload
   unload();
+  
+  // Reset Synth-level parameters to defaults before loading new config,
+  // so parameters not specified in the new config don't retain old values
+  backgroundColorParameter.set(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
+  backgroundMultiplierParameter.set(0.1f);
+  
   bool loadOk = loadFromConfig(filepath);
   if (!loadOk) {
     ofLogError("Synth") << "switchToConfig: load failed, leaving Synth unloaded and paused";
     paused = true;  // Ensure no further mod activity
     transitionState = TransitionState::NONE;  // Cancel any pending transition
     return;
+  }
+  
+  // Sync background color controller with newly loaded parameter value to prevent
+  // old color bleeding through due to internal smoothing state
+  backgroundColorController.syncWithParameter();
+  
+  // Reset side panel update timers so they capture fresh content from the new config
+  // immediately rather than showing stale content from the old config
+  leftSidePanelLastUpdate = 0.0f;
+  rightSidePanelLastUpdate = 0.0f;
+  
+  // Clear the composite FBO with the new background color to prevent old content
+  // from showing through before the first frame renders
+  if (imageCompositeFbo.isAllocated()) {
+    imageCompositeFbo.begin();
+    ofFloatColor bgColor = backgroundColorParameter.get();
+    bgColor *= backgroundMultiplierParameter;
+    bgColor.a = 1.0f;
+    ofClear(bgColor);
+    imageCompositeFbo.end();
   }
   
   initParameters();
