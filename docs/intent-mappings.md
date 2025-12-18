@@ -236,7 +236,7 @@ Strategy selection:
 - S >= 0.7 -> 2 (radiating)
 
 ### FluidRadialImpulseMod
- 
+
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | G | Impulse Radius | lin |
@@ -278,7 +278,7 @@ Strategy selection:
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | E*G | Density | exp |
-| G | PointRadius | exp(3.0)(0.5 -> 16.0) |
+| G | PointRadius | exp(3.0)(1.0 -> 16.0) |
 | E | Colour | energyToColor |
 | S | Colour.brightness | structureToBrightness |
 | E*(1-S) | Colour.saturation | direct |

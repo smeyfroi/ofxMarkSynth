@@ -149,7 +149,7 @@ void SandLineMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
   (im.E() * im.G()).exp(densityController, strength);
-  im.G().exp(pointRadiusController, strength, 0.5f, 16.0f, 3.0f);
+  im.G().exp(pointRadiusController, strength, 1.0f, 16.0f, 3.0f);
   
   // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);

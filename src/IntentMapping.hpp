@@ -51,7 +51,8 @@ inline ofFloatColor energyToColor(const Intent& intent) {
 
 inline float structureToBrightness(const Intent& intent) {
   float s = intent.getStructure();
-  return ofLerp(0.0, 0.2, s);
+  return exponentialMap(s, 0.0, 1.0);
+//  return ofLerp(0.0, 0.2, s);
 }
 
 inline ofFloatColor densityToAlpha(const Intent& intent, const ofFloatColor& baseColor) {

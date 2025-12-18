@@ -40,7 +40,7 @@ protected:
 private:
   void drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale);
 
-  ofParameter<float> densityParameter { "Density", 0.05, 0.0, 0.5 };
+  ofParameter<float> densityParameter { "Density", 0.2, 0.05, 0.5 };
   ParamController<float> densityController { densityParameter };
   ofParameter<float> pointRadiusParameter { "PointRadius", 1.0, 0.0, 32.0 };
   ParamController<float> pointRadiusController { pointRadiusParameter };
@@ -50,7 +50,7 @@ private:
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
   ofParameter<float> stdDevAlongParameter { "StdDevAlong", 0.5, 0.0, 1.0 };
   ParamController<float> stdDevAlongController { stdDevAlongParameter };
-  ofParameter<float> stdDevPerpendicularParameter { "StdDevPerpendicular", 0.01, 0.0, 0.1 };
+  ofParameter<float> stdDevPerpendicularParameter { "StdDevPerpendicular", 0.005, 0.0, 0.02 };
   ParamController<float> stdDevPerpendicularController { stdDevPerpendicularParameter };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
