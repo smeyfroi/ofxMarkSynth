@@ -70,7 +70,14 @@
         "MinSpectralCrest": "20",
         "MaxSpectralCrest": "100",
         "MinZeroCrossingRate": "5",
-        "MaxZeroCrossingRate": "15"
+        "MaxZeroCrossingRate": "15",
+        "OnsetThreshold": "2.0",
+        "OnsetCooldownSecs": "2.0",
+        "TimbreThreshold": "2.0",
+        "TimbreCooldownSecs": "2.0",
+        "PitchThreshold": "2.0",
+        "PitchCooldownSecs": "2.0",
+        "_comment_event_detection": "Event detection parameters: Threshold (0.5-5.0) controls sensitivity (lower = more events). CooldownSecs (0.0-30.0) is minimum time between events of that type."
       }
     },
 

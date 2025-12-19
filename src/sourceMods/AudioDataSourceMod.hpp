@@ -74,6 +74,8 @@ private:
   void emitSpectral3DPoints();
   void emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar);
 
+  void drawEventDetectionOverlay();
+
   bool tuningVisible { false };
 };
 

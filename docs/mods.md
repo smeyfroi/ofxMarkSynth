@@ -40,14 +40,22 @@ Extracts musical features from the Synth-owned audio analysis client and emits t
 - `ComplexSpectralDifferenceScalar` (float): Measure of spectral change
 - `SpectralCrestScalar` (float): Spectral peak-to-average ratio
 - `ZeroCrossingRateScalar` (float): Zero-crossing rate (relates to noisiness)
-- `Onset1` (event): Audio onset detection
-- `TimbreChange` (event): Timbre change detection
+- `Onset1` (event): Audio onset detection (sudden energy + spectral change)
+- `TimbreChange` (event): Timbre change detection (spectral crest + zero-crossing rate change)
 - `PitchChange` (event): Pitch change detection
 
 **Key Parameters**:
 - `MinPitch`, `MaxPitch`: Pitch range mapping (Hz)
 - `MinRms`, `MaxRms`: Loudness range
 - Audio analysis parameters for spectral features
+
+**Event Detection Tuning** (runtime-adjustable for live performance):
+- `OnsetThreshold` (0.5-5.0, default 2.0): Z-score threshold for onset detection. Lower = more sensitive (more events)
+- `OnsetCooldownSecs` (0.0-30.0, default 2.0): Minimum seconds between onset events
+- `TimbreThreshold` (0.5-5.0, default 2.0): Z-score threshold for timbre change detection
+- `TimbreCooldownSecs` (0.0-30.0, default 2.0): Minimum seconds between timbre events
+- `PitchThreshold` (0.5-5.0, default 2.0): Z-score threshold for pitch change detection
+- `PitchCooldownSecs` (0.0-30.0, default 2.0): Minimum seconds between pitch events
 
 **Use Cases**:
 - Map pitch to Y position and loudness to size
