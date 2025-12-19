@@ -56,7 +56,7 @@ private:
   ParamController<ofFloatColor> minorLineColorController { minorLineColorParameter };
   ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColour", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> majorLineColorController { majorLineColorParameter };
-  ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.01 };
+  ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.005 };
   ParamController<float> pathWidthController { pathWidthParameter };
   ofParameter<float> majorLineWidthParameter { "MajorLineWidth", 200.0, 0.0, 500.0 };
   ParamController<float> majorLineWidthController { majorLineWidthParameter };

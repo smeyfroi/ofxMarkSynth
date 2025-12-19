@@ -221,7 +221,7 @@ void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
   im.C().exp(angleController, strength, 0.0f, 0.5f, 2.0f);
-  im.G().exp(pathWidthController, strength, 0.7f);
+  im.G().exp(pathWidthController, strength, 1.0f);
   
   // Minor color composition
   ofFloatColor minorColor = ofxMarkSynth::energyToColor(intent);

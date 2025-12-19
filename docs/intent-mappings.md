@@ -219,7 +219,7 @@ Strategy selection:
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | C | Angle | exp(0.0 -> 0.5) |
-| G | PathWidth | exp(0.7) |
+| G | PathWidth | exp(1.0) |
 | E | MinorLineColour | energyToColor |
 | D | MinorLineColour.alpha | lin(0.7 -> 1.0) |
 | E | MajorLineColour | energyToColor * 0.7 |
