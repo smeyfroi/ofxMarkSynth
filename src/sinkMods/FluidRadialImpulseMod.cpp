@@ -87,7 +87,7 @@ void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
 void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
-  im.G().lin(impulseRadiusController, strength);
+  im.G().exp(impulseRadiusController, strength);
   
   // Weighted blend: energy (80%) + chaos (20%)
   float impulseStrengthI = linearMap(intent.getEnergy(), impulseStrengthController.getManualMin(), impulseStrengthController.getManualMax() * 0.8f) +
