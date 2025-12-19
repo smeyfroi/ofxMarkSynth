@@ -96,6 +96,16 @@ public:
   int getSplitElapsedMinutes() const;
   int getSplitElapsedSeconds() const;
   
+  // Config duration and countdown (optional, 0 means no duration specified)
+  void setConfigDurationSec(int durationSec);
+  int getConfigDurationSec() const { return configDurationSec; }
+  bool hasConfigDuration() const { return configDurationSec > 0; }
+  int getCountdownSec() const;  // Remaining seconds (negative if over time)
+  int getCountdownMinutes() const;  // Absolute value of minutes remaining
+  int getCountdownSeconds() const;  // Absolute value of seconds remaining (0-59)
+  bool isCountdownNegative() const;  // True if over time
+  bool isCountdownExpired() const;   // True if countdown <= 0
+  
 private:
   Synth* synth;
   std::vector<std::string> configs;      // Full paths
@@ -123,6 +133,9 @@ private:
   float splitTimerStartTime { 0.0f };
   float splitTimerPausedTime { 0.0f };
   float splitTimerTotalPausedDuration { 0.0f };
+  
+  // Config duration (0 = no duration specified)
+  int configDurationSec { 0 };
 };
 
 

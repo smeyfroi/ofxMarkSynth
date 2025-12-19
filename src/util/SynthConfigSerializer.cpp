@@ -8,6 +8,7 @@
 #include "SynthConfigSerializer.hpp"
 #include "Synth.hpp"
 #include "Intent.hpp"
+#include "TimeStringUtil.h"
 #include "../sourceMods/AudioDataSourceMod.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
@@ -375,6 +376,15 @@ bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Sy
   
   if (j.contains("description") && j["description"].is_string()) {
     ofLogNotice("SynthConfigSerializer") << "  " << j["description"].get<std::string>();
+  }
+  
+  // Parse optional duration field for performance timing
+  if (j.contains("duration") && j["duration"].is_string()) {
+    int durationSec = parseTimeStringToSeconds(j["duration"].get<std::string>());
+    synth->getPerformanceNavigator().setConfigDurationSec(durationSec);
+    ofLogNotice("SynthConfigSerializer") << "  Config duration: " << j["duration"].get<std::string>();
+  } else {
+    synth->getPerformanceNavigator().setConfigDurationSec(0);
   }
 
   // Parse synth-level configuration (agency, backgroundColor, backgroundMultiplier)

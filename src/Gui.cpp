@@ -619,7 +619,29 @@ void Gui::drawStatus() {
   int splitMinutes = nav.getSplitElapsedMinutes();
   int splitSeconds = nav.getSplitElapsedSeconds();
   
-  ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d", minutes, seconds, splitMinutes, splitSeconds);
+  // Show split timer with countdown if duration is configured
+  if (nav.hasConfigDuration()) {
+    int countdownMin = nav.getCountdownMinutes();
+    int countdownSec = nav.getCountdownSeconds();
+    const char* sign = nav.isCountdownNegative() ? "-" : "";
+    
+    // Flash red when countdown is expired (toggle every 0.5 seconds)
+    if (nav.isCountdownExpired()) {
+      bool flash = static_cast<int>(ofGetElapsedTimef() * 2) % 2 == 0;
+      if (flash) {
+        ImGui::TextColored(RED_COLOR, "Timer: %02d:%02d  Split: %02d:%02d / %s%02d:%02d", 
+                           minutes, seconds, splitMinutes, splitSeconds, sign, countdownMin, countdownSec);
+      } else {
+        ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d / %s%02d:%02d", 
+                    minutes, seconds, splitMinutes, splitSeconds, sign, countdownMin, countdownSec);
+      }
+    } else {
+      ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d / %s%02d:%02d", 
+                  minutes, seconds, splitMinutes, splitSeconds, sign, countdownMin, countdownSec);
+    }
+  } else {
+    ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d", minutes, seconds, splitMinutes, splitSeconds);
+  }
   ImGui::SameLine();
   
   // Pause/Resume button

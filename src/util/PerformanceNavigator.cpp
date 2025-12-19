@@ -10,6 +10,7 @@
 #include "ofLog.h"
 #include "ofUtils.h"
 #include <algorithm>
+#include <cstdlib>
 
 
 
@@ -357,6 +358,31 @@ int PerformanceNavigator::getSplitElapsedMinutes() const {
 
 int PerformanceNavigator::getSplitElapsedSeconds() const {
   return static_cast<int>(getSplitElapsedTimeSec()) % 60;
+}
+
+void PerformanceNavigator::setConfigDurationSec(int durationSec) {
+  configDurationSec = durationSec;
+}
+
+int PerformanceNavigator::getCountdownSec() const {
+  if (configDurationSec <= 0) return 0;
+  return configDurationSec - static_cast<int>(getSplitElapsedTimeSec());
+}
+
+int PerformanceNavigator::getCountdownMinutes() const {
+  return std::abs(getCountdownSec()) / 60;
+}
+
+int PerformanceNavigator::getCountdownSeconds() const {
+  return std::abs(getCountdownSec()) % 60;
+}
+
+bool PerformanceNavigator::isCountdownNegative() const {
+  return getCountdownSec() < 0;
+}
+
+bool PerformanceNavigator::isCountdownExpired() const {
+  return configDurationSec > 0 && getCountdownSec() <= 0;
 }
 
 
