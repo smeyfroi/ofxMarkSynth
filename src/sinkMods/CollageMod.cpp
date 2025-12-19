@@ -50,7 +50,7 @@ void CollageMod::update() {
   outlineController.update();
   
   if (path.getCommands().size() <= 3) return;
-  if (strategyParameter == 1 && !snapshotTexture.isAllocated()) return;
+  if (strategyParameter != 0 && !snapshotTexture.isAllocated()) return;
 
   auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt0) return;

@@ -256,6 +256,7 @@
         "Saturation": "1.5",
         "Outline": "1",
         "Strategy": "1",
+        "_comment_strategy": "0=tint; 1=add tinted pixels; 2=add pixels",
         "AgencyFactor": "1"
       }
     },
