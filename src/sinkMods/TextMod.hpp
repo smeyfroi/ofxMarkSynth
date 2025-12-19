@@ -9,11 +9,9 @@
 
 #include "../Mod.hpp"
 #include "../ParamController.h"
+#include "../util/FontCache.hpp"
 #include "ofTrueTypeFont.h"
-#include <filesystem>
 #include <memory>
-#include <optional>
-#include <unordered_map>
 #include <vector>
 
 
@@ -26,7 +24,7 @@ class TextMod : public Mod {
 
 public:
   TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, 
-          const std::filesystem::path& fontPath);
+          std::shared_ptr<FontCache> fontCache);
   
   void update() override;
   void receive(int sinkId, const std::string& text) override;
@@ -64,12 +62,8 @@ private:
     std::shared_ptr<ofTrueTypeFont> fontPtr;
   };
 
-  static constexpr int MAX_FONT_CACHE_SIZE = 16;
-
-  // Font rendering
-  std::filesystem::path fontPath;
-  std::unordered_map<int, std::shared_ptr<ofTrueTypeFont>> fontCache;
-  std::vector<int> fontCacheLru;
+  // Font cache (shared, pre-loaded at startup)
+  std::shared_ptr<FontCache> fontCachePtr;
 
   // State
   std::string currentText;
@@ -79,7 +73,7 @@ private:
   ofParameter<glm::vec2> positionParameter { "Position", { 0.5, 0.5 }, { 0.0, 0.0 }, { 1.0, 1.0 } };
   ParamController<glm::vec2> positionController { positionParameter };
 
-  ofParameter<float> fontSizeParameter { "FontSize", 0.05, 0.01, 0.5 };
+  ofParameter<float> fontSizeParameter { "FontSize", 0.05, 0.01, 0.08 };
   ParamController<float> fontSizeController { fontSizeParameter };
 
   ofParameter<ofFloatColor> colorParameter { "Colour", { 1.0, 1.0, 1.0, 1.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0, 1.0 } };
@@ -100,9 +94,6 @@ private:
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   // Helpers
-  std::shared_ptr<ofTrueTypeFont> getFontForSize(int pixelSize);
-  void touchFontCacheKey(int pixelSize);
-  void pruneFontCache();
   int resolvePixelSize(float normalizedFontSize, float fboHeight) const;
   void pushDrawEvent(const std::string& text);
   void drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr);

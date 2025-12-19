@@ -17,9 +17,10 @@ namespace ofxMarkSynth {
 
 
 
-TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& fontPath_)
+TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
+                 std::shared_ptr<FontCache> fontCache)
 : Mod { synthPtr, name, std::move(config) },
-  fontPath { fontPath_ }
+  fontCachePtr { fontCache }
 {
   sinkNameIdMap = {
     { "Text", SINK_TEXT },
@@ -149,7 +150,7 @@ void TextMod::receive(int sinkId, const glm::vec4& v) {
 void TextMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
-  im.G().exp(fontSizeController, strength);
+  im.G().exp(fontSizeController, strength, 1.4f);
   
   // Color composition
   ofFloatColor colorI = energyToColor(intent);
@@ -177,71 +178,14 @@ void TextMod::applyIntent(const Intent& intent, float strength) {
   }
 }
 
-std::shared_ptr<ofTrueTypeFont> TextMod::getFontForSize(int pixelSize) {
-  if (pixelSize <= 0) return nullptr;
-
-  auto it = fontCache.find(pixelSize);
-  if (it != fontCache.end()) {
-    touchFontCacheKey(pixelSize);
-    return it->second;
-  }
-
-  auto fontPtr = std::make_shared<ofTrueTypeFont>();
-  bool success = fontPtr->load(fontPath.string(), pixelSize, true, true);
-  if (!success) {
-    ofLogError("TextMod") << "Failed to load font from " << fontPath << " at size " << pixelSize;
-    return nullptr;
-  }
-
-  fontCache[pixelSize] = fontPtr;
-  touchFontCacheKey(pixelSize);
-  pruneFontCache();
-
-  ofLogNotice("TextMod") << "Loaded font at size " << pixelSize;
-  return fontPtr;
-}
-
-void TextMod::touchFontCacheKey(int pixelSize) {
-  fontCacheLru.erase(std::remove(fontCacheLru.begin(), fontCacheLru.end(), pixelSize), fontCacheLru.end());
-  fontCacheLru.push_back(pixelSize);
-}
-
-void TextMod::pruneFontCache() {
-  while (static_cast<int>(fontCache.size()) > MAX_FONT_CACHE_SIZE) {
-    bool evicted = false;
-
-    for (auto it = fontCacheLru.begin(); it != fontCacheLru.end(); ++it) {
-      int key = *it;
-      auto mapIt = fontCache.find(key);
-      if (mapIt == fontCache.end()) {
-        fontCacheLru.erase(it);
-        evicted = true;
-        break;
-      }
-
-      if (mapIt->second && mapIt->second.use_count() <= 1) {
-        fontCache.erase(mapIt);
-        fontCacheLru.erase(it);
-        evicted = true;
-        break;
-      }
-    }
-
-    if (!evicted) break;
-  }
-}
-
 int TextMod::resolvePixelSize(float normalizedFontSize, float fboHeight) const {
-  int pixelSize = static_cast<int>(normalizedFontSize * fboHeight);
-  pixelSize = std::max(pixelSize, minFontPxParameter.get());
-
-  // Round to nearest 5 pixels to avoid excessive font loads
-  pixelSize = ((pixelSize + 2) / 5) * 5;
-  return pixelSize;
+  int rawSize = static_cast<int>(normalizedFontSize * fboHeight);
+  return std::max(rawSize, minFontPxParameter.get());
 }
 
 void TextMod::pushDrawEvent(const std::string& text) {
   if (text.empty()) return;
+  if (!fontCachePtr) return;
 
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
@@ -250,7 +194,7 @@ void TextMod::pushDrawEvent(const std::string& text) {
   if (!fboPtr) return;
 
   int pixelSize = resolvePixelSize(fontSizeController.value, fboPtr->getHeight());
-  auto fontPtr = getFontForSize(pixelSize);
+  auto fontPtr = fontCachePtr->get(pixelSize);
   if (!fontPtr) return;
 
   DrawEvent e;

@@ -6,6 +6,7 @@
 //
 
 #include "ModFactory.hpp"
+#include "FontCache.hpp"
 #include "Synth.hpp"
 #include "ofLog.h"
 #include "ofxMarkSynth.h"
@@ -190,12 +191,12 @@ void ModFactory::initializeBuiltinTypes() {
   });
   
   registerType("Text", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto fontPathPtr = r.get<std::filesystem::path>("fontPath");
-    if (!fontPathPtr) {
-      ofLogError("ModFactory") << "TextMod requires 'fontPath' resource";
+    auto fontCachePtr = r.get<FontCache>("fontCache");
+    if (!fontCachePtr) {
+      ofLogError("ModFactory") << "TextMod requires 'fontCache' resource";
       return nullptr;
     }
-    return std::make_shared<TextMod>(s, n, std::move(c), *fontPathPtr);
+    return std::make_shared<TextMod>(s, n, std::move(c), fontCachePtr);
   });
   
   registerType("SomPalette", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {

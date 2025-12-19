@@ -39,4 +39,5 @@
 #include "ParticleFieldMod.hpp"
 
 #include "ModFactory.hpp"
+#include "util/FontCache.hpp"
 #include "Synth.hpp"
