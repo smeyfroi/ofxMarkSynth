@@ -19,7 +19,7 @@ using IntentPtr = std::shared_ptr<Intent>;
  • Density → quantity, opacity, detail level, connection strength
  • Structure → organization, alignment, brightness, pattern regularity
  • Chaos → randomness, variance, noise, unpredictability, disorder
- • Granularity → scale, resolution, feature size, clustering
+ • Granularity → scale, resolution, feature size, clustering; high is larger
  */
 class Intent {
 public:
