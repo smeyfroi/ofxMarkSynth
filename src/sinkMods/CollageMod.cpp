@@ -105,11 +105,13 @@ void CollageMod::update() {
 //  if (drawingLayerPtr0->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
 //  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
-  ofFloatColor tintColor = ofFloatColor(1.0, 1.0, 1.0, 1.0);
+  ofFloatColor tintColor;
   if (strategyParameter != 2) { // 2 == draw an untinted snapshot
     tintColor = colorController.value; // comes from a connected palette or manually
     float currentSaturation = tintColor.getSaturation();
     tintColor.setSaturation(std::clamp(currentSaturation * saturationController.value, 0.0f, 1.0f));
+  } else {
+    tintColor = ofFloatColor(1.0, 1.0, 1.0, 1.0);
   }
   
   ofEnableBlendMode(OF_BLENDMODE_SCREEN);
@@ -121,6 +123,8 @@ void CollageMod::update() {
   } else {
     glEnable(GL_STENCIL_TEST);
     
+    ofLogVerbose() << "CollageMod drawing at frame " << ofGetFrameNum() << " with outline " << outline;
+
     // draw stencil as mask (1s inside path)
     glClear(GL_STENCIL_BUFFER_BIT);
     glStencilFunc(GL_ALWAYS, 1, 1);
@@ -152,6 +156,7 @@ void CollageMod::update() {
   ofPopStyle();
   fboPtr0->getSource().end();
   path.clear();
+  snapshotTexture = ofTexture{}; // Reset to unallocated state so we don't redraw with stale texture
 }
 
 void CollageMod::receive(int sinkId, const ofTexture& texture) {
