@@ -36,10 +36,8 @@ private:
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 3 }; // 0=polypath; 1=bounds; 2=horizontals; 3=convex hull
   ofParameter<float> maxVerticesParameter { "MaxVertices", 3, 0, 20 };
   ParamController<float> maxVerticesController { maxVerticesParameter };
-  ofParameter<float> maxVertexProximityParameter { "MaxVertexProximity", 0.07, 0.0, 1.0 };
-  ParamController<float> maxVertexProximityController { maxVertexProximityParameter };
-  ofParameter<float> minVertexProximityParameter { "MinVertexProximity", 0.01, 0.0, 1.0 };
-  ParamController<float> minVertexProximityController { minVertexProximityParameter };
+  ofParameter<float> clusterRadiusParameter { "ClusterRadius", 0.15, 0.01, 1.0 };
+  ParamController<float> clusterRadiusController { clusterRadiusParameter };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   std::deque<glm::vec2> newVecs;

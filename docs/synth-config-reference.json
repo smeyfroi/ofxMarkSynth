@@ -203,9 +203,9 @@
       "config": {
         "Strategy": "0",
         "MaxVertices": "3",
-        "MaxVertexProximity": "0.07",
-        "MinVertexProximity": "0.01",
-        "AgencyFactor": "1"
+        "ClusterRadius": "0.15",
+        "AgencyFactor": "1",
+        "_comment_ClusterRadius": "ClusterRadius: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy."
       }
     },
 

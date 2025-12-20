@@ -166,12 +166,14 @@ This visual distinction helps identify at a glance which parts of the synth grap
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| 1-D | MinVertexProximity | invExp |
-| G | MaxVertexProximity | lin |
-| D | MaxVertices | lin |
-| C, S | Strategy | conditional (see below) |
+| G | ClusterRadius | exp — higher granularity = larger cluster radius (bigger shapes) |
+| D | MaxVertices | exp |
+| C, S | Strategy | conditional (see below, currently disabled) |
 
-Strategy selection:
+**Parameter semantics:**
+- **ClusterRadius**: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). All points within this radius of the newest point are collected, then shaped by the Strategy (polypath, bounds, convex hull, etc.).
+
+Strategy selection (commented out in code):
 - C > 0.6 AND S < 0.4 -> 2 (horizontals)
 - S > 0.7 -> 3 (convex hull)
 - S < 0.3 -> 0 (polypath)

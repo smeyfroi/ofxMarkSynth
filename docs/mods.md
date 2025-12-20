@@ -339,10 +339,9 @@ Converts a stream of points into geometric paths using various strategies.
 **Key Parameters**:
 - `Strategy`: 0=polypath, 1=bounds, 2=horizontals, 3=convex hull
 - `MaxVertices`: Maximum points in path (0-20)
-- `MaxVertexProximity`: Maximum distance between adjacent vertices
-- `MinVertexProximity`: Minimum distance between vertices
+- `ClusterRadius`: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy.
 
-**Intent Integration**: Responds to Structure dimension.
+**Intent Integration**: Responds to Granularity (cluster radius) and Density (max vertices) dimensions.
 
 **Use Cases**:
 - Create polygonal shapes from audio points

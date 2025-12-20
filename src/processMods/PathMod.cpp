@@ -25,15 +25,13 @@ PathMod::PathMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
   };
   
   registerControllerForSource(maxVerticesParameter, maxVerticesController);
-  registerControllerForSource(maxVertexProximityParameter, maxVertexProximityController);
-  registerControllerForSource(minVertexProximityParameter, minVertexProximityController);
+  registerControllerForSource(clusterRadiusParameter, clusterRadiusController);
 }
 
 void PathMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(maxVerticesParameter);
-  parameters.add(minVertexProximityParameter);
-  parameters.add(maxVertexProximityParameter);
+  parameters.add(clusterRadiusParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -43,13 +41,19 @@ float PathMod::getAgency() const {
 
 std::vector<glm::vec2> PathMod::findCloseNewPoints() const {
   std::vector<glm::vec2> result;
-  glm::vec2 previousVec { std::numeric_limits<float>::max(), std::numeric_limits<float>::max() };
-  std::for_each(newVecs.crbegin(), newVecs.crend(), [&](const auto& v) { // start from the back, which is the newest points
-    if (previousVec.x != std::numeric_limits<float>::max() && glm::distance2(previousVec, v) > maxVertexProximityController.value) return;
-    if (glm::distance2(previousVec, v) < minVertexProximityController.value) return;
-    result.push_back(v);
-    previousVec = v;
-  });
+  if (newVecs.empty()) return result;
+  
+  // Reference point is the newest point
+  const glm::vec2& referencePoint = newVecs.back();
+  float maxDistance = clusterRadiusController.value;
+  
+  // Collect all points within proximity of the reference point (cluster)
+  for (const auto& v : newVecs) {
+    float dist = glm::distance(referencePoint, v);
+    if (dist <= maxDistance) {
+      result.push_back(v);
+    }
+  }
   return result;
 }
 
@@ -115,8 +119,7 @@ ofPath makeHorizontalStripesPath(const std::vector<glm::vec2>& points) {
 void PathMod::update() {
   syncControllerAgencies();
   maxVerticesController.update();
-  maxVertexProximityController.update();
-  minVertexProximityController.update();
+  clusterRadiusController.update();
   
   auto points = findCloseNewPoints();
   if (points.size() < 4) {
@@ -163,22 +166,23 @@ bool PathMod::keyPressed(int key) {
 void PathMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
-  im.D().inv().exp(minVertexProximityController, strength);
-  im.G().lin(maxVertexProximityController, strength);
-  im.D().lin(maxVerticesController, strength);
+  // Granularity -> larger cluster radius (bigger shapes)
+  im.G().exp(clusterRadiusController, strength);
+  // Density -> more vertices allowed
+  im.D().exp(maxVerticesController, strength);
   
   // Strategy selection based on chaos + structure
-  if (strength > 0.05f) {
-    if (im.C().get() > 0.6f && im.S().get() < 0.4f) {
-      strategyParameter = 2; // horizontals - chaotic, unstructured
-    } else if (im.S().get() > 0.7f) {
-      strategyParameter = 3; // convex hull - highly structured
-    } else if (im.S().get() < 0.3f) {
-      strategyParameter = 0; // polypath - low structure
-    } else {
-      strategyParameter = 1; // bounds - middle ground
-    }
-  }
+//  if (strength > 0.05f) {
+//    if (im.C().get() > 0.6f && im.S().get() < 0.4f) {
+//      strategyParameter = 2; // horizontals - chaotic, unstructured
+//    } else if (im.S().get() > 0.7f) {
+//      strategyParameter = 3; // convex hull - highly structured
+//    } else if (im.S().get() < 0.3f) {
+//      strategyParameter = 0; // polypath - low structure
+//    } else {
+//      strategyParameter = 1; // bounds - middle ground
+//    }
+//  }
 }
 
 void PathMod::receive(int sinkId, const glm::vec2& v) {
