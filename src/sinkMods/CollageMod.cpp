@@ -180,7 +180,7 @@ void CollageMod::update() {
   ofPopStyle();
   fboPtr0->getSource().end();
   path.clear();
-  // Note: snapshotTexture persists until a new one arrives, so subsequent paths have something to draw
+  snapshotTexture = ofTexture{}; // Reset to unallocated state so we wait for fresh texture
 }
 
 void CollageMod::receive(int sinkId, const ofTexture& texture) {
