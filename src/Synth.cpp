@@ -913,19 +913,34 @@ void Synth::drawMiddlePanel(float w, float h, float scale) {
   ofPopMatrix();
 }
 
-void Synth::drawDebugViews() {
-  ofPushMatrix();
-  {
-    ofTranslate((ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0, (ofGetWindowHeight() - imageCompositeFbo.getHeight() * compositeScale) / 2.0);
-    // For Mods that draw directly and not on an FBO,
-    // for example audio data plots and other debug views
-    ofScale(ofGetWindowHeight(), ofGetWindowHeight()); // everything needs to draw in [0,1]x[0,1]
-    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
-      const auto& [name, modPtr] = pair;
-      modPtr->draw();
-    });
+void Synth::updateDebugViewFbo() {
+  if (!debugViewEnabled) return;
+  
+  // Allocate FBO if needed
+  if (!debugViewFbo.isAllocated()) {
+    ofFboSettings settings;
+    settings.width = DEBUG_VIEW_SIZE;
+    settings.height = DEBUG_VIEW_SIZE;
+    settings.internalformat = GL_RGBA;
+    settings.useDepth = false;
+    settings.useStencil = false;
+    debugViewFbo.allocate(settings);
   }
+  
+  debugViewFbo.begin();
+  ofClear(20, 20, 20, 200);  // Semi-transparent dark background for context
+  
+  // Draw Mod debug overlays in [0,1] normalized coordinates
+  ofPushMatrix();
+  ofPushStyle();
+  ofScale(DEBUG_VIEW_SIZE, DEBUG_VIEW_SIZE);
+  for (const auto& [name, modPtr] : modPtrs) {
+    modPtr->draw();
+  }
+  ofPopStyle();
   ofPopMatrix();
+  
+  debugViewFbo.end();
 }
 
 // Does not draw the GUI: see drawGui()
@@ -934,7 +949,7 @@ void Synth::draw() {
   ofBlendMode(OF_BLENDMODE_DISABLED);
   drawSidePanels(0.0, ofGetWindowWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
   drawMiddlePanel(ofGetWindowWidth(), ofGetWindowHeight(), compositeScale);
-  drawDebugViews();
+  updateDebugViewFbo();  // Render Mod debug draws to FBO for ImGui display
   TSGL_STOP("Synth::draw");
 
 #ifdef TARGET_MAC
@@ -1191,6 +1206,11 @@ bool Synth::keyPressed(int key) {
 
   if (key == 'R') {
     toggleRecording();
+    return true;
+  }
+
+  if (key == 'D') {
+    toggleDebugView();
     return true;
   }
 

@@ -216,27 +216,40 @@ bool AudioDataSourceMod::keyPressed(int key) {
 }
 
 void AudioDataSourceMod::drawEventDetectionOverlay() {
-  // Compact panel in bottom-right
+  // This draws in a [0,1] normalized coordinate system (parent has already scaled)
+  // We need to draw text at a fixed pixel size, so we scale down to pixel coords
+  
+  // Get the current modelview matrix to determine the effective scale
+  // The parent has scaled by the viewport size, so we can use that
+  ofRectangle viewport = ofGetCurrentViewport();
+  float effectiveScale = std::max(viewport.width, viewport.height);
+  
+  // Text character size in normalized coords (8 pixels / effectiveScale)
+  float charW = 8.0f / effectiveScale;
+  float charH = 13.0f / effectiveScale;  // bitmap font is ~13px tall
+  
+  // Compact panel in bottom-left - sizes relative to normalized [0,1] space
   constexpr float PANEL_MARGIN = 0.01f;
-  constexpr float BAR_HEIGHT = 0.012f;
-  constexpr float COOLDOWN_HEIGHT = 0.003f;
-  constexpr float ROW_GAP = 0.006f;
-  constexpr float LABEL_WIDTH = 0.035f;
-  constexpr float BAR_WIDTH = 0.05f;  // Narrower bars
-  constexpr float MAX_ZSCORE = 5.0f; // matches parameter ranges
-  constexpr float PANEL_PADDING = 0.005f;
+  float barHeight = charH * 0.8f;
+  float cooldownHeight = charH * 0.2f;
+  float rowGap = charH * 0.3f;
+  float labelWidth = charW * 7.0f;  // "Timbre" is 6 chars + padding
+  float barWidth = 0.12f;
+  constexpr float MAX_ZSCORE = 5.0f;
+  float padding = charW * 0.5f;
 
   // Calculate panel dimensions based on content
-  float panelWidth = LABEL_WIDTH + BAR_WIDTH + PANEL_PADDING * 3;
-  float contentHeight = 3 * (BAR_HEIGHT + COOLDOWN_HEIGHT + ROW_GAP) + 2 * 0.015f; // 3 bars + 2 legend lines
-  float panelHeight = contentHeight + PANEL_PADDING * 2;
+  float panelWidth = labelWidth + barWidth + padding * 3;
+  float contentHeight = 3 * (barHeight + cooldownHeight + rowGap) + 2 * charH; // 3 bars + 2 legend lines
+  float panelHeight = contentHeight + padding * 2;
 
-  float panelX = 1.0f - panelWidth - PANEL_MARGIN;
+  // Position in bottom-left
+  float panelX = PANEL_MARGIN;
   float panelY = 1.0f - panelHeight - PANEL_MARGIN;
 
   ofPushStyle();
 
-  // Semi-transparent background (lighter)
+  // Semi-transparent background
   ofSetColor(0, 0, 0, 100);
   ofFill();
   ofDrawRectangle(panelX, panelY, panelWidth, panelHeight);
@@ -244,27 +257,24 @@ void AudioDataSourceMod::drawEventDetectionOverlay() {
   // Helper lambda to draw one detector row
   auto drawDetectorRow = [&](float y, const std::string& label, float zScore, float threshold,
                              float cooldownRemaining, float cooldownTotal, float flash) {
-    float barX = panelX + LABEL_WIDTH + PANEL_PADDING;
-    float barWidth = BAR_WIDTH;
+    float barX = panelX + labelWidth + padding;
 
-    // Label
+    // Label - draw text using normalized scale
     ofSetColor(255);
-    // Use normalized coordinates for bitmap string position (scale to pixels)
-    float pixelX = (panelX + 0.003f) * ofGetWidth();
-    float pixelY = (y + BAR_HEIGHT * 0.7f) * ofGetHeight();
     ofPushMatrix();
-    ofScale(1.0f / ofGetWidth(), 1.0f / ofGetHeight());
-    ofDrawBitmapString(label, pixelX, pixelY);
+    ofTranslate(panelX + padding, y + barHeight * 0.8f);
+    ofScale(1.0f / effectiveScale, 1.0f / effectiveScale);
+    ofDrawBitmapString(label, 0, 0);
     ofPopMatrix();
 
     // Z-score bar background
     ofSetColor(40, 40, 40);
-    ofDrawRectangle(barX, y, barWidth, BAR_HEIGHT);
+    ofDrawRectangle(barX, y, barWidth, barHeight);
 
     // Calculate fill ratio and color based on proximity to threshold
     float ratio = std::min(zScore / MAX_ZSCORE, 1.0f);
     float thresholdRatio = threshold / MAX_ZSCORE;
-    float proximityToThreshold = zScore / threshold;
+    float proximityToThreshold = (threshold > 0.001f) ? zScore / threshold : 0.0f;
 
     ofColor barColor;
     if (proximityToThreshold < 0.5f) {
@@ -279,29 +289,29 @@ void AudioDataSourceMod::drawEventDetectionOverlay() {
 
     // Draw z-score fill
     ofSetColor(barColor);
-    ofDrawRectangle(barX, y, barWidth * ratio, BAR_HEIGHT);
+    ofDrawRectangle(barX, y, barWidth * ratio, barHeight);
 
     // Threshold marker (vertical line)
     ofSetColor(255, 255, 255, 200);
     float thresholdX = barX + barWidth * thresholdRatio;
-    ofDrawRectangle(thresholdX, y, 0.001f, BAR_HEIGHT);
+    ofDrawRectangle(thresholdX, y, 0.002f, barHeight);
 
     // Flash overlay when triggered
     if (flash > 0.0f) {
       ofSetColor(255, 255, 255, static_cast<int>(flash * 200));
-      ofDrawRectangle(barX, y, barWidth, BAR_HEIGHT);
+      ofDrawRectangle(barX, y, barWidth, barHeight);
     }
 
-    // Cooldown progress bar (thin line below, counts down from right to left)
+    // Cooldown progress bar (thin line below)
     if (cooldownRemaining > 0.0f && cooldownTotal > 0.0f) {
       float cooldownRatio = cooldownRemaining / cooldownTotal;
       ofSetColor(100, 100, 100);
-      ofDrawRectangle(barX, y + BAR_HEIGHT + 0.001f, barWidth * cooldownRatio, COOLDOWN_HEIGHT);
+      ofDrawRectangle(barX, y + barHeight + 0.001f, barWidth * cooldownRatio, cooldownHeight);
     }
   };
 
   // Draw the three detector rows
-  float rowY = panelY + PANEL_PADDING;
+  float rowY = panelY + padding;
 
   drawDetectorRow(rowY, "Onset",
                   audioDataProcessorPtr->getOnsetZScore(),
@@ -310,7 +320,7 @@ void AudioDataSourceMod::drawEventDetectionOverlay() {
                   audioDataProcessorPtr->getOnsetCooldownTotal(),
                   audioDataProcessorPtr->getOnsetTriggerFlash());
 
-  rowY += BAR_HEIGHT + COOLDOWN_HEIGHT + ROW_GAP;
+  rowY += barHeight + cooldownHeight + rowGap;
 
   drawDetectorRow(rowY, "Timbre",
                   audioDataProcessorPtr->getTimbreZScore(),
@@ -319,7 +329,7 @@ void AudioDataSourceMod::drawEventDetectionOverlay() {
                   audioDataProcessorPtr->getTimbreCooldownTotal(),
                   audioDataProcessorPtr->getTimbreTriggerFlash());
 
-  rowY += BAR_HEIGHT + COOLDOWN_HEIGHT + ROW_GAP;
+  rowY += barHeight + cooldownHeight + rowGap;
 
   drawDetectorRow(rowY, "Pitch",
                   audioDataProcessorPtr->getPitchZScore(),
@@ -329,22 +339,21 @@ void AudioDataSourceMod::drawEventDetectionOverlay() {
                   audioDataProcessorPtr->getPitchTriggerFlash());
 
   // Legend for existing blue/purple dots
-  rowY += BAR_HEIGHT + COOLDOWN_HEIGHT + ROW_GAP + 0.01f;
+  rowY += barHeight + cooldownHeight + rowGap;
 
   ofSetColor(100, 100, 255); // Blue
-  float legendPixelX = (panelX + 0.003f) * ofGetWidth();
-  float legendPixelY = rowY * ofGetHeight();
   ofPushMatrix();
-  ofScale(1.0f / ofGetWidth(), 1.0f / ofGetHeight());
-  ofDrawBitmapString("Blue: Pitch(x) RMS(y)", legendPixelX, legendPixelY);
+  ofTranslate(panelX + padding, rowY + charH);
+  ofScale(1.0f / effectiveScale, 1.0f / effectiveScale);
+  ofDrawBitmapString("Blue: Pitch RMS", 0, 0);
   ofPopMatrix();
 
-  rowY += 0.015f;
+  rowY += charH;
   ofSetColor(180, 100, 180); // Purple
-  legendPixelY = rowY * ofGetHeight();
   ofPushMatrix();
-  ofScale(1.0f / ofGetWidth(), 1.0f / ofGetHeight());
-  ofDrawBitmapString("Purple: Crest(x) ZCR(y)", legendPixelX, legendPixelY);
+  ofTranslate(panelX + padding, rowY + charH);
+  ofScale(1.0f / effectiveScale, 1.0f / effectiveScale);
+  ofDrawBitmapString("Purple: Crest ZCR", 0, 0);
   ofPopMatrix();
 
   ofPopStyle();

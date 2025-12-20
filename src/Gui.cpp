@@ -118,6 +118,7 @@ void Gui::draw() {
   drawSynthControls();
   drawNodeEditor();
   drawHelpWindow();
+  drawDebugView();
   
   imgui.end();
   imgui.draw();
@@ -1362,6 +1363,49 @@ void Gui::drawHelpWindow() {
     if (monoFont) {
       ImGui::PopFont();
     }
+  }
+  ImGui::End();
+}
+
+void Gui::drawDebugView() {
+  if (!synthPtr->isDebugViewEnabled()) return;
+  
+  const ofFbo& fbo = synthPtr->getDebugViewFbo();
+  if (!fbo.isAllocated()) return;
+  
+  // Set initial window size
+  ImGui::SetNextWindowSize(ImVec2(520, 540), ImGuiCond_FirstUseEver);
+  
+  bool visible = true;
+  ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+  if (ImGui::Begin("Debug View", &visible, flags)) {
+    const auto& texData = fbo.getTexture().getTextureData();
+    ImTextureID texId = (ImTextureID)(uintptr_t)texData.textureID;
+    
+    // Handle texture flipping (openFrameworks FBOs are typically flipped)
+    ImVec2 uv0(0, texData.bFlipTexture ? 1 : 0);
+    ImVec2 uv1(1, texData.bFlipTexture ? 0 : 1);
+    
+    // Scale image to fit available content area while maintaining aspect ratio
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    float fboAspect = static_cast<float>(fbo.getWidth()) / static_cast<float>(fbo.getHeight());
+    float availAspect = avail.x / avail.y;
+    
+    ImVec2 displaySize;
+    if (availAspect > fboAspect) {
+      // Window is wider than texture - fit to height
+      displaySize = ImVec2(avail.y * fboAspect, avail.y);
+    } else {
+      // Window is taller than texture - fit to width
+      displaySize = ImVec2(avail.x, avail.x / fboAspect);
+    }
+    
+    ImGui::Image(texId, displaySize, uv0, uv1);
+  }
+  
+  // Handle window close button
+  if (!visible) {
+    synthPtr->setDebugViewEnabled(false);
   }
   ImGui::End();
 }

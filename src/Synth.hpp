@@ -233,7 +233,20 @@ private:
 
   void drawMiddlePanel(float w, float h, float scale);
   void drawSidePanels(float xleft, float xright, float w, float h);
-  void drawDebugViews();
+  void updateDebugViewFbo();
+  
+  // Debug view system - renders Mod::draw() calls to FBO for ImGui display
+  ofFbo debugViewFbo;
+  bool debugViewEnabled { false };
+  static constexpr float DEBUG_VIEW_SIZE { 640.0f };
+  
+public:
+  const ofFbo& getDebugViewFbo() const { return debugViewFbo; }
+  bool isDebugViewEnabled() const { return debugViewEnabled; }
+  void setDebugViewEnabled(bool enabled) { debugViewEnabled = enabled; }
+  void toggleDebugView() { debugViewEnabled = !debugViewEnabled; }
+  
+private:
 
   // >>> Config transition crossfade system
   enum class TransitionState {

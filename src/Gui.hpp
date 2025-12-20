@@ -57,6 +57,7 @@ private:
   void drawNodeEditor();
   void drawSnapshotControls();
   void drawPerformanceNavigator();
+  void drawDebugView();
   std::vector<ModPtr> getSelectedMods();
 
   std::shared_ptr<Synth> synthPtr;

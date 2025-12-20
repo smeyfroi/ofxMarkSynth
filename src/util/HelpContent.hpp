@@ -18,6 +18,9 @@ RECORDING & SAVING
 S               Save HDR image
 R               Toggle video recording
 
+DEBUG
+D               Toggle debug view window
+
 PERFORMANCE
 <- (hold)       Previous config
 -> (hold)       Next config
