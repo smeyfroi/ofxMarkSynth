@@ -34,9 +34,9 @@ protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> impulseRadiusParameter { "Impulse Radius", 0.001, 0.0, 0.1 };
+  ofParameter<float> impulseRadiusParameter { "Impulse Radius", 0.01, 0.0, 0.15 };
   ParamController<float> impulseRadiusController { impulseRadiusParameter };
-  ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.5, 0.0, 2.0 };
+  ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.5, 0.0, 1.5 };
   ParamController<float> impulseStrengthController { impulseStrengthParameter };
   ofParameter<float> dtParameter { "dt", 0.1, 0.001, 1.0 };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
