@@ -28,14 +28,18 @@ CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name,
   
   registerControllerForSource(colorParameter, colorController);
   registerControllerForSource(saturationParameter, saturationController);
-  registerControllerForSource(outlineParameter, outlineController);
+  registerControllerForSource(outlineAlphaFactorParameter, outlineAlphaFactorController);
+  registerControllerForSource(outlineWidthParameter, outlineWidthController);
+  registerControllerForSource(outlineColorParameter, outlineColorController);
 }
 
 void CollageMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(colorParameter);
   parameters.add(saturationParameter);
-  parameters.add(outlineParameter);
+  parameters.add(outlineAlphaFactorParameter);
+  parameters.add(outlineWidthParameter);
+  parameters.add(outlineColorParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -43,12 +47,90 @@ float CollageMod::getAgency() const {
   return Mod::getAgency() * agencyFactorParameter;
 }
 
+void CollageMod::drawOutline(std::shared_ptr<PingPongFbo> fboPtr, float outlineAlphaFactor) {
+  // Punch hole through existing outlines and draw fatline border
+  // TODO: punch hole on fatline as well to avoid the middle seam when the outlines fade.
+  // Or add the fatline into the stencil to draw the snapshot only within the fatline interior
+  fboPtr->getSource().begin();
+  ofPushStyle();
+  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
+
+  // Clear interior of path
+  path.setFilled(true);
+  ofEnableBlendMode(OF_BLENDMODE_DISABLED);
+  path.setColor(ofFloatColor { 0.0, 0.0, 0.0, 0.0 });
+  path.draw();
+
+  // Draw fatline outline using parameterized width and color
+  const float width = outlineWidthController.value / fboPtr->getWidth();
+  const auto& vertices = path.getOutline()[0].getVertices();
+  int count = vertices.size();
+  ofFloatColor outlineColor = outlineColorController.value;
+  outlineColor.a *= outlineAlphaFactor; // modulate alpha by outline alpha factor for fade effect
+  std::vector<ofFloatColor> colors(count, outlineColor);
+  std::vector<double> widths(count, width);
+  ofxFatLine fatline;
+  fatline.setFeather(width / 8.0); // NOTE: getting this wrong can cause weird artifacts
+  // fatline.setJointType(OFX_FATLINE_JOINT_ROUND); // causes weird artefacts?
+  // fatline.setCapType(OFX_FATLINE_CAP_SQUARE); // causes weird artefacts?
+  fatline.add(vertices, colors, widths);
+  fatline.add(vertices.front(), colors.front(), widths.front()); // close the loop
+
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  fatline.draw();
+  ofPopStyle();
+  fboPtr->getSource().end();
+}
+
+void CollageMod::drawStrategyTintFill(const ofFloatColor& tintColor) {
+  // Strategy 0: Simple tinted fill of the path
+  path.setFilled(true);
+  path.setColor(tintColor);
+  path.draw();
+}
+
+void CollageMod::drawStrategySnapshot(const ofFloatColor& tintColor) {
+  // Strategy 1 & 2: Draw snapshot texture clipped to path using stencil buffer
+  glEnable(GL_STENCIL_TEST);
+
+  ofLogVerbose() << "CollageMod drawing at frame " << ofGetFrameNum() << " with outlineAlphaFactor " << outlineAlphaFactorController.value;
+
+  // Draw stencil as mask (1s inside path)
+  glClear(GL_STENCIL_BUFFER_BIT);
+  glStencilFunc(GL_ALWAYS, 1, 1);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+  glColorMask(false, false, false, false);
+  path.setFilled(true);
+  path.draw();
+
+  // Now only draw snapshot where stencil is 1
+  glStencilFunc(GL_EQUAL, 1, 1);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+  glColorMask(true, true, true, true);
+
+  ofSetColor(tintColor);
+
+  ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
+  float x = normalisedPathBounds.x;
+  float y = normalisedPathBounds.y;
+  float w = normalisedPathBounds.width;
+  float h = normalisedPathBounds.height;
+
+  // Could also limit the scaling to some limit, and optionally crop here?
+
+  snapshotTexture.draw(x, y, w, h);
+
+  glDisable(GL_STENCIL_TEST);
+}
+
 void CollageMod::update() {
   syncControllerAgencies();
   colorController.update();
   saturationController.update();
-  outlineController.update();
-  
+  outlineAlphaFactorController.update();
+  outlineWidthController.update();
+  outlineColorController.update();
+
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter != 0 && !snapshotTexture.isAllocated()) return;
 
@@ -61,50 +143,22 @@ void CollageMod::update() {
     return;
   }
 
+  // Draw outline if enabled and outline layer exists
+  float outlineAlphaFactor = outlineAlphaFactorController.value;
   auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(OUTLINE_LAYERPTR_NAME);
-  float outline = outlineController.value;
-  if (outline > 0.0f && drawingLayerPtrOpt1) {
-    auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
-
-    // punch hole through existing outlines
-    // TODO: punch hole on fatline as well to avoid the middle seam when the outlines fade. Or add the fatline into the stencil to draw the snapshot only within the fatline interior
-    fboPtr1->getSource().begin();
-    ofPushStyle();
-    ofScale(fboPtr1->getWidth(), fboPtr1->getHeight());
-    path.setFilled(true);
-    ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-    path.setColor(ofFloatColor { 0.0, 0.0, 0.0, 0.0 });
-    path.draw();
-
-    const float width = 12.0 / fboPtr1->getWidth(); // TODO: parameterise
-    const auto& vertices = path.getOutline()[0].getVertices();
-    int count = vertices.size();
-    std::vector<ofFloatColor> colors(count, ofFloatColor { 0.0, 0.0, 0.0, outline });
-    std::vector<double> widths(count, width);
-    ofxFatLine fatline;
-    fatline.setFeather(width/8.0); // NOTE: getting this wrong can cause weird artifacts
-//    fatline.setJointType(OFX_FATLINE_JOINT_ROUND); // causes weird artefacts?
-//    fatline.setCapType(OFX_FATLINE_CAP_SQUARE); // causes weird artefacts?
-    fatline.add(vertices, colors, widths);
-    fatline.add(vertices.front(), colors.front(), widths.front()); // close the loop
-    
-    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-    fatline.draw();
-    ofPopStyle();
-    fboPtr1->getSource().end();
+  if (outlineAlphaFactor > 0.0f && drawingLayerPtrOpt1) {
+    drawOutline(drawingLayerPtrOpt1.value()->fboPtr, outlineAlphaFactor);
   }
 
+  // Begin drawing to main layer
   fboPtr0->getSource().begin();
   ofPushStyle();
   ofScale(fboPtr0->getWidth(), fboPtr0->getHeight());
 
   // Close the path for drawing the fill
   path.close();
-  
-//  // Use ALPHA for layers that clear on update, else SCREEN
-//  if (drawingLayerPtr0->clearOnUpdate) ofEnableBlendMode(OF_BLENDMODE_SCREEN);
-//  else ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
+  // Compute tint color based on strategy
   ofFloatColor tintColor;
   if (strategyParameter != 2) { // 2 == draw an untinted snapshot
     tintColor = colorController.value; // comes from a connected palette or manually
@@ -113,50 +167,20 @@ void CollageMod::update() {
   } else {
     tintColor = ofFloatColor(1.0, 1.0, 1.0, 1.0);
   }
-  
+
   ofEnableBlendMode(OF_BLENDMODE_SCREEN);
-  
+
+  // Execute the appropriate drawing strategy
   if (strategyParameter == 0) {
-    path.setFilled(true);
-    path.setColor(tintColor);
-    path.draw();
+    drawStrategyTintFill(tintColor);
   } else {
-    glEnable(GL_STENCIL_TEST);
-    
-    ofLogVerbose() << "CollageMod drawing at frame " << ofGetFrameNum() << " with outline " << outline;
-
-    // draw stencil as mask (1s inside path)
-    glClear(GL_STENCIL_BUFFER_BIT);
-    glStencilFunc(GL_ALWAYS, 1, 1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    glColorMask(false, false, false, false);
-    path.setFilled(true);
-    path.draw();
-    
-    // Now only draw snapshot where stencil is 1
-    glStencilFunc(GL_EQUAL, 1, 1);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glColorMask(true, true, true, true);
-    
-    ofSetColor(tintColor);
-
-    ofRectangle normalisedPathBounds { path.getOutline()[0].getBoundingBox() };
-    float x = normalisedPathBounds.x;
-    float y = normalisedPathBounds.y;
-    float w = normalisedPathBounds.width;
-    float h = normalisedPathBounds.height;
-    
-    // Could also limit the scaling to some limit, and optionally crop here?
-    
-    snapshotTexture.draw(x, y, w, h);
-    
-    glDisable(GL_STENCIL_TEST);
+    drawStrategySnapshot(tintColor);
   }
 
   ofPopStyle();
   fboPtr0->getSource().end();
   path.clear();
-  snapshotTexture = ofTexture{}; // Reset to unallocated state so we don't redraw with stale texture
+  // Note: snapshotTexture persists until a new one arrives, so subsequent paths have something to draw
 }
 
 void CollageMod::receive(int sinkId, const ofTexture& texture) {
@@ -204,12 +228,27 @@ void CollageMod::applyIntent(const Intent& intent, float strength) {
   float targetSaturation = std::clamp(satEnergy * satChaos * satStructure, 0.0f, 3.0f);
   saturationController.updateIntent(targetSaturation, strength, "E*C*inv(S)->sat");
 
-  if (strength > 0.01f) {
-    int strategy = (im.S().get() > 0.55f || im.G().get() > 0.6f) ? 1 : 0;
-    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
-    bool outlineOn = im.C().get() < 0.6f;
-    outlineController.updateIntent(outlineOn ? 1.0f : 0.0f, strength, "C<.6->outline");
-  }
+  // OutlineAlphaFactor: High structure + low chaos = visible outlines
+  // S increases alpha, C decreases it
+  float outlineAlpha = linearMap(im.S().get(), 0.2f, 1.0f) * inverseMap(im.C().get(), 0.5f, 1.0f);
+  outlineAlphaFactorController.updateIntent(std::clamp(outlineAlpha, 0.0f, 1.0f), strength, "S*inv(C)->alpha");
+
+  // OutlineWidth: Energy increases boldness, granularity refines
+  // High E = bold outlines, high G = finer detail (thinner)
+  float widthEnergy = linearMap(im.E().get(), 8.0f, 24.0f);
+  float widthGranularity = inverseMap(im.G().get(), 0.5f, 1.2f);
+  float targetWidth = std::clamp(widthEnergy * widthGranularity, 1.0f, 50.0f);
+  outlineWidthController.updateIntent(targetWidth, strength, "E*inv(G)->width");
+
+  // OutlineColour: Contrast with fill - structure controls brightness, energy controls warmth
+  ofFloatColor outlineColor;
+  float brightness = inverseExponentialMap(im.S().get(), 0.3f, 1.0f); // high S = darker outlines for contrast
+  float warmth = linearMap(im.E().get(), 0.0f, 0.15f); // subtle warm shift with energy
+  outlineColor.r = std::clamp(brightness + warmth, 0.0f, 1.0f);
+  outlineColor.g = std::clamp(brightness, 0.0f, 1.0f);
+  outlineColor.b = std::clamp(brightness - warmth * 0.5f, 0.0f, 1.0f);
+  outlineColor.a = 1.0f; // alpha handled by OutlineAlphaFactor
+  outlineColorController.updateIntent(outlineColor, strength, "inv(S)->bright, E->warmth");
 }
 
 

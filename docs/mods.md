@@ -590,14 +590,16 @@ Composites texture snapshots within path boundaries.
 **Key Parameters**:
 - `Colour`: Tint color for textures
 - `Saturation`: Color saturation boost (0.0-4.0)
-- `Outline`: Outline vs fill blend (0.0-1.0)
+- `OutlineAlphaFactor`: Outline opacity multiplier (0.0-1.0)
+- `OutlineWidth`: Outline stroke width in pixels (1.0-50.0, default 12.0)
+- `OutlineColour`: Outline stroke color (RGBA)
 - `Strategy`: 0=tint, 1=add tinted pixels, 2=add pixels
 
 **Layers**:
 - Default layer: Filled shapes
 - `outlines` layer: Shape outlines
 
-**Intent Integration**: Responds to Intent.
+**Intent Integration**: E/S/D control tint colour and saturation. S and C control outline visibility (high structure + low chaos = visible outlines). E and G control outline width (energy = bold, granularity = refined). S controls outline brightness for contrast with fills.
 
 **Use Cases**:
 - Create cut-paper collage effects

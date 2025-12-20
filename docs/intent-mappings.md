@@ -213,8 +213,10 @@ Strategy selection (commented out in code):
 | E | Saturation (part 1) | lin(0.8 -> 2.2) |
 | C | Saturation (part 2) | exp(0.9 -> 2.8) |
 | 1-S | Saturation (part 3) | inv(0.8 -> 1.6) |
-| S or G | Strategy | 1 if S>0.55 or G>0.6, else 0 |
-| 1-C | Outline | 1.0 if C<0.6, else 0.0 |
+| S * (1-C) | OutlineAlphaFactor | S lin(0.2 -> 1.0) * inv(C)(0.5 -> 1.0) |
+| E * (1-G) | OutlineWidth | E lin(8 -> 24) * inv(G)(0.5 -> 1.2) |
+| 1-S | OutlineColour.brightness | invExp(0.3 -> 1.0) for contrast |
+| E | OutlineColour.warmth | lin(0.0 -> 0.15) subtle warm shift |
 
 ### DividedAreaMod
 

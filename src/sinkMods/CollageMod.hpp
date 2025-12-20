@@ -38,6 +38,12 @@ public:
 protected:
   void initParameters() override;
 
+private:
+  void drawOutline(std::shared_ptr<PingPongFbo> fboPtr, float outlineAlphaFactor);
+  void drawStrategyTintFill(const ofFloatColor& tintColor);
+  void drawStrategySnapshot(const ofFloatColor& tintColor);
+
+protected:
   ofPath path;
   ofTexture snapshotTexture;
 
@@ -45,8 +51,12 @@ protected:
   ParamController<ofFloatColor> colorController { colorParameter };
   ofParameter<float> saturationParameter { "Saturation", 1.5, 0.0, 4.0 };
   ParamController<float> saturationController { saturationParameter };
-  ofParameter<float> outlineParameter { "Outline", 1.0f, 0.0f, 1.0f }; // float for lerp between 0.0 and 1.0
-  ParamController<float> outlineController { outlineParameter };
+  ofParameter<float> outlineAlphaFactorParameter { "OutlineAlphaFactor", 1.0f, 0.0f, 1.0f };
+  ParamController<float> outlineAlphaFactorController { outlineAlphaFactorParameter };
+  ofParameter<float> outlineWidthParameter { "OutlineWidth", 12.0f, 1.0f, 50.0f }; // pixels
+  ParamController<float> outlineWidthController { outlineWidthParameter };
+  ofParameter<ofFloatColor> outlineColorParameter { "OutlineColour", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ParamController<ofFloatColor> outlineColorController { outlineColorParameter };
   ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 };
