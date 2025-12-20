@@ -65,6 +65,9 @@ private:
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   float strategyChangeInvalidUntilTimestamp = 0.0;
   
+  // Controller for smoothness - wraps DividedArea's parameter for Intent integration
+  std::unique_ptr<ParamController<float>> smoothnessControllerPtr;
+  
   std::vector<glm::vec2> newMajorAnchors;
   std::vector<glm::vec2> newMinorAnchors;
   DividedArea dividedArea;

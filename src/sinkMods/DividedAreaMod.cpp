@@ -40,6 +40,10 @@ dividedArea({ { 1.0, 1.0 }, static_cast<int>(maxUnconstrainedLinesParameter.get(
   registerControllerForSource(pathWidthParameter, pathWidthController);
   registerControllerForSource(majorLineWidthParameter, majorLineWidthController);
   registerControllerForSource(maxUnconstrainedLinesParameter, maxUnconstrainedLinesController);
+  
+  // Create smoothness controller wrapping DividedArea's parameter
+  smoothnessControllerPtr = std::make_unique<ParamController<float>>(dividedArea.unconstrainedSmoothnessParameter);
+  registerControllerForSource(dividedArea.unconstrainedSmoothnessParameter, *smoothnessControllerPtr);
 }
 
 void DividedAreaMod::initParameters() {
@@ -101,6 +105,7 @@ void DividedAreaMod::update() {
   pathWidthController.update();
   majorLineWidthController.update();
   maxUnconstrainedLinesController.update();
+  smoothnessControllerPtr->update();
   dividedArea.maxUnconstrainedDividerLines = static_cast<int>(maxUnconstrainedLinesController.value);
   
   dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
@@ -222,6 +227,10 @@ void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   
   im.C().exp(angleController, strength, 0.0f, 0.5f, 2.0f);
   im.G().exp(pathWidthController, strength, 1.0f);
+  
+  // Smoothness: high Structure = more stable/smooth lines, low Structure = responsive
+  // Inverted so high structure -> high smoothness (0.3 to 0.9 range)
+  im.S().inv().lin(*smoothnessControllerPtr, strength, 0.3f, 0.9f);
   
   // Minor color composition
   ofFloatColor minorColor = ofxMarkSynth::energyToColor(intent);

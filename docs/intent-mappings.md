@@ -233,6 +233,9 @@ Strategy selection (commented out in code):
 | C | MaxUnconstrainedLines | exp(2.0)(1 -> 9) |
 | G | MajorLineWidth | lin |
 | S | Strategy | conditional (see below) |
+| 1-S | unconstrainedSmoothness | inv.lin(0.3 -> 0.9) |
+
+**unconstrainedSmoothness**: Controls how smoothly major (unconstrained) lines track their input points. High Structure = high smoothness (stable, graceful motion). Low Structure = low smoothness (responsive, direct tracking). Uses spring-damper physics with hysteresis for natural motion.
 
 Strategy selection:
 - S < 0.3 -> 0 (pairs)

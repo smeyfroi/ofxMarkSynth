@@ -274,6 +274,8 @@
         "MajorLineColour": "0, 0, 0, 1",
         "MaxUnconstrainedLines": "3",
         "unconstrainedLerpAmount": "0.5",
+        "unconstrainedSmoothness": "0.5",
+        "minRefPointDistance": "0.08",
         "unconstrainedClosePoint": "0.03",
         "unconstrainedOcclusionDistance": "0.05",
         "constrainedOcclusionDistance": "0.0015",

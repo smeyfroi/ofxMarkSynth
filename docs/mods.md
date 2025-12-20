@@ -558,6 +558,13 @@ Divides the drawing space with lines using various geometric strategies.
 - `MajorLineWidth`: Major line width (pixels)
 - `MinorLineColour`, `MajorLineColour`: Line colors
 - `MaxUnconstrainedLines`: Maximum divisions
+- `unconstrainedSmoothness`: Motion smoothness for major lines (0.0-1.0):
+  - 0.0: Responsive/instant - lines track input points directly
+  - 0.5: Balanced - smooth but still responsive
+  - 1.0: Dreamy/floaty - heavy damping, slow graceful motion
+  - Uses spring-damper physics with hysteresis for natural motion
+  - Automatically increases damping when input points are close together to prevent angular jitter
+- `minRefPointDistance`: Distance threshold below which extra damping is applied (default 0.08)
 - `majorLineStyle`: Drawing style for major (unconstrained) lines (0-6):
   - 0: **Solid** - Simple flat-colored line
   - 1: **Inner Glow** - Light edges, darker core
@@ -567,7 +574,7 @@ Divides the drawing space with lines using various geometric strategies.
   - 5: **Blur/Refraction** - Screen-space blur with mild refraction (requires background FBO)
   - 6: **Chromatic Aberration** - RGB channel split at edges (requires background FBO)
 
-**Intent Integration**: Responds to Structure dimension.
+**Intent Integration**: Responds to Chaos, Granularity, Energy, Density, and Structure dimensions. Structure controls line smoothness (high structure = smooth/stable, low structure = responsive).
 
 **Use Cases**:
 - Create geometric compositions responding to audio
