@@ -50,6 +50,16 @@ private:
   std::unique_ptr<ParamController<float>> minWeightControllerPtr;
   std::unique_ptr<ParamController<float>> maxWeightControllerPtr;
   std::unique_ptr<ParamController<ofFloatColor>> pointColorControllerPtr;
+  
+  std::unique_ptr<ParamController<float>> velocityDampingControllerPtr;
+  std::unique_ptr<ParamController<float>> forceMultiplierControllerPtr;
+  std::unique_ptr<ParamController<float>> maxVelocityControllerPtr;
+  std::unique_ptr<ParamController<float>> particleSizeControllerPtr;
+  std::unique_ptr<ParamController<float>> jitterStrengthControllerPtr;
+  std::unique_ptr<ParamController<float>> jitterSmoothingControllerPtr;
+  std::unique_ptr<ParamController<float>> speedThresholdControllerPtr;
+  std::unique_ptr<ParamController<float>> field1MultiplierControllerPtr;
+  std::unique_ptr<ParamController<float>> field2MultiplierControllerPtr;
 };
 
 

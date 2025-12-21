@@ -261,6 +261,15 @@ Strategy selection:
 | D | PointColour.alpha | lin(0.1 -> 0.5) |
 | 1-G | minWeight | inv |
 | C | maxWeight | lin |
+| 1-G | velocityDamping | inv — high G = low damping (more motion) |
+| E | forceMultiplier | exp — energy = force intensity |
+| E | maxVelocity | lin — energy = speed |
+| G | particleSize | exp — granularity = feature size |
+| C | jitterStrength | lin — chaos = randomness |
+| S | jitterSmoothing | lin — structure = smoothness |
+| E*C | speedThreshold | lin — activity threshold |
+| E | field1Multiplier | exp(2.0) — energy controls primary field |
+| C | field2Multiplier | exp(3.0) — chaos controls secondary field |
 
 ### ParticleSetMod
 

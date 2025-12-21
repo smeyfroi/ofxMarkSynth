@@ -39,11 +39,31 @@ void ParticleFieldMod::initParameters() {
   maxWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxWeight").cast<float>());
   pointColorControllerPtr = std::make_unique<ParamController<ofFloatColor>>(pointColorParameter);
   
+  velocityDampingControllerPtr = std::make_unique<ParamController<float>>(parameters.get("velocityDamping").cast<float>());
+  forceMultiplierControllerPtr = std::make_unique<ParamController<float>>(parameters.get("forceMultiplier").cast<float>());
+  maxVelocityControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxVelocity").cast<float>());
+  particleSizeControllerPtr = std::make_unique<ParamController<float>>(parameters.get("particleSize").cast<float>());
+  jitterStrengthControllerPtr = std::make_unique<ParamController<float>>(parameters.get("jitterStrength").cast<float>());
+  jitterSmoothingControllerPtr = std::make_unique<ParamController<float>>(parameters.get("jitterSmoothing").cast<float>());
+  speedThresholdControllerPtr = std::make_unique<ParamController<float>>(parameters.get("speedThreshold").cast<float>());
+  field1MultiplierControllerPtr = std::make_unique<ParamController<float>>(parameters.get("field1Multiplier").cast<float>());
+  field2MultiplierControllerPtr = std::make_unique<ParamController<float>>(parameters.get("field2Multiplier").cast<float>());
+  
   auto& minWeightParam = parameters.get("minWeight").cast<float>();
   auto& maxWeightParam = parameters.get("maxWeight").cast<float>();
   registerControllerForSource(minWeightParam, *minWeightControllerPtr);
   registerControllerForSource(maxWeightParam, *maxWeightControllerPtr);
   registerControllerForSource(pointColorParameter, *pointColorControllerPtr);
+  
+  registerControllerForSource(parameters.get("velocityDamping").cast<float>(), *velocityDampingControllerPtr);
+  registerControllerForSource(parameters.get("forceMultiplier").cast<float>(), *forceMultiplierControllerPtr);
+  registerControllerForSource(parameters.get("maxVelocity").cast<float>(), *maxVelocityControllerPtr);
+  registerControllerForSource(parameters.get("particleSize").cast<float>(), *particleSizeControllerPtr);
+  registerControllerForSource(parameters.get("jitterStrength").cast<float>(), *jitterStrengthControllerPtr);
+  registerControllerForSource(parameters.get("jitterSmoothing").cast<float>(), *jitterSmoothingControllerPtr);
+  registerControllerForSource(parameters.get("speedThreshold").cast<float>(), *speedThresholdControllerPtr);
+  registerControllerForSource(parameters.get("field1Multiplier").cast<float>(), *field1MultiplierControllerPtr);
+  registerControllerForSource(parameters.get("field2Multiplier").cast<float>(), *field2MultiplierControllerPtr);
 }
 
 float ParticleFieldMod::getAgency() const {
@@ -55,6 +75,15 @@ void ParticleFieldMod::update() {
   if (minWeightControllerPtr) minWeightControllerPtr->update();
   if (maxWeightControllerPtr) maxWeightControllerPtr->update();
   if (pointColorControllerPtr) pointColorControllerPtr->update();
+  if (velocityDampingControllerPtr) velocityDampingControllerPtr->update();
+  if (forceMultiplierControllerPtr) forceMultiplierControllerPtr->update();
+  if (maxVelocityControllerPtr) maxVelocityControllerPtr->update();
+  if (particleSizeControllerPtr) particleSizeControllerPtr->update();
+  if (jitterStrengthControllerPtr) jitterStrengthControllerPtr->update();
+  if (jitterSmoothingControllerPtr) jitterSmoothingControllerPtr->update();
+  if (speedThresholdControllerPtr) speedThresholdControllerPtr->update();
+  if (field1MultiplierControllerPtr) field1MultiplierControllerPtr->update();
+  if (field2MultiplierControllerPtr) field2MultiplierControllerPtr->update();
   
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
@@ -149,6 +178,25 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   
   im.G().inv().lin(*minWeightControllerPtr, strength);
   im.C().lin(*maxWeightControllerPtr, strength);
+  
+  // Physics parameters
+  im.G().inv().lin(*velocityDampingControllerPtr, strength);
+  im.E().exp(*forceMultiplierControllerPtr, strength);
+  im.E().lin(*maxVelocityControllerPtr, strength);
+  
+  // Visual parameters
+  im.G().exp(*particleSizeControllerPtr, strength);
+  
+  // Jitter parameters
+  im.C().lin(*jitterStrengthControllerPtr, strength);
+  im.S().lin(*jitterSmoothingControllerPtr, strength);
+  
+  // Speed threshold
+  (im.E() * im.C()).lin(*speedThresholdControllerPtr, strength);
+  
+  // Field influence
+  im.E().exp(*field1MultiplierControllerPtr, strength, 2.0f);
+  im.C().exp(*field2MultiplierControllerPtr, strength, 3.0f);
 }
 
 
