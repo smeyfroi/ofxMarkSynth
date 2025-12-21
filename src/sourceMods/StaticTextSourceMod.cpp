@@ -20,8 +20,6 @@ StaticTextSourceMod::StaticTextSourceMod(std::shared_ptr<Synth> synthPtr, const 
   sourceNameIdMap = {
     { "Text", SOURCE_TEXT }
   };
-  
-  startTime = ofGetElapsedTimef();
 }
 
 StaticTextSourceMod::~StaticTextSourceMod() {
@@ -42,17 +40,18 @@ void StaticTextSourceMod::update() {
     return;
   }
   
-  float elapsedTime = ofGetElapsedTimef() - startTime;
-  if (elapsedTime < delayParameter) return;
+  // Accumulate time only when update() is called (i.e., synth is unpaused and running)
+  // This is naturally pause-aware because Synth only calls Mod::update() when not paused
+  accumulatedTime += ofGetLastFrameTime();
+  if (accumulatedTime < delayParameter) return;
   
   emit(SOURCE_TEXT, textParameter.get());
   hasEmitted = true;
-//  ofLogVerbose("StaticTextSourceMod") << "Emitted text: '" << textParameter.get() << "'";
 }
 
 void StaticTextSourceMod::onTextChanged(std::string& text) {
   hasEmitted = false;
-  ofLogNotice("StaticTextSourceMod") << "Text changed to: '" << text << "', will re-emit";
+  accumulatedTime = 0.0f;  // Reset delay timer when text changes
 }
 
 

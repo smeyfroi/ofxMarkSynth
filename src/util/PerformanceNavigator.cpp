@@ -20,8 +20,6 @@ namespace ofxMarkSynth {
 
 PerformanceNavigator::PerformanceNavigator(Synth* synth_)
 : synth(synth_)
-, timerStartTime(ofGetElapsedTimef())
-, splitTimerStartTime(ofGetElapsedTimef())
 {}
 
 bool PerformanceNavigator::keyPressed(int key) {
@@ -166,8 +164,7 @@ void PerformanceNavigator::loadCurrentConfig() {
   const std::string& configPath = configs[currentIndex];
   ofLogNotice("PerformanceNavigator") << "Loading config: " << getConfigName(currentIndex);
   
-  // Reset split timer when loading a new config
-  resetSplitTimer();
+  // Config running time is reset in Synth::switchToConfig()
   
   if (synth) {
     synth->switchToConfig(configPath, true);  // Use crossfade transition
@@ -281,92 +278,13 @@ float PerformanceNavigator::getHoldProgress() const {
   return std::min(progress, 1.0f);
 }
 
-void PerformanceNavigator::resetTimer() {
-  float currentTime = ofGetElapsedTimef();
-  timerStartTime = currentTime;
-  timerTotalPausedDuration = 0.0f;
-  splitTimerStartTime = currentTime;
-  splitTimerTotalPausedDuration = 0.0f;
-  if (timerPaused) {
-    timerPausedTime = currentTime;
-    splitTimerPausedTime = currentTime;
-  }
-}
-
-void PerformanceNavigator::pauseTimer() {
-  if (!timerPaused) {
-    float currentTime = ofGetElapsedTimef();
-    timerPausedTime = currentTime;
-    splitTimerPausedTime = currentTime;
-    timerPaused = true;
-  }
-}
-
-void PerformanceNavigator::resumeTimer() {
-  if (timerPaused) {
-    float currentTime = ofGetElapsedTimef();
-    float pausedDuration = currentTime - timerPausedTime;
-    timerTotalPausedDuration += pausedDuration;
-    splitTimerTotalPausedDuration += pausedDuration;
-    timerPaused = false;
-  }
-}
-
-void PerformanceNavigator::toggleTimerPause() {
-  if (timerPaused) {
-    resumeTimer();
-  } else {
-    pauseTimer();
-  }
-}
-
-float PerformanceNavigator::getElapsedTimeSec() const {
-  float currentTime = ofGetElapsedTimef();
-  if (timerPaused) {
-    return timerPausedTime - timerStartTime - timerTotalPausedDuration;
-  }
-  return currentTime - timerStartTime - timerTotalPausedDuration;
-}
-
-int PerformanceNavigator::getElapsedMinutes() const {
-  return static_cast<int>(getElapsedTimeSec()) / 60;
-}
-
-int PerformanceNavigator::getElapsedSeconds() const {
-  return static_cast<int>(getElapsedTimeSec()) % 60;
-}
-
-void PerformanceNavigator::resetSplitTimer() {
-  splitTimerStartTime = ofGetElapsedTimef();
-  splitTimerTotalPausedDuration = 0.0f;
-  if (timerPaused) {
-    splitTimerPausedTime = splitTimerStartTime;
-  }
-}
-
-float PerformanceNavigator::getSplitElapsedTimeSec() const {
-  float currentTime = ofGetElapsedTimef();
-  if (timerPaused) {
-    return splitTimerPausedTime - splitTimerStartTime - splitTimerTotalPausedDuration;
-  }
-  return currentTime - splitTimerStartTime - splitTimerTotalPausedDuration;
-}
-
-int PerformanceNavigator::getSplitElapsedMinutes() const {
-  return static_cast<int>(getSplitElapsedTimeSec()) / 60;
-}
-
-int PerformanceNavigator::getSplitElapsedSeconds() const {
-  return static_cast<int>(getSplitElapsedTimeSec()) % 60;
-}
-
 void PerformanceNavigator::setConfigDurationSec(int durationSec) {
   configDurationSec = durationSec;
 }
 
 int PerformanceNavigator::getCountdownSec() const {
-  if (configDurationSec <= 0) return 0;
-  return configDurationSec - static_cast<int>(getSplitElapsedTimeSec());
+  if (configDurationSec <= 0 || !synth) return 0;
+  return configDurationSec - static_cast<int>(synth->getConfigRunningTime());
 }
 
 int PerformanceNavigator::getCountdownMinutes() const {

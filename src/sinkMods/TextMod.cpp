@@ -74,7 +74,8 @@ void TextMod::update() {
   auto fboPtr = drawingLayerPtr->fboPtr;
   if (!fboPtr) return;
 
-  float now = ofGetElapsedTimef();
+  // Use config running time (pause-aware) instead of wall clock
+  float now = getSynth()->getConfigRunningTime();
   drawEvents.erase(std::remove_if(drawEvents.begin(), drawEvents.end(), [&](const DrawEvent& e) {
     return (now - e.startTimeSec) >= e.durationSec;
   }), drawEvents.end());
@@ -203,7 +204,8 @@ void TextMod::pushDrawEvent(const std::string& text) {
   e.baseColor = colorController.value;
   e.baseColor.a *= alphaController.value;
   e.pixelSize = pixelSize;
-  e.startTimeSec = ofGetElapsedTimef();
+  // Use config running time (pause-aware) instead of wall clock
+  e.startTimeSec = getSynth()->getConfigRunningTime();
   e.durationSec = std::max(0.001f, drawDurationSecController.value);
   e.alphaFactor = alphaFactorController.value;
   e.applied = 0.0f;
@@ -223,16 +225,22 @@ void TextMod::drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr) {
   if (!e.fontPtr) return;
 
   float duration = std::max(0.001f, e.durationSec);
-  float now = ofGetElapsedTimef();
+  // Use config running time (pause-aware) instead of wall clock
+  float now = getSynth()->getConfigRunningTime();
   float t = (now - e.startTimeSec) / duration;
   t = ofClamp(t, 0.0f, 1.0f);
 
-  float eased = glm::smoothstep(0.0f, 1.0f, t);
-
   float alphaScale = 0.0f;
   if (drawingLayerPtr->clearOnUpdate) {
-    alphaScale = eased;
+    // For clearing layers (including fluid): quick fade-in (10%), slow fade-out (90%)
+    if (t < 0.1f) {
+      alphaScale = t / 0.1f;  // 0→1 in first 10%
+    } else {
+      alphaScale = 1.0f - glm::smoothstep(0.1f, 1.0f, t);  // 1→0 smoothly
+    }
   } else {
+    // For non-clearing layers: incremental drawing
+    float eased = glm::smoothstep(0.0f, 1.0f, t);
     float target = eased;
     float delta = std::max(0.0f, target - e.applied);
 

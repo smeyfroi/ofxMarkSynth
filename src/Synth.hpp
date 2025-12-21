@@ -46,12 +46,12 @@ class Synth : public Mod {
 
 public:
   // The composite is the middle (square) section, scaled to fit the window height
-  static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources = {});
+  static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startHibernated, glm::vec2 compositeSize, ResourceManager resources = {});
 
 protected:
   Synth(const std::string& name,
         ModConfig config,
-        bool startPaused,
+        bool startHibernated,
         glm::vec2 compositeSize_,
         std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient,
         ResourceManager resources = {});
@@ -184,6 +184,22 @@ public:
   friend class NodeEditorLayout;
   friend class SynthConfigSerializer;
   friend class PerformanceNavigator;
+
+  // >>> Time tracking system (public interface)
+  // Three time values, all in seconds:
+  // 1. Clock Time Since First Run: Wall clock since first cancelHibernation() (never pauses)
+  // 2. Synth Running Time: Accumulated time synth has been running (pauses with synth)
+  // 3. Config Running Time: Accumulated time current config has been running (resets on config load, pauses with synth)
+  
+  bool hasEverRun() const { return hasEverRun_; }
+  float getClockTimeSinceFirstRun() const;
+  float getSynthRunningTime() const;
+  float getConfigRunningTime() const;
+  
+  // Convenience accessors for config time (used by Mods and external controllers)
+  int getConfigRunningMinutes() const;
+  int getConfigRunningSeconds() const;
+  // <<<
 
 protected:
   void initParameters() override;
@@ -324,6 +340,13 @@ private:
   void cancelHibernation();
   void updateHibernation();
   void updateLayerPauseStates();
+  
+  // Time tracking state
+  bool hasEverRun_ { false };                    // True after first cancelHibernation()
+  float worldTimeAtFirstRun_ { 0.0f };           // ofGetElapsedTimef() when first unhibernated
+  float synthRunningTimeAccumulator_ { 0.0f };   // Accumulated synth running time (pauses when paused)
+  float configRunningTimeAccumulator_ { 0.0f };  // Accumulated config running time (resets on config load)
+  void resetConfigRunningTime();                 // Called on config load
 
   bool isHibernating() const { return hibernationState != HibernationState::ACTIVE; }
   std::string getHibernationStateString() const;

@@ -36,7 +36,7 @@ private:
   ofParameter<bool> emitOnceParameter { "EmitOnce", true };
   ofParameter<float> delayParameter { "Delay", 0.0, 0.0, 10.0 };
   
-  float startTime;
+  float accumulatedTime { 0.0f };  // Accumulated time since last reset (only counts when update() is called)
   
   void onTextChanged(std::string& text);
 };

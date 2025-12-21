@@ -120,7 +120,7 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
 
 
 
-std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, bool startPaused, glm::vec2 compositeSize, ResourceManager resources) {
+std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, bool startHibernated, glm::vec2 compositeSize, ResourceManager resources) {
   auto audioClient = createAudioAnalysisClient(resources);
   if (!audioClient) {
     ofLogError("Synth") << "Synth::create: failed to create audio source";
@@ -130,7 +130,7 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
   auto synth = std::shared_ptr<Synth>(
       new Synth(name,
                 std::move(config),
-                startPaused,
+                startHibernated,
                 compositeSize,
                 std::move(audioClient),
                 std::move(resources)));
@@ -146,12 +146,14 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
 
 
 
-Synth::Synth(const std::string& name_, ModConfig config, bool startPaused, glm::vec2 compositeSize_, std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient, ResourceManager resources_) :
+Synth::Synth(const std::string& name_, ModConfig config, bool startHibernated, glm::vec2 compositeSize_, std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient, ResourceManager resources_) :
 Mod(nullptr, name_, std::move(config)),
-paused { startPaused },
+paused { startHibernated },  // Start paused if hibernated
 compositeSize { compositeSize_ },
 resources { std::move(resources_) },
-audioAnalysisClientPtr { std::move(audioAnalysisClient) }
+audioAnalysisClientPtr { std::move(audioAnalysisClient) },
+hibernationState { startHibernated ? HibernationState::HIBERNATED : HibernationState::ACTIVE },
+hibernationAlpha { startHibernated ? 0.0f : 1.0f }
 {
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -663,6 +665,15 @@ void Synth::update() {
   // When paused, skip Mod updates but still update composites if hibernating
   if (paused && hibernationState == HibernationState::ACTIVE) {
     return;
+  }
+  
+  // Accumulate running time when not paused and has ever run
+  if (!paused && hasEverRun_) {
+    // Cap frame time to avoid time racing ahead during slow/unstable frames at startup
+    // Use 2x target frame time (assuming 30fps target = 0.033s, cap at ~0.066s)
+    float dt = std::min(ofGetLastFrameTime(), 0.066);
+    synthRunningTimeAccumulator_ += dt;
+    configRunningTimeAccumulator_ += dt;
   }
   
   // Update Mods only when not paused
@@ -1182,19 +1193,21 @@ bool Synth::keyPressed(int key) {
   }
   
   if (key == OF_KEY_SPACE) {
-    paused = not paused;
-    // We don't need to pause Mods individually yet, but if we did:
-//    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](auto& modPtr) {
-//      modPtr->setPaused(paused);
-//    });
+    // Spacebar: unhibernate if hibernated/fading, unpause if paused, pause if running
+    if (hibernationState != HibernationState::ACTIVE) {
+      cancelHibernation();  // Also sets paused = false
+    } else if (paused) {
+      paused = false;
+    } else {
+      paused = true;
+    }
     return true;
   }
   
   if (key == 'H') {
+    // H key: hibernate only (one-way, not a toggle)
     if (hibernationState == HibernationState::ACTIVE) {
       startHibernation();
-    } else {
-      cancelHibernation();
     }
     return true;
   }
@@ -1261,6 +1274,15 @@ void Synth::cancelHibernation() {
     hibernationState = HibernationState::ACTIVE;
     hibernationAlpha = 1.0f;
     paused = false;  // Resume updates
+    
+    // Start all time tracking on first ever cancelHibernation
+    if (!hasEverRun_) {
+      hasEverRun_ = true;
+      worldTimeAtFirstRun_ = ofGetElapsedTimef();
+      synthRunningTimeAccumulator_ = 0.0f;
+      configRunningTimeAccumulator_ = 0.0f;
+      ofLogNotice("Synth") << "First run - all time tracking started";
+    }
   }
 }
 
@@ -1747,6 +1769,9 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   // Unload and reload
   unload();
   
+  // Reset config running time for the new config
+  resetConfigRunningTime();
+  
   // Reset Synth-level parameters to defaults before loading new config,
   // so parameters not specified in the new config don't retain old values
   backgroundColorParameter.set(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
@@ -1821,6 +1846,33 @@ std::optional<std::reference_wrapper<ofAbstractParameter>> Synth::findParameterB
   }
   
   return std::nullopt;
+}
+
+// Time tracking implementations
+
+float Synth::getClockTimeSinceFirstRun() const {
+  if (!hasEverRun_) return 0.0f;
+  return ofGetElapsedTimef() - worldTimeAtFirstRun_;
+}
+
+float Synth::getSynthRunningTime() const {
+  return synthRunningTimeAccumulator_;
+}
+
+float Synth::getConfigRunningTime() const {
+  return configRunningTimeAccumulator_;
+}
+
+int Synth::getConfigRunningMinutes() const {
+  return static_cast<int>(configRunningTimeAccumulator_) / 60;
+}
+
+int Synth::getConfigRunningSeconds() const {
+  return static_cast<int>(configRunningTimeAccumulator_) % 60;
+}
+
+void Synth::resetConfigRunningTime() {
+  configRunningTimeAccumulator_ = 0.0f;
 }
 
 

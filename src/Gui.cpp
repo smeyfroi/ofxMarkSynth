@@ -613,14 +613,26 @@ void Gui::drawStatus() {
     ImGui::TextColored(GREY_COLOR, "Config: None");
   }
   
-  // Performance timer display - delegated to PerformanceNavigator
-  auto& nav = synthPtr->performanceNavigator;
-  int minutes = nav.getElapsedMinutes();
-  int seconds = nav.getElapsedSeconds();
-  int splitMinutes = nav.getSplitElapsedMinutes();
-  int splitSeconds = nav.getSplitElapsedSeconds();
+  // Time display: Clock | Synth | Config
+  // Clock: wall time since first H key (never pauses)
+  // Synth: accumulated running time (pauses when synth pauses)
+  // Config: accumulated time in current config (resets on config load)
   
-  // Show split timer with countdown if duration is configured
+  int clockSec = static_cast<int>(synthPtr->getClockTimeSinceFirstRun());
+  int clockMin = clockSec / 60;
+  clockSec = clockSec % 60;
+  
+  int synthSec = static_cast<int>(synthPtr->getSynthRunningTime());
+  int synthMin = synthSec / 60;
+  synthSec = synthSec % 60;
+  
+  int configSec = static_cast<int>(synthPtr->getConfigRunningTime());
+  int configMin = configSec / 60;
+  configSec = configSec % 60;
+  
+  auto& nav = synthPtr->performanceNavigator;
+  
+  // Show config timer with countdown if duration is configured
   if (nav.hasConfigDuration()) {
     int countdownMin = nav.getCountdownMinutes();
     int countdownSec = nav.getCountdownSeconds();
@@ -630,44 +642,31 @@ void Gui::drawStatus() {
     if (nav.isCountdownExpired()) {
       bool flash = static_cast<int>(ofGetElapsedTimef() * 2) % 2 == 0;
       if (flash) {
-        ImGui::TextColored(RED_COLOR, "Timer: %02d:%02d  Split: %02d:%02d / %s%02d:%02d", 
-                           minutes, seconds, splitMinutes, splitSeconds, sign, countdownMin, countdownSec);
+        ImGui::TextColored(RED_COLOR, "%02d:%02d | S %02d:%02d | C %02d:%02d / %s%02d:%02d", 
+                           clockMin, clockSec, synthMin, synthSec, configMin, configSec, sign, countdownMin, countdownSec);
       } else {
-        ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d / %s%02d:%02d", 
-                    minutes, seconds, splitMinutes, splitSeconds, sign, countdownMin, countdownSec);
+        ImGui::Text("%02d:%02d | S %02d:%02d | C %02d:%02d / %s%02d:%02d", 
+                    clockMin, clockSec, synthMin, synthSec, configMin, configSec, sign, countdownMin, countdownSec);
       }
     } else {
-      ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d / %s%02d:%02d", 
-                  minutes, seconds, splitMinutes, splitSeconds, sign, countdownMin, countdownSec);
+      ImGui::Text("%02d:%02d | S %02d:%02d | C %02d:%02d / %s%02d:%02d", 
+                  clockMin, clockSec, synthMin, synthSec, configMin, configSec, sign, countdownMin, countdownSec);
     }
   } else {
-    ImGui::Text("Timer: %02d:%02d  Split: %02d:%02d", minutes, seconds, splitMinutes, splitSeconds);
-  }
-  ImGui::SameLine();
-  
-  // Pause/Resume button
-  if (nav.isTimerPaused()) {
-    if (ImGui::SmallButton(PLAY_ICON)) {
-      nav.resumeTimer();
-    }
-  } else {
-    if (ImGui::SmallButton(PAUSE_ICON)) {
-      nav.pauseTimer();
-    }
-  }
-  
-  ImGui::SameLine();
-  
-  // Reset button - sets main timer back to 00:00
-  if (ImGui::SmallButton(RESET_ICON)) {
-    nav.resetTimer();
+    ImGui::Text("%02d:%02d | S %02d:%02d | C %02d:%02d", clockMin, clockSec, synthMin, synthSec, configMin, configSec);
   }
   
   // FPS counter on same line with spacing
   ImGui::SameLine(0.0f, 20.0f);  // 20 pixels spacing
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
   
-  if (synthPtr->paused) {
+  // Status indicator: hibernation state takes priority over pause state
+  auto hibState = synthPtr->getHibernationState();
+  if (hibState == Synth::HibernationState::HIBERNATED) {
+    ImGui::TextColored(YELLOW_COLOR, "Hibernated");
+  } else if (hibState == Synth::HibernationState::FADING_OUT) {
+    ImGui::TextColored(YELLOW_COLOR, "Hibernating...");
+  } else if (synthPtr->paused) {
     ImGui::TextColored(YELLOW_COLOR, "%s Paused", PAUSE_ICON);
   } else {
     ImGui::TextColored(GREY_COLOR, "%s Playing", PLAY_ICON);

@@ -68,7 +68,7 @@ resources.add("recorderCompositeSize", glm::vec2(1920, 1080));
 auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
   ofxMarkSynth::ModConfig{},
-  /*startPaused*/ false,
+  /*startHibernated*/ true,  // Start in hibernated state (black screen, press H to start)
   /*compositeSize*/ glm::vec2(1920, 1920),
   resources
 );
@@ -175,7 +175,7 @@ resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
 auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
   ofxMarkSynth::ModConfig{},
-  /*startPaused*/ false,
+  /*startHibernated*/ true,  // Start in hibernated state (black screen, press H to start)
   /*compositeSize*/ glm::vec2(1920, 1920),
   resources
 );
