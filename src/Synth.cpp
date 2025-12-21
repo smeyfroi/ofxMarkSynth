@@ -783,7 +783,7 @@ void Synth::updateCompositeImage() {
     ++i;
     if (layerAlpha == 0.0f) return;
     
-    float finalAlpha = layerAlpha * dlptr->pauseAlpha;
+    float finalAlpha = layerAlpha;
     if (hibernationState != HibernationState::ACTIVE) {
       finalAlpha *= hibernationAlpha;
     }
@@ -1391,8 +1391,6 @@ void Synth::initLayerPauseParameterGroup() {
     
     layerPtr->pauseState = initialPaused ? DrawingLayer::PauseState::PAUSED
                                          : DrawingLayer::PauseState::ACTIVE;
-    layerPtr->pauseAlpha = initialPaused ? 0.0f : 1.0f;
-    layerPtr->pauseAlphaAtFadeStart = layerPtr->pauseAlpha;
   });
 }
 
@@ -1425,9 +1423,6 @@ void Synth::initDisplayParameterGroup() {
 }
 
 void Synth::updateLayerPauseStates() {
-  float now = ofGetElapsedTimef();
-  float duration = std::max(0.001f, layerPauseFadeDurationSecParameter.get());
-  
   // Build lookup: base layer name -> pause parameter
   std::unordered_map<std::string, ofParameter<bool>*> pauseByName;
   for (auto& p : layerPauseParamPtrs) {
@@ -1447,53 +1442,8 @@ void Synth::updateLayerPauseStates() {
       targetPaused = it->second->get();
     }
     
-    auto& state = layerPtr->pauseState;
-    float& alpha = layerPtr->pauseAlpha;
-    
-    // Start fades based on target
-    if (targetPaused) {
-      if (state == DrawingLayer::PauseState::ACTIVE ||
-          state == DrawingLayer::PauseState::FADING_IN) {
-        state = DrawingLayer::PauseState::FADING_OUT;
-        layerPtr->pauseFadeStartTime = now;
-        layerPtr->pauseAlphaAtFadeStart = alpha;
-      }
-    } else {
-      if (state == DrawingLayer::PauseState::PAUSED ||
-          state == DrawingLayer::PauseState::FADING_OUT) {
-        state = DrawingLayer::PauseState::FADING_IN;
-        layerPtr->pauseFadeStartTime = now;
-        layerPtr->pauseAlphaAtFadeStart = alpha;
-      }
-    }
-    
-    // Advance fades
-    switch (state) {
-      case DrawingLayer::PauseState::ACTIVE:
-        alpha = 1.0f;
-        break;
-      case DrawingLayer::PauseState::PAUSED:
-        alpha = 0.0f;
-        break;
-      case DrawingLayer::PauseState::FADING_OUT: {
-        float t = ofClamp((now - layerPtr->pauseFadeStartTime) / duration, 0.0f, 1.0f);
-        alpha = ofLerp(layerPtr->pauseAlphaAtFadeStart, 0.0f, t);
-        if (t >= 1.0f) {
-          state = DrawingLayer::PauseState::PAUSED;
-          alpha = 0.0f;
-        }
-        break;
-      }
-      case DrawingLayer::PauseState::FADING_IN: {
-        float t = ofClamp((now - layerPtr->pauseFadeStartTime) / duration, 0.0f, 1.0f);
-        alpha = ofLerp(layerPtr->pauseAlphaAtFadeStart, 1.0f, t);
-        if (t >= 1.0f) {
-          state = DrawingLayer::PauseState::ACTIVE;
-          alpha = 1.0f;
-        }
-        break;
-      }
-    }
+    layerPtr->pauseState = targetPaused ? DrawingLayer::PauseState::PAUSED
+                                        : DrawingLayer::PauseState::ACTIVE;
   }
 }
 
@@ -1517,7 +1467,6 @@ void Synth::initParameters() {
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
   parameters.add(hibernationFadeDurationParameter);
-  parameters.add(layerPauseFadeDurationSecParameter);
   parameters.add(crossfadeDurationParameter);
   
   // initialise Mod parameters but do not add them to Synth parameters
