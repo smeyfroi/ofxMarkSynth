@@ -181,11 +181,7 @@ void PerformanceNavigator::beginHold(HoldAction action, HoldSource source, int j
     return;
   }
   
-  // Block holds while hibernating
-  if (synth && synth->isHibernating()) {
-    ofLogVerbose("PerformanceNavigator") << "beginHold: blocked during hibernation";
-    return;
-  }
+  // Allow config navigation while hibernated or paused - config loads but synth stays in current state
   
   // Ignore if already holding the same action from the same source (keyboard auto-repeat)
   if (activeHold == action && holdSource == source) {
