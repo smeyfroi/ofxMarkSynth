@@ -8,6 +8,7 @@
 #include "SmearMod.hpp"
 #include "IntentMapping.hpp"
 #include "../IntentMapper.hpp"
+#include <cmath>
 
 
 
@@ -32,17 +33,22 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
   registerControllerForSource(field1MultiplierParameter, field1MultiplierController);
   registerControllerForSource(field2MultiplierParameter, field2MultiplierController);
+  registerControllerForSource(gridSizeParameter, gridSizeController);
   registerControllerForSource(jumpAmountParameter, jumpAmountController);
   registerControllerForSource(borderWidthParameter, borderWidthController);
+  registerControllerForSource(gridLevelsParameter, gridLevelsController);
   registerControllerForSource(ghostBlendParameter, ghostBlendController);
+  registerControllerForSource(foldPeriodParameter, foldPeriodController);
 }
 
 void SmearMod::initParameters() {
   parameters.add(mixNewParameter);
   parameters.add(alphaMultiplierParameter);
   parameters.add(translateByParameter);
+  parameters.add(field1PreScaleExpParameter);
   parameters.add(field1MultiplierParameter);
   parameters.add(field1BiasParameter);
+  parameters.add(field2PreScaleExpParameter);
   parameters.add(field2MultiplierParameter);
   parameters.add(field2BiasParameter);
   
@@ -66,9 +72,12 @@ void SmearMod::update() {
   alphaMultiplierController.update();
   field1MultiplierController.update();
   field2MultiplierController.update();
+  gridSizeController.update();
   jumpAmountController.update();
   borderWidthController.update();
+  gridLevelsController.update();
   ghostBlendController.update();
+  foldPeriodController.update();
   
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
@@ -78,25 +87,30 @@ void SmearMod::update() {
   float mixNew = mixNewController.value;
   float alphaMultiplier = alphaMultiplierController.value;
   SmearShader::GridParameters gridParameters = {
-    .gridSize = glm::vec2 { gridSizeParameter->x, gridSizeParameter->y },
-    .strategy = strategyParameter,
+    .gridSize = gridSizeController.value,
+    .strategy = strategyParameter.get(),
     .jumpAmount = jumpAmountController.value,
     .borderWidth = borderWidthController.value,
-    .gridLevels = gridLevelsParameter,
+    .gridLevels = gridLevelsController.value,
     .ghostBlend = ghostBlendController.value,
-    .foldPeriod = glm::vec2 { foldPeriodParameter->x, foldPeriodParameter->y }
+    .foldPeriod = foldPeriodController.value
   };
   ofPushStyle();
   // Shader already mixes history; disable GL blending to avoid interference
   ofEnableBlendMode(OF_BLENDMODE_DISABLED);
   // TODO: make this more forgiving
+  // PreScaleExp is log10 exponent: 10^exp gives preScale to normalize field magnitude
+  float field1PreScale = std::pow(10.0f, field1PreScaleExpParameter.get());
+  float field2PreScale = std::pow(10.0f, field2PreScaleExpParameter.get());
+  float field1EffectiveMultiplier = field1PreScale * field1MultiplierController.value;
+  float field2EffectiveMultiplier = field2PreScale * field2MultiplierController.value;
   if (field2Tex.isAllocated() && field1Tex.isAllocated()) {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,
-                       field1Tex, field1MultiplierController.value, field1BiasParameter,
-                       field2Tex, field2MultiplierController.value, field2BiasParameter,
+                       field1Tex, field1EffectiveMultiplier, field1BiasParameter,
+                       field2Tex, field2EffectiveMultiplier, field2BiasParameter,
                        gridParameters);
   } else if (field1Tex.isAllocated()) {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Tex, field1MultiplierController.value, field1BiasParameter, gridParameters);
+    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Tex, field1EffectiveMultiplier, field1BiasParameter, gridParameters);
   } else {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, gridParameters);
   }
@@ -164,28 +178,14 @@ void SmearMod::applyIntent(const Intent& intent, float strength) {
     float s = im.S().get();
     float g = im.G().get();
 
-    int strategy;
-    if (s < 0.2f) {
-      strategy = 0;
-    } else if (s < 0.4f) {
-      strategy = 2;
-    } else if (s < 0.6f) {
-      strategy = 4;
-    } else if (s < 0.8f) {
-      strategy = 1;
-    } else {
-      strategy = 3;
-    }
-    if (strategyParameter.get() != strategy) strategyParameter.set(strategy);
-
     int levels = 1 + static_cast<int>(linearMap(s, 0.0f, 4.0f));
-    if (gridLevelsParameter.get() != levels) gridLevelsParameter.set(levels);
+    gridLevelsController.updateIntent(levels, strength, "S -> levels");
 
     float gridVal = linearMap(1.0f - g, 8.0f, 64.0f);
-    gridSizeParameter.set(glm::vec2 { gridVal, gridVal });
+    gridSizeController.updateIntent(glm::vec2 { gridVal, gridVal }, strength, "G -> gridSize");
 
     float p = linearMap(g, 4.0f, 32.0f);
-    foldPeriodParameter.set(glm::vec2 { p, p });
+    foldPeriodController.updateIntent(glm::vec2 { p, p }, strength, "G -> foldPeriod");
   }
 }
 

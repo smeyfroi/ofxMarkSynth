@@ -224,8 +224,10 @@
         "MixNew": "0.9",
         "AlphaMultiplier": "0.998",
         "Translation": "0, 0",
-        "Field1Multiplier": "0.001",
+        "Field1PreScaleExp": "0",
+        "Field1Multiplier": "0.01",
         "Field1Bias": "0, 0",
+        "Field2PreScaleExp": "0",
         "Field2Multiplier": "0.005",
         "Field2Bias": "0, 0",
         "GridSize": "8, 8",
@@ -235,7 +237,9 @@
         "GridLevels5": "1",
         "GhostBlend8": "0.5",
         "FoldPeriod9": "8, 8",
-        "AgencyFactor": "1"
+        "AgencyFactor": "1",
+        "_comment_Field1PreScaleExp": "Field1PreScaleExp: Log10 exponent (-3.0 to 2.0) to normalize incoming field magnitude. 0 = 1x, -2 = 0.01x, 2 = 100x. Not controlled by Intent.",
+        "_comment_Field2PreScaleExp": "Field2PreScaleExp: Log10 exponent (-3.0 to 2.0) to normalize incoming field magnitude. 0 = 1x, -2 = 0.01x, 2 = 100x. Not controlled by Intent."
       }
     },
 

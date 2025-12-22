@@ -227,7 +227,12 @@ public:
     manualBias = isManualControlActive() ? 1.0f : smoothToFloat(manualBias, settings.baseManualBias, dt, settings.manualBiasDecaySec);
     
     // Use angular or linear smoothing based on the angular flag
-    if constexpr (std::is_same_v<T, float>) {
+    // For int types, don't smooth - just snap to target values
+    if constexpr (std::is_same_v<T, int>) {
+      manualSmoothed = manualValueParameter.get();
+      autoSmoothed   = autoValue;
+      intentSmoothed = intentValue;
+    } else if constexpr (std::is_same_v<T, float>) {
       if (angular) {
         manualSmoothed = smoothToAngular(manualSmoothed, manualValueParameter.get(), dt, manualSmoothSec);
         autoSmoothed   = smoothToAngular(autoSmoothed, autoValue, dt, autoSmoothSec);
@@ -281,12 +286,25 @@ public:
     } else if constexpr (std::is_same_v<T, ofFloatColor>) {
       // ofFloatColor's arithmetic operators ignore alpha, so use explicit weighted blend
       targetValue = weightedBlend(autoSmoothed, wAuto, manualSmoothed, wManual, intentSmoothed, wIntent);
+    } else if constexpr (std::is_same_v<T, int>) {
+      // Discrete int values don't interpolate well - use winner-takes-all
+      // Pick the value from the source with the highest weight
+      if (wManual >= wAuto && wManual >= wIntent) {
+        targetValue = manualSmoothed;
+      } else if (wIntent >= wAuto) {
+        targetValue = intentSmoothed;
+      } else {
+        targetValue = autoSmoothed;
+      }
     } else {
       targetValue = wAuto * autoSmoothed + wManual * manualSmoothed + wIntent * intentSmoothed;
     }
     
     // Final smoothing to target
-    if constexpr (std::is_same_v<T, float>) {
+    // For int types, don't smooth - just snap to target
+    if constexpr (std::is_same_v<T, int>) {
+      value = targetValue;
+    } else if constexpr (std::is_same_v<T, float>) {
       if (angular) {
         value = smoothToAngular(value, targetValue, dt, targetSmoothSec);
       } else {

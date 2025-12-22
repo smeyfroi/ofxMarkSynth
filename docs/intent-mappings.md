@@ -359,17 +359,11 @@ Strategy selection:
 | C | JumpAmount | exp(2.0) |
 | G | BorderWidth | lin |
 | D | GhostBlend | lin |
-| S | Strategy | conditional (see below) |
 | S | GridLevels | lin + 1 (1-5) |
 | 1-G | GridSize | lin(8 -> 64) |
 | G | FoldPeriod | lin(4 -> 32) |
 
-Strategy selection:
-- S < 0.2 -> 0 (Off)
-- S 0.2-0.4 -> 2 (Per-cell random offset)
-- S 0.4-0.6 -> 4 (Per-cell rotation)
-- S 0.6-0.8 -> 1 (Cell-quantized)
-- S >= 0.8 -> 3 (Boundary teleport)
+*Note: Strategy, Field1PreScaleExp, Field2PreScaleExp, Field1Bias, and Field2Bias are manual-only parameters (not controlled by Intent). The PreScaleExp parameters are log10 exponents (-3.0 to 2.0) that normalize incoming field magnitudes before the Intent-controlled multipliers.*
 
 ---
 

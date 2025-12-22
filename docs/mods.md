@@ -778,7 +778,9 @@ Applies displacement-based smearing using vector fields with various spatial str
 - `MixNew`: Blend with previous frame (0.3-1.0)
 - `AlphaMultiplier`: Fade rate (0.994-0.999)
 - `Translation`: Direct translation offset
-- `Field1Multiplier`, `Field1Bias`: Primary field control (0.0-0.05)
+- `Field1PreScaleExp`: Log10 exponent to normalize primary field magnitude (-3.0 to 2.0, i.e. 0.001x to 100x). Not controlled by Intent.
+- `Field1Multiplier`, `Field1Bias`: Primary field control (0.0-0.1)
+- `Field2PreScaleExp`: Log10 exponent to normalize secondary field magnitude (-3.0 to 2.0). Not controlled by Intent.
 - `Field2Multiplier`, `Field2Bias`: Secondary field control
 - `Strategy`: Spatial manipulation mode (0-9):
   - 0: Off
