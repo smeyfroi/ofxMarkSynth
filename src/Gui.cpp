@@ -1028,10 +1028,22 @@ void Gui::drawPerformanceNavigator() {
   
   // Config list with scrolling
   const float listHeight = 120.0f;
+  
+  // Check if selection changed and we should scroll
+  // Only suppress scrolling when user is mouse-holding a list item (JUMP action from MOUSE)
+  int currentIndex = nav.getCurrentIndex();
+  bool indexChanged = (currentIndex != lastPerformanceNavIndex);
+  bool isMouseHoldingListItem = (nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
+                                  nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE);
+  
+  if (indexChanged && !isMouseHoldingListItem) {
+    scrollToSelectedConfig = true;
+  }
+  lastPerformanceNavIndex = currentIndex;
+  
   ImGui::BeginChild("ConfigList", ImVec2(0, listHeight), true);
   {
     const auto& configs = nav.getConfigs();
-    int currentIndex = nav.getCurrentIndex();
     
     for (int i = 0; i < static_cast<int>(configs.size()); ++i) {
       std::string configName = nav.getConfigName(i);
@@ -1069,6 +1081,13 @@ void Gui::drawPerformanceNavigator() {
         // Single click does nothing - need hold
       }
       
+      // Auto-scroll to keep selected config visible (upper third)
+      // ImGui clamps scroll position automatically, so first/last items are handled correctly
+      if (isCurrentConfig && scrollToSelectedConfig) {
+        ImGui::SetScrollHereY(0.3f);  // 0.3 = upper third
+        scrollToSelectedConfig = false;
+      }
+      
       // Handle mouse hold for jump
       if (ImGui::IsItemActive() && !isCurrentConfig) {
         if (nav.getActiveHold() != PerformanceNavigator::HoldAction::JUMP ||
@@ -1095,7 +1114,7 @@ void Gui::drawPerformanceNavigator() {
   float buttonSize = 60.0f;
   float spacing = 20.0f;
   
-  int currentIndex = nav.getCurrentIndex();
+  // currentIndex already declared above for scroll detection
   int configCount = nav.getConfigCount();
   bool canPrev = currentIndex > 0;
   bool canNext = currentIndex < configCount - 1;

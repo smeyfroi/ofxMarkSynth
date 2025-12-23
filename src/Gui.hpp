@@ -81,6 +81,10 @@ private:
   // Help window
   bool showHelpWindow { false };
   ImFont* monoFont { nullptr };
+  
+  // Performance navigator scroll state
+  int lastPerformanceNavIndex { -1 };       // Track previous config index
+  bool scrollToSelectedConfig { false };    // Flag to trigger scroll on next frame
 };
 
 
