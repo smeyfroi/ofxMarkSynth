@@ -680,10 +680,11 @@ void Gui::drawStatus() {
   }
 #endif
   
-  if (SaveToFileThread::getActiveThreadCount() < 1) {
+  int saveCount = synthPtr->getActiveSaveCount();
+  if (saveCount < 1) {
     ImGui::TextColored(GREY_COLOR, "   No Image Saves");
   } else {
-    ImGui::TextColored(YELLOW_COLOR, "%s %d Image Saves", SAVE_ICON, SaveToFileThread::getActiveThreadCount());
+    ImGui::TextColored(YELLOW_COLOR, "%s %d Image Save%s", SAVE_ICON, saveCount, saveCount > 1 ? "s" : "");
   }
 }
 

@@ -158,9 +158,7 @@ hibernationAlpha { startHibernated ? 0.0f : 1.0f }
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   
-  // Pre-allocate PBO for async image saving (RGB float, same size as composite)
-  size_t pboSize = static_cast<size_t>(compositeSize.x) * static_cast<size_t>(compositeSize.y) * 3 * sizeof(float);
-  imageSavePbo.allocate(pboSize, GL_STREAM_READ);
+  imageSaver = std::make_unique<AsyncImageSaver>(compositeSize);
   
   sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - *resources.get<float>("compositePanelGapPx");
   if (sidePanelWidth > 0.0) {
@@ -331,15 +329,6 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   }
 }
 
-void Synth::pruneSaveThreads() {
-  saveToFileThreads.erase(
-      std::remove_if(saveToFileThreads.begin(), saveToFileThreads.end(),
-                     [](const std::unique_ptr<SaveToFileThread>& thread) {
-                       return !thread->isThreadRunning();
-                     }),
-      saveToFileThreads.end());
-}
-
 void Synth::shutdown() {
   ofLogNotice("Synth") << "Synth::shutdown " << name;
   
@@ -364,48 +353,9 @@ void Synth::shutdown() {
     audioAnalysisClientPtr->closeStream();
   }
 
-  // Complete any pending PBO image save before waiting for threads
-  if (pendingImageSave) {
-    ofLogNotice("Synth") << "Waiting for pending image save PBO transfer";
-    glClientWaitSync(pendingImageSave->fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-    
-    // Generate filepath now (was deferred from saveImage)
-    std::string filepath = Synth::saveArtefactFilePath(
-      SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+pendingImageSave->timestamp+".exr");
-    ofLogNotice("Synth") << "Saving drawing to " << filepath;
-    
-    int w = imageCompositeFbo.getWidth();
-    int h = imageCompositeFbo.getHeight();
-    size_t size = static_cast<size_t>(w) * static_cast<size_t>(h) * 3 * sizeof(float);
-    
-    ofFloatPixels pixels;
-    pixels.allocate(w, h, OF_IMAGE_COLOR);
-    
-    imageSavePbo.bind(GL_PIXEL_PACK_BUFFER);
-    void* ptr = imageSavePbo.map(GL_READ_ONLY);
-    if (ptr) {
-      memcpy(pixels.getData(), ptr, size);
-      imageSavePbo.unmap();
-    }
-    imageSavePbo.unbind(GL_PIXEL_PACK_BUFFER);
-    
-    glDeleteSync(pendingImageSave->fence);
-    
-    pruneSaveThreads();
-    auto threadPtr = std::make_unique<SaveToFileThread>();
-    threadPtr->save(filepath, std::move(pixels));
-    saveToFileThreads.push_back(std::move(threadPtr));
-    
-    pendingImageSave.reset();
-    ofLogNotice("Synth") << "Pending image save handed off to thread";
+  if (imageSaver) {
+    imageSaver->flush();
   }
-  
-  std::for_each(saveToFileThreads.begin(), saveToFileThreads.end(), [](auto& thread) {
-    ofLogNotice("Synth") << "Waiting for save thread to finish";
-    thread->waitForThread(false);
-    ofLogNotice("Synth") << "Done waiting for save thread to finish";
-  });
-  saveToFileThreads.clear();
 }
 
 void Synth::unload() {
@@ -644,7 +594,7 @@ void Synth::applyIntent(const Intent& intent, float intentStrength) {
 void Synth::update() {
   pauseStatus = paused ? "Yes" : "No";
   recorderStatus = recorder.isRecording() ? "Yes" : "No";
-  saveStatus = ofToString(SaveToFileThread::getActiveThreadCount());
+  saveStatus = ofToString(getActiveSaveCount());
   
   // Update global ParamController settings from Synth parameters
   ParamControllerSettings::instance().manualBiasDecaySec = manualBiasDecaySecParameter;
@@ -719,6 +669,14 @@ void Synth::update() {
   updateSidePanels();
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
+  
+  // Process deferred image save immediately after composite is ready
+  // This timing ensures PBO bind happens while GPU is still working on this frame's data
+  if (pendingImageSave) {
+    imageSaver->requestSave(imageCompositeFbo, pendingImageSavePath);
+    pendingImageSave = false;
+    pendingImageSavePath.clear();
+  }
   
   // Process any deferred memory bank saves (requested from GUI)
   memoryBank.processPendingSave(imageCompositeFbo);
@@ -1008,8 +966,7 @@ void Synth::draw() {
   }
 #endif
   
-  processPendingImageSave();
-  initiateImageSaveTransfer();  // Issue glReadPixels here, after all rendering complete
+  imageSaver->update();
 }
 
 
@@ -1067,109 +1024,20 @@ void Synth::toggleRecording() {
 }
 
 void Synth::saveImage() {
-  // Silently ignore if a save is already in progress or requested
-  if (pendingImageSave || imageSaveRequested) return;
-  
-  // Just set flag - actual GL work happens at end of draw() to avoid mid-frame stalls
-  imageSaveRequested = true;
+  // Defer save to next update() - PBO bind happens right after composite is rendered
+  // This avoids GPU stalls from binding PBO at arbitrary points in the frame
+  std::string timestamp = ofGetTimestampString();
+  pendingImageSavePath = Synth::saveArtefactFilePath(
+      SNAPSHOTS_FOLDER_NAME + "/" + name + "/drawing-" + timestamp + ".exr");
+  pendingImageSave = true;
 }
 
 void Synth::requestSaveAllMemories() {
   memorySaveAllRequested = true;
 }
 
-void Synth::initiateImageSaveTransfer() {
-  // Called at end of draw(), after all rendering is complete
-  if (!imageSaveRequested) return;
-  imageSaveRequested = false;
-  
-  // Capture timestamp (system call, but we're past the critical rendering path)
-  std::string timestamp = ofGetTimestampString();
-  
-  int w = imageCompositeFbo.getWidth();
-  int h = imageCompositeFbo.getHeight();
-  
-  // Bind FBO only to GL_READ_FRAMEBUFFER to avoid affecting draw state
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, imageCompositeFbo.getId());
-  glBindBuffer(GL_PIXEL_PACK_BUFFER, imageSavePbo.getId());
-  glReadPixels(0, 0, w, h, GL_RGB, GL_FLOAT, 0);
-  glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-  
-  // Create fence to track completion
-  GLsync fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-  
-  // Store pending state
-  PendingImageSave pending;
-  pending.timestamp = std::move(timestamp);
-  pending.fence = fence;
-  pendingImageSave = std::move(pending);
-  
-  saveStatus = "Fetching";
-}
-
-void Synth::processPendingImageSave() {
-  // Clear saveStatus after timeout
-  if (saveStatusClearTime > 0.0f && ofGetElapsedTimef() > saveStatusClearTime) {
-    saveStatus = "";
-    saveStatusClearTime = 0.0f;
-  }
-  
-  if (!pendingImageSave) return;
-  
-  pendingImageSave->framesSinceRequested++;
-  
-  // Non-blocking check if fence is signaled
-  GLenum result = glClientWaitSync(pendingImageSave->fence, 0, 0);
-  
-  if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
-    // Transfer complete - generate filepath now (deferred from saveImage to avoid stutter)
-    std::string filepath = Synth::saveArtefactFilePath(
-      SNAPSHOTS_FOLDER_NAME+"/"+name+"/drawing-"+pendingImageSave->timestamp+".exr");
-    ofLogNotice("Synth") << "Saving drawing to " << filepath;
-    
-    // Map PBO and copy to pixels
-    int w = imageCompositeFbo.getWidth();
-    int h = imageCompositeFbo.getHeight();
-    size_t size = static_cast<size_t>(w) * static_cast<size_t>(h) * 3 * sizeof(float);
-    
-    ofFloatPixels pixels;
-    pixels.allocate(w, h, OF_IMAGE_COLOR);
-    
-    imageSavePbo.bind(GL_PIXEL_PACK_BUFFER);
-    void* ptr = imageSavePbo.map(GL_READ_ONLY);
-    if (ptr) {
-      memcpy(pixels.getData(), ptr, size);
-      imageSavePbo.unmap();
-    }
-    imageSavePbo.unbind(GL_PIXEL_PACK_BUFFER);
-    
-    // Clean up fence
-    glDeleteSync(pendingImageSave->fence);
-    
-    // Hand off to save thread
-    pruneSaveThreads();
-    auto threadPtr = std::make_unique<SaveToFileThread>();
-    threadPtr->save(filepath, std::move(pixels));
-    saveToFileThreads.push_back(std::move(threadPtr));
-    
-    // Extract filename for status
-    std::string filename = filepath.substr(filepath.find_last_of("/") + 1);
-    saveStatus = "Saving: " + filename;
-    saveStatusClearTime = ofGetElapsedTimef() + 5.0f;  // Clear after 5 seconds
-    
-    pendingImageSave.reset();
-    
-  } else if (result == GL_WAIT_FAILED || pendingImageSave->framesSinceRequested > 300) {
-    // Timeout or error - abandon save
-    ofLogError("Synth") << "Failed to fetch pixels for image save (frames waited: "
-                        << pendingImageSave->framesSinceRequested << ")";
-    glDeleteSync(pendingImageSave->fence);
-    saveStatus = "Save failed";
-    saveStatusClearTime = ofGetElapsedTimef() + 5.0f;
-    pendingImageSave.reset();
-  }
-  // else GL_TIMEOUT_EXPIRED - leave for next frame
+int Synth::getActiveSaveCount() const {
+  return imageSaver ? imageSaver->getActiveSaveCount() : 0;
 }
 
 bool Synth::keyPressed(int key) {

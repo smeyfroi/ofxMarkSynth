@@ -20,7 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "SaveToFileThread.hpp"
+#include "util/AsyncImageSaver.hpp"
 #include "Intent.hpp"
 #include "ParamController.h"
 #include "Gui.hpp"
@@ -133,6 +133,7 @@ public:
   const std::string& getCurrentConfigPath() const { return currentConfigPath; }
   void saveImage();
   void requestSaveAllMemories();
+  int getActiveSaveCount() const;
   bool keyPressed(int key) override;
   bool keyReleased(int key);
 
@@ -367,21 +368,11 @@ private:
   ofPixels recorderPixels;           // Reusable pixel buffer
 #endif
 
-  std::vector<std::unique_ptr<SaveToFileThread>> saveToFileThreads;
-  void pruneSaveThreads();
-
-  // PBO-based async pixel readback for image saving
-  ofBufferObject imageSavePbo;  // Pre-allocated at construction, reused for all saves
-  bool imageSaveRequested { false };  // Set by saveImage(), cleared after glReadPixels issued
-  struct PendingImageSave {
-    GLsync fence { nullptr };
-    std::string timestamp;  // Captured at save request, filepath generated later
-    int framesSinceRequested { 0 };
-  };
-  std::optional<PendingImageSave> pendingImageSave;
-  void initiateImageSaveTransfer();  // Called from draw() after all rendering
-  void processPendingImageSave();
-  float saveStatusClearTime { 0.0f };
+  std::unique_ptr<AsyncImageSaver> imageSaver;
+  
+  // Deferred image save: flag set in keyPressed, processed after composite update
+  bool pendingImageSave { false };
+  std::string pendingImageSavePath;
 
   // >>> Memory bank system
   bool globalMemoryBankLoaded { false };
