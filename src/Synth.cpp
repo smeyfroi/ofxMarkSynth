@@ -226,20 +226,10 @@ hibernationAlpha { startHibernated ? 0.0f : 1.0f }
   }
   
 #ifdef TARGET_MAC
-  recorderCompositeSize = *resources.get<glm::vec2>("recorderCompositeSize");
-  recorderCompositeFbo.allocate(recorderCompositeSize.x, recorderCompositeSize.y, GL_RGB);
-  recorder.setup(/*video*/true, /*audio*/false, recorderCompositeFbo.getSize(), /*fps*/30.0, /*bitrate*/8000);
-  recorder.setOverWrite(true);
-  recorder.setFFmpegPath(resources.get<std::filesystem::path>("ffmpegBinaryPath")->string());
-//  recorder.setInputPixelFormat(ofPixelFormat::OF_PIXELS_RGB);
-  recorder.setVideoCodec("h264_videotoolbox"); // hw accelerated in macos. hevc_videotoolbox is higher quality but slower and less compatible
-  
-  // Allocate PBOs for async pixel readback
-  size_t recorderPboSize = recorderCompositeSize.x * recorderCompositeSize.y * 3;  // RGB bytes
-  for (int i = 0; i < NUM_PBOS; i++) {
-    recorderPbos[i].allocate(recorderPboSize, GL_DYNAMIC_READ);
-  }
-  recorderPixels.allocate(recorderCompositeSize.x, recorderCompositeSize.y, OF_PIXELS_RGB);
+  videoRecorderPtr = std::make_unique<VideoRecorder>();
+  videoRecorderPtr->setup(
+      *resources.get<glm::vec2>("recorderCompositeSize"),
+      *resources.get<std::filesystem::path>("ffmpegBinaryPath"));
 #endif
   
   of::random::seed(0);
@@ -340,10 +330,8 @@ void Synth::shutdown() {
   gui.exit();
   
 #ifdef TARGET_MAC
-  if (recorder.isRecording()) {
-    ofLogNotice("Synth") << "Stopping recording";
-    recorder.stop();
-    ofLogNotice("Synth") << "Recording stopped";
+  if (videoRecorderPtr) {
+    videoRecorderPtr->shutdown();
   }
 #endif
   
@@ -593,7 +581,11 @@ void Synth::applyIntent(const Intent& intent, float intentStrength) {
 
 void Synth::update() {
   pauseStatus = paused ? "Yes" : "No";
-  recorderStatus = recorder.isRecording() ? "Yes" : "No";
+#ifdef TARGET_MAC
+  recorderStatus = (videoRecorderPtr && videoRecorderPtr->isRecording()) ? "Yes" : "No";
+#else
+  recorderStatus = "No";
+#endif
   saveStatus = ofToString(getActiveSaveCount());
   
   // Update global ParamController settings from Synth parameters
@@ -922,47 +914,15 @@ void Synth::draw() {
   TSGL_STOP("Synth::draw");
 
 #ifdef TARGET_MAC
-  // Maybe this should be in update()?
-  if (!paused && recorder.isRecording()) {
-    recorderCompositeFbo.begin();
-    float scale = recorderCompositeFbo.getHeight() / imageCompositeFbo.getHeight(); // could precompute this
-    float sidePanelWidth = (recorderCompositeFbo.getWidth() - imageCompositeFbo.getWidth() * scale) / 2.0; // could precompute this
-    drawSidePanels(0.0, recorderCompositeFbo.getWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
-    drawMiddlePanel(recorderCompositeFbo.getWidth(), recorderCompositeFbo.getHeight(), scale);
-    recorderCompositeFbo.end();
-    
-    TS_START("Synth::draw readToPixels");
-    
-    int width = recorderCompositeFbo.getWidth();
-    int height = recorderCompositeFbo.getHeight();
-    
-    // Bind FBO for reading
-    recorderCompositeFbo.bind();
-    
-    // Start async read into current PBO (non-blocking)
-    recorderPbos[recorderPboWriteIndex].bind(GL_PIXEL_PACK_BUFFER);
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
-    recorderPbos[recorderPboWriteIndex].unbind(GL_PIXEL_PACK_BUFFER);
-    
-    recorderCompositeFbo.unbind();
-    
-    // Read from previous PBO (should be ready now) - but only after first frame
-    if (recorderFrameCount > 0) {
-      int readIndex = (recorderPboWriteIndex + 1) % NUM_PBOS;
-      recorderPbos[readIndex].bind(GL_PIXEL_PACK_BUFFER);
-      void* ptr = recorderPbos[readIndex].map(GL_READ_ONLY);
-      if (ptr) {
-        memcpy(recorderPixels.getData(), ptr, width * height * 3);
-        recorderPbos[readIndex].unmap();
-      }
-      recorderPbos[readIndex].unbind(GL_PIXEL_PACK_BUFFER);
-      recorder.addFrame(recorderPixels);
-    }
-    
-    recorderPboWriteIndex = (recorderPboWriteIndex + 1) % NUM_PBOS;
-    recorderFrameCount++;
-    
-    TS_STOP("Synth::draw readToPixels");
+  if (!paused && videoRecorderPtr && videoRecorderPtr->isRecording()) {
+    TS_START("Synth::draw captureFrame");
+    videoRecorderPtr->captureFrame([this](ofFbo& fbo) {
+      float scale = fbo.getHeight() / imageCompositeFbo.getHeight();
+      float panelWidth = (fbo.getWidth() - imageCompositeFbo.getWidth() * scale) / 2.0;
+      drawSidePanels(0.0, fbo.getWidth() - panelWidth, panelWidth, sidePanelHeight);
+      drawMiddlePanel(fbo.getWidth(), fbo.getHeight(), scale);
+    });
+    TS_STOP("Synth::draw captureFrame");
   }
 #endif
   
@@ -977,7 +937,7 @@ void Synth::drawGui() {
 
 bool Synth::isRecording() const {
 #ifdef TARGET_MAC
-  return recorder.isRecording();
+  return videoRecorderPtr && videoRecorderPtr->isRecording();
 #else
   return false;
 #endif
@@ -985,40 +945,27 @@ bool Synth::isRecording() const {
 
 void Synth::toggleRecording() {
 #ifdef TARGET_MAC
-  if (recorder.isRecording()) {
-    // Flush the last pending frame from PBO before stopping
-    if (recorderFrameCount > 0) {
-      int readIndex = (recorderPboWriteIndex + NUM_PBOS - 1) % NUM_PBOS;
-      recorderPbos[readIndex].bind(GL_PIXEL_PACK_BUFFER);
-      void* ptr = recorderPbos[readIndex].map(GL_READ_ONLY);
-      if (ptr) {
-        memcpy(recorderPixels.getData(), ptr, recorderCompositeSize.x * recorderCompositeSize.y * 3);
-        recorderPbos[readIndex].unmap();
-        recorder.addFrame(recorderPixels);
-      }
-      recorderPbos[readIndex].unbind(GL_PIXEL_PACK_BUFFER);
-    }
-    
-    recorder.stop();
+  if (!videoRecorderPtr) return;
+  
+  if (videoRecorderPtr->isRecording()) {
+    videoRecorderPtr->stopRecording();
     
     if (audioAnalysisClientPtr) {
       audioAnalysisClientPtr->stopSegmentRecording();
     }
-    
   } else {
     std::string timestamp = ofGetTimestampString();
-    recorder.setOutputPath(Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/drawing-"+timestamp+".mp4"));
+    std::string videoPath = Synth::saveArtefactFilePath(
+        VIDEOS_FOLDER_NAME + "/" + name + "/drawing-" + timestamp + ".mp4");
+    
     // Start audio segment recording with matching timestamp
     if (audioAnalysisClientPtr) {
-      audioAnalysisClientPtr->startSegmentRecording(
-        Synth::saveArtefactFilePath(VIDEOS_FOLDER_NAME+"/"+name+"/audio-"+timestamp+".wav"));
+      std::string audioPath = Synth::saveArtefactFilePath(
+          VIDEOS_FOLDER_NAME + "/" + name + "/audio-" + timestamp + ".wav");
+      audioAnalysisClientPtr->startSegmentRecording(audioPath);
     }
     
-    // Reset PBO state for new recording
-    recorderPboWriteIndex = 0;
-    recorderFrameCount = 0;
-    
-    recorder.startCustomRecord();
+    videoRecorderPtr->startRecording(videoPath);
   }
 #endif
 }

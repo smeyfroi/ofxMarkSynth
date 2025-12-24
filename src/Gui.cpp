@@ -673,7 +673,7 @@ void Gui::drawStatus() {
   }
   
 #ifdef TARGET_MAC
-  if (synthPtr->recorder.isRecording()) {
+  if (synthPtr->isRecording()) {
     ImGui::TextColored(RED_COLOR, "%s Recording", RECORD_ICON);
   } else {
     ImGui::TextColored(GREY_COLOR, "   Not Recording");
