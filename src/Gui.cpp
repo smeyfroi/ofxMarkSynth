@@ -661,10 +661,10 @@ void Gui::drawStatus() {
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
   
   // Status indicator: hibernation state takes priority over pause state
-  auto hibState = synthPtr->getHibernationState();
-  if (hibState == Synth::HibernationState::HIBERNATED) {
+  auto hibernationState = synthPtr->getHibernationState();
+  if (hibernationState == HibernationController::State::HIBERNATED) {
     ImGui::TextColored(YELLOW_COLOR, "Hibernated");
-  } else if (hibState == Synth::HibernationState::FADING_OUT) {
+  } else if (hibernationState == HibernationController::State::FADING_OUT) {
     ImGui::TextColored(YELLOW_COLOR, "Hibernating...");
   } else if (synthPtr->paused) {
     ImGui::TextColored(YELLOW_COLOR, "%s Paused", PAUSE_ICON);
@@ -1011,12 +1011,11 @@ void Gui::drawPerformanceNavigator() {
   {
     const float barHeight = 4.0f;
     const ImVec2 barSize(-1, barHeight);
-    const bool fading = (synthPtr->getHibernationState() == Synth::HibernationState::FADING_OUT);
+    const bool fading = (synthPtr->getHibernationState() == HibernationController::State::FADING_OUT);
 
     if (fading) {
-      float elapsed = ofGetElapsedTimef() - synthPtr->getHibernationStartTime();
-      float duration = synthPtr->getHibernationFadeDurationSec();
-      float progress = ofClamp(elapsed / std::max(0.001f, duration), 0.0f, 1.0f);
+      // Alpha goes from 1.0 to 0.0, so progress = 1.0 - alpha
+      float progress = 1.0f - synthPtr->hibernationController->getAlpha();
       ImGui::ProgressBar(progress, barSize, "");
     } else {
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(130,130,130,140));

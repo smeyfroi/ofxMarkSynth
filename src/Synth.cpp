@@ -151,10 +151,11 @@ Mod(nullptr, name_, std::move(config)),
 paused { startHibernated },  // Start paused if hibernated
 compositeSize { compositeSize_ },
 resources { std::move(resources_) },
-audioAnalysisClientPtr { std::move(audioAnalysisClient) },
-hibernationState { startHibernated ? HibernationState::HIBERNATED : HibernationState::ACTIVE },
-hibernationAlpha { startHibernated ? 0.0f : 1.0f }
+audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
+  hibernationController = std::make_unique<HibernationController>(name_, startHibernated);
+  timeTracker = std::make_unique<TimeTracker>();
+
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   
@@ -596,7 +597,7 @@ void Synth::update() {
   performanceNavigator.update();
   
   // Update hibernation fade even when paused
-  updateHibernation();
+  hibernationController->update();
   
   // Update crossfade transition
   updateTransition();
@@ -605,17 +606,16 @@ void Synth::update() {
   updateLayerPauseStates();
   
   // When paused, skip Mod updates but still update composites if hibernating
-  if (paused && hibernationState == HibernationState::ACTIVE) {
+  if (paused && !hibernationController->isHibernating()) {
     return;
   }
   
   // Accumulate running time when not paused and has ever run
-  if (!paused && hasEverRun_) {
+  if (!paused && timeTracker->hasEverRun()) {
     // Cap frame time to avoid time racing ahead during slow/unstable frames at startup
     // Use 2x target frame time (assuming 30fps target = 0.033s, cap at ~0.066s)
     float dt = std::min(ofGetLastFrameTime(), 0.066);
-    synthRunningTimeAccumulator_ += dt;
-    configRunningTimeAccumulator_ += dt;
+    timeTracker->accumulate(dt);
   }
   
   // Update Mods only when not paused
@@ -734,8 +734,8 @@ void Synth::updateCompositeImage() {
     if (layerAlpha == 0.0f) return;
     
     float finalAlpha = layerAlpha;
-    if (hibernationState != HibernationState::ACTIVE) {
-      finalAlpha *= hibernationAlpha;
+    if (hibernationController->isHibernating()) {
+      finalAlpha *= hibernationController->getAlpha();
     }
     if (finalAlpha == 0.0f) return;
     
@@ -1009,8 +1009,14 @@ bool Synth::keyPressed(int key) {
   
   if (key == OF_KEY_SPACE) {
     // Spacebar: unhibernate if hibernated/fading, unpause if paused, pause if running
-    if (hibernationState != HibernationState::ACTIVE) {
-      cancelHibernation();  // Also sets paused = false
+    if (hibernationController->isHibernating()) {
+      if (hibernationController->cancel()) {
+        paused = false;
+      }
+      // Start time tracking on first ever wake
+      if (!timeTracker->hasEverRun()) {
+        timeTracker->start();
+      }
     } else if (paused) {
       paused = false;
     } else {
@@ -1021,8 +1027,10 @@ bool Synth::keyPressed(int key) {
   
   if (key == 'H') {
     // H key: hibernate only (one-way, not a toggle)
-    if (hibernationState == HibernationState::ACTIVE) {
-      startHibernation();
+    if (!hibernationController->isHibernating()) {
+      if (hibernationController->start()) {
+        paused = true;
+      }
     }
     return true;
   }
@@ -1069,66 +1077,42 @@ bool Synth::toggleLayerPauseSlot(int layerIndex) {
   return true;
 }
 
-// Hibernation system implementation
+// Hibernation and time tracking accessors (delegate to controllers)
 
-void Synth::startHibernation() {
-  if (hibernationState == HibernationState::ACTIVE) {
-    ofLogNotice("Synth") << "Starting hibernation, fade duration: "
-                         << hibernationFadeDurationParameter.get() << "s";
-    hibernationState = HibernationState::FADING_OUT;
-    hibernationStartTime = ofGetElapsedTimef();
-    paused = true;  // Pause updates immediately
-  }
+ofEvent<HibernationController::CompleteEvent>& Synth::getHibernationCompleteEvent() {
+  return hibernationController->completeEvent;
 }
 
-void Synth::cancelHibernation() {
-  if (hibernationState == HibernationState::FADING_OUT) {
-    ofLogNotice("Synth") << "Cancelling hibernation";
-  }
-  if (hibernationState != HibernationState::ACTIVE) {
-    hibernationState = HibernationState::ACTIVE;
-    hibernationAlpha = 1.0f;
-    paused = false;  // Resume updates
-    
-    // Start all time tracking on first ever cancelHibernation
-    if (!hasEverRun_) {
-      hasEverRun_ = true;
-      worldTimeAtFirstRun_ = ofGetElapsedTimef();
-      synthRunningTimeAccumulator_ = 0.0f;
-      configRunningTimeAccumulator_ = 0.0f;
-      ofLogNotice("Synth") << "First run - all time tracking started";
-    }
-  }
+HibernationController::State Synth::getHibernationState() const {
+  return hibernationController->getState();
 }
 
-void Synth::updateHibernation() {
-  if (hibernationState != HibernationState::FADING_OUT) return;
-  
-  float elapsed = ofGetElapsedTimef() - hibernationStartTime;
-  float duration = hibernationFadeDurationParameter.get();
-  
-  if (elapsed >= duration) {
-    hibernationAlpha = 0.0f;
-    hibernationState = HibernationState::HIBERNATED;
-    
-    ofLogNotice("Synth") << "Hibernation complete after " << elapsed << "s";
-    HibernationCompleteEvent event;
-    event.fadeDuration = elapsed;
-    event.synthName = name;
-    ofNotifyEvent(hibernationCompleteEvent, event, this);
-  } else {
-    float t = elapsed / duration;
-    hibernationAlpha = 1.0f - t;
-  }
+float Synth::getHibernationFadeDurationSec() const {
+  return hibernationController->getFadeDurationParameter();
 }
 
-std::string Synth::getHibernationStateString() const {
-  switch (hibernationState) {
-    case HibernationState::ACTIVE:     return "Active";
-    case HibernationState::FADING_OUT: return "Hibernating...";
-    case HibernationState::HIBERNATED: return "Hibernated";
-  }
-  return "Unknown";
+bool Synth::hasEverRun() const {
+  return timeTracker->hasEverRun();
+}
+
+float Synth::getClockTimeSinceFirstRun() const {
+  return timeTracker->getClockTimeSinceFirstRun();
+}
+
+float Synth::getSynthRunningTime() const {
+  return timeTracker->getSynthRunningTime();
+}
+
+float Synth::getConfigRunningTime() const {
+  return timeTracker->getConfigRunningTime();
+}
+
+int Synth::getConfigRunningMinutes() const {
+  return timeTracker->getConfigRunningMinutes();
+}
+
+int Synth::getConfigRunningSeconds() const {
+  return timeTracker->getConfigRunningSeconds();
 }
 
 // Config transition crossfade system
@@ -1281,7 +1265,7 @@ void Synth::initParameters() {
   parameters.add(baseManualBiasParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
-  parameters.add(hibernationFadeDurationParameter);
+  parameters.add(hibernationController->getFadeDurationParameter());
   parameters.add(crossfadeDurationParameter);
   
   // initialise Mod parameters but do not add them to Synth parameters
@@ -1534,7 +1518,7 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   unload();
   
   // Reset config running time for the new config
-  resetConfigRunningTime();
+  timeTracker->resetConfigTime();
   
   // Reset Synth-level parameters to defaults before loading new config,
   // so parameters not specified in the new config don't retain old values
@@ -1612,32 +1596,7 @@ std::optional<std::reference_wrapper<ofAbstractParameter>> Synth::findParameterB
   return std::nullopt;
 }
 
-// Time tracking implementations
 
-float Synth::getClockTimeSinceFirstRun() const {
-  if (!hasEverRun_) return 0.0f;
-  return ofGetElapsedTimef() - worldTimeAtFirstRun_;
-}
-
-float Synth::getSynthRunningTime() const {
-  return synthRunningTimeAccumulator_;
-}
-
-float Synth::getConfigRunningTime() const {
-  return configRunningTimeAccumulator_;
-}
-
-int Synth::getConfigRunningMinutes() const {
-  return static_cast<int>(configRunningTimeAccumulator_) / 60;
-}
-
-int Synth::getConfigRunningSeconds() const {
-  return static_cast<int>(configRunningTimeAccumulator_) % 60;
-}
-
-void Synth::resetConfigRunningTime() {
-  configRunningTimeAccumulator_ = 0.0f;
-}
 
 
 

@@ -28,6 +28,8 @@
 #include "util/PerformanceNavigator.hpp"
 #include "util/MemoryBank.hpp"
 #include "util/VideoRecorder.hpp"
+#include "util/HibernationController.hpp"
+#include "util/TimeTracker.hpp"
 
 namespace ofxAudioAnalysisClient {
 class LocalGistClient;
@@ -113,7 +115,7 @@ public:
   void setAgency(float agency) { agencyParameter = agency; }
   float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
   float getBaseManualBias() const { return baseManualBiasParameter; }
-  float getHibernationFadeDurationSec() const { return hibernationFadeDurationParameter; }
+  float getHibernationFadeDurationSec() const;
 
   const std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient>& getAudioAnalysisClient() const { return audioAnalysisClientPtr; }
   PerformanceNavigator& getPerformanceNavigator() { return performanceNavigator; }
@@ -158,12 +160,8 @@ public:
   static constexpr int SINK_MEMORY_EMIT_WIDTH = 310;
   static constexpr int SINK_MEMORY_CLEAR_ALL = 311;
 
-  class HibernationCompleteEvent : public ofEventArgs {
-  public:
-    float fadeDuration;
-    std::string synthName;
-  };
-  ofEvent<HibernationCompleteEvent> hibernationCompleteEvent;
+  ofEvent<HibernationController::CompleteEvent>& getHibernationCompleteEvent();
+  HibernationController::State getHibernationState() const;
 
   class ConfigUnloadEvent : public ofEventArgs {
   public:
@@ -190,7 +188,7 @@ public:
   // 2. Synth Running Time: Accumulated time synth has been running (pauses with synth)
   // 3. Config Running Time: Accumulated time current config has been running (resets on config load, pauses with synth)
   
-  bool hasEverRun() const { return hasEverRun_; }
+  bool hasEverRun() const;
   float getClockTimeSinceFirstRun() const;
   float getSynthRunningTime() const;
   float getConfigRunningTime() const;
@@ -325,32 +323,10 @@ private:
 
   std::shared_ptr<LoggerChannel> loggerChannelPtr;
 
-  // >>> Hibernation system
-  enum class HibernationState {
-    ACTIVE,        // Normal operation
-    FADING_OUT,    // Hibernating - fade in progress
-    HIBERNATED     // Fully hibernated (black screen, paused)
-  };
-  HibernationState hibernationState { HibernationState::ACTIVE };
-  float hibernationAlpha { 1.0f };  // 1.0 = fully visible, 0.0 = fully black
-  float hibernationStartTime { 0.0f };
-  ofParameter<float> hibernationFadeDurationParameter { "Hibernate Duration", 2.0, 0.5, 10.0 };
-  void startHibernation();
-  void cancelHibernation();
-  void updateHibernation();
+  // >>> Hibernation and time tracking (delegated to helper classes)
+  std::unique_ptr<HibernationController> hibernationController;
+  std::unique_ptr<TimeTracker> timeTracker;
   void updateLayerPauseStates();
-  
-  // Time tracking state
-  bool hasEverRun_ { false };                    // True after first cancelHibernation()
-  float worldTimeAtFirstRun_ { 0.0f };           // ofGetElapsedTimef() when first unhibernated
-  float synthRunningTimeAccumulator_ { 0.0f };   // Accumulated synth running time (pauses when paused)
-  float configRunningTimeAccumulator_ { 0.0f };  // Accumulated config running time (resets on config load)
-  void resetConfigRunningTime();                 // Called on config load
-
-  bool isHibernating() const { return hibernationState != HibernationState::ACTIVE; }
-  std::string getHibernationStateString() const;
-  HibernationState getHibernationState() const { return hibernationState; }
-  float getHibernationStartTime() const { return hibernationStartTime; }
   // <<<
 
 #ifdef TARGET_MAC
