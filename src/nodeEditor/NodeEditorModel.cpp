@@ -34,7 +34,7 @@ void NodeEditorModel::buildFromSynth(const std::shared_ptr<Synth> synthPtr_) {
     });
     layoutEnginePtr->addNode(modPtr);
   }
-  for (const auto& layerNamePtr : synthPtr->drawingLayerPtrs) {
+  for (const auto& layerNamePtr : synthPtr->getDrawingLayers()) {
     auto& [layerName, layerPtr] = layerNamePtr;
     nodes.emplace_back(NodeEditorNode {
       .objectPtr = layerPtr,

@@ -437,14 +437,14 @@ void Gui::drawLayerControls() {
   
   // Build tooltip map from layer name to description (if available)
   std::unordered_map<std::string, std::string> layerTooltips;
-  for (const auto& [name, layerPtr] : synthPtr->drawingLayerPtrs) {
+  for (const auto& [name, layerPtr] : synthPtr->getDrawingLayers()) {
     if (!layerPtr || !layerPtr->isDrawn) continue;
     if (!layerPtr->description.empty()) {
       layerTooltips[layerPtr->name] = layerPtr->description;
     }
   }
   NodeRenderUtil::setLayerTooltipMap(&layerTooltips);
-  drawVerticalSliders(synthPtr->layerAlphaParameters, synthPtr->layerPauseParamPtrs);
+  drawVerticalSliders(synthPtr->getLayerAlphaParameters(), synthPtr->layerController->getPauseParamPtrs());
   NodeRenderUtil::setLayerTooltipMap(nullptr);
 }
 
@@ -804,7 +804,7 @@ void Gui::drawNode(const DrawingLayerPtr& layerPtr) {
 }
 
 void Gui::drawNodeEditor() {
-  if (!synthPtr || (synthPtr->modPtrs.empty() && synthPtr->drawingLayerPtrs.empty())) {
+  if (!synthPtr || (synthPtr->modPtrs.empty() && synthPtr->getDrawingLayers().empty())) {
     ImGui::Begin("NodeEditor");
     ImGui::TextUnformatted("No synth configuration loaded.");
     ImGui::End();

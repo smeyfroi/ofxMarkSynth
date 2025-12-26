@@ -157,6 +157,7 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   timeTracker = std::make_unique<TimeTracker>();
   configTransitionManager = std::make_unique<ConfigTransitionManager>();
   intentController = std::make_unique<IntentController>();
+  layerController = std::make_unique<LayerController>();
 
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -290,8 +291,8 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 // TODO: fold this into loadFromConfig and the ctor?
 void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initDisplayParameterGroup();
-  initFboParameterGroup();
-  initLayerPauseParameterGroup();
+  layerController->buildAlphaParameters();
+  layerController->buildPauseParameters();
   initMemoryBankParameterGroup();
   
   parameters = getParameterGroup();
@@ -358,17 +359,12 @@ void Synth::unload() {
   modPtrs.clear();
 
   // 2) Clear drawing layers
-  drawingLayerPtrs.clear();
-  initialLayerAlphas.clear();
+  layerController->clear();
 
   // 3) Clear GUI live texture hooks
   liveTexturePtrFns.clear();
 
-  // 4) Clear parameter groups related to config
-  layerAlphaParamPtrs.clear();
-  layerAlphaParameters.clear();
-
-  // Clear intent controller state
+  // 4) Clear intent controller state
   intentController->setPresets({});
 
   // 5) Clear current config path
@@ -379,12 +375,7 @@ void Synth::unload() {
 }
 
 DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
-  auto fboPtr = std::make_shared<PingPongFbo>();
-  fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
-  fboPtr->clearFloat(DEFAULT_CLEAR_COLOR);
-  DrawingLayerPtr drawingLayerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate, blendMode, isDrawn, isOverlay, description);
-  drawingLayerPtrs.insert({ name, drawingLayerPtr });
-  return drawingLayerPtr;
+  return layerController->addLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
 }
 
 void Synth::addConnections(const std::string& dsl) {
@@ -602,7 +593,7 @@ void Synth::update() {
   configTransitionManager->update();
   
   // Update per-layer pause envelopes
-  updateLayerPauseStates();
+  layerController->updatePauseStates();
   
   // When paused, skip Mod updates but still update composites if hibernating
   if (paused && !hibernationController->isHibernating()) {
@@ -626,15 +617,7 @@ void Synth::update() {
 
     backgroundColorController.update();
     
-    std::for_each(drawingLayerPtrs.begin(), drawingLayerPtrs.end(), [this](auto& pair) {
-
-      const auto& [name, fcptr] = pair;
-      if (fcptr->clearOnUpdate && fcptr->pauseState != DrawingLayer::PauseState::PAUSED) {
-        fcptr->fboPtr->getSource().begin();
-        ofClear(DEFAULT_CLEAR_COLOR);
-        fcptr->fboPtr->getSource().end();
-      }
-    });
+    layerController->clearActiveLayers(DEFAULT_CLEAR_COLOR);
     
     std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
       const auto& [name, modPtr] = pair;
@@ -718,26 +701,28 @@ void Synth::updateCompositeImage() {
   std::vector<LayerInfo> baseLayers;
   std::vector<LayerInfo> overlayLayers;
   
+  const auto& drawingLayers = layerController->getLayers();
+  auto& alphaParams = layerController->getAlphaParameterGroup();
+  
   size_t i = 0;
-  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this, &i, &baseLayers, &overlayLayers](const auto& pair) {
-    const auto& [name, dlptr] = pair;
-    if (!dlptr->isDrawn) return;
-    float layerAlpha = layerAlphaParameters.getFloat(i);
+  for (const auto& [name, dlptr] : drawingLayers) {
+    if (!dlptr->isDrawn) continue;
+    float layerAlpha = alphaParams.getFloat(i);
     ++i;
-    if (layerAlpha == 0.0f) return;
+    if (layerAlpha == 0.0f) continue;
     
     float finalAlpha = layerAlpha;
     if (hibernationController->isHibernating()) {
       finalAlpha *= hibernationController->getAlpha();
     }
-    if (finalAlpha == 0.0f) return;
+    if (finalAlpha == 0.0f) continue;
     
     if (dlptr->isOverlay) {
       overlayLayers.push_back({ dlptr, finalAlpha });
     } else {
       baseLayers.push_back({ dlptr, finalAlpha });
     }
-  });
+  }
   
   // 1) Base composite (background + base layers)
   imageCompositeFbo.begin();
@@ -993,9 +978,9 @@ bool Synth::keyPressed(int key) {
   // Per-layer pause toggles (1-8 map to visible layers in order)
   if (key >= '1' && key <= '8') {
     int index = key - '1';
-    if (index < static_cast<int>(layerPauseParamPtrs.size())) {
-      auto& p = layerPauseParamPtrs[index];
-      p->set(!p->get());
+    const auto& pauseParams = layerController->getPauseParamPtrs();
+    if (index < static_cast<int>(pauseParams.size())) {
+      layerController->togglePause(index);
       return true;
     }
   }
@@ -1063,10 +1048,10 @@ bool Synth::loadModSnapshotSlot(int slotIndex) {
 }
 
 bool Synth::toggleLayerPauseSlot(int layerIndex) {
-  if (layerIndex < 0 || layerIndex >= static_cast<int>(layerPauseParamPtrs.size())) return false;
+  const auto& pauseParams = layerController->getPauseParamPtrs();
+  if (layerIndex < 0 || layerIndex >= static_cast<int>(pauseParams.size())) return false;
 
-  auto& p = layerPauseParamPtrs[layerIndex];
-  p->set(!p->get());
+  layerController->togglePause(layerIndex);
   return true;
 }
 
@@ -1110,47 +1095,6 @@ int Synth::getConfigRunningSeconds() const {
 
 
 
-void Synth::initFboParameterGroup() {
-  layerAlphaParameters.clear();
-  layerAlphaParamPtrs.clear();
-  
-  layerAlphaParameters.setName("Layers");
-  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
-    const auto& [name, fcptr] = pair;
-    if (!fcptr->isDrawn) return;
-    float initialAlpha = 1.0f;
-    auto it = initialLayerAlphas.find(fcptr->name);
-    if (it != initialLayerAlphas.end()) {
-      initialAlpha = it->second;
-    }
-    auto fboParam = std::make_shared<ofParameter<float>>(fcptr->name, initialAlpha, 0.0f, 1.0f);
-    layerAlphaParamPtrs.push_back(fboParam);
-    layerAlphaParameters.add(*fboParam);
-  });
-}
-
-void Synth::initLayerPauseParameterGroup() {
-  layerPauseParameters.clear();
-  layerPauseParamPtrs.clear();
-  
-  layerPauseParameters.setName("Layer Pauses");
-  std::for_each(drawingLayerPtrs.cbegin(), drawingLayerPtrs.cend(), [this](const auto& pair) {
-    const auto& [name, layerPtr] = pair;
-    if (!layerPtr->isDrawn) return;
-    bool initialPaused = false;
-    auto it = initialLayerPaused.find(layerPtr->name);
-    if (it != initialLayerPaused.end()) {
-      initialPaused = it->second;
-    }
-    auto p = std::make_shared<ofParameter<bool>>(layerPtr->name + " Paused", initialPaused);
-    layerPauseParamPtrs.push_back(p);
-    layerPauseParameters.add(*p);
-    
-    layerPtr->pauseState = initialPaused ? DrawingLayer::PauseState::PAUSED
-                                         : DrawingLayer::PauseState::ACTIVE;
-  });
-}
-
 void Synth::initDisplayParameterGroup() {
   displayParameters.clear();
   
@@ -1164,31 +1108,6 @@ void Synth::initDisplayParameterGroup() {
   displayParameters.add(brightnessParameter);
   displayParameters.add(hueShiftParameter);
   displayParameters.add(sideExposureParameter);
-}
-
-void Synth::updateLayerPauseStates() {
-  // Build lookup: base layer name -> pause parameter
-  std::unordered_map<std::string, ofParameter<bool>*> pauseByName;
-  for (auto& p : layerPauseParamPtrs) {
-    std::string baseName = p->getName();
-    auto pos = baseName.rfind(" Paused");
-    if (pos != std::string::npos) {
-      baseName = baseName.substr(0, pos);
-    }
-    pauseByName[baseName] = p.get();
-  }
-  
-  for (auto& [name, layerPtr] : drawingLayerPtrs) {
-    if (!layerPtr->isDrawn) continue;
-    
-    bool targetPaused = false;
-    if (auto it = pauseByName.find(name); it != pauseByName.end()) {
-      targetPaused = it->second->get();
-    }
-    
-    layerPtr->pauseState = targetPaused ? DrawingLayer::PauseState::PAUSED
-                                        : DrawingLayer::PauseState::ACTIVE;
-  }
 }
 
 void Synth::initMemoryBankParameterGroup() {
@@ -1445,8 +1364,8 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   }
   
   initParameters();
-  initFboParameterGroup();
-  initLayerPauseParameterGroup();
+  layerController->buildAlphaParameters();
+  layerController->buildPauseParameters();
   gui.onConfigLoaded();
   
   // Emit load event

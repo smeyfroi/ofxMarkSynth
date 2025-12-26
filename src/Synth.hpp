@@ -32,6 +32,7 @@
 #include "util/TimeTracker.hpp"
 #include "util/ConfigTransitionManager.hpp"
 #include "util/IntentController.hpp"
+#include "util/LayerController.hpp"
 
 namespace ofxAudioAnalysisClient {
 class LocalGistClient;
@@ -41,7 +42,6 @@ namespace ofxMarkSynth {
 
 const ofFloatColor DEFAULT_CLEAR_COLOR { 0.0, 0.0, 0.0, 0.0 };
 
-using DrawingLayerPtrMap = std::map<std::string, DrawingLayerPtr>;
 using ModPtrMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 
 class Synth : public Mod {
@@ -94,7 +94,8 @@ public:
   ofParameterGroup& getIntentParameterGroup() { return intentController->getParameterGroup(); }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
   
-  ofParameterGroup& getLayerAlphaParameters() { return layerAlphaParameters; };
+  ofParameterGroup& getLayerAlphaParameters() { return layerController->getAlphaParameterGroup(); }
+  const DrawingLayerPtrMap& getDrawingLayers() const { return layerController->getLayers(); }
   
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
 
@@ -216,13 +217,12 @@ private:
   PerformanceNavigator performanceNavigator { this };
 
   ModPtrMap modPtrs;
-  DrawingLayerPtrMap drawingLayerPtrs;
-  std::unordered_map<std::string, float> initialLayerAlphas;
-  std::unordered_map<std::string, bool> initialLayerPaused;
+
+  // >>> Layer system (delegated to helper class)
+  std::unique_ptr<LayerController> layerController;
+  // <<<
 
   void initDisplayParameterGroup();
-  void initFboParameterGroup();
-  void initLayerPauseParameterGroup();
   
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
 
@@ -278,10 +278,6 @@ private:
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   
-  ofParameterGroup layerAlphaParameters;
-  std::vector<std::shared_ptr<ofParameter<float>>> layerAlphaParamPtrs;
-  ofParameterGroup layerPauseParameters;
-  std::vector<std::shared_ptr<ofParameter<bool>>> layerPauseParamPtrs;
   ofParameterGroup displayParameters;
   ofParameter<ofFloatColor> backgroundColorParameter { "BackgroundColour", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
@@ -311,7 +307,6 @@ private:
   // >>> Hibernation and time tracking (delegated to helper classes)
   std::unique_ptr<HibernationController> hibernationController;
   std::unique_ptr<TimeTracker> timeTracker;
-  void updateLayerPauseStates();
   // <<<
 
 #ifdef TARGET_MAC

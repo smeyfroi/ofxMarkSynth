@@ -115,13 +115,13 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
       if (layerJson.contains("alpha") && layerJson["alpha"].is_number()) {
         alpha = layerJson["alpha"];
       }
-      synth->initialLayerAlphas[name] = alpha;
+      synth->layerController->setInitialAlpha(name, alpha);
 
       bool paused = false;
       if (layerJson.contains("paused") && layerJson["paused"].is_boolean()) {
         paused = layerJson["paused"];
       }
-      synth->initialLayerPaused[name] = paused;
+      synth->layerController->setInitialPaused(name, paused);
       
       std::string description;
       if (layerJson.contains("description") && layerJson["description"].is_string()) {
