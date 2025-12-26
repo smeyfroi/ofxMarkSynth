@@ -30,6 +30,7 @@
 #include "util/VideoRecorder.hpp"
 #include "util/HibernationController.hpp"
 #include "util/TimeTracker.hpp"
+#include "util/ConfigTransitionManager.hpp"
 
 namespace ofxAudioAnalysisClient {
 class LocalGistClient;
@@ -261,18 +262,8 @@ public:
   
 private:
 
-  // >>> Config transition crossfade system
-  enum class TransitionState {
-    NONE,           // No transition in progress
-    CROSSFADING     // Crossfading from snapshot to live
-  };
-  TransitionState transitionState { TransitionState::NONE };
-  ofFbo transitionSnapshotFbo;  // Holds captured frame from old config
-  float transitionStartTime { 0.0f };
-  float transitionAlpha { 0.0f };  // 0.0 = all snapshot, 1.0 = all live
-  ofParameter<float> crossfadeDurationParameter { "Crossfade Duration", 2.5, 0.5, 10.0 };
-  void updateTransition();
-  void captureSnapshot();
+  // >>> Config transition crossfade system (delegated to helper class)
+  std::unique_ptr<ConfigTransitionManager> configTransitionManager;
   // <<<
 
   // Intent system

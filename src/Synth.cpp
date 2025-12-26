@@ -155,6 +155,7 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
   hibernationController = std::make_unique<HibernationController>(name_, startHibernated);
   timeTracker = std::make_unique<TimeTracker>();
+  configTransitionManager = std::make_unique<ConfigTransitionManager>();
 
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -600,7 +601,7 @@ void Synth::update() {
   hibernationController->update();
   
   // Update crossfade transition
-  updateTransition();
+  configTransitionManager->update();
   
   // Update per-layer pause envelopes
   updateLayerPauseStates();
@@ -828,8 +829,8 @@ void Synth::drawMiddlePanel(float w, float h, float scale) {
   ofTranslate((w - imageCompositeFbo.getWidth() * scale) / 2.0, (h - imageCompositeFbo.getHeight() * scale) / 2.0);
   ofScale(scale, scale);
   
-  if (transitionState == TransitionState::CROSSFADING && transitionSnapshotFbo.isAllocated()) {
-    const auto& snapshotTexData = transitionSnapshotFbo.getTexture().getTextureData();
+  if (configTransitionManager->isTransitioning() && configTransitionManager->hasValidSnapshot()) {
+    const auto& snapshotTexData = configTransitionManager->getSnapshotFbo().getTexture().getTextureData();
     const auto& liveTexData = imageCompositeFbo.getTexture().getTextureData();
 
     tonemapCrossfadeShader.begin(toneMapTypeParameter,
@@ -840,10 +841,10 @@ void Synth::drawMiddlePanel(float w, float h, float scale) {
                                 saturationParameter,
                                 brightnessParameter,
                                 hueShiftParameter,
-                                transitionAlpha,
+                                configTransitionManager->getAlpha(),
                                 snapshotTexData.bFlipTexture,
                                 liveTexData.bFlipTexture,
-                                transitionSnapshotFbo.getTexture(),
+                                configTransitionManager->getSnapshotFbo().getTexture(),
                                 imageCompositeFbo.getTexture());
 
     ofSetColor(255);
@@ -1115,42 +1116,7 @@ int Synth::getConfigRunningSeconds() const {
   return timeTracker->getConfigRunningSeconds();
 }
 
-// Config transition crossfade system
 
-void Synth::captureSnapshot() {
-  float w = imageCompositeFbo.getWidth();
-  float h = imageCompositeFbo.getHeight();
-  
-  // Allocate snapshot FBO if needed
-  if (!transitionSnapshotFbo.isAllocated() ||
-      transitionSnapshotFbo.getWidth() != w ||
-      transitionSnapshotFbo.getHeight() != h) {
-    transitionSnapshotFbo.allocate(w, h, GL_RGB16F);
-  }
-  
-  transitionSnapshotFbo.begin();
-  {
-    ofClear(0, 0, 0, 255);
-    ofSetColor(255);
-    imageCompositeFbo.draw(0, 0);
-  }
-  transitionSnapshotFbo.end();
-}
-
-void Synth::updateTransition() {
-  if (transitionState != TransitionState::CROSSFADING) return;
-  
-  float elapsed = ofGetElapsedTimef() - transitionStartTime;
-  float duration = crossfadeDurationParameter.get();
-  
-  if (elapsed >= duration) {
-    transitionAlpha = 1.0f;
-    transitionState = TransitionState::NONE;
-  } else {
-    float t = elapsed / duration;
-    transitionAlpha = glm::smoothstep(0.0f, 1.0f, t);
-  }
-}
 
 void Synth::initFboParameterGroup() {
   layerAlphaParameters.clear();
@@ -1266,7 +1232,7 @@ void Synth::initParameters() {
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
   parameters.add(hibernationController->getFadeDurationParameter());
-  parameters.add(crossfadeDurationParameter);
+  parameters.add(configTransitionManager->getDurationParameter());
   
   // initialise Mod parameters but do not add them to Synth parameters
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
@@ -1504,7 +1470,7 @@ bool Synth::saveModsToCurrentConfig() {
 void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   // Capture snapshot before unload (if crossfading)
   if (useCrossfade) {
-    captureSnapshot();
+    configTransitionManager->captureSnapshot(imageCompositeFbo);
   }
   
   // Emit unload event
@@ -1529,7 +1495,7 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   if (!loadOk) {
     ofLogError("Synth") << "switchToConfig: load failed, leaving Synth unloaded and paused";
     paused = true;  // Ensure no further mod activity
-    transitionState = TransitionState::NONE;  // Cancel any pending transition
+    configTransitionManager->cancelTransition();  // Cancel any pending transition
     return;
   }
   
@@ -1570,9 +1536,7 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   
   // Begin crossfade transition
   if (useCrossfade) {
-    transitionState = TransitionState::CROSSFADING;
-    transitionStartTime = ofGetElapsedTimef();
-    transitionAlpha = 0.0f;
+    configTransitionManager->beginTransition();
   }
 }
 

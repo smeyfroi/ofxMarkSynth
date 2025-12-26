@@ -294,7 +294,7 @@ bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::share
   }
   
   if (synthJson.contains("crossfadeDuration") && synthJson["crossfadeDuration"].is_number()) {
-    synth->crossfadeDurationParameter.set(synthJson["crossfadeDuration"].get<float>());
+    synth->configTransitionManager->getDurationParameter().set(synthJson["crossfadeDuration"].get<float>());
     ofLogNotice("SynthConfigSerializer") << "  Crossfade duration: " << synthJson["crossfadeDuration"].get<float>();
   }
   
