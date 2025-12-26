@@ -45,6 +45,7 @@ public:
   float getGranularity() const { return granularityParameter; }
   
   ofParameterGroup& getParameterGroup() { return parameters; }
+  const ofParameterGroup& getParameterGroup() const { return parameters; }
   
   void setWeightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents);
   

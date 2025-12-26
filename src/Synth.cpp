@@ -156,6 +156,7 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   hibernationController = std::make_unique<HibernationController>(name_, startHibernated);
   timeTracker = std::make_unique<TimeTracker>();
   configTransitionManager = std::make_unique<ConfigTransitionManager>();
+  intentController = std::make_unique<IntentController>();
 
   imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
   compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
@@ -293,8 +294,6 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   initLayerPauseParameterGroup();
   initMemoryBankParameterGroup();
   
-  initIntentParameterGroup();
-  
   parameters = getParameterGroup();
 
   // Pass a windowPtr for a full imgui, else handle it in the calling ofApp
@@ -369,9 +368,8 @@ void Synth::unload() {
   layerAlphaParamPtrs.clear();
   layerAlphaParameters.clear();
 
-  intentActivationParameters.clear();
-  intentParameters.clear();
-  intentActivations.clear();
+  // Clear intent controller state
+  intentController->setPresets({});
 
   // 5) Clear current config path
   currentConfigPath.clear();
@@ -622,14 +620,8 @@ void Synth::update() {
   // Update Mods only when not paused
   if (!paused) {
     TS_START("Synth-updateIntents");
-    updateIntentActivations();
-    computeActiveIntent();
+    intentController->update();
     applyIntentToAllMods();
-    activeIntentInfoLabel1 = ofToString("E") + ofToString(activeIntent.getEnergy(), 2) +
-                            " D" + ofToString(activeIntent.getDensity(), 2) +
-                            " C" + ofToString(activeIntent.getChaos(), 2);
-    activeIntentInfoLabel2 = ofToString("S") + ofToString(activeIntent.getStructure(), 2) +
-                            " G" + ofToString(activeIntent.getGranularity(), 2);
     TS_STOP("Synth-updateIntents");
 
     backgroundColorController.update();
@@ -1159,19 +1151,6 @@ void Synth::initLayerPauseParameterGroup() {
   });
 }
 
-void Synth::initIntentParameterGroup() {
-  intentParameters.clear();
-
-  intentParameters.setName("Intent");
-
-  // Don't recreate intents here - they should be set via setIntentPresets() or initIntentPresets()
-  // Just add the existing activation parameters to the group
-  for (auto& p : intentActivationParameters) intentParameters.add(*p);
-
-  // Keep master intent strength at the end so it appears rightmost in the GUI.
-  intentParameters.add(intentStrengthParameter);
-}
-
 void Synth::initDisplayParameterGroup() {
   displayParameters.clear();
   
@@ -1243,78 +1222,24 @@ void Synth::initParameters() {
 }
 
 void Synth::setIntentPresets(const std::vector<IntentPtr>& presets) {
-  if (presets.size() > 7) {
-    ofLogWarning("Synth") << "Received " << presets.size() << " intents, limiting to 7";
-  }
-  
-  intentActivations.clear();
-  intentActivationParameters.clear();
-  
-  size_t count = std::min(presets.size(), size_t(7));
-  for (size_t i = 0; i < count; ++i) {
-    intentActivations.emplace_back(presets[i]);
-    auto p = std::make_shared<ofParameter<float>>(presets[i]->getName() + " Activation", 0.0f, 0.0f, 1.0f);
-    intentActivationParameters.push_back(p);
-  }
-  
-  ofLogNotice("Synth") << "Set " << count << " intent presets from config";
+  intentController->setPresets(presets);
 }
 
 void Synth::setIntentStrength(float value) {
-    intentStrengthParameter.set(ofClamp(value, 0.0f, 1.0f));
+  intentController->setStrength(value);
 }
 
 void Synth::setIntentActivation(size_t index, float value) {
-    if (index >= intentActivations.size()) {
-        ofLogWarning("Synth") << "setIntentActivation: index " << index
-                              << " out of range (have " << intentActivations.size() << " intents)";
-        return;
-    }
-    float clamped = ofClamp(value, 0.0f, 1.0f);
-    intentActivations[index].activation = clamped;
-    intentActivations[index].targetActivation = clamped;
-    if (index < intentActivationParameters.size()) {
-        intentActivationParameters[index]->set(clamped);
-    }
-}
-
-void Synth::updateIntentActivations() {
-  float dt = ofGetLastFrameTime();
-  for (size_t i = 0; i < intentActivations.size(); ++i) {
-    auto& ia = intentActivations[i];
-    float target = intentActivationParameters[i]->get();
-    ia.targetActivation = target;
-    float speed = ia.transitionSpeed;
-    float alpha = 1.0f - expf(-dt * std::max(0.001f, speed) * 4.0f);
-    ia.activation = ofLerp(ia.activation, ia.targetActivation, alpha);
-  }
-}
-
-void Synth::computeActiveIntent() {
-  static std::vector<std::pair<IntentPtr, float>> weighted;
-  if (weighted.size() != intentActivations.size()) {
-    weighted.clear();
-    weighted.resize(intentActivations.size());
-  }
-  for (size_t i = 0; i < intentActivations.size(); ++i) {
-    auto& ia = intentActivations[i];
-    weighted[i].first = ia.intentPtr;
-    weighted[i].second = ia.activation;
-  }
-  activeIntent.setWeightedBlend(weighted);
+  intentController->setActivation(index, value);
 }
 
 void Synth::applyIntentToAllMods() {
-  // Scale effective intent strength by total activation weight
-  float totalActivation = 0.0f;
-  for (const auto& ia : intentActivations) {
-    totalActivation += ia.activation;
-  }
-  float effectiveStrength = intentStrengthParameter * std::min(1.0f, totalActivation);
+  const auto& intent = intentController->getActiveIntent();
+  float effectiveStrength = intentController->getEffectiveStrength();
   
-  applyIntent(activeIntent, effectiveStrength);
+  applyIntent(intent, effectiveStrength);
   for (auto& kv : modPtrs) {
-    kv.second->applyIntent(activeIntent, effectiveStrength);
+    kv.second->applyIntent(intent, effectiveStrength);
   }
 }
 
@@ -1522,7 +1447,6 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   initParameters();
   initFboParameterGroup();
   initLayerPauseParameterGroup();
-  initIntentParameterGroup();
   gui.onConfigLoaded();
   
   // Emit load event

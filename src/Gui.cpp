@@ -265,11 +265,12 @@ void Gui::drawIntentSlotSliders() {
       ImGui::PushID(i);
       ImGui::BeginGroup();
 
+      const auto& activationParams = synthPtr->intentController->getActivationParameters();
       const bool hasIntentParam =
-        i < (int)synthPtr->intentActivationParameters.size() && synthPtr->intentActivationParameters[i];
+        i < (int)activationParams.size() && activationParams[i];
 
       if (hasIntentParam) {
-        auto& param = *synthPtr->intentActivationParameters[i];
+        auto& param = *activationParams[i];
         float v = param.get();
         if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
           param.set(v);
@@ -309,12 +310,17 @@ void Gui::drawIntentSlotSliders() {
     ImGui::PushID(kTotalSlots - 1);
     ImGui::BeginGroup();
     {
-      auto& param = synthPtr->intentStrengthParameter;
-      float v = param.get();
-      if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
-        param.set(v);
+      // Access strength parameter through the intent controller's parameter group
+      auto& intentParams = synthPtr->intentController->getParameterGroup();
+      // The strength parameter is named "Intent Strength" and is always last in the group
+      if (intentParams.contains("Intent Strength")) {
+        auto& param = intentParams.getFloat("Intent Strength");
+        float v = param.get();
+        if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
+          param.set(v);
+        }
+        ImGui::SetItemTooltip("%s", param.getName().c_str());
       }
-      ImGui::SetItemTooltip("%s", param.getName().c_str());
 
       ImGui::TextUnformatted("M");
     }
@@ -358,19 +364,21 @@ static ImU32 influenceToColorU32(float influence) {
 }
 
 void Gui::drawIntentCharacteristicsEditor() {
-  float intentStrength = synthPtr->intentStrengthParameter.get();
+  float intentStrength = synthPtr->intentController->getStrength();
   constexpr float sliderWidth = 150.0f;
   constexpr float activationThreshold = 0.001f;
   
+  const auto& intentActivations = synthPtr->intentController->getActivations();
+  
   // Count active intents
   int activeCount = 0;
-  for (const auto& ia : synthPtr->intentActivations) {
+  for (const auto& ia : intentActivations) {
     if (ia.activation > activationThreshold) activeCount++;
   }
   
   // Show blended values only when multiple intents are active
   if (activeCount > 1) {
-    const auto& active = synthPtr->activeIntent;
+    const auto& active = synthPtr->intentController->getActiveIntent();
     ImGui::TextColored(GREY_COLOR, "Blended: E:%.2f D:%.2f S:%.2f C:%.2f G:%.2f",
                        active.getEnergy(), active.getDensity(),
                        active.getStructure(), active.getChaos(),
@@ -379,11 +387,11 @@ void Gui::drawIntentCharacteristicsEditor() {
   }
   
   // Only show intents with activation > 0
-  for (size_t i = 0; i < synthPtr->intentActivations.size(); ++i) {
-    auto& ia = synthPtr->intentActivations[i];
+  for (size_t i = 0; i < intentActivations.size(); ++i) {
+    const auto& ia = intentActivations[i];
     if (ia.activation <= activationThreshold) continue;
     
-    Intent& intent = *ia.intentPtr;
+    const Intent& intent = *ia.intentPtr;
     float influence = ia.activation * intentStrength;
     ImU32 indicatorColor = influenceToColorU32(influence);
     

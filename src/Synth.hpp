@@ -31,6 +31,7 @@
 #include "util/HibernationController.hpp"
 #include "util/TimeTracker.hpp"
 #include "util/ConfigTransitionManager.hpp"
+#include "util/IntentController.hpp"
 
 namespace ofxAudioAnalysisClient {
 class LocalGistClient;
@@ -90,7 +91,7 @@ public:
 
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
-  ofParameterGroup& getIntentParameterGroup() { return intentParameters; }
+  ofParameterGroup& getIntentParameterGroup() { return intentController->getParameterGroup(); }
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
   
   ofParameterGroup& getLayerAlphaParameters() { return layerAlphaParameters; };
@@ -105,7 +106,7 @@ public:
   void setIntentPresets(const std::vector<IntentPtr>& presets);
   void setIntentStrength(float value);
   void setIntentActivation(size_t index, float value);
-  size_t getIntentCount() const { return intentActivations.size(); }
+  size_t getIntentCount() const { return intentController->getCount(); }
 
   static void setArtefactRootPath(const std::filesystem::path& root);
   static std::string saveArtefactFilePath(const std::string& relative);
@@ -222,7 +223,6 @@ private:
   void initDisplayParameterGroup();
   void initFboParameterGroup();
   void initLayerPauseParameterGroup();
-  void initIntentParameterGroup();
   
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
 
@@ -266,19 +266,13 @@ private:
   std::unique_ptr<ConfigTransitionManager> configTransitionManager;
   // <<<
 
-  // Intent system
-  IntentActivations intentActivations;
-  Intent activeIntent { "Active", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-  ofParameterGroup intentParameters;
-  ofParameter<float> intentStrengthParameter { "Intent Strength", 0.0, 0.0, 1.0 };
-  std::vector<std::shared_ptr<ofParameter<float>>> intentActivationParameters;
-  ofxLabel activeIntentInfoLabel1, activeIntentInfoLabel2;
-  const Intent& getActiveIntent() const { return activeIntent; }
-  float getIntentStrength() const { return intentStrengthParameter; }
+  // >>> Intent system (delegated to helper class)
+  std::unique_ptr<IntentController> intentController;
+  const Intent& getActiveIntent() const { return intentController->getActiveIntent(); }
+  float getIntentStrength() const { return intentController->getStrength(); }
   void applyIntent(const Intent& intent, float intentStrength) override;
-  void updateIntentActivations();
-  void computeActiveIntent();
   void applyIntentToAllMods();
+  // <<<
 
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
