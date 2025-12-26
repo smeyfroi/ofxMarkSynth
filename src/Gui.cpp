@@ -10,8 +10,8 @@
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
-#include "ImGuiUtil.hpp"
-#include "NodeRenderUtil.hpp"
+#include "util/ImGuiUtil.hpp"
+#include "nodeEditor/NodeRenderUtil.hpp"
 #include "util/HelpContent.hpp"
 
 

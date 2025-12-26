@@ -8,7 +8,7 @@
 #include "TimerSourceMod.hpp"
 #include "Synth.hpp"
 #include "IntentMapping.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 #include "ofUtils.h"
 
 

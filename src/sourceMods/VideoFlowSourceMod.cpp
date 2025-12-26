@@ -8,8 +8,8 @@
 #include "VideoFlowSourceMod.hpp"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
-#include "../IntentMapper.hpp"
-#include "../util/TimeStringUtil.h"
+#include "IntentMapper.hpp"
+#include "util/TimeStringUtil.h"
 
 
 

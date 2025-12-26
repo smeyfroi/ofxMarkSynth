@@ -7,7 +7,7 @@
 
 #include "TextMod.hpp"
 #include "IntentMapping.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 #include "Synth.hpp"
 #include <algorithm>
 

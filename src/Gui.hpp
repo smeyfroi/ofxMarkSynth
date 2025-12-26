@@ -10,7 +10,7 @@
 #include "ofxImGui.h"
 #include "ImHelpers.h"
 #include "ofColor.h"
-#include "NodeEditorModel.hpp"
+#include "nodeEditor/NodeEditorModel.hpp"
 #include "util/ModSnapshotManager.hpp"
 #include <memory>
 #include <unordered_set>

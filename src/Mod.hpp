@@ -9,8 +9,8 @@
 
 #include "PingPongFbo.h"
 #include "Gui.h"
-#include "NodeEditorLayout.hpp"
-#include "NodeEditorLayoutSerializer.hpp"
+#include "nodeEditor/NodeEditorLayout.hpp"
+#include "nodeEditor/NodeEditorLayoutSerializer.hpp"
 #include "ofParameter.h"
 #include "ParamController.h"
 #include <map>

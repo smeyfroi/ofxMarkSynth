@@ -9,7 +9,7 @@
 #include "Synth.hpp"
 #include "Intent.hpp"
 #include "TimeStringUtil.h"
-#include "../sourceMods/AudioDataSourceMod.hpp"
+#include "sourceMods/AudioDataSourceMod.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
 #include <fstream>

@@ -7,7 +7,7 @@
 
 #include "SoftCircleMod.hpp"
 #include "IntentMapping.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 
 
 

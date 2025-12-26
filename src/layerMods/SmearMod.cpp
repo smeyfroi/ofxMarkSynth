@@ -7,7 +7,7 @@
 
 #include "SmearMod.hpp"
 #include "IntentMapping.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 #include <cmath>
 
 

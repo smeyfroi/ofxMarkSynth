@@ -9,7 +9,7 @@
 #include "LineGeom.h"
 #include "IntentMapping.hpp"
 #include "Parameter.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 #include "Synth.hpp"
 
 

@@ -9,7 +9,7 @@
 #include "CollageMod.hpp"
 #include "ofxFatline.h"
 #include "IntentMapping.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 
 
 

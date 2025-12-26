@@ -8,7 +8,7 @@
 #include "PathMod.hpp"
 #include "ofxConvexHull.h"
 #include "IntentMapping.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {

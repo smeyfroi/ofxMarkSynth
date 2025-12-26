@@ -5,7 +5,7 @@
 
 #include "TextSourceMod.hpp"
 #include "Synth.hpp"
-#include "../IntentMapper.hpp"
+#include "IntentMapper.hpp"
 #include "ofUtils.h"
 
 namespace ofxMarkSynth {
