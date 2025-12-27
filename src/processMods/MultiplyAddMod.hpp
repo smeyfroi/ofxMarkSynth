@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "Mod.hpp"
-#include "ParamController.h"
-#include "IntentMapping.hpp"
+#include "core/Mod.hpp"
+#include "core/ParamController.h"
+#include "core/IntentMapping.hpp"
 
 
 

@@ -5,10 +5,10 @@
 //  Created by AI Assistant on 08/11/2025.
 //
 
-#include "NodeEditorLayoutSerializer.hpp"
-#include "NodeEditorModel.hpp"
-#include "Synth.hpp"
-#include "Mod.hpp"
+#include "nodeEditor/NodeEditorLayoutSerializer.hpp"
+#include "nodeEditor/NodeEditorModel.hpp"
+#include "core/Synth.hpp"
+#include "core/Mod.hpp"
 #include "imnodes.h"
 #include "ofLog.h"
 #include "ofUtils.h"

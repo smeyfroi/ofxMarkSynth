@@ -8,7 +8,7 @@
 #pragma once
 
 #include "ofParameter.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 
 struct ImFont;  // Forward declaration
 

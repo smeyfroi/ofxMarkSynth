@@ -6,9 +6,9 @@
 //
 
 #include "ClusterMod.hpp"
-#include "IntentMapping.hpp"
-#include "IntentMapper.hpp"
-#include "Parameter.hpp"
+#include "core/IntentMapping.hpp"
+#include "core/IntentMapper.hpp"
+#include "config/Parameter.hpp"
 
 
 

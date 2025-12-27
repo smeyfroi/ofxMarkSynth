@@ -5,8 +5,8 @@
 //  Created by Steve Meyfroidt on 12/11/2025.
 //
 
-#include "NodeRenderUtil.hpp"
-#include "util/ImGuiUtil.hpp"
+#include "nodeEditor/NodeRenderUtil.hpp"
+#include "gui/ImGuiUtil.hpp"
 #include <cstdio>
 
 

@@ -6,8 +6,8 @@
 //
 
 #include "SomPaletteMod.hpp"
-#include "IntentMapping.hpp"
-#include "Synth.hpp"
+#include "core/IntentMapping.hpp"
+#include "core/Synth.hpp"
 
 
 namespace ofxMarkSynth {

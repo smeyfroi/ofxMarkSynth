@@ -6,8 +6,8 @@
 //
 
 #include "PixelSnapshotMod.hpp"
-#include "IntentMapping.hpp"
-#include "IntentMapper.hpp"
+#include "core/IntentMapping.hpp"
+#include "core/IntentMapper.hpp"
 
 
 

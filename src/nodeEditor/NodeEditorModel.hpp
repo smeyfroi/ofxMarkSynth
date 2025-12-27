@@ -12,8 +12,8 @@
 #include <variant>
 #include <vector>
 #include "glm/vec2.hpp"
-#include "Mod.hpp"
-#include "NodeEditorLayout.hpp"
+#include "core/Mod.hpp"
+#include "nodeEditor/NodeEditorLayout.hpp"
 
 
 

@@ -5,9 +5,9 @@
 //  Created by Steve Meyfroidt on 08/11/2025.
 //
 
-#include "NodeEditorLayout.hpp"
-#include "Mod.hpp"
-#include "Synth.hpp"
+#include "nodeEditor/NodeEditorLayout.hpp"
+#include "core/Mod.hpp"
+#include "core/Synth.hpp"
 #include "ofMath.h"
 #include <cmath>
 

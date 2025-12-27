@@ -9,8 +9,8 @@
 
 #include <filesystem>
 #include <string>
-#include "Mod.hpp"
-#include "ParamController.h"
+#include "core/Mod.hpp"
+#include "core/ParamController.h"
 #include "ofxMotionFromVideo.h"
 #ifdef TARGET_MAC
 #include "ofxFFmpegRecorder.h"

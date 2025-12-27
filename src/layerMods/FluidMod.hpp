@@ -8,9 +8,9 @@
 #pragma once
 
 #include <memory>
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "FluidSimulation.h"
-#include "ParamController.h"
+#include "core/ParamController.h"
 
 namespace ofxMarkSynth {
 

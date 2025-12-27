@@ -6,7 +6,7 @@
 //
 
 #include "MultiplyAddMod.hpp"
-#include "IntentMapper.hpp"
+#include "core/IntentMapper.hpp"
 
 
 

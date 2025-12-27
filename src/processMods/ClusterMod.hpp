@@ -10,10 +10,10 @@
 #include <memory>
 #include <vector>
 #include "ofxGui.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxPointClusters.h"
-#include "Intent.hpp"
-#include "ParamController.h"
+#include "core/Intent.hpp"
+#include "core/ParamController.h"
 
 namespace ofxMarkSynth {
 

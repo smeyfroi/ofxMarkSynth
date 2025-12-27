@@ -8,8 +8,8 @@
 #pragma once
 
 #include <vector>
-#include "Mod.hpp"
-#include "ParamController.h"
+#include "core/Mod.hpp"
+#include "core/ParamController.h"
 #include "SoftCircleShader.h"
 
 

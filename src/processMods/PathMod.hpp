@@ -9,8 +9,8 @@
 
 #include <deque>
 #include <vector>
-#include "Mod.hpp"
-#include "ParamController.h"
+#include "core/Mod.hpp"
+#include "core/ParamController.h"
 
 namespace ofxMarkSynth {
 

@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 #include "ofxGui.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxIntrospector.h"
 
 

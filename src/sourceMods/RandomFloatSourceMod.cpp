@@ -6,8 +6,8 @@
 //
 
 #include "RandomFloatSourceMod.hpp"
-#include "IntentMapping.hpp"
-#include "IntentMapper.hpp"
+#include "core/IntentMapping.hpp"
+#include "core/IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {

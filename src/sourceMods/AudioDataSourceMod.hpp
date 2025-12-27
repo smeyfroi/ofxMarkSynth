@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxAudioData.h"
 #include <memory>
 

@@ -6,10 +6,10 @@
 //
 
 #include "FluidMod.hpp"
-#include "Intent.hpp"
-#include "IntentMapper.hpp"
-#include "IntentMapping.hpp"
-#include "Parameter.hpp"
+#include "core/Intent.hpp"
+#include "core/IntentMapper.hpp"
+#include "core/IntentMapping.hpp"
+#include "config/Parameter.hpp"
 
 
 

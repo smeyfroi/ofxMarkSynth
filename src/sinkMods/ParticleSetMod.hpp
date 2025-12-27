@@ -10,9 +10,9 @@
 #include <memory>
 #include <vector>
 #include "ofxGui.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxParticleSet.h"
-#include "ParamController.h"
+#include "core/ParamController.h"
 //#include "AddTextureThresholded.h"
 
 

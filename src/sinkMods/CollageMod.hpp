@@ -8,9 +8,9 @@
 #pragma once
 
 #include "ofxGui.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "PingPongFbo.h"
-#include "ParamController.h"
+#include "core/ParamController.h"
 
 
 

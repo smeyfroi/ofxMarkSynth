@@ -5,9 +5,9 @@
 //  Created by Steve Meyfroidt on 07/11/2025.
 //
 
-#include "NodeEditorModel.hpp"
-#include "NodeEditorLayoutSerializer.hpp"
-#include "Synth.hpp"
+#include "nodeEditor/NodeEditorModel.hpp"
+#include "nodeEditor/NodeEditorLayoutSerializer.hpp"
+#include "core/Synth.hpp"
 #include "imnodes.h"
 
 

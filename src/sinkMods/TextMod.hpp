@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "Mod.hpp"
-#include "ParamController.h"
-#include "util/FontCache.hpp"
+#include "core/Mod.hpp"
+#include "core/ParamController.h"
+#include "gui/FontCache.hpp"
 #include "ofTrueTypeFont.h"
 #include <memory>
 #include <vector>

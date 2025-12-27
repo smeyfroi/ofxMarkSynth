@@ -8,9 +8,9 @@
 #pragma once
 
 #include <vector>
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "AddRadialImpulseShader.h"
-#include "ParamController.h"
+#include "core/ParamController.h"
 
 
 namespace ofxMarkSynth {

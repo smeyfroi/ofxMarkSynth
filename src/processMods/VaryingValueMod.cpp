@@ -6,7 +6,7 @@
 //
 
 //#include "VaryingValueMod.hpp"
-//#include "IntentMapping.hpp"
+//#include "core/IntentMapping.hpp"
 //
 //namespace ofxMarkSynth {
 //

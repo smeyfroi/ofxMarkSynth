@@ -6,7 +6,7 @@
 //
 
 #include "StaticTextSourceMod.hpp"
-#include "Synth.hpp"
+#include "core/Synth.hpp"
 
 
 

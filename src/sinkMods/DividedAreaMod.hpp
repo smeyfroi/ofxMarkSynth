@@ -9,9 +9,9 @@
 
 #include <vector>
 #include "ofxGui.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxDividedArea.h"
-#include "ParamController.h"
+#include "core/ParamController.h"
 
 
 

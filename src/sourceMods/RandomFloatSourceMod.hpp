@@ -8,8 +8,8 @@
 #pragma once
 
 #include <utility>
-#include "Mod.hpp"
-#include "ParamController.h"
+#include "core/Mod.hpp"
+#include "core/ParamController.h"
 
 namespace ofxMarkSynth {
 

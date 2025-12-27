@@ -10,9 +10,9 @@
 #include <random>
 #include <vector>
 #include "ofxGui.h"
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxContinuousSomPalette.hpp"
-//#include "ParamController.h"
+//#include "core/ParamController.h"
 
 
 namespace ofxMarkSynth {

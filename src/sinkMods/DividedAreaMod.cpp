@@ -7,10 +7,10 @@
 
 #include "DividedAreaMod.hpp"
 #include "LineGeom.h"
-#include "IntentMapping.hpp"
-#include "Parameter.hpp"
-#include "IntentMapper.hpp"
-#include "Synth.hpp"
+#include "core/IntentMapping.hpp"
+#include "config/Parameter.hpp"
+#include "core/IntentMapper.hpp"
+#include "core/Synth.hpp"
 
 
 

@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "Mod.hpp"
+#include "core/Mod.hpp"
 #include "ofxGui.h"
 #include "UnitQuadMesh.h"
-#include "ParamController.h"
-#include "IntentMapping.hpp"
+#include "core/ParamController.h"
+#include "core/IntentMapping.hpp"
 
 
 

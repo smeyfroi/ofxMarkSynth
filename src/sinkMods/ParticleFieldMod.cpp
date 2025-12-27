@@ -7,9 +7,9 @@
 
 #include "ParticleFieldMod.hpp"
 #include "cmath"
-#include "IntentMapping.hpp"
-#include "Parameter.hpp"
-#include "IntentMapper.hpp"
+#include "core/IntentMapping.hpp"
+#include "config/Parameter.hpp"
+#include "core/IntentMapper.hpp"
 
 
 namespace ofxMarkSynth {

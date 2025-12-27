@@ -6,7 +6,7 @@
 //
 
 #include "FadeMod.hpp"
-#include "IntentMapper.hpp"
+#include "core/IntentMapper.hpp"
 
 
 
