@@ -8,7 +8,6 @@
 #pragma once
 
 #include "Mod.hpp"
-#include "TonemapCrossfadeShader.h"
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -33,6 +32,8 @@
 #include "util/ConfigTransitionManager.hpp"
 #include "util/IntentController.hpp"
 #include "util/LayerController.hpp"
+#include "util/DisplayController.hpp"
+#include "util/CompositeRenderer.hpp"
 
 namespace ofxAudioAnalysisClient {
 class LocalGistClient;
@@ -127,8 +128,8 @@ public:
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
   void update() override;
-  glm::vec2 getSize() const { return compositeSize; }
-  const ofFbo& getCompositeFbo() const { return imageCompositeFbo; }
+  glm::vec2 getSize() const { return compositeRenderer->getCompositeSize(); }
+  const ofFbo& getCompositeFbo() const { return compositeRenderer->getCompositeFbo(); }
   void draw() override;
 
   void toggleRecording();
@@ -222,31 +223,15 @@ private:
   std::unique_ptr<LayerController> layerController;
   // <<<
 
-  void initDisplayParameterGroup();
+  // >>> Display and composite rendering (delegated to helper classes)
+  std::unique_ptr<DisplayController> displayController;
+  std::unique_ptr<CompositeRenderer> compositeRenderer;
+  // <<<
   
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
 
   bool paused;
 
-  TonemapCrossfadeShader tonemapCrossfadeShader;
-  ofMesh crossfadeQuadMesh;
-  ofMesh unitQuadMesh;
-  glm::vec2 compositeSize;
-  float compositeScale;
-  ofFbo imageCompositeFbo;
-  void updateCompositeImage();
-
-  float sidePanelWidth, sidePanelHeight;
-  PingPongFbo leftPanelFbo, rightPanelFbo;
-
-  float leftSidePanelLastUpdate { 0.0 };
-  float rightSidePanelLastUpdate { 0.0 };
-  float leftSidePanelTimeoutSecs { 7.0 };
-  float rightSidePanelTimeoutSecs { 11.0 };
-  void updateSidePanels();
-
-  void drawMiddlePanel(float w, float h, float scale);
-  void drawSidePanels(float xleft, float xright, float w, float h);
   void updateDebugViewFbo();
   
   // Debug view system - renders Mod::draw() calls to FBO for ImGui display
@@ -278,20 +263,11 @@ private:
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   
-  ofParameterGroup displayParameters;
+  // Background color (part of Intent system, stays in Synth)
   ofParameter<ofFloatColor> backgroundColorParameter { "BackgroundColour", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
   ofParameter<float> backgroundMultiplierParameter { "BackgroundMultiplier", 0.1, 0.0, 1.0 };
-  ofParameter<int> toneMapTypeParameter { "Tone map", 3, 0, 5 }; // 0: Linear (clamp); 1: Reinhard; 2: Reinhard Extended; 3: ACES; 4: Filmic; 5: Exposure
-  ofParameter<float> exposureParameter { "Exposure", 1.0, 0.0, 4.0 };
 
-  ofParameter<float> gammaParameter { "Gamma", 2.2, 0.1, 5.0 };
-  ofParameter<float> whitePointParameter { "White Pt", 11.2, 1.0, 20.0 }; // for Reinhard Extended
-  ofParameter<float> contrastParameter { "Contrast", 1.03, 0.9, 1.1 };
-  ofParameter<float> saturationParameter { "Saturation", 1.0, 0.0, 2.0 };
-  ofParameter<float> brightnessParameter { "Brightness", 0.0, -0.1, 0.1 };
-  ofParameter<float> hueShiftParameter { "Hue Shift", 0.0, -1.0, 1.0 };
-  ofParameter<float> sideExposureParameter { "Side Exp", 0.6, 0.0, 4.0 };
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
   ofxLabel pauseStatus;

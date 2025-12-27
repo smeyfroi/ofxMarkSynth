@@ -462,23 +462,24 @@ void Gui::drawDisplayControls() {
     "Filmic",
     "Exposure"
   };
-  int currentTonemap = synthPtr->toneMapTypeParameter.get();
+  auto& dc = *synthPtr->displayController;
+  int currentTonemap = dc.getToneMapType().get();
   ImGui::PushItemWidth(150.0f);
   if (ImGui::Combo("##tonemap", &currentTonemap, tonemapOptions, IM_ARRAYSIZE(tonemapOptions))) {
-    synthPtr->toneMapTypeParameter.set(currentTonemap);
+    dc.getToneMapType().set(currentTonemap);
   }
   ImGui::PopItemWidth();
   ImGui::SameLine();
-  ImGui::Text("%s", synthPtr->toneMapTypeParameter.getName().c_str());
+  ImGui::Text("%s", dc.getToneMapType().getName().c_str());
 
-  addParameter(synthPtr, synthPtr->exposureParameter);
-  addParameter(synthPtr, synthPtr->gammaParameter);
-  addParameter(synthPtr, synthPtr->whitePointParameter);
-  addParameter(synthPtr, synthPtr->contrastParameter);
-  addParameter(synthPtr, synthPtr->saturationParameter);
-  addParameter(synthPtr, synthPtr->brightnessParameter);
-  addParameter(synthPtr, synthPtr->hueShiftParameter);
-  addParameter(synthPtr, synthPtr->sideExposureParameter);
+  addParameter(synthPtr, dc.getExposure());
+  addParameter(synthPtr, dc.getGamma());
+  addParameter(synthPtr, dc.getWhitePoint());
+  addParameter(synthPtr, dc.getContrast());
+  addParameter(synthPtr, dc.getSaturation());
+  addParameter(synthPtr, dc.getBrightness());
+  addParameter(synthPtr, dc.getHueShift());
+  addParameter(synthPtr, dc.getSideExposure());
 }
 
 constexpr float thumbW = 128.0f;

@@ -149,7 +149,6 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
 Synth::Synth(const std::string& name_, ModConfig config, bool startHibernated, glm::vec2 compositeSize_, std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient, ResourceManager resources_) :
 Mod(nullptr, name_, std::move(config)),
 paused { startHibernated },  // Start paused if hibernated
-compositeSize { compositeSize_ },
 resources { std::move(resources_) },
 audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
@@ -158,48 +157,16 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   configTransitionManager = std::make_unique<ConfigTransitionManager>();
   intentController = std::make_unique<IntentController>();
   layerController = std::make_unique<LayerController>();
-
-  imageCompositeFbo.allocate(compositeSize.x, compositeSize.y, GL_RGB16F);
-  compositeScale = std::min(ofGetWindowWidth() / imageCompositeFbo.getWidth(), ofGetWindowHeight() / imageCompositeFbo.getHeight());
   
-  imageSaver = std::make_unique<AsyncImageSaver>(compositeSize);
+  // Display and composite rendering
+  displayController = std::make_unique<DisplayController>();
+  displayController->buildParameterGroup();
   
-  sidePanelWidth = (ofGetWindowWidth() - imageCompositeFbo.getWidth() * compositeScale) / 2.0 - *resources.get<float>("compositePanelGapPx");
-  if (sidePanelWidth > 0.0) {
-    sidePanelHeight = ofGetWindowHeight();
-    leftPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-    rightPanelFbo.allocate(sidePanelWidth, sidePanelHeight, GL_RGB16F);
-  }
-
-  tonemapCrossfadeShader.load();
-
-  crossfadeQuadMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
-  crossfadeQuadMesh.getVertices() = {
-    { 0.0f, 0.0f, 0.0f },
-    { compositeSize.x, 0.0f, 0.0f },
-    { compositeSize.x, compositeSize.y, 0.0f },
-    { 0.0f, compositeSize.y, 0.0f },
-  };
-  crossfadeQuadMesh.getTexCoords() = {
-    { 0.0f, 0.0f },
-    { 1.0f, 0.0f },
-    { 1.0f, 1.0f },
-    { 0.0f, 1.0f },
-  };
-
-  unitQuadMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
-  unitQuadMesh.getVertices() = {
-    { 0.0f, 0.0f, 0.0f },
-    { 1.0f, 0.0f, 0.0f },
-    { 1.0f, 1.0f, 0.0f },
-    { 0.0f, 1.0f, 0.0f },
-  };
-  unitQuadMesh.getTexCoords() = {
-    { 0.0f, 0.0f },
-    { 1.0f, 0.0f },
-    { 1.0f, 1.0f },
-    { 0.0f, 1.0f },
-  };
+  compositeRenderer = std::make_unique<CompositeRenderer>();
+  compositeRenderer->allocate(compositeSize_, ofGetWindowWidth(), ofGetWindowHeight(),
+                              *resources.get<float>("compositePanelGapPx"));
+  
+  imageSaver = std::make_unique<AsyncImageSaver>(compositeSize_);
   
   if (resources.has("performanceArtefactRootPath")) {
     auto p = resources.get<std::filesystem::path>("performanceArtefactRootPath");
@@ -290,7 +257,6 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 
 // TODO: fold this into loadFromConfig and the ctor?
 void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
-  initDisplayParameterGroup();
   layerController->buildAlphaParameters();
   layerController->buildPauseParameters();
   initMemoryBankParameterGroup();
@@ -370,8 +336,8 @@ void Synth::unload() {
   // 5) Clear current config path
   currentConfigPath.clear();
 
-  // Note: Keep displayParameters, imageCompositeFbo, side panel FBOs, and tonemapCrossfadeShader
-  // Rebuild of groups happens when reloading config (configureGui/init* called then)
+  // Note: Keep displayController, compositeRenderer, and other helper classes
+  // Rebuild of parameter groups happens when reloading config (configureGui/init* called then)
 }
 
 DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
@@ -464,7 +430,7 @@ void Synth::receive(int sinkId, const float& v) {
     // Memory bank: save operations
     case SINK_MEMORY_SAVE:
       if (v > 0.5f) {
-        memoryBank.save(imageCompositeFbo,
+        memoryBank.save(compositeRenderer->getCompositeFbo(),
             memorySaveCentreController.value,
             memorySaveWidthController.value);
       }
@@ -473,7 +439,7 @@ void Synth::receive(int sinkId, const float& v) {
     case SINK_MEMORY_SAVE_SLOT:
       {
         int slot = static_cast<int>(v) % MemoryBank::NUM_SLOTS;
-        memoryBank.saveToSlot(imageCompositeFbo, slot);
+        memoryBank.saveToSlot(compositeRenderer->getCompositeFbo(), slot);
 //        ofLogNotice("Synth") << "Memory saved to slot " << slot;
       }
       break;
@@ -633,21 +599,42 @@ void Synth::update() {
   // When not hibernating, only update if not paused
   TSGL_START("Synth-updateComposites");
   TS_START("Synth-updateComposites");
-  updateCompositeImage();
-  updateSidePanels();
+  
+  // Phase 1: Update composite base layers
+  CompositeRenderer::CompositeParams compositeParams {
+    .layers = *layerController,
+    .hibernationAlpha = hibernationController->getAlpha(),
+    .backgroundColor = backgroundColorController.value,
+    .backgroundMultiplier = backgroundMultiplierParameter
+  };
+  compositeRenderer->updateCompositeBase(compositeParams);
+  
+  // Phase 2: Let mods render overlays (they sample the current composite)
+  if (!paused) {
+    for (const auto& [name, modPtr] : modPtrs) {
+      modPtr->drawOverlay();
+    }
+  }
+  
+  // Phase 3: Composite overlay layers on top
+  compositeRenderer->updateCompositeOverlays(compositeParams);
+  
+  // Update side panels
+  compositeRenderer->updateSidePanels();
+  
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
   
   // Process deferred image save immediately after composite is ready
   // This timing ensures PBO bind happens while GPU is still working on this frame's data
   if (pendingImageSave) {
-    imageSaver->requestSave(imageCompositeFbo, pendingImageSavePath);
+    imageSaver->requestSave(compositeRenderer->getCompositeFbo(), pendingImageSavePath);
     pendingImageSave = false;
     pendingImageSavePath.clear();
   }
   
   // Process any deferred memory bank saves (requested from GUI)
-  memoryBank.processPendingSave(imageCompositeFbo);
+  memoryBank.processPendingSave(compositeRenderer->getCompositeFbo());
 
   if (memorySaveAllRequested) {
     memorySaveAllRequested = false;
@@ -660,196 +647,8 @@ void Synth::update() {
   }
   
   if (!paused) {
-    emit(Synth::SOURCE_COMPOSITE_FBO, imageCompositeFbo);
+    emit(Synth::SOURCE_COMPOSITE_FBO, compositeRenderer->getCompositeFbo());
   }
-}
-
-glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
-  float x = ofRandom(bounds.x / 4.0, bounds.x * 3.0 / 4.0 - rectSize.x);
-  float y = ofRandom(bounds.y / 4.0, bounds.y * 3.0 / 4.0 - rectSize.y);
-  return { x, y };
-}
-
-// target is the outgoing image; source is the incoming one
-void Synth::updateSidePanels() {
-  if (sidePanelWidth <= 0.0) return;
-  
-  if (ofGetElapsedTimef() - leftSidePanelLastUpdate > leftSidePanelTimeoutSecs) {
-    leftSidePanelLastUpdate = ofGetElapsedTimef();
-    leftPanelFbo.swap();
-    glm::vec2 leftPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
-    leftPanelFbo.getSource().begin();
-    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, leftPanelImageOrigin.x, leftPanelImageOrigin.y);
-    leftPanelFbo.getSource().end();
-  }
-
-  if (ofGetElapsedTimef() - rightSidePanelLastUpdate > rightSidePanelTimeoutSecs) {
-    rightSidePanelLastUpdate = ofGetElapsedTimef();
-    rightPanelFbo.swap();
-    glm::vec2 rightPanelImageOrigin = randomCentralRectOrigin({ sidePanelWidth, sidePanelHeight }, { imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight() });
-    rightPanelFbo.getSource().begin();
-    imageCompositeFbo.getTexture().drawSubsection(0.0, 0.0, sidePanelWidth, sidePanelHeight, rightPanelImageOrigin.x, rightPanelImageOrigin.y);
-    rightPanelFbo.getSource().end();
-  }
-}
-
-void Synth::updateCompositeImage() {
-  struct LayerInfo {
-    DrawingLayerPtr layer;
-    float finalAlpha;
-  };
-  std::vector<LayerInfo> baseLayers;
-  std::vector<LayerInfo> overlayLayers;
-  
-  const auto& drawingLayers = layerController->getLayers();
-  auto& alphaParams = layerController->getAlphaParameterGroup();
-  
-  size_t i = 0;
-  for (const auto& [name, dlptr] : drawingLayers) {
-    if (!dlptr->isDrawn) continue;
-    float layerAlpha = alphaParams.getFloat(i);
-    ++i;
-    if (layerAlpha == 0.0f) continue;
-    
-    float finalAlpha = layerAlpha;
-    if (hibernationController->isHibernating()) {
-      finalAlpha *= hibernationController->getAlpha();
-    }
-    if (finalAlpha == 0.0f) continue;
-    
-    if (dlptr->isOverlay) {
-      overlayLayers.push_back({ dlptr, finalAlpha });
-    } else {
-      baseLayers.push_back({ dlptr, finalAlpha });
-    }
-  }
-  
-  // 1) Base composite (background + base layers)
-  imageCompositeFbo.begin();
-  {
-    ofFloatColor backgroundColor = backgroundColorController.value;
-    backgroundColor *= backgroundMultiplierParameter; backgroundColor.a = 1.0f;
-    ofClear(backgroundColor);
-    
-    for (const auto& info : baseLayers) {
-      ofEnableBlendMode(info.layer->blendMode);
-      ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, info.finalAlpha });
-      info.layer->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-    }
-  }
-  imageCompositeFbo.end();
-  
-  // 2) Overlay mods render into their own FBOs, sampling current composite
-  if (!paused) {
-    std::for_each(modPtrs.cbegin(), modPtrs.cend(), [](const auto& pair) {
-      const auto& [name, modPtr] = pair;
-      modPtr->drawOverlay();
-    });
-  }
-  
-  // 3) Composite overlay layers on top
-  if (!overlayLayers.empty()) {
-    imageCompositeFbo.begin();
-    {
-      for (const auto& info : overlayLayers) {
-        ofEnableBlendMode(info.layer->blendMode);
-        ofSetColor(ofFloatColor { 1.0f, 1.0f, 1.0f, info.finalAlpha });
-        info.layer->fboPtr->draw(0, 0, imageCompositeFbo.getWidth(), imageCompositeFbo.getHeight());
-      }
-    }
-    imageCompositeFbo.end();
-  }
-}
-
-void Synth::drawSidePanels(float xleft, float xright, float w, float h) {
-  const auto easeIn = [](float x) { return x * x * x; };
-
-  const auto drawPanel = [&](PingPongFbo& panelFbo, float lastUpdateTime, float timeoutSecs, float x) {
-    if (timeoutSecs <= 0.0f) return;
-
-    float cycleElapsed = (ofGetElapsedTimef() - lastUpdateTime) / timeoutSecs;
-    float alphaIn = easeIn(ofClamp(cycleElapsed, 0.0f, 1.0f));
-
-    const auto& oldTexData = panelFbo.getTarget().getTexture().getTextureData();
-    const auto& newTexData = panelFbo.getSource().getTexture().getTextureData();
-
-    tonemapCrossfadeShader.begin(toneMapTypeParameter,
-                                sideExposureParameter,
-                                gammaParameter,
-                                whitePointParameter,
-                                contrastParameter,
-                                saturationParameter,
-                                brightnessParameter,
-                                hueShiftParameter,
-                                alphaIn,
-                                oldTexData.bFlipTexture,
-                                newTexData.bFlipTexture,
-                                panelFbo.getTarget().getTexture(),
-                                panelFbo.getSource().getTexture());
-
-    ofPushMatrix();
-    ofTranslate(x, 0.0f);
-    ofScale(w, h);
-    ofSetColor(255);
-    unitQuadMesh.draw();
-    ofPopMatrix();
-
-    tonemapCrossfadeShader.end();
-  };
-
-  drawPanel(leftPanelFbo, leftSidePanelLastUpdate, leftSidePanelTimeoutSecs, xleft);
-  drawPanel(rightPanelFbo, rightSidePanelLastUpdate, rightSidePanelTimeoutSecs, xright);
-}
-
-void Synth::drawMiddlePanel(float w, float h, float scale) {
-  ofPushMatrix();
-  ofTranslate((w - imageCompositeFbo.getWidth() * scale) / 2.0, (h - imageCompositeFbo.getHeight() * scale) / 2.0);
-  ofScale(scale, scale);
-  
-  if (configTransitionManager->isTransitioning() && configTransitionManager->hasValidSnapshot()) {
-    const auto& snapshotTexData = configTransitionManager->getSnapshotFbo().getTexture().getTextureData();
-    const auto& liveTexData = imageCompositeFbo.getTexture().getTextureData();
-
-    tonemapCrossfadeShader.begin(toneMapTypeParameter,
-                                exposureParameter,
-                                gammaParameter,
-                                whitePointParameter,
-                                contrastParameter,
-                                saturationParameter,
-                                brightnessParameter,
-                                hueShiftParameter,
-                                configTransitionManager->getAlpha(),
-                                snapshotTexData.bFlipTexture,
-                                liveTexData.bFlipTexture,
-                                configTransitionManager->getSnapshotFbo().getTexture(),
-                                imageCompositeFbo.getTexture());
-
-    ofSetColor(255);
-    crossfadeQuadMesh.draw();
-    tonemapCrossfadeShader.end();
-  } else {
-    const auto& texData = imageCompositeFbo.getTexture().getTextureData();
-
-    tonemapCrossfadeShader.begin(toneMapTypeParameter,
-                                exposureParameter,
-                                gammaParameter,
-                                whitePointParameter,
-                                contrastParameter,
-                                saturationParameter,
-                                brightnessParameter,
-                                hueShiftParameter,
-                                1.0f,
-                                texData.bFlipTexture,
-                                texData.bFlipTexture,
-                                imageCompositeFbo.getTexture(),
-                                imageCompositeFbo.getTexture());
-
-    ofSetColor(255);
-    crossfadeQuadMesh.draw();
-    tonemapCrossfadeShader.end();
-  }
-  
-  ofPopMatrix();
 }
 
 void Synth::updateDebugViewFbo() {
@@ -885,9 +684,10 @@ void Synth::updateDebugViewFbo() {
 // Does not draw the GUI: see drawGui()
 void Synth::draw() {
   TSGL_START("Synth::draw");
-  ofBlendMode(OF_BLENDMODE_DISABLED);
-  drawSidePanels(0.0, ofGetWindowWidth() - sidePanelWidth, sidePanelWidth, sidePanelHeight);
-  drawMiddlePanel(ofGetWindowWidth(), ofGetWindowHeight(), compositeScale);
+  compositeRenderer->draw(ofGetWindowWidth(), ofGetWindowHeight(),
+                          displayController->getSettings(),
+                          displayController->getSidePanelSettings(),
+                          configTransitionManager.get());
   updateDebugViewFbo();  // Render Mod debug draws to FBO for ImGui display
   TSGL_STOP("Synth::draw");
 
@@ -895,10 +695,9 @@ void Synth::draw() {
   if (!paused && videoRecorderPtr && videoRecorderPtr->isRecording()) {
     TS_START("Synth::draw captureFrame");
     videoRecorderPtr->captureFrame([this](ofFbo& fbo) {
-      float scale = fbo.getHeight() / imageCompositeFbo.getHeight();
-      float panelWidth = (fbo.getWidth() - imageCompositeFbo.getWidth() * scale) / 2.0;
-      drawSidePanels(0.0, fbo.getWidth() - panelWidth, panelWidth, sidePanelHeight);
-      drawMiddlePanel(fbo.getWidth(), fbo.getHeight(), scale);
+      compositeRenderer->drawToFbo(fbo, displayController->getSettings(),
+                                   displayController->getSidePanelSettings(),
+                                   configTransitionManager.get());
     });
     TS_STOP("Synth::draw captureFrame");
   }
@@ -1091,23 +890,6 @@ int Synth::getConfigRunningMinutes() const {
 
 int Synth::getConfigRunningSeconds() const {
   return timeTracker->getConfigRunningSeconds();
-}
-
-
-
-void Synth::initDisplayParameterGroup() {
-  displayParameters.clear();
-  
-  displayParameters.setName("Display");
-  displayParameters.add(toneMapTypeParameter);
-  displayParameters.add(exposureParameter);
-  displayParameters.add(gammaParameter);
-  displayParameters.add(whitePointParameter);
-  displayParameters.add(contrastParameter);
-  displayParameters.add(saturationParameter);
-  displayParameters.add(brightnessParameter);
-  displayParameters.add(hueShiftParameter);
-  displayParameters.add(sideExposureParameter);
 }
 
 void Synth::initMemoryBankParameterGroup() {
@@ -1314,7 +1096,7 @@ bool Synth::saveModsToCurrentConfig() {
 void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   // Capture snapshot before unload (if crossfading)
   if (useCrossfade) {
-    configTransitionManager->captureSnapshot(imageCompositeFbo);
+    configTransitionManager->captureSnapshot(compositeRenderer->getCompositeFbo());
   }
   
   // Emit unload event
@@ -1347,21 +1129,8 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   // old color bleeding through due to internal smoothing state
   backgroundColorController.syncWithParameter();
   
-  // Reset side panel update timers so they capture fresh content from the new config
-  // immediately rather than showing stale content from the old config
-  leftSidePanelLastUpdate = 0.0f;
-  rightSidePanelLastUpdate = 0.0f;
-  
-  // Clear the composite FBO with the new background color to prevent old content
-  // from showing through before the first frame renders
-  if (imageCompositeFbo.isAllocated()) {
-    imageCompositeFbo.begin();
-    ofFloatColor bgColor = backgroundColorParameter.get();
-    bgColor *= backgroundMultiplierParameter;
-    bgColor.a = 1.0f;
-    ofClear(bgColor);
-    imageCompositeFbo.end();
-  }
+  // Note: Side panel timers and composite FBO clearing are managed by CompositeRenderer
+  // The first updateCompositeBase() call will clear with the new background color
   
   initParameters();
   layerController->buildAlphaParameters();
