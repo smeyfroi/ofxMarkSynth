@@ -548,7 +548,7 @@ void Gui::drawMemoryBank() {
     ImGui::BeginGroup();
     {
       // Thumbnail or empty box
-      const ofTexture* tex = synthPtr->memoryBank.get(i);
+      const ofTexture* tex = synthPtr->getMemoryBankController().getMemoryBank().get(i);
       if (tex && tex->isAllocated()) {
         const auto& textureData = tex->getTextureData();
         ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
@@ -573,7 +573,7 @@ void Gui::drawMemoryBank() {
       // Save button - deferred to avoid GL state issues during ImGui rendering
       const std::string saveLabel = "Save " + std::to_string(i);
       if (ImGui::Button(saveLabel.c_str(), ImVec2(memThumbW, 0))) {
-        synthPtr->memoryBank.requestSaveToSlot(i);
+        synthPtr->getMemoryBankController().getMemoryBank().requestSaveToSlot(i);
       }
     }
     ImGui::EndGroup();
@@ -597,7 +597,7 @@ void Gui::drawMemoryBank() {
     }
 
     if (ImGui::Button("Clear All", ImVec2(memThumbW, 0))) {
-      synthPtr->memoryBank.clearAll();
+      synthPtr->getMemoryBankController().getMemoryBank().clearAll();
     }
 
     ImGui::Dummy(ImVec2(0.0f, ImGui::GetStyle().ItemSpacing.y));

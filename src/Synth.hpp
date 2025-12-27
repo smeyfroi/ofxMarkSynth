@@ -25,7 +25,7 @@
 #include "util/LoggerChannel.hpp"
 #include "util/ModFactory.hpp"
 #include "util/PerformanceNavigator.hpp"
-#include "util/MemoryBank.hpp"
+#include "util/MemoryBankController.hpp"
 #include "util/VideoRecorder.hpp"
 #include "util/HibernationController.hpp"
 #include "util/TimeTracker.hpp"
@@ -149,20 +149,9 @@ public:
 
   static constexpr int SINK_BACKGROUND_COLOR = 100;
   static constexpr int SINK_RESET_RANDOMNESS = 200;
-
-  // Memory bank sinks
-  static constexpr int SINK_MEMORY_SAVE = 300;
-  static constexpr int SINK_MEMORY_SAVE_SLOT = 301;
-  static constexpr int SINK_MEMORY_EMIT = 302;
-  static constexpr int SINK_MEMORY_EMIT_SLOT = 303;
-  static constexpr int SINK_MEMORY_EMIT_RANDOM = 304;
-  static constexpr int SINK_MEMORY_EMIT_RANDOM_NEW = 305;
-  static constexpr int SINK_MEMORY_EMIT_RANDOM_OLD = 306;
-  static constexpr int SINK_MEMORY_SAVE_CENTRE = 307;
-  static constexpr int SINK_MEMORY_SAVE_WIDTH = 308;
-  static constexpr int SINK_MEMORY_EMIT_CENTRE = 309;
-  static constexpr int SINK_MEMORY_EMIT_WIDTH = 310;
-  static constexpr int SINK_MEMORY_CLEAR_ALL = 311;
+  
+  // Memory bank controller accessor (for Gui)
+  MemoryBankController& getMemoryBankController() { return *memoryBankController; }
 
   ofEvent<HibernationController::CompleteEvent>& getHibernationCompleteEvent();
   HibernationController::State getHibernationState() const;
@@ -295,28 +284,8 @@ private:
   bool pendingImageSave { false };
   std::string pendingImageSavePath;
 
-  // >>> Memory bank system
-  bool globalMemoryBankLoaded { false };
-  bool memorySaveAllRequested { false };
-  MemoryBank memoryBank;
-  void initMemoryBankParameterGroup();
-
-  // Memory save parameters
-  ofParameterGroup memoryBankParameters;
-  ofParameter<float> memorySaveCentreParameter { "MemorySaveCentre", 1.0, 0.0, 1.0 };
-  ofParameter<float> memorySaveWidthParameter { "MemorySaveWidth", 0.0, 0.0, 1.0 };
-  ParamController<float> memorySaveCentreController { memorySaveCentreParameter };
-  ParamController<float> memorySaveWidthController { memorySaveWidthParameter };
-
-  // Memory emit parameters
-  ofParameter<float> memoryEmitCentreParameter { "MemoryEmitCentre", 0.5, 0.0, 1.0 };
-  ofParameter<float> memoryEmitWidthParameter { "MemoryEmitWidth", 1.0, 0.0, 1.0 };
-  ParamController<float> memoryEmitCentreController { memoryEmitCentreParameter };
-  ParamController<float> memoryEmitWidthController { memoryEmitWidthParameter };
-
-  // Emit rate limiting
-  float lastMemoryEmitTime { 0.0f };
-  ofParameter<float> memoryEmitMinIntervalParameter { "MemoryEmitMinInterval", 0.1, 0.0, 2.0 };
+  // >>> Memory bank system (delegated to helper class)
+  std::unique_ptr<MemoryBankController> memoryBankController;
   // <<<
 };
 
