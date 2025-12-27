@@ -6,6 +6,7 @@
 //
 
 #include "rendering/VideoRecorder.hpp"
+#include "rendering/RenderingConstants.h"
 
 #ifdef TARGET_MAC
 
@@ -23,10 +24,11 @@ void VideoRecorder::setup(glm::vec2 compositeSize, const std::filesystem::path& 
     
     compositeFbo_.allocate(compositeSize_.x, compositeSize_.y, GL_RGB);
     
-    recorder_.setup(/*video*/true, /*audio*/false, compositeFbo_.getSize(), /*fps*/30.0, /*bitrate*/8000);
+    recorder_.setup(/*video*/true, /*audio*/false, compositeFbo_.getSize(),
+                    DEFAULT_VIDEO_FPS, DEFAULT_VIDEO_BITRATE);
     recorder_.setOverWrite(true);
     recorder_.setFFmpegPath(ffmpegPath.string());
-    recorder_.setVideoCodec("h264_videotoolbox");
+    recorder_.setVideoCodec(DEFAULT_VIDEO_CODEC);
     
     // Allocate PBOs for async pixel readback
     size_t pboSize = compositeSize_.x * compositeSize_.y * 3;  // RGB bytes

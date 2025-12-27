@@ -4,6 +4,7 @@
 //
 
 #include "rendering/CompositeRenderer.hpp"
+#include "rendering/RenderingConstants.h"
 
 #include "ofGraphics.h"
 #include "ofAppRunner.h"
@@ -13,8 +14,8 @@ namespace ofxMarkSynth {
 namespace {
 
 glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
-    float x = ofRandom(bounds.x / 4.0f, bounds.x * 3.0f / 4.0f - rectSize.x);
-    float y = ofRandom(bounds.y / 4.0f, bounds.y * 3.0f / 4.0f - rectSize.y);
+    float x = ofRandom(bounds.x * PANEL_ORIGIN_MIN_FRAC, bounds.x * PANEL_ORIGIN_MAX_FRAC - rectSize.x);
+    float y = ofRandom(bounds.y * PANEL_ORIGIN_MIN_FRAC, bounds.y * PANEL_ORIGIN_MAX_FRAC - rectSize.y);
     return { x, y };
 }
 
@@ -36,8 +37,8 @@ void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, flo
         panelHeight = windowHeight;
         leftPanel.fbo.allocate(panelWidth, panelHeight, GL_RGB16F);
         rightPanel.fbo.allocate(panelWidth, panelHeight, GL_RGB16F);
-        leftPanel.timeoutSecs = 7.0f;
-        rightPanel.timeoutSecs = 11.0f;
+        leftPanel.timeoutSecs = LEFT_PANEL_TIMEOUT_SECS;
+        rightPanel.timeoutSecs = RIGHT_PANEL_TIMEOUT_SECS;
     }
     
     tonemapShader.load();
@@ -190,44 +191,20 @@ void CompositeRenderer::drawMiddlePanel(float w, float h, float drawScale,
         const auto& snapshotTexData = transition->getSnapshotFbo().getTexture().getTextureData();
         const auto& liveTexData = compositeFbo.getTexture().getTextureData();
         
-        tonemapShader.begin(display.toneMapType,
-                            display.exposure,
-                            display.gamma,
-                            display.whitePoint,
-                            display.contrast,
-                            display.saturation,
-                            display.brightness,
-                            display.hueShift,
-                            transition->getAlpha(),
-                            snapshotTexData.bFlipTexture,
-                            liveTexData.bFlipTexture,
-                            transition->getSnapshotFbo().getTexture(),
-                            compositeFbo.getTexture());
-        
-        ofSetColor(255);
-        compositeQuadMesh.draw();
-        tonemapShader.end();
+        beginTonemapShader(display, transition->getAlpha(),
+                           snapshotTexData.bFlipTexture, liveTexData.bFlipTexture,
+                           transition->getSnapshotFbo().getTexture(), compositeFbo.getTexture());
     } else {
         const auto& texData = compositeFbo.getTexture().getTextureData();
         
-        tonemapShader.begin(display.toneMapType,
-                            display.exposure,
-                            display.gamma,
-                            display.whitePoint,
-                            display.contrast,
-                            display.saturation,
-                            display.brightness,
-                            display.hueShift,
-                            1.0f,
-                            texData.bFlipTexture,
-                            texData.bFlipTexture,
-                            compositeFbo.getTexture(),
-                            compositeFbo.getTexture());
-        
-        ofSetColor(255);
-        compositeQuadMesh.draw();
-        tonemapShader.end();
+        beginTonemapShader(display, 1.0f,
+                           texData.bFlipTexture, texData.bFlipTexture,
+                           compositeFbo.getTexture(), compositeFbo.getTexture());
     }
+    
+    ofSetColor(255);
+    compositeQuadMesh.draw();
+    tonemapShader.end();
     
     ofPopMatrix();
 }
@@ -250,19 +227,9 @@ void CompositeRenderer::drawPanel(SidePanel& panel, float x, float w, float h,
     const auto& oldTexData = panel.fbo.getTarget().getTexture().getTextureData();
     const auto& newTexData = panel.fbo.getSource().getTexture().getTextureData();
     
-    tonemapShader.begin(display.toneMapType,
-                        display.exposure,  // Already uses sideExposure via getSidePanelSettings()
-                        display.gamma,
-                        display.whitePoint,
-                        display.contrast,
-                        display.saturation,
-                        display.brightness,
-                        display.hueShift,
-                        alphaIn,
-                        oldTexData.bFlipTexture,
-                        newTexData.bFlipTexture,
-                        panel.fbo.getTarget().getTexture(),
-                        panel.fbo.getSource().getTexture());
+    beginTonemapShader(display, alphaIn,
+                       oldTexData.bFlipTexture, newTexData.bFlipTexture,
+                       panel.fbo.getTarget().getTexture(), panel.fbo.getSource().getTexture());
     
     ofPushMatrix();
     ofTranslate(x, 0.0f);
@@ -272,6 +239,25 @@ void CompositeRenderer::drawPanel(SidePanel& panel, float x, float w, float h,
     ofPopMatrix();
     
     tonemapShader.end();
+}
+
+void CompositeRenderer::beginTonemapShader(const DisplayController::Settings& display,
+                                            float crossfadeAlpha,
+                                            bool flipTextureA, bool flipTextureB,
+                                            const ofTexture& textureA, const ofTexture& textureB) {
+    tonemapShader.begin(display.toneMapType,
+                        display.exposure,
+                        display.gamma,
+                        display.whitePoint,
+                        display.contrast,
+                        display.saturation,
+                        display.brightness,
+                        display.hueShift,
+                        crossfadeAlpha,
+                        flipTextureA,
+                        flipTextureB,
+                        textureA,
+                        textureB);
 }
 
 } // namespace ofxMarkSynth

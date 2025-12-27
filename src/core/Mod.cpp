@@ -313,7 +313,7 @@ void Mod::resetDrawingLayer(const std::string& layerName) {
   ofLogNotice("Mod") << "'" << name << "' reset current drawing layer '" << layerName << "'";
 }
 
-// Disable drawing for a lyer
+// Disable drawing for a layer
 void Mod::disableDrawingLayer() {
   if (const auto& layerNameOpt = getRandomLayerName()) disableDrawingLayer(*layerNameOpt);
 }

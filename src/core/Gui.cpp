@@ -1119,8 +1119,8 @@ void Gui::drawPerformanceNavigator() {
   ImGui::Text("(click and hold to jump)");
   
   // PREV / NEXT buttons with progress rings
-  float buttonSize = 60.0f;
-  float spacing = 20.0f;
+  constexpr float buttonSize = 60.0f;
+  constexpr float spacing = 20.0f;
   
   // currentIndex already declared above for scroll detection
   int configCount = nav.getConfigCount();
@@ -1132,103 +1132,9 @@ void Gui::drawPerformanceNavigator() {
   float startX = (ImGui::GetContentRegionAvail().x - totalWidth) / 2.0f;
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + startX);
   
-  // PREV button
-  {
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-    ImVec2 center(pos.x + buttonSize / 2, pos.y + buttonSize / 2);
-    float radius = buttonSize / 2 - 5;
-    
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    
-    // Background circle
-    if (canPrev) {
-      drawList->AddCircle(center, radius, IM_COL32(100, 100, 100, 255), 32, 2.0f);
-    } else {
-      drawList->AddCircle(center, radius, IM_COL32(60, 60, 60, 128), 32, 2.0f);
-    }
-    
-    // Progress arc if holding PREV
-    if (nav.getActiveHold() == PerformanceNavigator::HoldAction::PREV) {
-      float progress = nav.getHoldProgress();
-      float startAngle = -IM_PI / 2;  // 12 o'clock
-      float endAngle = startAngle + (progress * 2 * IM_PI);
-      drawList->PathArcTo(center, radius, startAngle, endAngle, 32);
-      drawList->PathStroke(IM_COL32(100, 200, 100, 255), false, 4.0f);
-    }
-    
-    // Invisible button for interaction
-    ImGui::InvisibleButton("##prev", ImVec2(buttonSize, buttonSize));
-    
-    // Draw left arrow icon
-    float arrowSize = radius * 0.5f;
-    ImU32 arrowColor = canPrev ? IM_COL32(255, 255, 255, 255) : IM_COL32(128, 128, 128, 128);
-    drawList->AddTriangleFilled(
-      ImVec2(center.x - arrowSize * 0.5f, center.y),           // left point
-      ImVec2(center.x + arrowSize * 0.5f, center.y - arrowSize * 0.6f),  // top right
-      ImVec2(center.x + arrowSize * 0.5f, center.y + arrowSize * 0.6f),  // bottom right
-      arrowColor);
-    
-    // Handle mouse hold
-    if (ImGui::IsItemActive() && canPrev) {
-      if (nav.getActiveHold() != PerformanceNavigator::HoldAction::PREV ||
-          nav.getActiveHoldSource() != PerformanceNavigator::HoldSource::MOUSE) {
-        nav.beginHold(PerformanceNavigator::HoldAction::PREV, PerformanceNavigator::HoldSource::MOUSE);
-      }
-    } else if (!ImGui::IsItemActive() && nav.getActiveHold() == PerformanceNavigator::HoldAction::PREV &&
-               nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
-      nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
-    }
-  }
-  
+  drawNavigationButton("##prev", -1, canPrev, buttonSize);
   ImGui::SameLine(0, spacing);
-  
-  // NEXT button
-  {
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-    ImVec2 center(pos.x + buttonSize / 2, pos.y + buttonSize / 2);
-    float radius = buttonSize / 2 - 5;
-    
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    
-    // Background circle
-    if (canNext) {
-      drawList->AddCircle(center, radius, IM_COL32(100, 100, 100, 255), 32, 2.0f);
-    } else {
-      drawList->AddCircle(center, radius, IM_COL32(60, 60, 60, 128), 32, 2.0f);
-    }
-    
-    // Progress arc if holding NEXT
-    if (nav.getActiveHold() == PerformanceNavigator::HoldAction::NEXT) {
-      float progress = nav.getHoldProgress();
-      float startAngle = -IM_PI / 2;  // 12 o'clock
-      float endAngle = startAngle + (progress * 2 * IM_PI);
-      drawList->PathArcTo(center, radius, startAngle, endAngle, 32);
-      drawList->PathStroke(IM_COL32(100, 200, 100, 255), false, 4.0f);
-    }
-    
-    // Invisible button for interaction
-    ImGui::InvisibleButton("##next", ImVec2(buttonSize, buttonSize));
-    
-    // Draw right arrow icon
-    float arrowSize = radius * 0.5f;
-    ImU32 arrowColor = canNext ? IM_COL32(255, 255, 255, 255) : IM_COL32(128, 128, 128, 128);
-    drawList->AddTriangleFilled(
-      ImVec2(center.x + arrowSize * 0.5f, center.y),           // right point
-      ImVec2(center.x - arrowSize * 0.5f, center.y - arrowSize * 0.6f),  // top left
-      ImVec2(center.x - arrowSize * 0.5f, center.y + arrowSize * 0.6f),  // bottom left
-      arrowColor);
-    
-    // Handle mouse hold
-    if (ImGui::IsItemActive() && canNext) {
-      if (nav.getActiveHold() != PerformanceNavigator::HoldAction::NEXT ||
-          nav.getActiveHoldSource() != PerformanceNavigator::HoldSource::MOUSE) {
-        nav.beginHold(PerformanceNavigator::HoldAction::NEXT, PerformanceNavigator::HoldSource::MOUSE);
-      }
-    } else if (!ImGui::IsItemActive() && nav.getActiveHold() == PerformanceNavigator::HoldAction::NEXT &&
-               nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
-      nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
-    }
-  }
+  drawNavigationButton("##next", +1, canNext, buttonSize);
   
   // Config counter
   ImGui::Spacing();
@@ -1238,6 +1144,67 @@ void Gui::drawPerformanceNavigator() {
   ImGui::Text("%s", counter.c_str());
   
   ImGui::TextColored(GREY_COLOR, "(hold arrow keys or buttons)");
+}
+
+void Gui::drawNavigationButton(const char* id, int direction, bool canNavigate, float buttonSize) {
+  auto& nav = synthPtr->performanceNavigator;
+  auto holdAction = (direction < 0) ? PerformanceNavigator::HoldAction::PREV 
+                                    : PerformanceNavigator::HoldAction::NEXT;
+  
+  ImVec2 pos = ImGui::GetCursorScreenPos();
+  ImVec2 center(pos.x + buttonSize / 2, pos.y + buttonSize / 2);
+  float radius = buttonSize / 2 - 5;
+  
+  ImDrawList* drawList = ImGui::GetWindowDrawList();
+  
+  // Background circle
+  if (canNavigate) {
+    drawList->AddCircle(center, radius, IM_COL32(100, 100, 100, 255), 32, 2.0f);
+  } else {
+    drawList->AddCircle(center, radius, IM_COL32(60, 60, 60, 128), 32, 2.0f);
+  }
+  
+  // Progress arc if holding this action
+  if (nav.getActiveHold() == holdAction) {
+    float progress = nav.getHoldProgress();
+    float startAngle = -IM_PI / 2;
+    float endAngle = startAngle + (progress * 2 * IM_PI);
+    drawList->PathArcTo(center, radius, startAngle, endAngle, 32);
+    drawList->PathStroke(IM_COL32(100, 200, 100, 255), false, 4.0f);
+  }
+  
+  // Invisible button for interaction
+  ImGui::InvisibleButton(id, ImVec2(buttonSize, buttonSize));
+  
+  // Draw arrow icon (direction determines which way it points)
+  float arrowSize = radius * 0.5f;
+  ImU32 arrowColor = canNavigate ? IM_COL32(255, 255, 255, 255) : IM_COL32(128, 128, 128, 128);
+  if (direction < 0) {
+    // Left arrow
+    drawList->AddTriangleFilled(
+      ImVec2(center.x - arrowSize * 0.5f, center.y),
+      ImVec2(center.x + arrowSize * 0.5f, center.y - arrowSize * 0.6f),
+      ImVec2(center.x + arrowSize * 0.5f, center.y + arrowSize * 0.6f),
+      arrowColor);
+  } else {
+    // Right arrow
+    drawList->AddTriangleFilled(
+      ImVec2(center.x + arrowSize * 0.5f, center.y),
+      ImVec2(center.x - arrowSize * 0.5f, center.y - arrowSize * 0.6f),
+      ImVec2(center.x - arrowSize * 0.5f, center.y + arrowSize * 0.6f),
+      arrowColor);
+  }
+  
+  // Handle mouse hold
+  if (ImGui::IsItemActive() && canNavigate) {
+    if (nav.getActiveHold() != holdAction ||
+        nav.getActiveHoldSource() != PerformanceNavigator::HoldSource::MOUSE) {
+      nav.beginHold(holdAction, PerformanceNavigator::HoldSource::MOUSE);
+    }
+  } else if (!ImGui::IsItemActive() && nav.getActiveHold() == holdAction &&
+             nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
+    nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
+  }
 }
 
 bool Gui::loadSnapshotSlot(int slotIndex) {

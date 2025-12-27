@@ -32,11 +32,6 @@
 #include "processMods/PathMod.hpp"
 #include "processMods/PixelSnapshotMod.hpp"
 #include "processMods/SomPaletteMod.hpp"
-#include "processMods/VaryingValueMod.hpp"
-
-// Shader Mods - GPU-based transformations
-#include "shaderMods/AddTextureMod.hpp"
-#include "shaderMods/TranslateMod.hpp"
 
 // Layer Mods - full-layer effects
 #include "layerMods/FadeMod.hpp"

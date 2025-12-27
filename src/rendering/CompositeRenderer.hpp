@@ -100,6 +100,12 @@ private:
                         const DisplayController::Settings& display);
     void drawPanel(SidePanel& panel, float x, float w, float h,
                    const DisplayController::Settings& display);
+    
+    /// Begin tonemap shader with display settings and crossfade textures
+    void beginTonemapShader(const DisplayController::Settings& display,
+                            float crossfadeAlpha,
+                            bool flipTextureA, bool flipTextureB,
+                            const ofTexture& textureA, const ofTexture& textureB);
 };
 
 } // namespace ofxMarkSynth

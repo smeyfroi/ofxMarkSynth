@@ -61,7 +61,7 @@ void fboCopyDraw(const ofFbo& src, ofFbo& dst) {
 void fboCopyBlit(const ofFbo& src, ofFbo& dst, bool copyDepth) {
   ensureAllocatedLike(src, dst, /*wantDepth=*/copyDepth);
 
-  // Save stete
+  // Save state
   GLint prevReadFbo = 0, prevDrawFbo = 0, prevReadBuf = 0, prevDrawBuf = 0;
   glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
   glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);

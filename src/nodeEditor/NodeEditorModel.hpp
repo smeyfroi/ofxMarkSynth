@@ -25,7 +25,7 @@ class Synth;
 
 using NodeObjectPtr = std::variant<ModPtr, DrawingLayerPtr>;
 
-static constexpr std::string emptyString = "";
+inline static constexpr std::string emptyString = "";
 
 struct NodeEditorNode {
   NodeObjectPtr objectPtr;

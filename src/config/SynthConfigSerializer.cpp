@@ -20,7 +20,50 @@
 
 namespace ofxMarkSynth {
 
+namespace {
 
+// JSON extraction helpers - reduce repetitive contains/is_type/get patterns
+template<typename T>
+T getJsonValue(const nlohmann::json& j, const std::string& key, T defaultValue) {
+    if (j.contains(key) && !j[key].is_null()) {
+        return j[key].get<T>();
+    }
+    return defaultValue;
+}
+
+// Specialization for bool (JSON stores as boolean type)
+bool getJsonBool(const nlohmann::json& j, const std::string& key, bool defaultValue) {
+    if (j.contains(key) && j[key].is_boolean()) {
+        return j[key].get<bool>();
+    }
+    return defaultValue;
+}
+
+// Specialization for float (JSON stores as number)
+float getJsonFloat(const nlohmann::json& j, const std::string& key, float defaultValue) {
+    if (j.contains(key) && j[key].is_number()) {
+        return j[key].get<float>();
+    }
+    return defaultValue;
+}
+
+// Specialization for int (JSON stores as number)
+int getJsonInt(const nlohmann::json& j, const std::string& key, int defaultValue) {
+    if (j.contains(key) && j[key].is_number()) {
+        return j[key].get<int>();
+    }
+    return defaultValue;
+}
+
+// Specialization for string
+std::string getJsonString(const nlohmann::json& j, const std::string& key, const std::string& defaultValue = "") {
+    if (j.contains(key) && j[key].is_string()) {
+        return j[key].get<std::string>();
+    }
+    return defaultValue;
+}
+
+} // anonymous namespace
 
 int SynthConfigSerializer::glEnumFromString(const std::string& str) {
   // Common GL enums used in ofxMarkSynth
@@ -59,78 +102,46 @@ int SynthConfigSerializer::ofBlendModeFromString(const std::string& str) {
 SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("drawingLayers") || !j["drawingLayers"].is_object()) {
     ofLogNotice("SynthConfigSerializer") << "No drawingLayers section in config";
-    return {}; // Not an error - layers are optional
+    return {};
   }
   
   SynthConfigSerializer::NamedLayers layers;
   try {
     for (const auto& [name, layerJson] : j["drawingLayers"].items()) {
+      // Parse size (special case - array)
       glm::vec2 size { 1080, 1080 };
       if (layerJson.contains("size") && layerJson["size"].is_array() && layerJson["size"].size() == 2) {
         size.x = layerJson["size"][0];
         size.y = layerJson["size"][1];
       }
       
-      GLint internalFormat = GL_RGBA;
-      if (layerJson.contains("internalFormat") && layerJson["internalFormat"].is_string()) {
-        internalFormat = glEnumFromString(layerJson["internalFormat"]);
-      }
+      // Parse layer properties using helpers
+      std::string formatStr = getJsonString(layerJson, "internalFormat");
+      GLint internalFormat = formatStr.empty() ? GL_RGBA : glEnumFromString(formatStr);
       
-      int wrap = GL_CLAMP_TO_EDGE;
-      if (layerJson.contains("wrap") && layerJson["wrap"].is_string()) {
-        wrap = glEnumFromString(layerJson["wrap"]);
-      }
+      std::string wrapStr = getJsonString(layerJson, "wrap");
+      int wrap = wrapStr.empty() ? GL_CLAMP_TO_EDGE : glEnumFromString(wrapStr);
       
-      bool clearOnUpdate = false;
-      if (layerJson.contains("clearOnUpdate") && layerJson["clearOnUpdate"].is_boolean()) {
-        clearOnUpdate = layerJson["clearOnUpdate"];
-      }
+      std::string blendStr = getJsonString(layerJson, "blendMode");
+      ofBlendMode blendMode = blendStr.empty() ? OF_BLENDMODE_ALPHA : static_cast<ofBlendMode>(ofBlendModeFromString(blendStr));
       
-      ofBlendMode blendMode = OF_BLENDMODE_ALPHA;
-      if (layerJson.contains("blendMode") && layerJson["blendMode"].is_string()) {
-        blendMode = static_cast<ofBlendMode>(ofBlendModeFromString(layerJson["blendMode"]));
-      }
+      bool clearOnUpdate = getJsonBool(layerJson, "clearOnUpdate", false);
+      bool useStencil = getJsonBool(layerJson, "useStencil", false);
+      int numSamples = getJsonInt(layerJson, "numSamples", 0);
+      bool isDrawn = getJsonBool(layerJson, "isDrawn", true);
+      bool isOverlay = getJsonBool(layerJson, "isOverlay", false);
+      float alpha = getJsonFloat(layerJson, "alpha", 1.0f);
+      bool paused = getJsonBool(layerJson, "paused", false);
+      std::string description = getJsonString(layerJson, "description");
       
-      bool useStencil = false;
-      if (layerJson.contains("useStencil") && layerJson["useStencil"].is_boolean()) {
-        useStencil = layerJson["useStencil"];
-      }
-      
-      int numSamples = 0;
-      if (layerJson.contains("numSamples") && layerJson["numSamples"].is_number()) {
-        numSamples = layerJson["numSamples"];
-      }
-      
-      bool isDrawn = true;
-      if (layerJson.contains("isDrawn") && layerJson["isDrawn"].is_boolean()) {
-        isDrawn = layerJson["isDrawn"];
-      }
-      
-      bool isOverlay = false;
-      if (layerJson.contains("isOverlay") && layerJson["isOverlay"].is_boolean()) {
-        isOverlay = layerJson["isOverlay"];
-      }
-      
-      float alpha = 1.0f;
-      if (layerJson.contains("alpha") && layerJson["alpha"].is_number()) {
-        alpha = layerJson["alpha"];
-      }
+      // Set layer controller initial values
       synth->layerController->setInitialAlpha(name, alpha);
-
-      bool paused = false;
-      if (layerJson.contains("paused") && layerJson["paused"].is_boolean()) {
-        paused = layerJson["paused"];
-      }
       synth->layerController->setInitialPaused(name, paused);
       
-      std::string description;
-      if (layerJson.contains("description") && layerJson["description"].is_string()) {
-        description = layerJson["description"].get<std::string>();
-      }
-      
+      // Create layer
       auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
       layers[name] = layerPtr;
-      ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << "(size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
+      ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << " (size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
     }
     return layers;
   } catch (const std::exception& e) {
@@ -262,40 +273,51 @@ static ofFloatColor parseFloatColor(const std::string& str) {
 
 bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("synth") || !j["synth"].is_object()) {
-    return true; // Optional section
+    return true;
   }
   
-  const auto& synthJson = j["synth"];
+  const auto& s = j["synth"];
   
-  if (synthJson.contains("agency") && synthJson["agency"].is_number()) {
-    synth->setAgency(synthJson["agency"].get<float>());
-    ofLogNotice("SynthConfigSerializer") << "  Synth agency: " << synthJson["agency"].get<float>();
+  // Agency
+  if (s.contains("agency") && s["agency"].is_number()) {
+    float agency = s["agency"].get<float>();
+    synth->setAgency(agency);
+    ofLogNotice("SynthConfigSerializer") << "  Synth agency: " << agency;
   }
   
-  if (synthJson.contains("backgroundColor") && synthJson["backgroundColor"].is_string()) {
-    ofFloatColor color = parseFloatColor(synthJson["backgroundColor"].get<std::string>());
-    synth->backgroundColorParameter.set(color);
-    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundColor: " << synthJson["backgroundColor"].get<std::string>();
+  // Background color
+  std::string bgColorStr = getJsonString(s, "backgroundColor");
+  if (!bgColorStr.empty()) {
+    synth->backgroundColorParameter.set(parseFloatColor(bgColorStr));
+    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundColor: " << bgColorStr;
   }
   
-  if (synthJson.contains("backgroundMultiplier") && synthJson["backgroundMultiplier"].is_number()) {
-    synth->backgroundMultiplierParameter.set(synthJson["backgroundMultiplier"].get<float>());
-    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundMultiplier: " << synthJson["backgroundMultiplier"].get<float>();
+  // Background multiplier
+  if (s.contains("backgroundMultiplier") && s["backgroundMultiplier"].is_number()) {
+    float mult = s["backgroundMultiplier"].get<float>();
+    synth->backgroundMultiplierParameter.set(mult);
+    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundMultiplier: " << mult;
   }
   
-  if (synthJson.contains("manualBiasDecaySec") && synthJson["manualBiasDecaySec"].is_number()) {
-    synth->manualBiasDecaySecParameter.set(synthJson["manualBiasDecaySec"].get<float>());
-    ofLogNotice("SynthConfigSerializer") << "  Manual bias decay time: " << synthJson["manualBiasDecaySec"].get<float>();
+  // Manual bias decay
+  if (s.contains("manualBiasDecaySec") && s["manualBiasDecaySec"].is_number()) {
+    float decay = s["manualBiasDecaySec"].get<float>();
+    synth->manualBiasDecaySecParameter.set(decay);
+    ofLogNotice("SynthConfigSerializer") << "  Manual bias decay time: " << decay;
   }
   
-  if (synthJson.contains("baseManualBias") && synthJson["baseManualBias"].is_number()) {
-    synth->baseManualBiasParameter.set(synthJson["baseManualBias"].get<float>());
-    ofLogNotice("SynthConfigSerializer") << "  Base manual bias: " << synthJson["baseManualBias"].get<float>();
+  // Base manual bias
+  if (s.contains("baseManualBias") && s["baseManualBias"].is_number()) {
+    float bias = s["baseManualBias"].get<float>();
+    synth->baseManualBiasParameter.set(bias);
+    ofLogNotice("SynthConfigSerializer") << "  Base manual bias: " << bias;
   }
   
-  if (synthJson.contains("crossfadeDuration") && synthJson["crossfadeDuration"].is_number()) {
-    synth->configTransitionManager->getDurationParameter().set(synthJson["crossfadeDuration"].get<float>());
-    ofLogNotice("SynthConfigSerializer") << "  Crossfade duration: " << synthJson["crossfadeDuration"].get<float>();
+  // Crossfade duration
+  if (s.contains("crossfadeDuration") && s["crossfadeDuration"].is_number()) {
+    float duration = s["crossfadeDuration"].get<float>();
+    synth->configTransitionManager->getDurationParameter().set(duration);
+    ofLogNotice("SynthConfigSerializer") << "  Crossfade duration: " << duration;
   }
   
   return true;
@@ -304,47 +326,30 @@ bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::share
 bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("intents") || !j["intents"].is_array()) {
     ofLogNotice("SynthConfigSerializer") << "No intents array in config";
-    return true; // Not an error - intents are optional
+    return true;
   }
   
   try {
     std::vector<IntentPtr> intentPresets;
     
     for (const auto& intentJson : j["intents"]) {
-      if (!intentJson.contains("name") || !intentJson["name"].is_string()) {
+      std::string name = getJsonString(intentJson, "name");
+      if (name.empty()) {
         ofLogWarning("SynthConfigSerializer") << "Intent missing 'name' field, skipping";
         continue;
       }
       
-      std::string name = intentJson["name"];
-      float energy = 0.5f;
-      float density = 0.5f;
-      float structure = 0.5f;
-      float chaos = 0.5f;
-      float granularity = 0.5f;
-      
-      if (intentJson.contains("energy") && intentJson["energy"].is_number()) {
-        energy = intentJson["energy"];
-      }
-      if (intentJson.contains("density") && intentJson["density"].is_number()) {
-        density = intentJson["density"];
-      }
-      if (intentJson.contains("structure") && intentJson["structure"].is_number()) {
-        structure = intentJson["structure"];
-      }
-      if (intentJson.contains("chaos") && intentJson["chaos"].is_number()) {
-        chaos = intentJson["chaos"];
-      }
-      if (intentJson.contains("granularity") && intentJson["granularity"].is_number()) {
-        granularity = intentJson["granularity"];
-      }
+      float energy = getJsonFloat(intentJson, "energy", 0.5f);
+      float density = getJsonFloat(intentJson, "density", 0.5f);
+      float structure = getJsonFloat(intentJson, "structure", 0.5f);
+      float chaos = getJsonFloat(intentJson, "chaos", 0.5f);
+      float granularity = getJsonFloat(intentJson, "granularity", 0.5f);
       
       auto intentPtr = Intent::createPreset(name, energy, density, structure, chaos, granularity);
       intentPresets.push_back(intentPtr);
       ofLogNotice("SynthConfigSerializer") << "Created intent: " << name;
     }
     
-    // Set the parsed intents into Synth
     if (!intentPresets.empty()) {
       synth->setIntentPresets(intentPresets);
     }

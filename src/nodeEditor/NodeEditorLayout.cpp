@@ -74,12 +74,19 @@ bool NodeEditorLayout::step() {
 }
 
 void NodeEditorLayout::applyForces() {
+  // Reset velocities
   for (auto& [objectPtr, node] : nodes) {
     if (node.isFixed) continue;
     node.velocity = glm::vec2(0, 0);
   }
   
-  // 1. Repulsion between all nodes (Coulomb-like)
+  applyRepulsionForces();
+  applySpringForces();
+  applyCenterAttraction();
+}
+
+void NodeEditorLayout::applyRepulsionForces() {
+  // Coulomb-like repulsion between all nodes
   for (auto& [objectPtr1, node1] : nodes) {
     if (node1.isFixed) continue;
     
@@ -97,47 +104,50 @@ void NodeEditorLayout::applyForces() {
       node1.velocity += direction * force;
     }
   }
-  
-  // 2. Spring attraction along links (connections)
+}
+
+void NodeEditorLayout::applySpringForces() {
+  // Spring attraction along links (connections)
   for (const auto& [objectPtr, sourceNode] : nodes) {
     if (const auto modPtrPtr = std::get_if<ModPtr>(&objectPtr)) {
-
       const auto& modPtr = *modPtrPtr;
-      if (!modPtr->connections.empty()) {
-        for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
-          if (!sinksPtr) continue;
+      if (modPtr->connections.empty()) continue;
+      
+      for (const auto& [sourceId, sinksPtr] : modPtr->connections) {
+        if (!sinksPtr) continue;
+        
+        for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
+          auto sinkIt = nodes.find(sinkModPtr);
+          if (sinkIt == nodes.end()) continue;
           
-          for (const auto& [sinkModPtr, sinkId] : *sinksPtr) {
-            auto sinkIt = nodes.find(sinkModPtr);
-            if (sinkIt == nodes.end()) continue;
-            
-            auto& sinkNode = sinkIt->second;
-            
-            glm::vec2 delta = sinkNode.position - sourceNode.position;
-            float distance = glm::length(delta);
-            
-            if (distance < 0.1f) continue;  // too close
-            
-            // Spring force: F = k * (distance - restLength)
-            float displacement = distance - config.springLength;
-            glm::vec2 force = delta * (config.springStrength * displacement / distance);
-            
-            // Apply force to both nodes (non-const access needed)
-            if (!sourceNode.isFixed) {
-              auto& mutableSourceNode = const_cast<LayoutNode&>(nodes.at(modPtr));
-              mutableSourceNode.velocity += force;
-            }
-            if (!sinkNode.isFixed) {
-              auto& mutableSinkNode = const_cast<LayoutNode&>(nodes.at(sinkModPtr));
-              mutableSinkNode.velocity -= force;
-            }
+          auto& sinkNode = sinkIt->second;
+          
+          glm::vec2 delta = sinkNode.position - sourceNode.position;
+          float distance = glm::length(delta);
+          
+          if (distance < 0.1f) continue;  // too close
+          
+          // Spring force: F = k * (distance - restLength)
+          float displacement = distance - config.springLength;
+          glm::vec2 force = delta * (config.springStrength * displacement / distance);
+          
+          // Apply force to both nodes (non-const access needed)
+          if (!sourceNode.isFixed) {
+            auto& mutableSourceNode = const_cast<LayoutNode&>(nodes.at(modPtr));
+            mutableSourceNode.velocity += force;
+          }
+          if (!sinkNode.isFixed) {
+            auto& mutableSinkNode = const_cast<LayoutNode&>(nodes.at(sinkModPtr));
+            mutableSinkNode.velocity -= force;
           }
         }
       }
     }
   }
-  
-  // 3. Gentle attraction to center (keeps graph from drifting)
+}
+
+void NodeEditorLayout::applyCenterAttraction() {
+  // Gentle attraction to center (keeps graph from drifting)
   for (auto& [objectPtr, node] : nodes) {
     if (node.isFixed) continue;
     

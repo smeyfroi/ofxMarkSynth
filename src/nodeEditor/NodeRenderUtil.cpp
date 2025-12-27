@@ -120,6 +120,14 @@ void addControllerTooltip(const ModPtr& modPtr, const std::string& paramName) {
   }
 }
 
+// Helper to finish a parameter row: adds label, controller tooltip, and contribution weights
+void finishParameterRow(const ModPtr& modPtr, const std::string& paramName) {
+  ImGui::SameLine();
+  ImGui::Text("%s", paramName.c_str());
+  addControllerTooltip(modPtr, paramName);
+  addContributionWeights(modPtr, paramName);
+}
+
 void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
   const auto& name = parameter.getName();
   int value = parameter.get();
@@ -130,10 +138,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addControllerTooltip(modPtr, parameter.getName());
-  addContributionWeights(modPtr, parameter.getName());
+  finishParameterRow(modPtr, name);
 }
 
 void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
@@ -148,10 +153,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addControllerTooltip(modPtr, parameter.getName());
-  addContributionWeights(modPtr, parameter.getName());
+  finishParameterRow(modPtr, name);
 }
 
 void addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter) {
@@ -165,10 +167,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter) {
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addControllerTooltip(modPtr, parameter.getName());
-  addContributionWeights(modPtr, parameter.getName());
+  finishParameterRow(modPtr, name);
 }
 
 void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
@@ -182,10 +181,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addControllerTooltip(modPtr, parameter.getName());
-  addContributionWeights(modPtr, parameter.getName());
+  finishParameterRow(modPtr, name);
 }
 
 void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter) {
@@ -195,10 +191,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter) {
     parameter.set(value);
   }
   ImGui::SetItemTooltip("%s", name.c_str());
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addControllerTooltip(modPtr, parameter.getName());
-  addContributionWeights(modPtr, parameter.getName());
+  finishParameterRow(modPtr, name);
 }
 
 void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter) {
@@ -212,10 +205,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter) {
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
-  ImGui::SameLine();
-  ImGui::Text("%s", parameter.getName().c_str());
-  addControllerTooltip(modPtr, parameter.getName());
-  addContributionWeights(modPtr, parameter.getName());
+  finishParameterRow(modPtr, name);
 }
 
 void addContributionWeights(const ModPtr& modPtr, const std::string& paramName) {

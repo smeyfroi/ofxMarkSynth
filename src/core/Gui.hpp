@@ -57,6 +57,7 @@ private:
   void drawNodeEditor();
   void drawSnapshotControls();
   void drawPerformanceNavigator();
+  void drawNavigationButton(const char* id, int direction, bool canNavigate, float buttonSize);
   void drawDebugView();
   std::vector<ModPtr> getSelectedMods();
 

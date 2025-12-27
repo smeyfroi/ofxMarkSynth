@@ -63,23 +63,20 @@ std::vector<std::string> ModFactory::getRegisteredTypes() {
   return types;
 }
 
-void ModFactory::initializeBuiltinTypes() {
-
+void ModFactory::registerSourceMods() {
   registerType("AudioDataSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-  (void)r;
-  if (!s) {
-    ofLogError("ModFactory") << "AudioDataSource requires a valid Synth";
-    return nullptr;
-  }
-
-  const auto& audioClient = s->getAudioAnalysisClient();
-  if (!audioClient) {
-    ofLogError("ModFactory") << "AudioDataSource requires Synth-owned audio client";
-    return nullptr;
-  }
-
-  return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), audioClient);
-});
+    (void)r;
+    if (!s) {
+      ofLogError("ModFactory") << "AudioDataSource requires a valid Synth";
+      return nullptr;
+    }
+    const auto& audioClient = s->getAudioAnalysisClient();
+    if (!audioClient) {
+      ofLogError("ModFactory") << "AudioDataSource requires Synth-owned audio client";
+      return nullptr;
+    }
+    return std::make_shared<AudioDataSourceMod>(s, n, std::move(c), audioClient);
+  });
   
   registerType("StaticTextSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<StaticTextSourceMod>(s, n, std::move(c));
@@ -100,16 +97,15 @@ void ModFactory::initializeBuiltinTypes() {
   
   registerType("RandomFloatSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomFloatSourceMod>(s, n, std::move(c),
-                                                  std::pair<float, float>{0.0f, 1.0f}, // min range
-                                                  std::pair<float, float>{0.0f, 1.0f}, // max range
-                                                  0); // seed
+                                                  std::pair<float, float>{0.0f, 1.0f},
+                                                  std::pair<float, float>{0.0f, 1.0f},
+                                                  0);
   });
   
   registerType("RandomHslColor", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomHslColorMod>(s, n, std::move(c));
   });
 
-  // TODO: make configurable (see Mod)
   registerType("RandomVecSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<RandomVecSourceMod>(s, n, std::move(c));
   });
@@ -131,30 +127,15 @@ void ModFactory::initializeBuiltinTypes() {
     ofLogError("ModFactory") << "VideoFlowSource requires ('sourceVideoPath', 'sourceVideoMute') or ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath') resources";
     return nullptr;
   });
-  
-  // Register all process mods
+}
+
+void ModFactory::registerProcessMods() {
   registerType("Cluster", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<ClusterMod>(s, n, std::move(c));
   });
   
-  registerType("Fluid", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<FluidMod>(s, n, std::move(c));
-  });
-  
-  registerType("FluidRadialImpulse", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<FluidRadialImpulseMod>(s, n, std::move(c));
-  });
-  
   registerType("MultiplyAdd", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<MultiplyAddMod>(s, n, std::move(c));
-  });
-  
-  registerType("ParticleField", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<ParticleFieldMod>(s, n, std::move(c));
-  });
-  
-  registerType("ParticleSet", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<ParticleSetMod>(s, n, std::move(c));
   });
   
   registerType("Path", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
@@ -165,15 +146,26 @@ void ModFactory::initializeBuiltinTypes() {
     return std::make_shared<PixelSnapshotMod>(s, n, std::move(c));
   });
   
+  registerType("SomPalette", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<SomPaletteMod>(s, n, std::move(c));
+  });
+}
+
+void ModFactory::registerLayerMods() {
+  registerType("Fade", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<FadeMod>(s, n, std::move(c));
+  });
+  
+  registerType("Fluid", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<FluidMod>(s, n, std::move(c));
+  });
+  
   registerType("Smear", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SmearMod>(s, n, std::move(c));
   });
-  
-  registerType("SoftCircle", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<SoftCircleMod>(s, n, std::move(c));
-  });
-  
-  // Register all sink mods
+}
+
+void ModFactory::registerSinkMods() {
   registerType("Collage", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<CollageMod>(s, n, std::move(c));
   });
@@ -182,12 +174,28 @@ void ModFactory::initializeBuiltinTypes() {
     return std::make_shared<DividedAreaMod>(s, n, std::move(c));
   });
   
+  registerType("FluidRadialImpulse", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<FluidRadialImpulseMod>(s, n, std::move(c));
+  });
+  
   registerType("Introspector", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<IntrospectorMod>(s, n, std::move(c));
   });
   
+  registerType("ParticleField", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<ParticleFieldMod>(s, n, std::move(c));
+  });
+  
+  registerType("ParticleSet", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<ParticleSetMod>(s, n, std::move(c));
+  });
+  
   registerType("SandLine", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<SandLineMod>(s, n, std::move(c));
+  });
+  
+  registerType("SoftCircle", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<SoftCircleMod>(s, n, std::move(c));
   });
   
   registerType("Text", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
@@ -198,15 +206,13 @@ void ModFactory::initializeBuiltinTypes() {
     }
     return std::make_shared<TextMod>(s, n, std::move(c), fontCachePtr);
   });
-  
-  registerType("SomPalette", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<SomPaletteMod>(s, n, std::move(c));
-  });
-  
-  // Register all layer mods
-  registerType("Fade", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<FadeMod>(s, n, std::move(c));
-  });
+}
+
+void ModFactory::initializeBuiltinTypes() {
+  registerSourceMods();
+  registerProcessMods();
+  registerLayerMods();
+  registerSinkMods();
   
   ofLogNotice("ModFactory") << "Initialized " << getRegistry().size() << " built-in Mod types";
 }

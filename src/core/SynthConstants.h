@@ -1,0 +1,27 @@
+//
+//  SynthConstants.h
+//  ofxMarkSynth
+//
+//  Named constants for core Synth-related values.
+//
+
+#pragma once
+
+namespace ofxMarkSynth {
+
+// Mod/Layer ID allocation
+// Mods get positive IDs starting at 1000, incrementing by 1000
+// DrawingLayers get negative IDs starting at -1000
+constexpr int MOD_ID_START = 1000;
+constexpr int MOD_ID_INCREMENT = 1000;
+constexpr int DRAWING_LAYER_ID_START = -1000;
+
+// Controller thresholds
+constexpr float FLOAT_EPSILON = 0.0001f;
+constexpr float CONTROLLER_CHANGE_THRESHOLD = 0.005f;
+constexpr float NORMALIZATION_EPSILON = 1e-6f;
+
+// Intent system
+constexpr int MAX_INTENT_SLOTS = 7;
+
+} // namespace ofxMarkSynth

@@ -102,6 +102,9 @@ public:
   
 private:
   void applyForces();
+  void applyRepulsionForces();
+  void applySpringForces();
+  void applyCenterAttraction();
   void updatePositions();
   
   std::unordered_map<NodeObjectPtr, LayoutNode> nodes;

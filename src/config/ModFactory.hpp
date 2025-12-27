@@ -75,6 +75,12 @@ public:
   
 private:
   static std::unordered_map<std::string, ModCreatorFn>& getRegistry();
+  
+  // Grouped registration helpers
+  static void registerSourceMods();
+  static void registerProcessMods();
+  static void registerLayerMods();
+  static void registerSinkMods();
 };
 
 
