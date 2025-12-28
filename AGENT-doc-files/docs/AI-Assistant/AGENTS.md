@@ -52,12 +52,49 @@ Use angle brackets for system or openFrameworks headers, and quotes for local on
 - Separate declarations (.h and .hpp) and definitions (.cpp) unless the function is trivial or templated.
 - Group related functions into classes or namespaces.
 - Keep functions short and focused (ideally under ~40 lines).
+- **Helper methods** should be private in class declarations.
+- **Constructor init helpers** should be named `initXxx()`.
+
+### Directory Structure
+
+The `src/` directory is organized into categorical subdirectories:
+
+```
+src/
+├── config/        # ModFactory, SynthConfigSerializer, PerformanceNavigator
+├── controller/    # HibernationController, IntentController, TimeTracker, etc.
+├── core/          # Synth, Mod, Gui, Intent, MemoryBank, ParamController
+├── gui/           # FontCache, ImGuiUtil, HelpContent, GuiConstants.h
+├── layerMods/     # FadeMod, FluidMod, SmearMod
+├── nodeEditor/    # NodeEditorLayout, NodeEditorModel, NodeRenderUtil
+├── rendering/     # CompositeRenderer, VideoRecorder, AsyncImageSaver
+├── sinkMods/      # Output modules (ParticleSetMod, TextMod, etc.)
+├── sourceMods/    # Input modules (AudioDataSourceMod, VideoFlowSourceMod, etc.)
+└── util/          # Lerp.h, Oklab.h, TimeStringUtil.h
+```
+
+### Constants Files
+
+Constants are organized into dedicated `*Constants.h` files:
+- `src/core/SynthConstants.h` - Core framework constants
+- `src/rendering/RenderingConstants.h` - Video/rendering constants
+- `src/gui/GuiConstants.h` - GUI dimension constants
+
+Use `constexpr` for compile-time constants. Avoid magic numbers.
+
+### JSON Helper Pattern
+
+For JSON parsing, use helper functions with the pattern:
+```cpp
+getJsonType(json, key, defaultValue)
+```
+Example: `getJsonBool(j, "enabled", false)`
 
 ### Formatting
 
-- Indentation: **2 spaces**
+- Indentation: **4 spaces**
 - Braces: **same line**
-- Column limit: ~100
+- Column limit: ~120
 - Prefer fixed-width types: `std::int32_t`, `std::size_t`
 - Pass non-owning parameters as `const&`
 - Use `auto` only when the type is obvious
@@ -215,3 +252,5 @@ void myApp::myFunction() {
 ## 5. Related Documents
 
 - [RULES.md](RULES.md) — Defines operational limits and safety policies for the AI coding agent.
+- [CURRENT-STATE.md](CURRENT-STATE.md) — Current project status and refactoring progress.
+- [FILE-STRUCTURE.md](../../FILE-STRUCTURE.md) — Complete project file organization.

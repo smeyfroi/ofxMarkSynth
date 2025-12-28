@@ -46,6 +46,7 @@ private:
   
   void drawIntentControls();
   void drawIntentSlotSliders();
+  void drawDisabledSlider(const ImVec2& size, int slotIndex);
   void drawIntentCharacteristicsEditor();
   void drawLayerControls();
   void drawDisplayControls();

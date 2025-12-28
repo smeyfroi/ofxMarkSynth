@@ -32,3 +32,31 @@ MarkSynth is used in realtime performance situations so it offloads
 work onto the GPU using OpenGL, as well as using CPU threads for
 async processing. Performance is a critical characteristic of the
 project.
+
+## Source Code Organization
+
+The `src/` directory is organized into categorical subdirectories:
+
+| Directory | Purpose |
+|-----------|---------|
+| `config/` | ModFactory, SynthConfigSerializer, PerformanceNavigator |
+| `controller/` | HibernationController, IntentController, TimeTracker, etc. |
+| `core/` | Synth, Mod, Gui, Intent, MemoryBank, ParamController |
+| `gui/` | FontCache, ImGuiUtil, HelpContent, GuiConstants.h |
+| `layerMods/` | FadeMod, FluidMod, SmearMod |
+| `nodeEditor/` | NodeEditorLayout, NodeEditorModel, NodeRenderUtil |
+| `rendering/` | CompositeRenderer, VideoRecorder, AsyncImageSaver |
+| `sinkMods/` | Output modules (ParticleSetMod, TextMod, etc.) |
+| `sourceMods/` | Input modules (AudioDataSourceMod, VideoFlowSourceMod, etc.) |
+| `util/` | Small utilities (Lerp.h, Oklab.h, TimeStringUtil.h) |
+
+## Coding Conventions
+
+- Constants in dedicated `*Constants.h` files
+- Helper methods as private class members
+- Constructor init helpers named `initXxx()`
+- JSON helpers use pattern `getJsonType(json, key, defaultValue)`
+- 4-space indentation, 120 column limit
+- `constexpr` for compile-time constants
+
+See `AGENTS.md` for full coding standards.

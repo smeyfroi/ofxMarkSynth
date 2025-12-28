@@ -4,7 +4,17 @@
 Defines the minimal operational rules for the AI coding agent to safely interact with this openFrameworks project.
 
 ## 2. SCOPE
-- The agent may read and edit files only inside the `/src` folder.
+- The agent may read and edit files only inside the `/src` folder and its subdirectories:
+  - `src/config/` - Configuration and serialization
+  - `src/controller/` - Runtime state controllers
+  - `src/core/` - Core framework classes
+  - `src/gui/` - GUI utilities
+  - `src/layerMods/` - Layer effect modules
+  - `src/nodeEditor/` - Node graph editor
+  - `src/rendering/` - Rendering subsystem
+  - `src/sinkMods/` - Output modules
+  - `src/sourceMods/` - Input modules
+  - `src/util/` - Small utilities
 - Never modify or delete content in `/libs`, `/bin`, `/data`, or addons.
 - Creating new files is allowed only after user confirmation.
 - For an `OF` (aka `openFrameworks`) project placed into `openframeworks\apps\myApps\myProject\`.
@@ -24,6 +34,12 @@ Defines the minimal operational rules for the AI coding agent to safely interact
 - Follow the style, patterns, and naming defined in `AGENTS.md`.
 - Comment in **English only**.
 - Keep modular structure and avoid mixing unrelated logic.
+- Place new files in the appropriate subdirectory based on their purpose.
+- Use established patterns:
+  - Constants in `*Constants.h` files
+  - Helper methods as private class members
+  - Constructor init helpers named `initXxx()`
+  - JSON helpers use pattern `getJsonType(json, key, defaultValue)`
 
 ## 5. SAFETY & DEPENDENCIES
 - Do **not** introduce new libraries, addons, or dependencies unless approved.
@@ -49,4 +65,3 @@ Defines the minimal operational rules for the AI coding agent to safely interact
 - Do **not** compile, run, or execute the project automatically.
   - The developer is responsible for manual builds and runs.
   - If you need, or better said if I authorize you, to run the app, use `Debug` mode, as `Release` is not configured correctly sometimes.
-

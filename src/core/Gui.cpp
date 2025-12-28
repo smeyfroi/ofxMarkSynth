@@ -277,23 +277,7 @@ void Gui::drawIntentSlotSliders() {
         }
         ImGui::SetItemTooltip("%s", param.getName().c_str());
       } else {
-        ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.45f, 0.45f, 1.0f));
-
-        ImGui::BeginDisabled();
-        float v = 0.0f;
-        ImGui::VSliderFloat("##v", sliderSize, &v, 0.0f, 1.0f, "", ImGuiSliderFlags_NoInput);
-        ImGui::EndDisabled();
-
-        ImGui::PopStyleColor(6);
-        ImGui::PopStyleVar();
-
-        ImGui::SetItemTooltip("No intent assigned to slot %d", i + 1);
+        drawDisabledSlider(sliderSize, i);
       }
 
       if (hasIntentParam) {
@@ -331,6 +315,26 @@ void Gui::drawIntentSlotSliders() {
   }
 
   ImGui::PopStyleVar();
+}
+
+void Gui::drawDisabledSlider(const ImVec2& size, int slotIndex) {
+  ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 1.0f);
+  ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.18f, 0.18f, 0.18f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+  ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.45f, 0.45f, 0.45f, 1.0f));
+
+  ImGui::BeginDisabled();
+  float v = 0.0f;
+  ImGui::VSliderFloat("##v", size, &v, 0.0f, 1.0f, "", ImGuiSliderFlags_NoInput);
+  ImGui::EndDisabled();
+
+  ImGui::PopStyleColor(6);
+  ImGui::PopStyleVar();
+
+  ImGui::SetItemTooltip("No intent assigned to slot %d", slotIndex + 1);
 }
 
 void Gui::drawIntentControls() {

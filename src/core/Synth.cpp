@@ -152,22 +152,40 @@ paused { startHibernated },  // Start paused if hibernated
 resources { std::move(resources_) },
 audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
-  hibernationController = std::make_unique<HibernationController>(name_, startHibernated);
+  initControllers(name_, startHibernated);
+  initRendering(compositeSize_);
+  initResourcePaths();
+  initPerformanceNavigator();
+  initSinkSourceMappings();
+}
+
+void Synth::initControllers(const std::string& name, bool startHibernated) {
+  hibernationController = std::make_unique<HibernationController>(name, startHibernated);
   timeTracker = std::make_unique<TimeTracker>();
   configTransitionManager = std::make_unique<ConfigTransitionManager>();
   intentController = std::make_unique<IntentController>();
   layerController = std::make_unique<LayerController>();
-  
-  // Display and composite rendering
+}
+
+void Synth::initRendering(glm::vec2 compositeSize) {
   displayController = std::make_unique<DisplayController>();
   displayController->buildParameterGroup();
   
   compositeRenderer = std::make_unique<CompositeRenderer>();
-  compositeRenderer->allocate(compositeSize_, ofGetWindowWidth(), ofGetWindowHeight(),
+  compositeRenderer->allocate(compositeSize, ofGetWindowWidth(), ofGetWindowHeight(),
                               *resources.get<float>("compositePanelGapPx"));
   
-  imageSaver = std::make_unique<AsyncImageSaver>(compositeSize_);
+  imageSaver = std::make_unique<AsyncImageSaver>(compositeSize);
   
+#ifdef TARGET_MAC
+  videoRecorderPtr = std::make_unique<VideoRecorder>();
+  videoRecorderPtr->setup(
+      *resources.get<glm::vec2>("recorderCompositeSize"),
+      *resources.get<std::filesystem::path>("ffmpegBinaryPath"));
+#endif
+}
+
+void Synth::initResourcePaths() {
   if (resources.has("performanceArtefactRootPath")) {
     auto p = resources.get<std::filesystem::path>("performanceArtefactRootPath");
     if (p) {
@@ -195,17 +213,12 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   } else {
     ofLogError("Synth") << "Missing required resource 'performanceConfigRootPath'";
   }
-  
-#ifdef TARGET_MAC
-  videoRecorderPtr = std::make_unique<VideoRecorder>();
-  videoRecorderPtr->setup(
-      *resources.get<glm::vec2>("recorderCompositeSize"),
-      *resources.get<std::filesystem::path>("ffmpegBinaryPath"));
-#endif
-  
+}
+
+void Synth::initPerformanceNavigator() {
   of::random::seed(0);
   
-  // Initialize performance navigator from ResourceManager if path is provided (allow for the old manual configuration until that gets stripped and simplified)
+  // Initialize performance navigator from ResourceManager if path is provided
   if (resources.has("performanceConfigRootPath")) {
     auto pathPtr = resources.get<std::filesystem::path>("performanceConfigRootPath");
     if (pathPtr) {
@@ -214,7 +227,6 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   }
 
   // Optional: pick a startup config by name (stem, not path) from the performance folder list.
-  // This is meant for rapid iteration when developing performance config sequences.
   // NOTE: do not call loadFromConfig() here; shared_from_this() is not valid in the constructor.
   if (resources.has("startupPerformanceConfigName")) {
     auto startupNamePtr = resources.get<std::string>("startupPerformanceConfigName");
@@ -229,21 +241,22 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
       }
     }
   }
-  
+}
+
+void Synth::initSinkSourceMappings() {
   sourceNameIdMap = {
     { "CompositeFbo", SOURCE_COMPOSITE_FBO },
     { "Memory", SOURCE_MEMORY }
   };
-  // Memory bank controller
+  
   memoryBankController = std::make_unique<MemoryBankController>();
   memoryBankController->allocate({ 1024, 1024 });
   
-  // Register sink name -> ID mappings
   sinkNameIdMap = {
     { backgroundColorParameter.getName(), SINK_BACKGROUND_COLOR },
     { "ResetRandomness", SINK_RESET_RANDOMNESS }
   };
-  // Add memory bank sinks from controller
+  
   for (const auto& [name, id] : memoryBankController->getSinkNameIdMap()) {
     sinkNameIdMap[name] = id;
   }
@@ -880,61 +893,13 @@ bool Synth::saveModsToCurrentConfig() {
     }
 
     for (auto& [modName, modJson] : j["mods"].items()) {
-      if (!modName.empty() && modName[0] == '_') {
-        continue;
-      }
-
-      if (!modJson.is_object()) {
-        continue;
-      }
+      if (!modName.empty() && modName[0] == '_') continue;
+      if (!modJson.is_object()) continue;
 
       auto it = modPtrs.find(modName);
-      if (it == modPtrs.end() || !it->second) {
-        continue;
-      }
+      if (it == modPtrs.end() || !it->second) continue;
 
-      const ModPtr& modPtr = it->second;
-      const auto currentValues = modPtr->getCurrentParameterValues();
-      const auto& defaultValues = modPtr->getDefaultParameterValues();
-
-      if (!modJson.contains("config") || !modJson["config"].is_object()) {
-        modJson["config"] = nlohmann::ordered_json::object();
-      }
-
-      nlohmann::ordered_json& configJson = modJson["config"];
-
-      // 1) Update any keys that already exist in the file.
-      for (auto cfgIt = configJson.begin(); cfgIt != configJson.end(); ++cfgIt) {
-        const std::string key = cfgIt.key();
-        if (!key.empty() && key[0] == '_') {
-          continue;
-        }
-
-        auto valIt = currentValues.find(key);
-        if (valIt != currentValues.end()) {
-          cfgIt.value() = valIt->second;
-        }
-      }
-
-      // 2) Add missing keys only when non-default.
-      for (const auto& [key, value] : currentValues) {
-        if (!key.empty() && key[0] == '_') {
-          continue;
-        }
-
-        if (configJson.contains(key)) {
-          continue;
-        }
-
-        auto defIt = defaultValues.find(key);
-        if (defIt == defaultValues.end()) {
-          continue;
-        }
-
-        if (value != defIt->second) {
-          configJson[key] = value;
-        }
-      }
+      updateModConfigJson(modJson, it->second);
     }
 
     const std::filesystem::path tmpPath = filepath.string() + ".tmp";
@@ -966,6 +931,39 @@ bool Synth::saveModsToCurrentConfig() {
   } catch (const std::exception& e) {
     ofLogError("Synth") << "saveModsToCurrentConfig: exception: " << e.what();
     return false;
+  }
+}
+
+void Synth::updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& modPtr) {
+  const auto currentValues = modPtr->getCurrentParameterValues();
+  const auto& defaultValues = modPtr->getDefaultParameterValues();
+
+  if (!modJson.contains("config") || !modJson["config"].is_object()) {
+    modJson["config"] = nlohmann::ordered_json::object();
+  }
+
+  nlohmann::ordered_json& configJson = modJson["config"];
+
+  // 1) Update any keys that already exist in the file
+  for (auto cfgIt = configJson.begin(); cfgIt != configJson.end(); ++cfgIt) {
+    const std::string key = cfgIt.key();
+    if (!key.empty() && key[0] == '_') continue;
+
+    auto valIt = currentValues.find(key);
+    if (valIt != currentValues.end()) {
+      cfgIt.value() = valIt->second;
+    }
+  }
+
+  // 2) Add missing keys only when non-default
+  for (const auto& [key, value] : currentValues) {
+    if (!key.empty() && key[0] == '_') continue;
+    if (configJson.contains(key)) continue;
+
+    auto defIt = defaultValues.find(key);
+    if (defIt != defaultValues.end() && value != defIt->second) {
+      configJson[key] = value;
+    }
   }
 }
 
