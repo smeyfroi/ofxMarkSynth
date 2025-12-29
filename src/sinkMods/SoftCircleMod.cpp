@@ -54,7 +54,10 @@ float SoftCircleMod::getAgency() const {
 void SoftCircleMod::update() {
   syncControllerAgencies();
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt) return;
+  if (!drawingLayerPtrOpt) {
+    newPoints.clear(); // Clear to prevent accumulation when paused
+    return;
+  }
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   radiusController.update();

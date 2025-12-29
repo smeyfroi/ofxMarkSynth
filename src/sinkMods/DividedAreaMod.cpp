@@ -108,8 +108,19 @@ void DividedAreaMod::update() {
   smoothnessControllerPtr->update();
   dividedArea.maxUnconstrainedDividerLines = static_cast<int>(maxUnconstrainedLinesController.value);
   
-  dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
-  newMajorAnchors.clear();
+  // Check major-lines layer for unconstrained line updates
+  auto majorLayerPtrOpt = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
+  if (majorLayerPtrOpt) {
+    dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
+  }
+  newMajorAnchors.clear(); // Always clear to prevent accumulation
+  
+  // Check default layer for constrained line processing and drawing
+  auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt1) {
+    newMinorAnchors.clear(); // Clear to prevent accumulation
+    return;
+  }
   
   if (!newMinorAnchors.empty()) {
     switch (strategyParameter) {
@@ -127,17 +138,10 @@ void DividedAreaMod::update() {
     }
   }
   
-  //  const float maxLineWidth = 160.0;
-  //  const float minLineWidth = 110.0;
-  
   // draw constrained
-  auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt1) return;
   auto fboPtr1 = drawingLayerPtrOpt1.value()->fboPtr;
   fboPtr1->getSource().begin();
   dividedArea.drawInstanced(fboPtr1->getWidth());
-  //    ofSetColor(minorDividerColor);
-  //    dividedArea.draw(0.0, 0.0, 10.0, fboPtr1->getWidth());
   fboPtr1->getSource().end();
 }
 

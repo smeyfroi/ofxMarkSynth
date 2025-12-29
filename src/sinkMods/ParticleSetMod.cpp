@@ -80,7 +80,10 @@ void ParticleSetMod::update() {
   maxSpeedControllerPtr->update();
   
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt) return;
+  if (!drawingLayerPtrOpt) {
+    newPoints.clear(); // Clear to prevent accumulation when paused
+    return;
+  }
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   particleSet.update();
