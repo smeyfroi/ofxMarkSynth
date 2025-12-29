@@ -143,6 +143,9 @@ void CollageMod::update() {
     return;
   }
 
+  // Close the path for drawing
+  path.close();
+
   // Draw outline if enabled and outline layer exists
   float outlineAlphaFactor = outlineAlphaFactorController.value;
   auto drawingLayerPtrOpt1 = getCurrentNamedDrawingLayerPtr(OUTLINE_LAYERPTR_NAME);
@@ -154,9 +157,6 @@ void CollageMod::update() {
   fboPtr0->getSource().begin();
   ofPushStyle();
   ofScale(fboPtr0->getWidth(), fboPtr0->getHeight());
-
-  // Close the path for drawing the fill
-  path.close();
 
   // Compute tint color based on strategy
   ofFloatColor tintColor;
