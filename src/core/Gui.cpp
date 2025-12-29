@@ -619,8 +619,6 @@ void Gui::drawMemoryBank() {
 }
 
 void Gui::drawStatus() {
-  ImGui::SeparatorText("Status");
-
   if (!synthPtr->currentConfigPath.empty()) {
     std::filesystem::path p(synthPtr->currentConfigPath);
     std::string filename = p.filename().string();
@@ -1129,8 +1127,9 @@ void Gui::drawPerformanceNavigator() {
     }
   }
   ImGui::EndChild();
-  
-  ImGui::Text("(click and hold to jump)");
+  if (ImGui::IsItemHovered()) {
+    ImGui::SetTooltip("Click and hold to jump");
+  }
   
   // PREV / NEXT buttons with progress rings
   constexpr float buttonSize = 60.0f;
@@ -1149,15 +1148,6 @@ void Gui::drawPerformanceNavigator() {
   drawNavigationButton("##prev", -1, canPrev, buttonSize);
   ImGui::SameLine(0, spacing);
   drawNavigationButton("##next", +1, canNext, buttonSize);
-  
-  // Config counter
-  ImGui::Spacing();
-  std::string counter = "Config " + std::to_string(currentIndex + 1) + " of " + std::to_string(configCount);
-  float counterWidth = ImGui::CalcTextSize(counter.c_str()).x;
-  ImGui::SetCursorPosX((ImGui::GetContentRegionAvail().x - counterWidth) / 2.0f + ImGui::GetCursorPosX());
-  ImGui::Text("%s", counter.c_str());
-  
-  ImGui::TextColored(GREY_COLOR, "(hold arrow keys or buttons)");
 }
 
 void Gui::drawNavigationButton(const char* id, int direction, bool canNavigate, float buttonSize) {
@@ -1218,6 +1208,12 @@ void Gui::drawNavigationButton(const char* id, int direction, bool canNavigate, 
   } else if (!ImGui::IsItemActive() && nav.getActiveHold() == holdAction &&
              nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
     nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
+  }
+  
+  // Tooltip
+  if (ImGui::IsItemHovered() && canNavigate) {
+    const char* dirLabel = (direction < 0) ? "previous" : "next";
+    ImGui::SetTooltip("Hold to go to %s config\n(or use arrow keys)", dirLabel);
   }
 }
 

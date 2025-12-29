@@ -49,7 +49,7 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
   
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
   const ImVec2 sliderSize(24, 140);
-  const float colW = sliderSize.x + 0.0f;   // column width (slider + padding)
+  const float colW = sliderSize.x + 8.0f;   // column width (slider + padding for layer names)
   const float colH = sliderSize.y + 28.0f;   // add room for label below
   
   if (ImGui::BeginTable(paramGroup.getName().c_str(), paramGroup.size(),
@@ -96,14 +96,14 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
           toggleParam->set(!isRunning);
         }
         ImGui::SetItemTooltip("Enable/disable layer %s", name.c_str());
-        // Reset X so label below is still centered in column
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPadCheck);
       }
       
-      ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad);
-      ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + colW);
-      ImGui::TextWrapped("%s", name.substr(0, 3).c_str());
-      ImGui::PopTextWrapPos();
+      // Center the label text under the slider
+      std::string labelText = name.substr(0, 3);
+      float textWidth = ImGui::CalcTextSize(labelText.c_str()).x;
+      float textPad = (colW - textWidth) * 0.5f;
+      ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textPad - xPad);
+      ImGui::TextUnformatted(labelText.c_str());
       ImGui::EndGroup();
       
       ImGui::PopID();
