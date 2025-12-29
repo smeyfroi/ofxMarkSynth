@@ -62,9 +62,14 @@ public:
   void resetLayout();
   
   void syncPositionsFromImNodes();
-  bool saveLayout() const;
+  bool saveLayout();
   bool loadLayout();
   bool hasStoredLayout() const;
+  
+  /// Check if any node positions have changed since last snapshot
+  bool hasPositionsChanged() const;
+  /// Take a snapshot of current positions for change detection
+  void snapshotPositions();
   
   std::shared_ptr<Synth> synthPtr;
   std::vector<NodeEditorNode> nodes;
@@ -74,6 +79,7 @@ public:
 
 private:
   std::unique_ptr<NodeEditorLayout> layoutEnginePtr;
+  std::vector<glm::vec2> lastKnownPositions;  // For change detection
 };
 
 

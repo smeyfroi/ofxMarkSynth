@@ -71,6 +71,16 @@ private:
   bool animateLayout { true };        // animate layout on load
   bool layoutComputed { false };      // track if layout has been computed
   bool layoutAutoLoadAttempted { false }; // track if we've tried auto-load
+  
+  // Auto-save layout with debounce
+  bool layoutNeedsSave { false };           // layout has changed and needs saving
+  float layoutChangeTime { 0.0f };          // time when layout change was detected
+  
+  // Auto-save mods config with debounce
+  bool modsConfigNeedsSave { false };       // mods config has changed and needs saving
+  float modsConfigChangeTime { 0.0f };      // time when mods config change was detected
+  
+  static constexpr float AUTO_SAVE_DELAY { 1.0f };  // seconds to wait before auto-saving
 
   // Snapshot system for saving/recalling Mod parameters
   ModSnapshotManager snapshotManager;

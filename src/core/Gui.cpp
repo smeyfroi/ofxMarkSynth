@@ -102,6 +102,8 @@ void Gui::onConfigLoaded() {
   nodeEditorDirty = true;
   layoutComputed = false;
   layoutAutoLoadAttempted = false;
+  layoutNeedsSave = false;
+  modsConfigNeedsSave = false;
   snapshotsLoaded = false;
   highlightedMods.clear();
 }
@@ -229,6 +231,8 @@ void Gui::drawLog() {
 void Gui::drawSynthControls() {
   ImGui::Begin("Synth");
   
+  drawStatus();
+  
 //  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
   addParameter(synthPtr, synthPtr->agencyParameter);
   
@@ -238,7 +242,6 @@ void Gui::drawSynthControls() {
   drawDisplayControls();
   drawInternalState();
   drawMemoryBank();
-  drawStatus();
   
   ImGui::End();
 }
@@ -833,6 +836,7 @@ void Gui::drawNodeEditor() {
       if (nodeEditorModel.loadLayout()) {
         layoutComputed = true;
         animateLayout = false; // Don't animate if we loaded positions
+        layoutNeedsSave = false;  // Reset dirty flag after load
         ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
       }
     }
@@ -857,54 +861,22 @@ void Gui::drawNodeEditor() {
     layoutComputed = false;
     animateLayout = true;
   }
-  ImGui::SameLine();
-  ImGui::Text("|");
-  
-  // Save/Load buttons
-  ImGui::SameLine();
-  if (ImGui::Button((std::string(SAVE_ICON) + " Save Layout").c_str())) {
-    // Sync current positions from imnodes before saving
-    nodeEditorModel.syncPositionsFromImNodes();
-    if (nodeEditorModel.saveLayout()) {
-      ofLogNotice("Gui") << "Saved node layout for: " << synthPtr->name;
-    } else {
-      ofLogError("Gui") << "Failed to save node layout";
-    }
-  }
-  ImGui::SameLine();
-  if (ImGui::Button((std::string(LOAD_ICON) + " Load Layout").c_str())) {
-    if (nodeEditorModel.loadLayout()) {
-      layoutComputed = true;
-      animateLayout = false;
-      ofLogNotice("Gui") << "Loaded node layout for: " << synthPtr->name;
-    } else {
-      ofLogError("Gui") << "Failed to load node layout";
-    }
-  }
-
-  ImGui::SameLine();
-  ImGui::Text("|");
-
-  ImGui::SameLine();
-  if (ImGui::Button((std::string(SAVE_ICON) + " Save Mods").c_str())) {
-    if (synthPtr->saveModsToCurrentConfig()) {
-      ofLogNotice("Gui") << "Saved Mods config to: " << synthPtr->currentConfigPath;
-    } else {
-      ofLogError("Gui") << "Failed to save Mods config";
-    }
-  }
-  if (ImGui::IsItemHovered()) {
-    ImGui::SetTooltip("Overwrite current config file (mods.config only)");
-  }
   
   // Run animated layout if enabled and not yet computed
   if (animateLayout && !layoutComputed) {
     nodeEditorModel.computeLayoutAnimated();
     if (!nodeEditorModel.isLayoutAnimating()) {
       layoutComputed = true; // Animation finished
+      // Mark layout as needing save after animation completes
+      nodeEditorModel.snapshotPositions();
+      layoutNeedsSave = true;
+      layoutChangeTime = ofGetElapsedTimef();
     }
   }
   
+  ImGui::SameLine();
+  ImGui::Text("|");
+  ImGui::SameLine();
   drawSnapshotControls();
   
   ImNodes::BeginNodeEditor();
@@ -982,6 +954,44 @@ void Gui::drawNodeEditor() {
   
   // Sync positions from imnodes back to model after every frame to capture manual dragging
   nodeEditorModel.syncPositionsFromImNodes();
+  
+  // Check for layout changes on mouse release (only when interacting with node editor)
+  // This avoids per-frame comparison overhead during performance
+  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+    if (nodeEditorModel.hasPositionsChanged()) {
+      layoutNeedsSave = true;
+      layoutChangeTime = ofGetElapsedTimef();
+    }
+  }
+  
+  // Check if any Mod parameter was modified via GUI this frame
+  if (NodeRenderUtil::wasAnyParameterModified()) {
+    modsConfigNeedsSave = true;
+    modsConfigChangeTime = ofGetElapsedTimef();
+  }
+  NodeRenderUtil::resetModifiedFlag();
+  
+  // Debounced auto-save for layout
+  if (layoutNeedsSave) {
+    float elapsed = ofGetElapsedTimef() - layoutChangeTime;
+    if (elapsed >= AUTO_SAVE_DELAY) {
+      if (nodeEditorModel.saveLayout()) {
+        ofLogNotice("Gui") << "Auto-saved node layout for: " << synthPtr->name;
+      }
+      layoutNeedsSave = false;
+    }
+  }
+  
+  // Debounced auto-save for mods config
+  if (modsConfigNeedsSave) {
+    float elapsed = ofGetElapsedTimef() - modsConfigChangeTime;
+    if (elapsed >= AUTO_SAVE_DELAY) {
+      if (synthPtr->saveModsToCurrentConfig()) {
+        ofLogNotice("Gui") << "Auto-saved mods config to: " << synthPtr->currentConfigPath;
+      }
+      modsConfigNeedsSave = false;
+    }
+  }
   
   ImGui::End();
 }
@@ -1233,17 +1243,12 @@ bool Gui::loadSnapshotSlot(int slotIndex) {
 }
 
 void Gui::drawSnapshotControls() {
-  ImGui::Separator();
-  
   // Get selected Mods
   auto selectedMods = getSelectedMods();
   bool hasSelection = !selectedMods.empty();
   bool hasName = strlen(snapshotNameBuffer) > 0;
   
-  // Snapshot slot buttons
-  ImGui::Text("Snapshots:");
-  ImGui::SameLine();
-  
+  // Snapshot slot buttons (inline with Random Layout)
   for (int i = 0; i < ModSnapshotManager::NUM_SLOTS; ++i) {
     if (i > 0) ImGui::SameLine();
     

@@ -18,6 +18,16 @@ namespace NodeRenderUtil {
 static ImFont* monoFont = nullptr;
 // Optional external tooltip map for sliders (e.g. layer descriptions)
 static const std::unordered_map<std::string, std::string>* externalTooltipMap = nullptr;
+// Track if any parameter was modified via GUI this frame
+static bool parameterModifiedThisFrame = false;
+
+void resetModifiedFlag() {
+  parameterModifiedThisFrame = false;
+}
+
+bool wasAnyParameterModified() {
+  return parameterModifiedThisFrame;
+}
  
 void setMonoFont(ImFont* font) {
   monoFont = font;
@@ -135,6 +145,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter) {
   ImGui::PushItemWidth(sliderWidth);
   if (ImGui::SliderInt(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax())) {
     parameter.set(value);
+    parameterModifiedThisFrame = true;
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
@@ -150,6 +161,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   const char* fmt = (r <= 0.01f) ? "%.5f" : (r <= 0.1f) ? "%.4f" : (r <= 1.0f) ? "%.3f" : "%.2f";
   if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), fmt, ImGuiSliderFlags_NoRoundToFormat)) {
     parameter.set(value);
+    parameterModifiedThisFrame = true;
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
@@ -164,6 +176,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<ofFloatColor>& parameter) {
   ImGui::PushItemWidth(sliderWidth);
   if (ImGui::ColorEdit4(("##" + name).c_str(), colorArray, ImGuiColorEditFlags_Float)) {
     parameter.set(ofFloatColor(colorArray[0], colorArray[1], colorArray[2], colorArray[3]));
+    parameterModifiedThisFrame = true;
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
@@ -178,6 +191,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<glm::vec2>& parameter) {
   ImGui::PushItemWidth(sliderWidth);
   if (ImGui::SliderFloat2(("##" + name).c_str(), valueArray, parameter.getMin().x, parameter.getMax().x, "%.2f", ImGuiSliderFlags_NoRoundToFormat)) {
     parameter.set(glm::vec2(valueArray[0], valueArray[1]));
+    parameterModifiedThisFrame = true;
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();
@@ -189,6 +203,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<bool>& parameter) {
   bool value = parameter.get();
   if (ImGui::Checkbox(("##" + name).c_str(), &value)) {
     parameter.set(value);
+    parameterModifiedThisFrame = true;
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   finishParameterRow(modPtr, name);
@@ -202,6 +217,7 @@ void addParameter(const ModPtr& modPtr, ofParameter<std::string>& parameter) {
   ImGui::PushItemWidth(sliderWidth);
   if (ImGui::InputText(("##" + name).c_str(), buf, sizeof(buf))) {
     parameter.set(std::string(buf));
+    parameterModifiedThisFrame = true;
   }
   ImGui::SetItemTooltip("%s", name.c_str());
   ImGui::PopItemWidth();

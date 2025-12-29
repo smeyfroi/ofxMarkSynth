@@ -25,6 +25,10 @@ void setLayerTooltipMap(const std::unordered_map<std::string, std::string>* tool
 
 
 
+// Track if any parameter was modified via GUI this frame
+void resetModifiedFlag();
+bool wasAnyParameterModified();
+
 void drawVerticalSliders(ofParameterGroup& paramGroup);
 void drawVerticalSliders(ofParameterGroup& paramGroup, const std::vector<std::shared_ptr<ofParameter<bool>>>& toggleParams);
 void addParameter(const ModPtr& modPtr, ofParameter<int>& parameter);

@@ -84,19 +84,47 @@ void NodeEditorModel::syncPositionsFromImNodes() {
   }
 }
 
-bool NodeEditorModel::saveLayout() const {
+bool NodeEditorModel::saveLayout() {
   if (!layoutEnginePtr) return false;
-  return NodeEditorLayoutSerializer::save(*this, synthPtr->name);
+  bool success = NodeEditorLayoutSerializer::save(*this, synthPtr->name);
+  if (success) {
+    snapshotPositions();  // Update snapshot after successful save
+  }
+  return success;
 }
 
 bool NodeEditorModel::loadLayout() {
   if (!layoutEnginePtr) return false;
-  return NodeEditorLayoutSerializer::load(*this, synthPtr->name);
+  bool success = NodeEditorLayoutSerializer::load(*this, synthPtr->name);
+  if (success) {
+    snapshotPositions();  // Update snapshot after successful load
+  }
+  return success;
 }
 
 bool NodeEditorModel::hasStoredLayout() const {
   if (!layoutEnginePtr) return false;
   return NodeEditorLayoutSerializer::exists(synthPtr->name);
+}
+
+bool NodeEditorModel::hasPositionsChanged() const {
+  if (lastKnownPositions.size() != nodes.size()) return true;
+  
+  constexpr float EPSILON = 0.5f;  // Small threshold to ignore sub-pixel drift
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    if (glm::distance(nodes[i].position, lastKnownPositions[i]) > EPSILON) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void NodeEditorModel::snapshotPositions() {
+  lastKnownPositions.clear();
+  lastKnownPositions.reserve(nodes.size());
+  for (const auto& node : nodes) {
+    lastKnownPositions.push_back(node.position);
+  }
 }
 
 
