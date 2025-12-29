@@ -267,7 +267,7 @@ void Mod::syncControllerAgencies() {
 
 std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, int index) {
   if (index < 0) return std::nullopt;
-  if (!namedDrawingLayerPtrs.contains(name)) return std::nullopt;
+  if (namedDrawingLayerPtrs.count(name) == 0) return std::nullopt;
   auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
   if (index >= static_cast<int>(drawingLayerPtrs.size())) return std::nullopt;
   auto layerPtr = drawingLayerPtrs[index];

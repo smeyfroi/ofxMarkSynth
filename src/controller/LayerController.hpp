@@ -6,13 +6,13 @@
 #pragma once
 
 #include "core/Mod.hpp"
+#include "util/OrderedMap.h"
 #include "ofParameter.h"
-#include <map>
 #include <unordered_map>
 
 namespace ofxMarkSynth {
 
-using DrawingLayerPtrMap = std::map<std::string, DrawingLayerPtr>;
+using DrawingLayerPtrMap = OrderedMap<std::string, DrawingLayerPtr>;
 
 /// Manages drawing layers - their creation, alpha/pause parameters, and state updates.
 class LayerController {

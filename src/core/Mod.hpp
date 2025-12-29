@@ -13,6 +13,7 @@
 #include "nodeEditor/NodeEditorLayoutSerializer.hpp"
 #include "ofParameter.h"
 #include "core/ParamController.h"
+#include "util/OrderedMap.h"
 #include <map>
 #include <memory>
 #include <optional>
@@ -73,7 +74,7 @@ private:
 
 using DrawingLayerPtr = std::shared_ptr<DrawingLayer>;
 using DrawingLayerPtrs = std::vector<DrawingLayerPtr>;
-using NamedDrawingLayerPtrs = std::unordered_map<std::string, DrawingLayerPtrs>;
+using NamedDrawingLayerPtrs = OrderedMap<std::string, DrawingLayerPtrs>;
 
 
 

@@ -20,6 +20,8 @@
 
 namespace ofxMarkSynth {
 
+using OrderedJson = nlohmann::ordered_json;
+
 namespace {
 
 // JSON extraction helpers - reduce repetitive contains/is_type/get patterns
@@ -99,7 +101,7 @@ int SynthConfigSerializer::ofBlendModeFromString(const std::string& str) {
   return OF_BLENDMODE_ALPHA;
 }
 
-SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
+SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("drawingLayers") || !j["drawingLayers"].is_object()) {
     ofLogNotice("SynthConfigSerializer") << "No drawingLayers section in config";
     return {};
@@ -150,7 +152,7 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
   }
 }
 
-bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const NamedLayers& layers) {
+bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const NamedLayers& layers) {
   if (!j.contains("mods") || !j["mods"].is_object()) {
     ofLogError("SynthConfigSerializer") << "No mods section in config";
     return false;
@@ -228,7 +230,7 @@ bool SynthConfigSerializer::parseMods(const nlohmann::json& j, std::shared_ptr<S
   }
 }
 
-bool SynthConfigSerializer::parseConnections(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
+bool SynthConfigSerializer::parseConnections(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("connections") || !j["connections"].is_array()) {
     ofLogNotice("SynthConfigSerializer") << "No connections section in config";
     return true; // Not an error - connections are optional
@@ -271,7 +273,7 @@ static ofFloatColor parseFloatColor(const std::string& str) {
   return ofFloatColor(0, 0, 0, 1);
 }
 
-bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
+bool SynthConfigSerializer::parseSynthConfig(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("synth") || !j["synth"].is_object()) {
     return true;
   }
@@ -323,7 +325,7 @@ bool SynthConfigSerializer::parseSynthConfig(const nlohmann::json& j, std::share
   return true;
 }
 
-bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_ptr<Synth> synth) {
+bool SynthConfigSerializer::parseIntents(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("intents") || !j["intents"].is_array()) {
     ofLogNotice("SynthConfigSerializer") << "No intents array in config";
     return true;
@@ -361,7 +363,7 @@ bool SynthConfigSerializer::parseIntents(const nlohmann::json& j, std::shared_pt
   }
 }
 
-bool SynthConfigSerializer::fromJson(const nlohmann::json& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& synthName) {
+bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& synthName) {
   if (!synth) {
     ofLogError("SynthConfigSerializer") << "Null Synth pointer";
     return false;
@@ -453,7 +455,7 @@ bool SynthConfigSerializer::load(std::shared_ptr<Synth> synth, const std::filesy
       return false;
     }
     
-    nlohmann::json j;
+    nlohmann::ordered_json j;
     file >> j;
     file.close();
     
