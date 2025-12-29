@@ -51,4 +51,4 @@
 
 // Config & utilities
 #include "config/ModFactory.hpp"
-#include "gui/FontCache.hpp"
+#include "core/FontStash2Cache.hpp"

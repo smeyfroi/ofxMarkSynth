@@ -18,7 +18,7 @@ namespace ofxMarkSynth {
 
 
 TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
-                 std::shared_ptr<FontCache> fontCache)
+                 std::shared_ptr<FontStash2Cache> fontCache)
 : Mod { synthPtr, name, std::move(config) },
   fontCachePtr { fontCache }
 {
@@ -195,8 +195,6 @@ void TextMod::pushDrawEvent(const std::string& text) {
   if (!fboPtr) return;
 
   int pixelSize = resolvePixelSize(fontSizeController.value, fboPtr->getHeight());
-  auto fontPtr = fontCachePtr->get(pixelSize);
-  if (!fontPtr) return;
 
   DrawEvent e;
   e.text = text;
@@ -209,7 +207,6 @@ void TextMod::pushDrawEvent(const std::string& text) {
   e.durationSec = std::max(0.001f, drawDurationSecController.value);
   e.alphaFactor = alphaFactorController.value;
   e.applied = 0.0f;
-  e.fontPtr = std::move(fontPtr);
 
   drawEvents.push_back(std::move(e));
 
@@ -221,8 +218,8 @@ void TextMod::pushDrawEvent(const std::string& text) {
 
 void TextMod::drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr) {
   if (!drawingLayerPtr || !drawingLayerPtr->fboPtr) return;
+  if (!fontCachePtr) return;
   auto fboPtr = drawingLayerPtr->fboPtr;
-  if (!e.fontPtr) return;
 
   float duration = std::max(0.001f, e.durationSec);
   // Use config running time (pause-aware) instead of wall clock
@@ -262,12 +259,16 @@ void TextMod::drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr) {
   float x = e.positionNorm.x * fboPtr->getWidth();
   float y = e.positionNorm.y * fboPtr->getHeight();
 
-  ofRectangle bounds = e.fontPtr->getStringBoundingBox(e.text, 0, 0);
+  // Create style for this draw call
+  auto style = fontCachePtr->createStyle(e.pixelSize, c);
+
+  // Get bounding box for centering
+  ofRectangle bounds = fontCachePtr->getTextBounds(e.text, style, 0, 0);
   x -= bounds.width * 0.5f;
   y += bounds.height * 0.5f;
 
-  ofSetColor(c);
-  e.fontPtr->drawString(e.text, x, y);
+  // Draw using ofxFontStash2
+  fontCachePtr->draw(e.text, style, x, y);
 }
 
 

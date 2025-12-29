@@ -29,6 +29,7 @@ common:
 	ADDON_DEPENDENCIES += ofxPlottable ofxPointClusters ofxSomPalette
 	ADDON_DEPENDENCIES += ofxConvexHull ofxTimeMeasurements ofxTinyEXR
 	ADDON_DEPENDENCIES += ofxFFmpegRecorder ofxFatLines ofxImGui ofxHistoryPlot.git
+	ADDON_DEPENDENCIES += ofxFontStash2
 
 	# include search paths, this will be usually parsed from the file system
 	# but if the addon or addon libraries need special search paths they can be
@@ -37,8 +38,8 @@ common:
 
 	# any special flag that should be passed to the compiler when using this
 	# addon
-	# ADDON_CFLAGS =
-
+	ADDON_CFLAGS = -DNANOVG_GL3_IMPLEMENTATION
+	
 	# any special flag that should be passed to the compiler for c++ files when
 	# using this addon
 	# ADDON_CPPFLAGS =

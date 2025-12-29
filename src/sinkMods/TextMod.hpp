@@ -9,8 +9,7 @@
 
 #include "core/Mod.hpp"
 #include "core/ParamController.h"
-#include "gui/FontCache.hpp"
-#include "ofTrueTypeFont.h"
+#include "core/FontStash2Cache.hpp"
 #include <memory>
 #include <vector>
 
@@ -24,7 +23,7 @@ class TextMod : public Mod {
 
 public:
   TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, 
-          std::shared_ptr<FontCache> fontCache);
+          std::shared_ptr<FontStash2Cache> fontCache);
   
   void update() override;
   void receive(int sinkId, const std::string& text) override;
@@ -57,13 +56,10 @@ private:
 
     // For incremental fades on accumulating layers
     float applied { 0.0f };
-
-    // Keep a shared reference so fonts can be evicted safely
-    std::shared_ptr<ofTrueTypeFont> fontPtr;
   };
 
   // Font cache (shared, pre-loaded at startup)
-  std::shared_ptr<FontCache> fontCachePtr;
+  std::shared_ptr<FontStash2Cache> fontCachePtr;
 
   // State
   std::string currentText;

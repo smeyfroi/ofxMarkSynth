@@ -35,6 +35,12 @@ public:
     resources[name] = std::make_shared<T>(std::move(resource));
   }
   
+  // Add a pre-constructed shared_ptr (for non-copyable types like FontStashCache)
+  template<typename T>
+  void addShared(const std::string& name, std::shared_ptr<T> resourcePtr) {
+    resources[name] = resourcePtr;
+  }
+  
   template<typename T>
   std::shared_ptr<T> get(const std::string& name) const {
     auto it = resources.find(name);

@@ -35,4 +35,5 @@ git clone https://github.com/Daandelange/ofxImGui.git
 git clone https://github.com/armadillu/ofxHistoryPlot.git
 git clone https://github.com/borg/ofxGist.git
 git clone https://github.com/npisanti/ofxAudioFile.git
+git clone https://github.com/armadillu/ofxFontStash2.git
 ```

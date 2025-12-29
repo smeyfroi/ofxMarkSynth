@@ -6,7 +6,7 @@
 //
 
 #include "config/ModFactory.hpp"
-#include "gui/FontCache.hpp"
+#include "core/FontStash2Cache.hpp"
 #include "core/Synth.hpp"
 #include "ofLog.h"
 #include "ofxMarkSynth.h"
@@ -205,7 +205,7 @@ void ModFactory::registerSinkMods() {
   });
   
   registerType("Text", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto fontCachePtr = r.get<FontCache>("fontCache");
+    auto fontCachePtr = r.get<FontStash2Cache>("fontCache");
     if (!fontCachePtr) {
       ofLogError("ModFactory") << "TextMod requires 'fontCache' resource";
       return nullptr;
