@@ -68,6 +68,9 @@ void FluidMod::update() {
   valueDissipationControllerPtr->update();
   velocityDissipationControllerPtr->update();
   
+  auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt) return;
+  
   setup();  
   fluidSimulation.update();
   
