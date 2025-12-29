@@ -962,8 +962,8 @@ void Gui::drawNodeEditor() {
     }
   }
   
-  // Check if any Mod parameter was modified via GUI this frame
-  if (NodeRenderUtil::wasAnyParameterModified()) {
+  // Check if any Mod parameter was modified via GUI this frame (only if auto-save enabled)
+  if (autoSaveModsEnabled && NodeRenderUtil::wasAnyParameterModified()) {
     modsConfigNeedsSave = true;
     modsConfigChangeTime = ofGetElapsedTimef();
   }
@@ -980,8 +980,8 @@ void Gui::drawNodeEditor() {
     }
   }
   
-  // Debounced auto-save for mods config
-  if (modsConfigNeedsSave) {
+  // Debounced auto-save for mods config (only if auto-save enabled)
+  if (autoSaveModsEnabled && modsConfigNeedsSave) {
     float elapsed = ofGetElapsedTimef() - modsConfigChangeTime;
     if (elapsed >= AUTO_SAVE_DELAY) {
       if (synthPtr->saveModsToCurrentConfig()) {
@@ -1234,6 +1234,7 @@ bool Gui::loadSnapshotSlot(int slotIndex) {
   auto affected = snapshotManager.apply(synthPtr, *snapshot);
   highlightedMods = affected;
   highlightStartTime = ofGetElapsedTimef();
+  autoSaveModsEnabled = false;  // Disable auto-save when loading snapshots
   ofLogNotice("Gui") << "Loaded snapshot from slot " << (slotIndex + 1);
   return true;
 }
@@ -1252,9 +1253,12 @@ void Gui::drawSnapshotControls() {
     std::string label = std::to_string(i + 1);
     
     // Determine button action
-    bool canSave = hasName && hasSelection;
-    bool canLoad = occupied && !hasName;
-    bool canClear = occupied && hasName && !hasSelection; // Shift+click or type name without selection to clear
+    bool shiftHeld = ImGui::GetIO().KeyShift;
+    int duplicateSlot = hasName ? snapshotManager.findNameInOtherSlot(snapshotNameBuffer, i) : -1;
+    bool nameConflict = duplicateSlot >= 0;
+    bool canSave = hasName && hasSelection && !nameConflict;
+    bool canLoad = occupied && !hasName && !shiftHeld;
+    bool canClear = occupied && shiftHeld;  // Shift+click to clear
     
     // Color based on state
     if (occupied) {
@@ -1283,13 +1287,13 @@ void Gui::drawSnapshotControls() {
           auto affected = snapshotManager.apply(synthPtr, *snapshot);
           highlightedMods = affected;
           highlightStartTime = ofGetElapsedTimef();
+          autoSaveModsEnabled = false;  // Disable auto-save when loading snapshots
           ofLogNotice("Gui") << "Loaded snapshot from slot " << (i + 1);
         }
       } else if (canClear) {
-        // Clear slot (type a name without selection to enable clear)
+        // Clear slot (Shift+click)
         snapshotManager.clearSlot(i);
         snapshotManager.saveToFile(synthPtr->getName());
-        snapshotNameBuffer[0] = '\0';  // Clear name
         ofLogNotice("Gui") << "Cleared snapshot slot " << (i + 1);
       }
     }
@@ -1298,16 +1302,38 @@ void Gui::drawSnapshotControls() {
     if (disabled) ImGui::EndDisabled();
     if (occupied) ImGui::PopStyleColor(3);
     
-    // Tooltip for occupied slots
-    if (occupied && ImGui::IsItemHovered()) {
-      auto snapshot = snapshotManager.getSlot(i);
-      if (snapshot) {
-        ImGui::SetTooltip("%s\n%zu mods\n\n[Click to load]\n[Type name + click to clear]",
-                          snapshot->name.c_str(),
-                          snapshot->modParams.size());
+    // Tooltip (allow on disabled items too)
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+      if (nameConflict) {
+        ImGui::SetTooltip("Name '%s' already in slot %d", snapshotNameBuffer, duplicateSlot + 1);
+      } else if (occupied) {
+        auto snapshot = snapshotManager.getSlot(i);
+        if (snapshot) {
+          if (hasName && hasSelection) {
+            ImGui::SetTooltip("%s\n%zu mods\n\n[Click to save]\n[Shift+click to clear]",
+                              snapshot->name.c_str(),
+                              snapshot->modParams.size());
+          } else if (hasName && !hasSelection) {
+            ImGui::SetTooltip("%s\n%zu mods\n\n[Select mods to save]\n[Shift+click to clear]",
+                              snapshot->name.c_str(),
+                              snapshot->modParams.size());
+          } else {
+            ImGui::SetTooltip("%s\n%zu mods\n\n[Click to load]\n[Shift+click to clear]",
+                              snapshot->name.c_str(),
+                              snapshot->modParams.size());
+          }
+        }
+      } else {
+        if (hasName && hasSelection) {
+          ImGui::SetTooltip("[Click to save]");
+        } else if (hasName && !hasSelection) {
+          ImGui::SetTooltip("[Select mods to save]");
+        } else if (!hasName && hasSelection) {
+          ImGui::SetTooltip("[Type name to save]");
+        } else {
+          ImGui::SetTooltip("[Select mods + type name to save]");
+        }
       }
-    } else if (!occupied && ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("[Select mods + type name + click to save]");
     }
   }
   
@@ -1334,6 +1360,12 @@ void Gui::drawSnapshotControls() {
     ImGui::Button("Undo");
     ImGui::EndDisabled();
   }
+  
+  // Auto-save mods toggle
+  ImGui::SameLine();
+  ImGui::Text("|");
+  ImGui::SameLine();
+  ImGui::Checkbox("auto-save configs", &autoSaveModsEnabled);
   
   // Keyboard shortcuts for loading slots (F1-F8 keys)
   for (int i = 0; i < ModSnapshotManager::NUM_SLOTS; ++i) {

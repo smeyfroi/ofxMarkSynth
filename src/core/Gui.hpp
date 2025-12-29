@@ -77,6 +77,7 @@ private:
   float layoutChangeTime { 0.0f };          // time when layout change was detected
   
   // Auto-save mods config with debounce
+  bool autoSaveModsEnabled { false };       // toggle for auto-saving mods config (OFF by default)
   bool modsConfigNeedsSave { false };       // mods config has changed and needs saving
   float modsConfigChangeTime { 0.0f };      // time when mods config change was detected
   

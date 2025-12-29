@@ -200,6 +200,16 @@ void ModSnapshotManager::clearSlot(int slot) {
     ofLogNotice("ModSnapshotManager") << "Cleared slot " << slot;
 }
 
+int ModSnapshotManager::findNameInOtherSlot(const std::string& name, int excludeSlot) const {
+    for (int i = 0; i < NUM_SLOTS; ++i) {
+        if (i == excludeSlot) continue;
+        if (slots[i].has_value() && slots[i]->name == name) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 nlohmann::json ModSnapshotManager::snapshotToJson(const Snapshot& snapshot) {
     nlohmann::json j;
     j["name"] = snapshot.name;

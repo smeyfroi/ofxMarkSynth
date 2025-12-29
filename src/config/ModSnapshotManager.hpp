@@ -57,6 +57,9 @@ public:
     bool isSlotOccupied(int slot) const;
     void clearSlot(int slot);
     
+    // Returns slot index if name exists in a different slot, -1 otherwise
+    int findNameInOtherSlot(const std::string& name, int excludeSlot) const;
+    
     bool saveToFile(const std::string& synthName);
     bool loadFromFile(const std::string& synthName);
     static std::string getSnapshotFilePath(const std::string& synthName);
