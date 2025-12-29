@@ -331,22 +331,31 @@ Converts a stream of points into geometric paths using various strategies.
 **Purpose**: Create shapes from point sequences.
 
 **Sinks**:
-- `Vec2` (vec2): Points to add to path
+- `Point` (vec2): Points to add to path
+- `Trigger` (float): Trigger path emission (only available in trigger-based mode)
 
 **Sources**:
 - `Path` (ofPath): Generated path object
 
+**Config Options** (set in JSON, not runtime parameters):
+- `TriggerBased`: When `"true"`, PathMod only emits paths when triggered via the `Trigger` sink. Points accumulate continuously and are clustered on trigger. Points outside the cluster are retained for subsequent triggers. When `"false"` (default), paths are emitted automatically when enough clustered points accumulate.
+
 **Key Parameters**:
 - `Strategy`: 0=polypath, 1=bounds, 2=horizontals, 3=convex hull
-- `MaxVertices`: Maximum points in path (0-20)
+- `MaxVertices`: Maximum points in path (0-20). In trigger-based mode, up to 7× this value are retained.
 - `ClusterRadius`: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy.
 
 **Intent Integration**: Responds to Granularity (cluster radius) and Density (max vertices) dimensions.
+
+**Modes**:
+- **Continuous mode** (default): Automatically emits a path when 4+ points cluster within `ClusterRadius`. All points are cleared after emission.
+- **Trigger-based mode**: Points accumulate continuously. On receiving a trigger, emits a path from clustered points and retains non-clustered points for the next trigger. This mode is useful for synchronizing path emission with other events (e.g., audio onsets, memory bank emissions).
 
 **Use Cases**:
 - Create polygonal shapes from audio points
 - Generate convex hulls around particle clusters
 - Build bounding boxes for collage sources
+- Synchronize path generation with audio events (trigger-based mode)
 
 ---
 

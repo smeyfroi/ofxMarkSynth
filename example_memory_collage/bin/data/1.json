@@ -43,7 +43,10 @@
     },
     
     "Path": {
-      "type": "Path"
+      "type": "Path",
+      "config": {
+        "TriggerBased": "true"
+      }
     },
     
     "Random Color": {
@@ -75,6 +78,7 @@
     "Random Point.Vec2 -> Path.Point",
     "Timer.Tick -> .MemorySave",
     "AudioData.Onset1 -> .MemoryEmitRandom",
+    "AudioData.Onset1 -> Path.Trigger",
     ".Memory -> Collage.SnapshotTexture",
     "Path.Path -> Collage.Path",
     "Random Color.Vec4 -> Collage.Colour"

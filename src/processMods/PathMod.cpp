@@ -14,12 +14,19 @@
 namespace ofxMarkSynth {
 
 
-PathMod::PathMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
+PathMod::PathMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, bool triggerBased_)
 : Mod { synthPtr, name, std::move(config) }
+, triggerBased { triggerBased_ }
 {
   sinkNameIdMap = {
     { "Point", SINK_VEC2 }
   };
+  
+  // Only expose Trigger sink in trigger-based mode
+  if (triggerBased) {
+    sinkNameIdMap["Trigger"] = SINK_TRIGGER;
+  }
+  
   sourceNameIdMap = {
     { "Path", SOURCE_PATH }
   };
@@ -121,6 +128,17 @@ void PathMod::update() {
   maxVerticesController.update();
   clusterRadiusController.update();
   
+  // In trigger-based mode, only accumulate points - don't auto-emit
+  // Apply upper limit to prevent unbounded growth: 7 * maxVertices
+  if (triggerBased) {
+    size_t maxPoints = static_cast<size_t>(maxVerticesController.value * 7.0);
+    while (newVecs.size() > maxPoints) {
+      newVecs.pop_front();
+    }
+    return;
+  }
+  
+  // Continuous mode: auto-emit when cluster found
   auto points = findCloseNewPoints();
   if (points.size() < 4) {
     if (newVecs.size() > maxVerticesController.value * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
@@ -147,6 +165,52 @@ void PathMod::update() {
   path.setColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
 //  path.setFilled(true);
   newVecs.clear();
+  emit(SOURCE_PATH, path);
+}
+
+void PathMod::emitPathFromClusteredPoints() {
+  // Find points within clusterRadius of the newest point
+  auto points = findCloseNewPoints();
+  if (points.size() < 4) {
+    // Not enough clustered points - keep accumulating
+    return;
+  }
+
+  // Build path using selected strategy
+  switch (strategyParameter) {
+    case 0:
+      path = makePolyPath(points);
+      break;
+    case 1:
+      path = makeBoundsPath(points);
+      break;
+    case 2:
+      path = makeHorizontalStripesPath(points);
+      break;
+    case 3:
+      path = makeConvexHullPath(points);
+      break;
+    default:
+      break;
+  }
+
+  path.setColor(ofFloatColor(1.0, 1.0, 1.0, 1.0));
+  
+  // Remove only the points that were used in the path, keep the rest for next trigger
+  // Points used are those within clusterRadius of the reference point (newest)
+  const glm::vec2& referencePoint = newVecs.back();
+  float maxDistance = clusterRadiusController.value;
+  
+  // Remove from back to front to maintain valid iterators
+  for (auto it = newVecs.begin(); it != newVecs.end(); ) {
+    float dist = glm::distance(referencePoint, *it);
+    if (dist <= maxDistance) {
+      it = newVecs.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  
   emit(SOURCE_PATH, path);
 }
 
@@ -193,6 +257,18 @@ void PathMod::receive(int sinkId, const glm::vec2& v) {
       break;
     default:
       ofLogError("PathMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
+  }
+}
+
+void PathMod::receive(int sinkId, const float& v) {
+  switch (sinkId) {
+    case SINK_TRIGGER:
+      if (v > 0.0f) {
+        emitPathFromClusteredPoints();
+      }
+      break;
+    default:
+      ofLogError("PathMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
 

@@ -139,7 +139,13 @@ void ModFactory::registerProcessMods() {
   });
   
   registerType("Path", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    return std::make_shared<PathMod>(s, n, std::move(c));
+    bool triggerBased = false;
+    auto it = c.find("TriggerBased");
+    if (it != c.end()) {
+      triggerBased = (it->second == "true" || it->second == "1");
+      c.erase(it);
+    }
+    return std::make_shared<PathMod>(s, n, std::move(c), triggerBased);
   });
   
   registerType("PixelSnapshot", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {

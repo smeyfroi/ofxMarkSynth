@@ -201,10 +201,12 @@
     "ExamplePath": {
       "type": "Path",
       "config": {
+        "TriggerBased": "false",
         "Strategy": "0",
         "MaxVertices": "3",
         "ClusterRadius": "0.15",
         "AgencyFactor": "1",
+        "_comment_TriggerBased": "TriggerBased: When 'true', PathMod only emits paths when triggered via the Trigger sink. Points accumulate continuously and are clustered on trigger. Points outside the cluster are retained for subsequent triggers. When 'false' (default), paths are emitted automatically when enough clustered points accumulate.",
         "_comment_ClusterRadius": "ClusterRadius: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy."
       }
     },

@@ -40,6 +40,12 @@ src/
 - Constructor init helpers named `initXxx()`
 - JSON helper functions use pattern `getJsonType(json, key, defaultValue)`
 
+## JSON Config Conventions
+- **Underscore-prefixed keys (`_key`)**: Reserved for comments in JSON config files. These are skipped when applying config to parameters. Example: `"_comment": "This explains the config"`
+- **Constructor config keys**: Config values needed at Mod construction time (not runtime parameters) should be read and erased in `ModFactory.cpp` before passing config to the Mod constructor. This prevents "unknown parameter" errors. Example: `TriggerBased` in PathMod is read in ModFactory, erased from config, and passed as a constructor argument.
+- **ResourceManager**: For external dependencies (file paths, device IDs) passed from the application. These are not stored in JSON config.
+- **Regular config keys**: Mapped to `ofParameter` values via `Mod::getParameterGroup()`. These appear in the GUI and can be controlled by the Intent system.
+
 ## Types & Error Handling
 - Prefer modern types: `std::shared_ptr`, `std::unique_ptr`, `glm::vec*`, `ofFloatColor`
 - Pass by const ref; use `auto` judiciously
