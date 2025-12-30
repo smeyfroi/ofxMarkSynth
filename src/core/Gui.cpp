@@ -1028,16 +1028,25 @@ void Gui::drawPerformanceNavigator() {
   
   ImGui::SeparatorText("Performance");
   
-  // Hibernation countdown indicator (fixed height, centered label)
+  // Hibernation fade indicator (fixed height, shows fade-out or fade-in progress)
   {
     const float barHeight = 4.0f;
     const ImVec2 barSize(-1, barHeight);
-    const bool fading = (synthPtr->getHibernationState() == HibernationController::State::FADING_OUT);
+    const auto state = synthPtr->getHibernationState();
+    const bool fadingOut = (state == HibernationController::State::FADING_OUT);
+    const bool fadingIn = (state == HibernationController::State::FADING_IN);
 
-    if (fading) {
+    if (fadingOut) {
       // Alpha goes from 1.0 to 0.0, so progress = 1.0 - alpha
       float progress = 1.0f - synthPtr->hibernationController->getAlpha();
       ImGui::ProgressBar(progress, barSize, "");
+    } else if (fadingIn) {
+      // Alpha goes from 0.0 to 1.0, so progress = alpha (show wake progress)
+      // Use a different color to distinguish from fade-out
+      ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(100,180,100,255));
+      float progress = synthPtr->hibernationController->getAlpha();
+      ImGui::ProgressBar(progress, barSize, "");
+      ImGui::PopStyleColor();
     } else {
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(130,130,130,140));
       ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(60,60,60,80));

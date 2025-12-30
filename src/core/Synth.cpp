@@ -473,8 +473,16 @@ void Synth::update() {
   // Update per-layer pause envelopes
   layerController->updatePauseStates();
   
-  // When paused, skip Mod updates but still update composites if hibernating
-  if (paused && !hibernationController->isHibernating()) {
+  // Sync paused state with hibernation:
+  // - HIBERNATED: paused = true (fully asleep, nothing updates)
+  // - FADING_OUT/FADING_IN: paused = false (mods update during transitions)
+  // - ACTIVE: paused controlled by user (spacebar toggle)
+  if (hibernationController->isFullyHibernated()) {
+    paused = true;
+  }
+  
+  // When paused and not in a fade transition, skip everything
+  if (paused && !hibernationController->isFading()) {
     return;
   }
   
@@ -595,7 +603,14 @@ void Synth::draw() {
   TSGL_STOP("Synth::draw");
 
 #ifdef TARGET_MAC
-  if (!paused && videoRecorderPtr && videoRecorderPtr->isRecording()) {
+  // Capture frames for recording:
+  // - During ACTIVE: capture if not paused
+  // - During FADING_OUT/FADING_IN/HIBERNATED: always capture to stay in sync with audio
+  // Recording captures the full audience experience including fades and black screen
+  bool shouldCaptureFrame = videoRecorderPtr && videoRecorderPtr->isRecording() &&
+      (!paused || hibernationController->isHibernating());
+  
+  if (shouldCaptureFrame) {
     TS_START("Synth::draw captureFrame");
     videoRecorderPtr->captureFrame([this](ofFbo& fbo) {
       compositeRenderer->drawToFbo(fbo, displayController->getSettings(),
@@ -688,11 +703,11 @@ bool Synth::keyPressed(int key) {
   }
   
   if (key == OF_KEY_SPACE) {
-    // Spacebar: unhibernate if hibernated/fading, unpause if paused, pause if running
+    // Spacebar: wake from hibernation (with fade-in), or toggle pause
     if (hibernationController->isHibernating()) {
-      if (hibernationController->cancel()) {
-        paused = false;
-      }
+      hibernationController->wake();  // Will reverse fade-out or start fade-in
+      // Mods start updating during fade-in (paused stays false)
+      paused = false;
       // Start time tracking on first ever wake
       if (!timeTracker->hasEverRun()) {
         timeTracker->start();
@@ -706,12 +721,10 @@ bool Synth::keyPressed(int key) {
   }
   
   if (key == 'H') {
-    // H key: hibernate only (one-way, not a toggle)
-    if (!hibernationController->isHibernating()) {
-      if (hibernationController->start()) {
-        paused = true;
-      }
-    }
+    // H key: hibernate (with fade-out), or reverse fade-in
+    hibernationController->hibernate();  // Will start fade-out or reverse fade-in
+    // Mods continue updating during fade-out so the visual keeps changing as it fades
+    // paused will be set when fully hibernated (handled elsewhere or leave running during fade)
     return true;
   }
 
@@ -768,7 +781,7 @@ HibernationController::State Synth::getHibernationState() const {
 }
 
 float Synth::getHibernationFadeDurationSec() const {
-  return hibernationController->getFadeDurationParameter();
+  return hibernationController->getFadeOutDurationParameter();
 }
 
 bool Synth::hasEverRun() const {
@@ -805,7 +818,8 @@ void Synth::initParameters() {
   parameters.add(baseManualBiasParameter);
   parameters.add(backgroundColorParameter);
   parameters.add(backgroundMultiplierParameter);
-  parameters.add(hibernationController->getFadeDurationParameter());
+  parameters.add(hibernationController->getFadeOutDurationParameter());
+  parameters.add(hibernationController->getFadeInDurationParameter());
   parameters.add(configTransitionManager->getDurationParameter());
   
   // initialise Mod parameters but do not add them to Synth parameters
