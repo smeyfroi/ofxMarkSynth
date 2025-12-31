@@ -32,6 +32,7 @@ TextSourceMod::~TextSourceMod() {
   // Clean up listeners to prevent memory leaks on mod destruction
   textFilenameParameter.removeListener(this, &TextSourceMod::onTextFilenameChanged);
   parseModeParameter.removeListener(this, &TextSourceMod::onParseModeChanged);
+  loopParameter.removeListener(this, &TextSourceMod::onLoopChanged);
 }
 
 float TextSourceMod::getAgency() const {
@@ -49,6 +50,7 @@ void TextSourceMod::initParameters() {
   // Register listeners for file/mode changes
   textFilenameParameter.addListener(this, &TextSourceMod::onTextFilenameChanged);
   parseModeParameter.addListener(this, &TextSourceMod::onParseModeChanged);
+  loopParameter.addListener(this, &TextSourceMod::onLoopChanged);
   
   // Initialize ParamController for Intent integration
   randomnessController.update();
@@ -90,29 +92,64 @@ void TextSourceMod::loadFile() {
   }
   
   hasLoadedFile = true;
-  currentIndex = 0;  // Reset index when loading new file
+  resetEmissionState();
+  
+  // Update tracking variables for change detection in listeners
+  lastLoadedFilename = textFilenameParameter.get();
+  lastParseMode = parseWords;
+  lastLoopValue = loopParameter.get();
   
   std::string modeStr = parseWords ? "words" : "lines";
   ofLogNotice("TextSourceMod") << "Loaded " << items.size() 
                                << " " << modeStr << " from " << fullPath;
 }
 
+void TextSourceMod::resetEmissionState() {
+  emittedIndices.clear();
+  nextSequentialIndex = 0;
+}
+
 void TextSourceMod::onTextFilenameChanged(std::string& filename) {
+  // Only reload if filename actually changed (listeners fire on any assignment)
+  if (filename == lastLoadedFilename) {
+    return;
+  }
   ofLogNotice("TextSourceMod") << "Text filename changed to: " << filename;
-  currentIndex = 0;
-  loadFile();
+  loadFile();  // loadFile() calls resetEmissionState()
 }
 
 void TextSourceMod::onParseModeChanged(bool& parseWords) {
+  // Only reload if parse mode actually changed (listeners fire on any assignment)
+  if (parseWords == lastParseMode) {
+    return;
+  }
   std::string mode = parseWords ? "words" : "lines";
   ofLogNotice("TextSourceMod") << "Parse mode changed to: " << mode;
-  currentIndex = 0;  // Reset index when changing mode
-  loadFile();
+  loadFile();  // loadFile() calls resetEmissionState()
+}
+
+void TextSourceMod::onLoopChanged(bool& loop) {
+  // Only act if loop actually changed to true (listeners fire on any assignment)
+  if (loop && !lastLoopValue) {
+    // User toggled loop from false to true - reset emission state to allow emitting again
+    resetEmissionState();
+    ofLogNotice("TextSourceMod") << "Loop enabled, reset emission state";
+  }
+  lastLoopValue = loop;
 }
 
 void TextSourceMod::emitNext() {
   if (!hasLoadedFile || items.empty()) {
     return;
+  }
+  
+  // Check if exhausted (all items emitted and not looping)
+  if (emittedIndices.size() >= items.size()) {
+    if (loopParameter) {
+      resetEmissionState();
+    } else {
+      return;  // Exhausted and not looping - stop emitting
+    }
   }
   
   // Get current randomness value (potentially influenced by Intent)
@@ -121,30 +158,37 @@ void TextSourceMod::emitNext() {
   int index;
   
   // Probabilistic selection based on randomness parameter
-  // randomness = 0.0 → always sequential
-  // randomness = 0.5 → 50% random, 50% sequential
-  // randomness = 1.0 → always random
+  // randomness = 0.0 → always sequential (next unvisited item in order)
+  // randomness = 0.5 → 50% random, 50% sequential picks from remaining items
+  // randomness = 1.0 → always random (any unvisited item)
   if (ofRandom(1.0f) < randomness) {
-    // Random selection: pick any item
-    index = ofRandom(items.size());
+    // Random selection: pick any unvisited item using rejection sampling
+    // Efficient when <50% emitted; bounded by item count near exhaustion
+    do {
+      index = static_cast<int>(ofRandom(items.size()));
+    } while (emittedIndices.count(index) > 0);
   } else {
-    // Sequential selection: use current index and advance
-    index = currentIndex;
-    
-    currentIndex++;
-    if (currentIndex >= items.size()) {
-      if (loopParameter) {
-        currentIndex = 0;  // Loop back to start
-      } else {
-        currentIndex = items.size() - 1;  // Stay on last item
+    // Sequential selection: find next unvisited item starting from nextSequentialIndex
+    while (emittedIndices.count(nextSequentialIndex) > 0) {
+      nextSequentialIndex++;
+      if (nextSequentialIndex >= static_cast<int>(items.size())) {
+        nextSequentialIndex = 0;  // Wrap around to find remaining items
       }
+    }
+    index = nextSequentialIndex;
+    nextSequentialIndex++;
+    if (nextSequentialIndex >= static_cast<int>(items.size())) {
+      nextSequentialIndex = 0;
     }
   }
   
+  emittedIndices.insert(index);
   emit(SOURCE_TEXT, items[index]);
+  
   ofLogVerbose("TextSourceMod") << "Emitted item[" << index << "]: '" 
                                 << items[index] << "' (randomness=" 
-                                << randomness << ")";
+                                << randomness << ", remaining=" 
+                                << (items.size() - emittedIndices.size()) << ")";
 }
 
 void TextSourceMod::receive(int sinkId, const float& value) {

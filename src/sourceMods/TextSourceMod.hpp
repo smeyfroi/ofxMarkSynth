@@ -11,6 +11,7 @@
 #include "core/Mod.hpp"
 #include "core/ParamController.h"
 #include <vector>
+#include <unordered_set>
 #include <filesystem>
 
 namespace ofxMarkSynth {
@@ -22,10 +23,13 @@ namespace ofxMarkSynth {
  * - Parse mode: Split into words OR keep whole lines
  * - Randomness: Float parameter (0.0-1.0) controls selection probability
  *   - 0.0 = Pure sequential (structured, predictable)
- *   - 0.5 = Mixed (50% random, 50% sequential)
+ *   - 0.5 = Mixed (50% random, 50% sequential picks from remaining items)
  *   - 1.0 = Pure random (chaotic, unpredictable)
  * - Intent integration: Chaos dimension maps to randomness
- * - Loop control for sequential mode
+ * - Loop control:
+ *   - Loop=true: Resets after all items emitted, continues indefinitely
+ *   - Loop=false: Stops emitting after each item has been emitted exactly once
+ *   - Works for both sequential and random modes (tracks emitted items)
  * 
  * Replaces: RandomWordSourceMod, FileTextSourceMod
  */
@@ -49,8 +53,16 @@ private:
   // State
   std::filesystem::path textSourcesPath;
   std::vector<std::string> items;  // Generic: words or lines
-  int currentIndex { 0 };
   bool hasLoadedFile { false };
+  
+  // Emission tracking (for non-looping exhaustion)
+  std::unordered_set<int> emittedIndices;  // Indices already emitted
+  int nextSequentialIndex { 0 };           // Next candidate for sequential pick
+  
+  // Change detection for listeners (ofParameter fires on any set, not just changes)
+  std::string lastLoadedFilename;
+  bool lastParseMode { false };
+  bool lastLoopValue { true };
   
   // Parameters
   ofParameter<std::string> textFilenameParameter { "TextFilename", "text.txt" };
@@ -64,8 +76,10 @@ private:
   
   // Methods
   void loadFile();
+  void resetEmissionState();  // Clear emitted tracking, called on load and loop toggle
   void onTextFilenameChanged(std::string& filename);
   void onParseModeChanged(bool& parseWords);
+  void onLoopChanged(bool& loop);
   void emitNext();
 };
 

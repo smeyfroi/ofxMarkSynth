@@ -98,7 +98,9 @@
         "ParseWords": "0",
         "Randomness": "0",
         "Loop": "1",
-        "AgencyFactor": "1"
+        "AgencyFactor": "1",
+        "_comment_Randomness": "Randomness: 0.0 = sequential, 1.0 = random, 0.5 = 50% chance of each. Both modes draw from unvisited items only.",
+        "_comment_Loop": "Loop: When false, stops emitting after each item emitted exactly once (works for sequential and random). When toggled true, resets immediately."
       }
     },
 

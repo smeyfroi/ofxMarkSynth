@@ -190,7 +190,7 @@ Generates random colors using HSB (Hue, Saturation, Brightness) color space with
 
 ### TextSourceMod
 
-Reads text from files and emits words or lines sequentially or randomly.
+Reads text from files and emits words or lines sequentially or randomly, with proper exhaustion handling.
 
 **Purpose**: Generate text content for visual display.
 
@@ -203,15 +203,23 @@ Reads text from files and emits words or lines sequentially or randomly.
 **Key Parameters**:
 - `TextFilename`: Source text file name
 - `ParseWords`: Split into words (true) or keep lines (false)
-- `Randomness`: 0.0 = sequential, 1.0 = random selection
-- `Loop`: Whether to loop through content
+- `Randomness`: 0.0 = sequential, 1.0 = random selection, 0.5 = 50% chance of each
+- `Loop`: Controls behavior after all items emitted:
+  - `true`: Resets and continues emitting indefinitely
+  - `false`: Stops emitting after each item has been emitted exactly once
+
+**Exhaustion Behavior**:
+- Tracks which items have been emitted (works for both sequential and random modes)
+- In mixed mode (`Randomness` between 0 and 1), both sequential and random picks draw from the same pool of unvisited items
+- When `Loop` is toggled from `false` to `true`, emission state resets immediately
 
 **Intent Integration**: Chaos dimension controls randomness.
 
 **Use Cases**:
-- Display song lyrics synchronized to audio
+- Display song lyrics synchronized to audio (sequential, no loop)
 - Create poetic text compositions
-- Generate random word arrangements
+- Generate random word arrangements (random, with loop)
+- Emit each line exactly once in random order (random, no loop)
 
 ---
 
