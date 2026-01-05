@@ -195,7 +195,9 @@ controller.updateIntent(computedValue, strength, "D -> custom formula");
 
 ## AgencyFactor
 
-Mods can scale their Intent responsiveness:
+`AgencyFactor` scales a Mod’s effective **Synth Agency** (auto takeover) when that Mod receives automatic values through connections.
+
+Most Mods implement:
 
 ```cpp
 float MyMod::getAgency() const {
@@ -203,9 +205,13 @@ float MyMod::getAgency() const {
 }
 ```
 
-- `agencyFactorParameter` is typically a 0-1 parameter exposed in the GUI
-- Setting it to 0 disables Intent for that Mod
-- Setting it to 0.5 halves the Intent influence
+and then pass `getAgency()` into `ParamController::updateAuto(...)`.
+
+- `agencyFactorParameter` is typically a 0–1 parameter exposed in the GUI
+- Setting it to `0` disables **auto takeover** for that Mod’s auto-wired parameters
+- Setting it to `0.5` halves the effect of the global Synth Agency for that Mod
+
+Note: Intent influence is driven by the Synth’s intent strength/activations and each Mod’s `applyIntent()` implementation. Most Mods do **not** currently scale intent strength by `AgencyFactor`.
 
 ---
 

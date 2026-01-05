@@ -45,13 +45,21 @@ All dimensions are normalized to 0.0-1.0.
 
 ## AgencyFactor
 
-Mods with Intent support have an **AgencyFactor** parameter (default 1.0, range 0.0-1.0).
+Many Mods have an **AgencyFactor** parameter (default 1.0, range 0.0–1.0).
 
-- **1.0**: Full Intent influence (default)
-- **0.5**: Intent effect is halved
-- **0.0**: Intent has no effect (Mod uses only its base parameters)
+`AgencyFactor` scales a Mod’s effective **Synth Agency** for auto-wired parameters.
 
-`AgencyFactor` is multiplied with the global agency value, controlling how much Intent affects that Mod. Configure via `"AgencyFactor": "0.5"` in synth config JSON.
+- **1.0**: Full auto takeover potential (uses the global Synth Agency)
+- **0.5**: Half auto takeover potential
+- **0.0**: No auto takeover (connected auto values still arrive, but the Mod treats agency as 0)
+
+In code, Mods typically compute:
+
+- `effectiveAgency = SynthAgency * AgencyFactor`
+
+and pass that value into `ParamController::updateAuto(...)`.
+
+Note: Intent influence is controlled by the Synth intent strength/activations and each Mod’s `applyIntent()` mapping. Most Mods do **not** currently scale intent strength by `AgencyFactor`.
 
 ---
 

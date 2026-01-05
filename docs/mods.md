@@ -79,7 +79,7 @@ Extracts motion flow data from video (file or camera).
 - `PointSamplesPerUpdate`: Number of motion point samples emitted per frame (0-500)
 - Motion detection sensitivity
 - Flow field resolution
-- `AgencyFactor`: Scales how strongly Intent affects this Mod
+- `AgencyFactor`: Scales this Mod’s effective Synth Agency for auto-wired parameters (0.0–1.0). Does not scale Intent strength.
 
 **Intent Integration**: Density (D) increases `PointSamplesPerUpdate` via exp(0.5).
 
@@ -295,7 +295,7 @@ Applies linear transformation (multiply + add) to float values.
 **Key Parameters**:
 - `Multiplier`: Scale factor (-2.0 to 2.0)
 - `Adder`: Offset value (-1.0 to 1.0)
-- `AgencyFactor`: Intent responsiveness (0.0-1.0)
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency) (0.0-1.0)
 
 **Intent Integration**: Full Intent system support with configurable agency.
 
@@ -321,7 +321,7 @@ Groups 2D points into clusters using k-means algorithm and outputs cluster cente
 
 **Key Parameters**:
 - Cluster count (adjustable via sink)
-- `AgencyFactor`: Intent responsiveness
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
 
 **Intent Integration**: Structure dimension affects clustering behavior.
 
@@ -448,7 +448,7 @@ Draws soft, alpha-blended circles with Gaussian falloff.
 - `AlphaMultiplier`: Transparency (0.0-1.0)
 - `Softness`: Edge blur (0.0-1.0)
 - `Falloff`: Falloff mode (0=Glow, 1=Dab)
-- `AgencyFactor`: Intent responsiveness
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
 
 **Falloff Modes**:
 - `0` (Glow): Exponential falloff creating sharp-centered, glowing marks. Good for dark backgrounds where marks add light.
@@ -485,7 +485,7 @@ Physics-based particle system with attraction, connections, and trails.
 - `attractionRadius`: Range of attraction
 - `connectionRadius`: Distance for drawing connections
 - `maxSpeed`: Velocity cap
-- `AgencyFactor`: Intent responsiveness
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
 
 **Intent Integration**: Full Intent with agency control.
 
@@ -660,7 +660,7 @@ For accumulating layers (`clearOnUpdate=false`), TextMod uses incremental alpha 
 - `AlphaFactor`: Draw-event opacity contribution (0.0-1.0)
 - `MaxDrawEvents`: Maximum concurrent draw events (oldest dropped)
 - `MinFontPx`: Minimum font size in pixels
-- `AgencyFactor`: Intent responsiveness
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
 
 **Intent Integration**: Full Intent support with agency (including draw-event envelope).
 
@@ -749,7 +749,7 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 - `Vorticity`: Vortex formation strength
 - `Value Dissipation`: Color/value fade rate
 - `Velocity Dissipation`: Motion decay rate
-- `AgencyFactor`: Intent responsiveness
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
 
 **Intent Integration**: Full Intent support with agency.
 
@@ -1042,7 +1042,7 @@ Many Mods support the **Intent System** for expressive real-time control. The In
 - **Chaos**: Randomness, variance, noise
 - **Granularity**: Scale, resolution, feature size
 
-Mods with `AgencyFactor` parameters can control their responsiveness to global Intent changes. Controllers can be mapped to Mod parameters through the `ParamController` system, enabling smooth interpolation and complex mappings.
+Mods with `AgencyFactor` parameters can scale their effective Synth Agency for auto-wired parameters (i.e. how much connected signals take over as you raise Synth Agency). Intent influence is controlled by the Intent faders/strength and each Mod’s `applyIntent()` mapping; it is not currently scaled by `AgencyFactor`.
 
 For detailed Intent mappings per Mod, see [intent-mappings.md](intent-mappings.md).
 
