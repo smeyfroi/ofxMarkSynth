@@ -27,7 +27,7 @@ class PerformanceNavigator {
   
 public:
   enum class HoldAction { NONE, NEXT, PREV, JUMP };
-  enum class HoldSource { NONE, KEYBOARD, MOUSE };
+  enum class HoldSource { NONE, KEYBOARD, MOUSE, APC_MINI };
   
   explicit PerformanceNavigator(Synth* synth);
   bool keyPressed(int key);

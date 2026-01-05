@@ -96,6 +96,9 @@ public:
   void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
   
   ofParameterGroup& getLayerAlphaParameters() { return layerController->getAlphaParameterGroup(); }
+  ofParameterGroup& getLayerPauseParameters() { return layerController->getPauseParameterGroup(); }
+  const std::vector<std::shared_ptr<ofParameter<bool>>>& getLayerPauseParamPtrs() const { return layerController->getPauseParamPtrs(); }
+  size_t getLayerCount() const { return layerController->getCount(); }
   const DrawingLayerPtrMap& getDrawingLayers() const { return layerController->getLayers(); }
   
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
