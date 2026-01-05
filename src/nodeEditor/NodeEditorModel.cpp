@@ -5,10 +5,11 @@
 //  Created by Steve Meyfroidt on 07/11/2025.
 //
 
-#include "nodeEditor/NodeEditorModel.hpp"
-#include "nodeEditor/NodeEditorLayoutSerializer.hpp"
-#include "core/Synth.hpp"
+#include "NodeEditorModel.hpp"
+#include "NodeEditorLayoutSerializer.hpp"
+#include "../core/Synth.hpp"
 #include "imnodes.h"
+#include <algorithm>
 
 
 
@@ -26,22 +27,40 @@ void NodeEditorModel::buildFromSynth(const std::shared_ptr<Synth> synthPtr_) {
     .objectPtr = synthPtr,
     .position = glm::vec2(50.0f, 100.0f),
   });
-  for (const auto& modNamePtr : synthPtr->modPtrs) {
-    auto& [modName, modPtr] = modNamePtr;
+  std::vector<std::string> modNames;
+  modNames.reserve(synthPtr->modPtrs.size());
+  for (const auto& [modName, modPtr] : synthPtr->modPtrs) {
+    modNames.push_back(modName);
+  }
+  std::sort(modNames.begin(), modNames.end());
+
+  for (const auto& modName : modNames) {
+    auto modPtr = synthPtr->modPtrs.at(modName);
     nodes.emplace_back(NodeEditorNode {
       .objectPtr = modPtr,
       .position = glm::vec2(100.0f, 100.0f),
     });
     layoutEnginePtr->addNode(modPtr);
   }
-  for (const auto& layerNamePtr : synthPtr->getDrawingLayers()) {
-    auto& [layerName, layerPtr] = layerNamePtr;
+
+  std::vector<std::string> layerNames;
+  layerNames.reserve(synthPtr->getDrawingLayers().size());
+  for (const auto& [layerName, layerPtr] : synthPtr->getDrawingLayers()) {
+    layerNames.push_back(layerName);
+  }
+  std::sort(layerNames.begin(), layerNames.end());
+
+  for (const auto& layerName : layerNames) {
+    auto layerPtr = synthPtr->getDrawingLayers().at(layerName);
     nodes.emplace_back(NodeEditorNode {
       .objectPtr = layerPtr,
       .position = glm::vec2(100.0f, 150.0f),
     });
     layoutEnginePtr->addNode(layerPtr);
   }
+
+  // Establish a deterministic initial layout (and any per-synth precomputation).
+  layoutEnginePtr->initialize(synthPtr);
 }
 
 int getId(NodeObjectPtr objectPtr) {
@@ -77,6 +96,18 @@ void NodeEditorModel::resetLayout() {
   buildFromSynth(synthPtr);
 }
 
+void NodeEditorModel::randomizeLayout() {
+  if (!layoutEnginePtr) return;
+  layoutEnginePtr->randomize();
+  computeLayout();
+}
+
+void NodeEditorModel::relaxLayout(int iterations) {
+  if (!layoutEnginePtr) return;
+  layoutEnginePtr->compute(iterations);
+  computeLayout();
+}
+
 void NodeEditorModel::syncPositionsFromImNodes() {
   for (auto& node : nodes) {
     ImVec2 imnodesPos = ImNodes::GetNodeGridSpacePos(getId(node.objectPtr));
@@ -86,7 +117,7 @@ void NodeEditorModel::syncPositionsFromImNodes() {
 
 bool NodeEditorModel::saveLayout() {
   if (!layoutEnginePtr) return false;
-  bool success = NodeEditorLayoutSerializer::save(*this, synthPtr->name);
+  bool success = NodeEditorLayoutSerializer::save(*this, synthPtr->name, synthPtr->getCurrentConfigPath());
   if (success) {
     snapshotPositions();  // Update snapshot after successful save
   }
@@ -95,7 +126,7 @@ bool NodeEditorModel::saveLayout() {
 
 bool NodeEditorModel::loadLayout() {
   if (!layoutEnginePtr) return false;
-  bool success = NodeEditorLayoutSerializer::load(*this, synthPtr->name);
+  bool success = NodeEditorLayoutSerializer::load(*this, synthPtr->name, synthPtr->getCurrentConfigPath());
   if (success) {
     snapshotPositions();  // Update snapshot after successful load
   }
@@ -104,7 +135,7 @@ bool NodeEditorModel::loadLayout() {
 
 bool NodeEditorModel::hasStoredLayout() const {
   if (!layoutEnginePtr) return false;
-  return NodeEditorLayoutSerializer::exists(synthPtr->name);
+  return NodeEditorLayoutSerializer::exists(synthPtr->name, synthPtr->getCurrentConfigPath());
 }
 
 bool NodeEditorModel::hasPositionsChanged() const {

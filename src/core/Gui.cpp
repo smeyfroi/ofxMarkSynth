@@ -837,6 +837,17 @@ void Gui::drawNodeEditor() {
         layoutNeedsSave = false;  // Reset dirty flag after load
         ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
       }
+    } else {
+      // No stored layout: generate a deterministic layout immediately and persist it.
+      // This keeps the node editor usable on first load without manual intervention.
+      nodeEditorModel.relaxLayout(120);
+      layoutComputed = true;
+      animateLayout = false;
+      layoutNeedsSave = false;
+
+      if (nodeEditorModel.saveLayout()) {
+        ofLogNotice("Gui") << "Auto-generated and saved node layout for: " << synthPtr->name;
+      }
     }
   }
   
@@ -856,6 +867,7 @@ void Gui::drawNodeEditor() {
   
   if (ImGui::Button((std::string(SHUFFLE_ICON) + " Random Layout").c_str())) {
     nodeEditorModel.resetLayout();
+    nodeEditorModel.randomizeLayout();
     layoutComputed = false;
     animateLayout = true;
   }

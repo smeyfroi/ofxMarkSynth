@@ -32,6 +32,10 @@ struct LayoutNode {
   glm::vec2 position;
   glm::vec2 velocity;
   bool isFixed { false };  // for pinning nodes
+
+  // Deterministic layout guidance: keep nodes loosely in X "bands".
+  float anchorX { 0.0f };
+  bool useAnchorX { false };
 };
 
 class NodeEditorLayout {
@@ -63,16 +67,24 @@ public:
     float repulsionStrength;
     float springStrength;
     float springLength;
+    float layerSpringStrength;
+    float layerSpringLength;
+    float bandAttractionStrength;
+    float layerYOffset;
     float damping;
     float maxSpeed;
     float stopThreshold;
     int maxIterations;
     glm::vec2 centerAttraction;
-    
+
     Config()
       : repulsionStrength(6000.0f)
       , springStrength(0.001f)
       , springLength(800.0f)
+      , layerSpringStrength(0.0015f)
+      , layerSpringLength(500.0f)
+      , bandAttractionStrength(0.01f)
+      , layerYOffset(200.0f)
       , damping(0.9f)
       , maxSpeed(100.0f)
       , stopThreshold(0.5f)
@@ -104,10 +116,12 @@ private:
   void applyForces();
   void applyRepulsionForces();
   void applySpringForces();
+  void applyBandAttraction();
   void applyCenterAttraction();
   void updatePositions();
   
   std::unordered_map<NodeObjectPtr, LayoutNode> nodes;
+  std::vector<NodeObjectPtr> nodeOrder;
   glm::vec2 bounds;
   glm::vec2 center;
   int currentIteration;

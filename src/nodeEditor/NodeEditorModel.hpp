@@ -60,6 +60,8 @@ public:
   void computeLayoutAnimated();
   bool isLayoutAnimating() const;
   void resetLayout();
+  void randomizeLayout();
+  void relaxLayout(int iterations);
   
   void syncPositionsFromImNodes();
   bool saveLayout();
