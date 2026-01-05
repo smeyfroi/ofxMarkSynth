@@ -69,7 +69,11 @@ void TextMod::update() {
   if (drawEvents.empty()) return;
 
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt) return;
+  if (!drawingLayerPtrOpt) {
+    // Drop queued draw events while the layer is inactive.
+    drawEvents.clear();
+    return;
+  }
   auto drawingLayerPtr = drawingLayerPtrOpt.value();
   auto fboPtr = drawingLayerPtr->fboPtr;
   if (!fboPtr) return;
@@ -77,8 +81,9 @@ void TextMod::update() {
   // Use config running time (pause-aware) instead of wall clock
   float now = getSynth()->getConfigRunningTime();
   drawEvents.erase(std::remove_if(drawEvents.begin(), drawEvents.end(), [&](const DrawEvent& e) {
-    return (now - e.startTimeSec) >= e.durationSec;
-  }), drawEvents.end());
+                     return (now - e.startTimeSec) >= e.durationSec;
+                   }),
+                   drawEvents.end());
   if (drawEvents.empty()) return;
 
   fboPtr->getSource().begin();
@@ -92,6 +97,8 @@ void TextMod::update() {
 }
 
 void TextMod::receive(int sinkId, const std::string& text) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_TEXT:
       ofLogVerbose("TextMod") << "Received text: " << text;
@@ -104,6 +111,8 @@ void TextMod::receive(int sinkId, const std::string& text) {
 }
 
 void TextMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_FONT_SIZE:
       fontSizeController.updateAuto(value, getAgency());
@@ -129,6 +138,8 @@ void TextMod::receive(int sinkId, const float& value) {
 }
 
 void TextMod::receive(int sinkId, const glm::vec2& point) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POSITION:
       positionController.updateAuto(point, getAgency());
@@ -139,6 +150,8 @@ void TextMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void TextMod::receive(int sinkId, const glm::vec4& v) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_COLOR:
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
@@ -150,29 +163,27 @@ void TextMod::receive(int sinkId, const glm::vec4& v) {
 
 void TextMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
-  
+
   im.G().exp(fontSizeController, strength, 1.4f);
-  
+
   // Color composition
   ofFloatColor colorI = energyToColor(intent);
   colorI.a = im.D().get() * 0.5f + 0.5f;
   colorController.updateIntent(colorI, strength, "E->color, D->alpha");
-  
+
   im.D().lin(alphaController, strength);
 
   // Draw event envelope
   im.G().inv().exp(drawDurationSecController, strength);
   im.D().exp(alphaFactorController, strength);
-  
+
   // Position jitter when chaos > threshold
   float chaos = im.C().get();
   if (chaos > 0.1f) {
     glm::vec2 basePos = positionController.value;
     float jitterAmount = chaos * 0.15f;
-    glm::vec2 jitteredPos = basePos + glm::vec2(
-      ofRandom(-jitterAmount, jitterAmount),
-      ofRandom(-jitterAmount, jitterAmount)
-    );
+    glm::vec2 jitteredPos = basePos + glm::vec2(ofRandom(-jitterAmount, jitterAmount),
+                                               ofRandom(-jitterAmount, jitterAmount));
     jitteredPos.x = std::clamp(jitteredPos.x, 0.05f, 0.95f);
     jitteredPos.y = std::clamp(jitteredPos.y, 0.05f, 0.95f);
     positionController.updateIntent(jitteredPos, strength * chaos, "C->jitter");
@@ -231,9 +242,9 @@ void TextMod::drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr) {
   if (drawingLayerPtr->clearOnUpdate) {
     // For clearing layers (including fluid): quick fade-in (10%), slow fade-out (90%)
     if (t < 0.1f) {
-      alphaScale = t / 0.1f;  // 0→1 in first 10%
+      alphaScale = t / 0.1f; // 0→1 in first 10%
     } else {
-      alphaScale = 1.0f - glm::smoothstep(0.1f, 1.0f, t);  // 1→0 smoothly
+      alphaScale = 1.0f - glm::smoothstep(0.1f, 1.0f, t); // 1→0 smoothly
     }
   } else {
     // For non-clearing layers: incremental drawing

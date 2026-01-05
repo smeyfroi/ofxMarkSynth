@@ -19,13 +19,13 @@ FluidRadialImpulseMod::FluidRadialImpulseMod(std::shared_ptr<Synth> synthPtr, co
 : Mod { synthPtr, name, std::move(config) }
 {
   addRadialImpulseShader.load();
-  
+
   sinkNameIdMap = {
     { "Point", SINK_POINTS },
     { impulseRadiusParameter.getName(), SINK_IMPULSE_RADIUS },
     { impulseStrengthParameter.getName(), SINK_IMPULSE_STRENGTH }
   };
-  
+
   registerControllerForSource(impulseRadiusParameter, impulseRadiusController);
   registerControllerForSource(impulseStrengthParameter, impulseStrengthController);
 }
@@ -45,8 +45,12 @@ void FluidRadialImpulseMod::update() {
   syncControllerAgencies();
   impulseRadiusController.update();
   impulseStrengthController.update();
+
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt) return;
+  if (!drawingLayerPtrOpt) {
+    newPoints.clear();
+    return;
+  }
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   float dt = dtParameter.get();
@@ -57,11 +61,13 @@ void FluidRadialImpulseMod::update() {
                                   impulseStrengthController.value,
                                   dt);
   });
-  
+
   newPoints.clear();
 }
 
 void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_IMPULSE_RADIUS:
       impulseRadiusController.updateAuto(value, getAgency());
@@ -75,6 +81,8 @@ void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
 }
 
 void FluidRadialImpulseMod::receive(int sinkId, const glm::vec2& point) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINTS:
       newPoints.push_back(point);
@@ -88,10 +96,11 @@ void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
   im.G().exp(impulseRadiusController, strength);
-  
+
   // Weighted blend: energy (80%) + chaos (20%)
-  float impulseStrengthI = linearMap(intent.getEnergy(), impulseStrengthController.getManualMin(), impulseStrengthController.getManualMax() * 0.8f) +
-      linearMap(intent.getChaos(), 0.0f, impulseStrengthController.getManualMax() * 0.2f);
+  float impulseStrengthI =
+      linearMap(intent.getEnergy(), impulseStrengthController.getManualMin(), impulseStrengthController.getManualMax() * 0.8f)
+      + linearMap(intent.getChaos(), 0.0f, impulseStrengthController.getManualMax() * 0.2f);
   impulseStrengthController.updateIntent(impulseStrengthI, strength, "E*.8+C -> lin");
 }
 

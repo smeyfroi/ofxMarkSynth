@@ -24,7 +24,7 @@ ParticleSetMod::ParticleSetMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { spinParameter.getName(), SINK_SPIN },
     { colorParameter.getName(), SINK_COLOR }
   };
-  
+
   registerControllerForSource(spinParameter, spinController);
   registerControllerForSource(colorParameter, colorController);
 }
@@ -47,7 +47,7 @@ void ParticleSetMod::initParameters() {
   connectionRadiusControllerPtr = std::make_unique<ParamController<float>>(parameters.get("connectionRadius").cast<float>());
   colourMultiplierControllerPtr = std::make_unique<ParamController<float>>(parameters.get("colourMultiplier").cast<float>());
   maxSpeedControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxSpeed").cast<float>());
-  
+
   auto& timeStepParam = parameters.get("timeStep").cast<float>();
   auto& velocityDampingParam = parameters.get("velocityDamping").cast<float>();
   auto& attractionStrengthParam = parameters.get("attractionStrength").cast<float>();
@@ -78,7 +78,7 @@ void ParticleSetMod::update() {
   connectionRadiusControllerPtr->update();
   colourMultiplierControllerPtr->update();
   maxSpeedControllerPtr->update();
-  
+
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) {
     newPoints.clear(); // Clear to prevent accumulation when paused
@@ -87,14 +87,14 @@ void ParticleSetMod::update() {
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   particleSet.update();
-  
+
   std::for_each(newPoints.begin(), newPoints.end(), [this](const auto& vec) {
     glm::vec2 p { vec.x, vec.y };
     glm::vec2 v { vec.z, vec.w };
     particleSet.add(p, v, colorController.value, spinController.value);
   });
   newPoints.clear();
-  
+
   fboPtr->getSource().begin();
   ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
@@ -105,6 +105,8 @@ void ParticleSetMod::update() {
 }
 
 void ParticleSetMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_SPIN:
       spinController.updateAuto(value, getAgency());
@@ -115,9 +117,11 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
 }
 
 void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINT:
-      newPoints.push_back(glm::vec4 { point, ofRandom(0.01)-0.005, ofRandom(0.01)-0.005 });
+      newPoints.push_back(glm::vec4 { point, ofRandom(0.01) - 0.005, ofRandom(0.01) - 0.005 });
       break;
     default:
       ofLogError("ParticleSetMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
@@ -125,6 +129,8 @@ void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINT_VELOCITY:
       newPoints.push_back(v);
@@ -139,16 +145,16 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
 
 void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
-  
+
   (im.C() * im.E()).lin(spinController, strength, -0.05f, 0.05f);
-  
+
   // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
   color.setSaturation((im.E() * im.C() * im.S().inv()).get());
   color.a = im.D().get();
   colorController.updateIntent(color, strength, "E->color, S->bright, E*C*(1-S)->sat, D->alpha");
-  
+
   im.E().exp(*timeStepControllerPtr, strength);
   im.G().inv().lin(*velocityDampingControllerPtr, strength);
   im.S().lin(*attractionStrengthControllerPtr, strength);

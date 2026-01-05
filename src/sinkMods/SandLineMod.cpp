@@ -23,7 +23,7 @@ SandLineMod::SandLineMod(std::shared_ptr<Synth> synthPtr, const std::string& nam
     { pointRadiusParameter.getName(), SINK_POINT_RADIUS },
     { colorParameter.getName(), SINK_POINT_COLOR }
   };
-  
+
   registerControllerForSource(densityParameter, densityController);
   registerControllerForSource(pointRadiusParameter, pointRadiusController);
   registerControllerForSource(colorParameter, colorController);
@@ -55,7 +55,7 @@ void SandLineMod::drawSandLine(glm::vec2 p1, glm::vec2 p2, float drawScale) {
   glm::vec2 midpoint = (p1 + p2) * 0.5f;
   glm::vec2 unitDirection = glm::normalize(lineVector);
   glm::vec2 perpendicular { -unitDirection.y, unitDirection.x };
-  
+
   std::normal_distribution<float> alongDist(0.0f, stdDevAlongController.value * lineLength);
   std::normal_distribution<float> perpDist(0.0f, stdDevPerpendicularController.value * lineLength);
 
@@ -85,9 +85,12 @@ void SandLineMod::update() {
   alphaMultiplierController.update();
   stdDevAlongController.update();
   stdDevPerpendicularController.update();
-  
+
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt) return;
+  if (!drawingLayerPtrOpt) {
+    newPoints.clear();
+    return;
+  }
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
   float drawScale = fboPtr->getWidth();
@@ -104,8 +107,10 @@ void SandLineMod::update() {
   if (newPoints.size() > 1) {
     auto iter = newPoints.begin();
     while (iter < newPoints.end() - (newPoints.size() % 2)) {
-      auto p1 = *iter; iter++;
-      auto p2 = *iter; iter++;
+      auto p1 = *iter;
+      iter++;
+      auto p2 = *iter;
+      iter++;
       drawSandLine(p1, p2, drawScale);
     }
     newPoints.erase(newPoints.begin(), iter);
@@ -115,6 +120,8 @@ void SandLineMod::update() {
 }
 
 void SandLineMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINT_RADIUS:
       pointRadiusController.updateAuto(value, getAgency());
@@ -126,6 +133,8 @@ void SandLineMod::receive(int sinkId, const float& value) {
 }
 
 void SandLineMod::receive(int sinkId, const glm::vec2& point) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINTS:
       newPoints.push_back(point);
@@ -136,6 +145,8 @@ void SandLineMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void SandLineMod::receive(int sinkId, const glm::vec4& v) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINT_COLOR:
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
@@ -147,17 +158,17 @@ void SandLineMod::receive(int sinkId, const glm::vec4& v) {
 
 void SandLineMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
-  
+
   (im.E() * im.G()).exp(densityController, strength);
   im.G().exp(pointRadiusController, strength, 1.0f, 16.0f, 3.0f);
-  
+
   // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
   color.setBrightness(ofxMarkSynth::structureToBrightness(intent));
   color.setSaturation((im.E() * im.S().inv()).get());
   color.a = 1.0f;
   colorController.updateIntent(color, strength, "E->color, S->bright, E*(1-S)->sat");
-  
+
   im.S().inv().lin(stdDevAlongController, strength);
   im.C().lin(stdDevPerpendicularController, strength);
 }

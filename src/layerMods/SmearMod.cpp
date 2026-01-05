@@ -20,7 +20,7 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
 : Mod { synthPtr, name, std::move(config) }
 {
   smearShader.load();
-  
+
   sinkNameIdMap = {
     { "Translation", SINK_VEC2 },
     { "MixNew", SINK_FLOAT },
@@ -28,7 +28,7 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
     { "Field2Texture", SINK_FIELD_2_TEX },
     { "ChangeLayer", SINK_CHANGE_LAYER }
   };
-  
+
   registerControllerForSource(mixNewParameter, mixNewController);
   registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
   registerControllerForSource(field1MultiplierParameter, field1MultiplierController);
@@ -51,7 +51,7 @@ void SmearMod::initParameters() {
   parameters.add(field2PreScaleExpParameter);
   parameters.add(field2MultiplierParameter);
   parameters.add(field2BiasParameter);
-  
+
   parameters.add(gridSizeParameter);
   parameters.add(strategyParameter);
   parameters.add(jumpAmountParameter);
@@ -78,7 +78,7 @@ void SmearMod::update() {
   gridLevelsController.update();
   ghostBlendController.update();
   foldPeriodController.update();
-  
+
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
@@ -105,12 +105,26 @@ void SmearMod::update() {
   float field1EffectiveMultiplier = field1PreScale * field1MultiplierController.value;
   float field2EffectiveMultiplier = field2PreScale * field2MultiplierController.value;
   if (field2Tex.isAllocated() && field1Tex.isAllocated()) {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier,
-                       field1Tex, field1EffectiveMultiplier, field1BiasParameter,
-                       field2Tex, field2EffectiveMultiplier, field2BiasParameter,
+    smearShader.render(*fboPtr,
+                       translation,
+                       mixNew,
+                       alphaMultiplier,
+                       field1Tex,
+                       field1EffectiveMultiplier,
+                       field1BiasParameter,
+                       field2Tex,
+                       field2EffectiveMultiplier,
+                       field2BiasParameter,
                        gridParameters);
   } else if (field1Tex.isAllocated()) {
-    smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, field1Tex, field1EffectiveMultiplier, field1BiasParameter, gridParameters);
+    smearShader.render(*fboPtr,
+                       translation,
+                       mixNew,
+                       alphaMultiplier,
+                       field1Tex,
+                       field1EffectiveMultiplier,
+                       field1BiasParameter,
+                       gridParameters);
   } else {
     smearShader.render(*fboPtr, translation, mixNew, alphaMultiplier, gridParameters);
   }
@@ -118,6 +132,9 @@ void SmearMod::update() {
 }
 
 void SmearMod::receive(int sinkId, const float& value) {
+  // Allow ChangeLayer even when inactive so the Mod can recover from disableDrawingLayer().
+  if (sinkId != SINK_CHANGE_LAYER && !canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_FLOAT:
       mixNewController.updateAuto(value, getAgency());
@@ -141,6 +158,8 @@ void SmearMod::receive(int sinkId, const float& value) {
 }
 
 void SmearMod::receive(int sinkId, const glm::vec2& v) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_VEC2:
       translateByParameter = v;
@@ -151,6 +170,8 @@ void SmearMod::receive(int sinkId, const glm::vec2& v) {
 }
 
 void SmearMod::receive(int sinkId, const ofTexture& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_FIELD_1_TEX:
       field1Tex = value;

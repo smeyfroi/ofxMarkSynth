@@ -25,7 +25,7 @@ CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name,
     { "SnapshotTexture", SINK_SNAPSHOT_TEXTURE },
     { colorParameter.getName(), SINK_COLOR }
   };
-  
+
   registerControllerForSource(colorParameter, colorController);
   registerControllerForSource(saturationParameter, saturationController);
   registerControllerForSource(outlineAlphaFactorParameter, outlineAlphaFactorController);
@@ -131,11 +131,17 @@ void CollageMod::update() {
   outlineWidthController.update();
   outlineColorController.update();
 
+  auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
+  if (!drawingLayerPtrOpt0) {
+    // Drop any pending sink data while this layer is inactive.
+    path.clear();
+    snapshotTexture = ofTexture{};
+    return;
+  }
+
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter != 0 && !snapshotTexture.isAllocated()) return;
 
-  auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt0) return;
   auto drawingLayerPtr0 = drawingLayerPtrOpt0.value();
   auto fboPtr0 = drawingLayerPtr0->fboPtr;
   if (fboPtr0->getSource().getStencilBuffer() == 0) {
@@ -184,6 +190,8 @@ void CollageMod::update() {
 }
 
 void CollageMod::receive(int sinkId, const ofTexture& texture) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_SNAPSHOT_TEXTURE:
       snapshotTexture = texture;
@@ -194,6 +202,8 @@ void CollageMod::receive(int sinkId, const ofTexture& texture) {
 }
 
 void CollageMod::receive(int sinkId, const ofPath& path_) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_PATH:
       path = path_;
@@ -204,6 +214,8 @@ void CollageMod::receive(int sinkId, const ofPath& path_) {
 }
 
 void CollageMod::receive(int sinkId, const glm::vec4& v) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_COLOR:
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());

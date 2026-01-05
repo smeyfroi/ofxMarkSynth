@@ -265,25 +265,33 @@ void Mod::syncControllerAgencies() {
   }
 }
 
-std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, int index) {
+std::optional<DrawingLayerPtr> Mod::getNamedDrawingLayerPtr(const std::string& name, int index) const {
   if (index < 0) return std::nullopt;
-  if (namedDrawingLayerPtrs.count(name) == 0) return std::nullopt;
-  auto& drawingLayerPtrs = namedDrawingLayerPtrs[name];
+
+  auto it = namedDrawingLayerPtrs.find(name);
+  if (it == namedDrawingLayerPtrs.end()) return std::nullopt;
+
+  const auto& drawingLayerPtrs = it->second;
   if (index >= static_cast<int>(drawingLayerPtrs.size())) return std::nullopt;
+
   auto layerPtr = drawingLayerPtrs[index];
   if (layerPtr->pauseState == DrawingLayer::PauseState::PAUSED) return std::nullopt;
+
   return layerPtr;
 }
 
-std::optional<DrawingLayerPtr> Mod::getCurrentNamedDrawingLayerPtr(const std::string& name) {
-  auto index = currentDrawingLayerIndices[name];
+std::optional<DrawingLayerPtr> Mod::getCurrentNamedDrawingLayerPtr(const std::string& name) const {
+  int index = 0;
+  if (auto it = currentDrawingLayerIndices.find(name); it != currentDrawingLayerIndices.end()) {
+    index = it->second;
+  }
   return getNamedDrawingLayerPtr(name, index);
 }
 
-std::optional<std::string> Mod::getRandomLayerName() {
+std::optional<std::string> Mod::getRandomLayerName() const {
   if (namedDrawingLayerPtrs.empty()) return std::nullopt;
   auto it = namedDrawingLayerPtrs.begin();
-  std::advance(it, (size_t)ofRandom(0, namedDrawingLayerPtrs.size()));
+  std::advance(it, static_cast<size_t>(ofRandom(0, namedDrawingLayerPtrs.size())));
   return it->first;
 }
 

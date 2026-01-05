@@ -29,7 +29,7 @@ SoftCircleMod::SoftCircleMod(std::shared_ptr<Synth> synthPtr, const std::string&
     { softnessParameter.getName(), SINK_SOFTNESS },
     { "ChangeLayer", SINK_CHANGE_LAYER }
   };
-  
+
   registerControllerForSource(radiusParameter, radiusController);
   registerControllerForSource(colorParameter, colorController);
   registerControllerForSource(colorMultiplierParameter, colorMultiplierController);
@@ -69,18 +69,18 @@ void SoftCircleMod::update() {
   colorMultiplierController.update();
   float multiplier = colorMultiplierController.value;
   color *= multiplier;
-  
+
   alphaMultiplierController.update();
   float alphaMultiplier = alphaMultiplierController.value;
   color.a *= alphaMultiplierParameter;
-  
+
   softnessController.update();
   float softness = softnessController.value;
 
   int falloff = falloffParameter.get();
-  
+
   fboPtr->getSource().begin();
-  
+
   ofPushStyle();
   if (falloff == 1) {
     // Dab: premultiplied alpha blend for proper compositing without halos
@@ -90,20 +90,22 @@ void SoftCircleMod::update() {
     // Glow: standard alpha blending
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   }
-  
+
   std::for_each(newPoints.begin(),
                 newPoints.end(),
                 [&](const auto& p) {
     softCircleShader.render(p * fboPtr->getSize(), radius * fboPtr->getWidth(), color, softness, falloff);
   });
-  
+
   ofPopStyle();
   fboPtr->getSource().end();
-  
+
   newPoints.clear();
 }
 
 void SoftCircleMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_RADIUS:
       radiusController.updateAuto(value, getAgency());
@@ -129,6 +131,8 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
 }
 
 void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_POINTS:
       newPoints.push_back(point);
@@ -139,6 +143,8 @@ void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_COLOR:
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());

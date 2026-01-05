@@ -423,6 +423,8 @@ Self-organizing map that learns color palettes from 3D color input.
 
 Sink Mods create visual marks on drawing layers. They can be categorized by their visual characteristics.
 
+**Layer pause behavior**: When a drawing layer is paused, Mods targeting that layer must treat it as inactive. While inactive, Mods must drop all incoming sink data for that layer (i.e., do not buffer/accumulate events to be applied later when the layer is unpaused). Layer alpha does not affect whether a layer is considered inactive.
+
 ### Soft/Organic Marks
 
 #### SoftCircleMod

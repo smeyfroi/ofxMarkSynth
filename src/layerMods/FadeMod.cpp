@@ -20,7 +20,7 @@ FadeMod::FadeMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
   sinkNameIdMap = {
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER }
   };
-  
+
   registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
 }
 
@@ -45,16 +45,16 @@ void FadeMod::update() {
    void main() {
      vec4 color = texture(tex, texCoordVarying);
      float noise = rand(texCoordVarying + time);
-     
+
      // Convert to 8-bit integer representation
      vec3 color255 = floor(color.rgb * 255.0 + 0.5);
-     
+
      // Apply probabilistic fade: chance to reduce by 1/255
      float fadeChance = fadeAmount * 255.0; // Scale fadeAmount to [0,255]
      if (noise < fadeChance && any(greaterThan(color255, vec3(0.0)))) {
        color255 = max(color255 - 1.0, vec3(0.0)); // Decrement, clamped to 0
      }
-     
+
      fragColor = vec4(color255 / 255.0, color.a);
    }
    */
@@ -68,17 +68,19 @@ void FadeMod::update() {
 //    } else {
 //      c.a = fcptr->fadeBy;
 //    }
-  
+
   fboPtr->getSource().begin();
   ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofSetColor(ofFloatColor { 0.0f, 0.0f, 0.0f, alphaMultiplierParameter.get() }); // TODO: fade to a color not just to black
-  unitQuadMesh.draw({0.0f, 0.0f}, fboPtr->getSource().getSize());
+  unitQuadMesh.draw({ 0.0f, 0.0f }, fboPtr->getSource().getSize());
   ofPopStyle();
   fboPtr->getSource().end();
 }
 
 void FadeMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
   switch (sinkId) {
     case SINK_ALPHA_MULTIPLIER:
       alphaMultiplierController.updateAuto(value, getAgency());

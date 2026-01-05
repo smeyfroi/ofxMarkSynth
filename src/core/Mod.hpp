@@ -116,7 +116,7 @@ class Intent;
 
 
 class Mod : public std::enable_shared_from_this<Mod> {
-  
+
 public:
   using ParamValueMap = std::unordered_map<std::string, std::string>;
 
@@ -134,17 +134,17 @@ public:
   ParamValueMap getCurrentParameterValues();
   // Flattened parameter defaults captured right after initParameters().
   const ParamValueMap& getDefaultParameterValues();
-  
+
   virtual std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name);
   int getId() const;
   void setName(const std::string& name_) { name = name_; }
   const std::string& getName() const;
-  
+
   virtual float getAgency() const;
   virtual void applyIntent(const Intent& intent, float intentStrength) {};
-  
+
   int getSourceId(const std::string& sourceName);
-  
+
   int getSinkId(const std::string& sinkName);
   void connect(int sourceId, ModPtr sinkModPtr, int sinkId);
   virtual void receive(int sinkId, const glm::vec2& point);
@@ -156,50 +156,57 @@ public:
   virtual void receive(int sinkId, const ofFbo& fbo);
   virtual void receive(int sinkId, const ofTexture& texture);
   virtual void receive(int sinkId, const std::string& text);
-  
+
   void receiveDrawingLayerPtr(const std::string& name, const DrawingLayerPtr drawingLayerPtr);
-  std::optional<DrawingLayerPtr> getCurrentNamedDrawingLayerPtr(const std::string& name);
-  
+  std::optional<DrawingLayerPtr> getCurrentNamedDrawingLayerPtr(const std::string& name) const;
+
   static constexpr int SINK_CHANGE_LAYER = -300;
-  
+
   // TODO: clean all this up
   friend class Gui;
   friend class NodeEditorLayout;
   friend class NodeEditorLayoutSerializer;
   std::map<std::string, BaseParamController*> sourceNameControllerPtrMap; // for the GUI to access
-  
+
 protected:
   std::string name;
-  
+
   std::weak_ptr<Synth> synthPtr; // parent Synth (may be expired)
-  
+
   ModConfig config;
   ofParameterGroup parameters;
   virtual void initParameters() = 0;
-  
+
   std::map<std::string, int> sourceNameIdMap;
   std::map<std::string, int> sinkNameIdMap;
   Connections connections;
   template<typename T> void emit(int sourceId, const T& value);
-  
-  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, int index);
-  std::optional<std::string> getRandomLayerName();
+
+  std::optional<DrawingLayerPtr> getNamedDrawingLayerPtr(const std::string& name, int index) const;
+  std::optional<std::string> getRandomLayerName() const;
+
+  // A Mod is considered "able to draw" on a named layer if the current layer index is valid
+  // AND the layer is not paused (see DrawingLayer::pauseState).
+  bool canDrawOnNamedLayer(const std::string& layerName = DEFAULT_DRAWING_LAYER_PTR_NAME) const {
+    return getCurrentNamedDrawingLayerPtr(layerName).has_value();
+  }
+
   void changeDrawingLayer();
   void changeDrawingLayer(const std::string& layerName);
   void resetDrawingLayer();
   void resetDrawingLayer(const std::string& layerName);
   void disableDrawingLayer();
   void disableDrawingLayer(const std::string& layerName);
-  
+
   void registerControllerForSource(const std::string& sourceName, BaseParamController& controller);
   template <typename T>
   void registerControllerForSource(ofParameter<T>& param, ParamController<T>& controller) {
     registerControllerForSource(param.getName(), controller);
   }
-  
+
   std::shared_ptr<Synth> getSynth() const;
   void syncControllerAgencies();
-  
+
 private:
   ParamValueMap defaultParameterValues;
   bool defaultParameterValuesCaptured { false };
