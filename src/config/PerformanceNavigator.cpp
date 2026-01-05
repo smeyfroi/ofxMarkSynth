@@ -7,10 +7,12 @@
 
 #include "config/PerformanceNavigator.hpp"
 #include "core/Synth.hpp"
+#include "nlohmann/json.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
 #include <algorithm>
 #include <cstdlib>
+#include <fstream>
 
 
 
@@ -42,8 +44,29 @@ bool PerformanceNavigator::keyReleased(int key) {
   return false;
 }
 
+static std::string parseConfigDescription(const std::filesystem::path& filepath) {
+  try {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+      return "";
+    }
+
+    nlohmann::json j;
+    file >> j;
+
+    if (j.contains("description") && j["description"].is_string()) {
+      return j["description"].get<std::string>();
+    }
+  } catch (const std::exception& e) {
+    ofLogVerbose("PerformanceNavigator") << "Failed to parse description from " << filepath << ": " << e.what();
+  }
+
+  return "";
+}
+
 void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
   configs.clear();
+  configDescriptions.clear();
   folderPath = folder;
   currentIndex = -1;
   
@@ -70,6 +93,7 @@ void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
   
   for (const auto& path : jsonFiles) {
     configs.push_back(path.string());
+    configDescriptions.push_back(parseConfigDescription(path));
   }
   
   ofLogNotice("PerformanceNavigator") << "Loaded " << configs.size() << " configs from " << folder;
@@ -93,6 +117,13 @@ std::string PerformanceNavigator::getConfigName(int index) const {
   }
   std::filesystem::path p(configs[index]);
   return p.stem().string();
+}
+
+std::string PerformanceNavigator::getConfigDescription(int index) const {
+  if (index < 0 || index >= static_cast<int>(configDescriptions.size())) {
+    return "";
+  }
+  return configDescriptions[index];
 }
 
 void PerformanceNavigator::next() {

@@ -1082,6 +1082,7 @@ void Gui::drawPerformanceNavigator() {
   }
   lastPerformanceNavIndex = currentIndex;
   
+  bool anyConfigItemHovered = false;
   ImGui::BeginChild("ConfigList", ImVec2(0, listHeight), true);
   {
     const auto& configs = nav.getConfigs();
@@ -1121,6 +1122,30 @@ void Gui::drawPerformanceNavigator() {
       if (ImGui::Selectable(label.c_str(), isCurrentConfig)) {
         // Single click does nothing - need hold
       }
+
+      if (ImGui::IsItemHovered()) {
+        anyConfigItemHovered = true;
+
+        const std::string description = nav.getConfigDescription(i);
+
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 28.0f);
+
+        ImGui::TextUnformatted(configName.c_str());
+        ImGui::Separator();
+
+        if (!description.empty()) {
+          ImGui::TextUnformatted(description.c_str());
+        } else {
+          ImGui::TextColored(GREY_COLOR, "No description");
+        }
+
+        ImGui::Separator();
+        ImGui::TextColored(GREY_COLOR, "Click and hold to jump");
+
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+      }
       
       // Auto-scroll to keep selected config visible (upper third)
       // ImGui clamps scroll position automatically, so first/last items are handled correctly
@@ -1148,7 +1173,7 @@ void Gui::drawPerformanceNavigator() {
     }
   }
   ImGui::EndChild();
-  if (ImGui::IsItemHovered()) {
+  if (ImGui::IsItemHovered() && !anyConfigItemHovered) {
     ImGui::SetTooltip("Click and hold to jump");
   }
   
