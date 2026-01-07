@@ -27,7 +27,7 @@ public:
     MemoryBank() = default;
     
     /// Allocate FBOs for all slots at the specified size
-    void allocate(glm::vec2 memorySize, GLint internalFormat = GL_RGBA8);
+    void allocate(glm::vec2 memorySize, GLint internalFormat = GL_RGB8);
     
     /// Save a random crop from source into a slot selected by centre/width
     /// @param source The source FBO to crop from (typically the full composite)

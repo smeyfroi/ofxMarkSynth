@@ -16,7 +16,8 @@ namespace ofxMarkSynth {
 MemoryBankController::MemoryBankController() = default;
 
 void MemoryBankController::allocate(glm::vec2 memorySize) {
-    memoryBank.allocate(memorySize, GL_RGBA8);
+    // Memories should be opaque; store as RGB to avoid alpha channel artifacts.
+    memoryBank.allocate(memorySize, GL_RGB8);
 }
 
 void MemoryBankController::buildParameterGroup() {
