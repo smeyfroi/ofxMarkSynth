@@ -97,11 +97,13 @@ void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
 
   im.G().exp(impulseRadiusController, strength);
 
-  // Weighted blend: energy (80%) + chaos (20%)
-  float impulseStrengthI =
-      linearMap(intent.getEnergy(), impulseStrengthController.getManualMin(), impulseStrengthController.getManualMax() * 0.8f)
-      + linearMap(intent.getChaos(), 0.0f, impulseStrengthController.getManualMax() * 0.2f);
-  impulseStrengthController.updateIntent(impulseStrengthI, strength, "E*.8+C -> lin");
+  // Weighted blend: energy (80%) + chaos (20%), then exp curve
+  float combinedIntentStrength = im.E().get() * 0.8f + im.C().get() * 0.2f;
+  float impulseStrengthI = exponentialMap(combinedIntentStrength,
+                                         impulseStrengthController.getManualMin(),
+                                         impulseStrengthController.getManualMax() * 0.5f,
+                                         4.0f);
+  impulseStrengthController.updateIntent(impulseStrengthI, strength, "E*.8+C*.2 -> exp(4)[0..0.5]");
 }
 
 

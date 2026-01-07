@@ -30,7 +30,10 @@ public:
   void receive(int sinkId, const ofTexture& value) override;
 
   static constexpr int SINK_VEC2 = 10;
-  static constexpr int SINK_FLOAT = 11;
+  static constexpr int SINK_FLOAT = 11; // MixNew
+  static constexpr int SINK_ALPHA_MULTIPLIER = 12;
+  static constexpr int SINK_FIELD1_MULTIPLIER = 13;
+  static constexpr int SINK_FIELD2_MULTIPLIER = 14;
   static constexpr int SINK_FIELD_1_TEX = 20;
   static constexpr int SINK_FIELD_2_TEX = 21;
 

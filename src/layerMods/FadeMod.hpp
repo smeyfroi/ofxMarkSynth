@@ -35,7 +35,7 @@ protected:
 private:
   UnitQuadMesh unitQuadMesh;
 
-  ofParameter<float> alphaMultiplierParameter { "Alpha", 0.01, 0.0, 0.1 };
+  ofParameter<float> alphaMultiplierParameter { "Alpha", 0.001, 0.0, 0.01 };
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 };

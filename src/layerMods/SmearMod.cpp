@@ -22,8 +22,11 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   smearShader.load();
 
   sinkNameIdMap = {
-    { "Translation", SINK_VEC2 },
-    { "MixNew", SINK_FLOAT },
+    { translateByParameter.getName(), SINK_VEC2 },
+    { mixNewParameter.getName(), SINK_FLOAT },
+    { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
+    { field1MultiplierParameter.getName(), SINK_FIELD1_MULTIPLIER },
+    { field2MultiplierParameter.getName(), SINK_FIELD2_MULTIPLIER },
     { "Field1Texture", SINK_FIELD_1_TEX },
     { "Field2Texture", SINK_FIELD_2_TEX },
     { "ChangeLayer", SINK_CHANGE_LAYER }
@@ -138,6 +141,15 @@ void SmearMod::receive(int sinkId, const float& value) {
   switch (sinkId) {
     case SINK_FLOAT:
       mixNewController.updateAuto(value, getAgency());
+      break;
+    case SINK_ALPHA_MULTIPLIER:
+      alphaMultiplierController.updateAuto(value, getAgency());
+      break;
+    case SINK_FIELD1_MULTIPLIER:
+      field1MultiplierController.updateAuto(value, getAgency());
+      break;
+    case SINK_FIELD2_MULTIPLIER:
+      field2MultiplierController.updateAuto(value, getAgency());
       break;
     case SINK_CHANGE_LAYER:
       if (value > 0.9) {
