@@ -113,6 +113,17 @@ void DividedAreaMod::update() {
   auto majorLayerPtrOpt = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
   if (majorLayerPtrOpt) {
     dividedArea.updateUnconstrainedDividerLines(newMajorAnchors); // assumes all the major anchors come at once (as the cluster centres)
+    
+    // If major-lines targets a non-overlay layer, draw here in update() instead of drawOverlay()
+    // This is because non-overlay layers don't have access to the composite FBO
+    auto majorLayerPtr = majorLayerPtrOpt.value();
+    if (!majorLayerPtr->isOverlay) {
+      auto fboPtr = majorLayerPtr->fboPtr;
+      fboPtr->getSource().begin();
+      const ofFloatColor majorDividerColor = majorLineColorController.value;
+      dividedArea.drawMajorLinesWithoutBackground(majorLineWidthController.value, fboPtr->getWidth(), majorDividerColor);
+      fboPtr->getSource().end();
+    }
   }
   newMajorAnchors.clear(); // Always clear to prevent accumulation
 
@@ -257,10 +268,10 @@ void DividedAreaMod::drawOverlay() {
   auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
   if (!drawingLayerPtrOpt0) return;
   auto drawingLayerPtr = drawingLayerPtrOpt0.value();
-  if (!drawingLayerPtr->isOverlay) {
-    ofLogError("DividedAreaMod") << "Drawing layer '" << MAJOR_LINES_LAYERPTR_NAME
-                                 << "' for DividedAreaMod should be configured as overlay (isOverlay=true).";
-  }
+  
+  // Non-overlay layers are handled in update() using drawMajorLinesWithoutBackground()
+  if (!drawingLayerPtr->isOverlay) return;
+  
   auto fboPtr0 = drawingLayerPtr->fboPtr;
   auto synth = getSynth();
   if (!synth) return;

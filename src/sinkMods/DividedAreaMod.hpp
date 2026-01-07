@@ -42,8 +42,10 @@ public:
   static constexpr int SINK_CHANGE_STRATEGY = 201;
   static constexpr int SINK_CHANGE_LAYER = 202;
   
-  // DEFAULT_LAYERPTR_NAME is for drawing unconstrained lines
-  static constexpr std::string MAJOR_LINES_LAYERPTR_NAME { "major-lines" }; // should be an overlay layer for refractive lines
+  // MAJOR_LINES_LAYERPTR_NAME is for drawing unconstrained (major) lines.
+  // - If targeting an overlay layer: draws in drawOverlay() with background FBO access (supports all styles)
+  // - If targeting a non-overlay layer: draws in update() without background (only Solid/InnerGlow/BloomedAdditive/Glow)
+  static constexpr std::string MAJOR_LINES_LAYERPTR_NAME { "major-lines" };
   
 protected:
   void initParameters() override;
