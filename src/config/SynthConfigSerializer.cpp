@@ -315,6 +315,13 @@ bool SynthConfigSerializer::parseSynthConfig(const OrderedJson& j, std::shared_p
     ofLogNotice("SynthConfigSerializer") << "  Base manual bias: " << bias;
   }
   
+  // Crossfade delay
+  if (s.contains("crossfadeDelaySec") && s["crossfadeDelaySec"].is_number()) {
+    float delaySec = s["crossfadeDelaySec"].get<float>();
+    synth->configTransitionManager->getDelaySecParameter().set(delaySec);
+    ofLogNotice("SynthConfigSerializer") << "  Crossfade delay sec: " << delaySec;
+  }
+
   // Crossfade duration
   if (s.contains("crossfadeDuration") && s["crossfadeDuration"].is_number()) {
     float duration = s["crossfadeDuration"].get<float>();

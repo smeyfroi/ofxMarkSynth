@@ -42,15 +42,18 @@ public:
     const ofFbo& getSnapshotFbo() const;
     bool hasValidSnapshot() const;
 
-    // Parameter for GUI/serialization
+    // Parameters for GUI/serialization
     ofParameter<float>& getDurationParameter();
     const ofParameter<float>& getDurationParameter() const;
+    ofParameter<float>& getDelaySecParameter();
+    const ofParameter<float>& getDelaySecParameter() const;
 
 private:
     State state { State::NONE };
     ofFbo snapshotFbo;
     float startTime { 0.0f };
     float alpha { 0.0f };
+    ofParameter<float> delaySecParameter { "Crossfade Delay Sec", 0.5f, 0.0f, 9999.0f };
     ofParameter<float> durationParameter { "Crossfade Duration", 2.5f, 0.5f, 10.0f };
 };
 

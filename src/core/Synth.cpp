@@ -829,6 +829,7 @@ void Synth::initParameters() {
   parameters.add(backgroundMultiplierParameter);
   parameters.add(hibernationController->getFadeOutDurationParameter());
   parameters.add(hibernationController->getFadeInDurationParameter());
+  parameters.add(configTransitionManager->getDelaySecParameter());
   parameters.add(configTransitionManager->getDurationParameter());
   // Expose delegated controller parameters in the Synth parameter group (flattened),
   // so they are editable in the node editor and configurable like other Mod params.

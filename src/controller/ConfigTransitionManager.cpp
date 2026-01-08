@@ -43,15 +43,24 @@ void ConfigTransitionManager::cancelTransition() {
 
 void ConfigTransitionManager::update() {
     if (state != State::CROSSFADING) return;
-    
+
     float elapsed = ofGetElapsedTimef() - startTime;
+    float delaySec = delaySecParameter.get();
     float duration = durationParameter.get();
-    
-    if (elapsed >= duration) {
+
+    // Hold the snapshot at full strength for a moment, so the new config has time
+    // to draw something meaningful before we start mixing it in.
+    if (elapsed < delaySec) {
+        alpha = 0.0f;
+        return;
+    }
+
+    float t = (elapsed - delaySec) / duration;
+
+    if (t >= 1.0f) {
         alpha = 1.0f;
         state = State::NONE;
     } else {
-        float t = elapsed / duration;
         alpha = glm::smoothstep(0.0f, 1.0f, t);
     }
 }
@@ -82,6 +91,14 @@ ofParameter<float>& ConfigTransitionManager::getDurationParameter() {
 
 const ofParameter<float>& ConfigTransitionManager::getDurationParameter() const {
     return durationParameter;
+}
+
+ofParameter<float>& ConfigTransitionManager::getDelaySecParameter() {
+    return delaySecParameter;
+}
+
+const ofParameter<float>& ConfigTransitionManager::getDelaySecParameter() const {
+    return delaySecParameter;
 }
 
 } // namespace ofxMarkSynth
