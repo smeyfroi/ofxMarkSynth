@@ -11,6 +11,7 @@
 #include "ofUtils.h"
 #include "core/Gui.hpp"
 #include "config/SynthConfigSerializer.hpp"
+#include "config/Parameter.hpp"
 #include "util/TimeStringUtil.h"
 #include "ofxImGui.h"
 #include "ofxAudioAnalysisClient.h"
@@ -486,7 +487,14 @@ void Synth::update() {
     return;
   }
   
-  // Accumulate running time when not paused and has ever run
+  // Ensure time tracking starts once the synth is actually running.
+  // Previously this only started on first Spacebar wake-from-hibernation, which meant
+  // `getSynthRunningTime()` could stay at 0 in always-active sessions.
+  if (!paused && !timeTracker->hasEverRun()) {
+    timeTracker->start();
+  }
+
+  // Accumulate running time when not paused
   if (!paused && timeTracker->hasEverRun()) {
     // Cap frame time to avoid time racing ahead during slow/unstable frames at startup
     // Use 2x target frame time (assuming 30fps target = 0.033s, cap at ~0.066s)
@@ -553,9 +561,10 @@ void Synth::update() {
     pendingImageSavePath.clear();
   }
   
-  // Update memory bank controller (process pending saves, save-all requests)
+  // Update memory bank controller (process pending saves, auto-capture, save-all requests)
   memoryBankController->update(compositeRenderer->getCompositeFbo(),
-                               configRootPathSet ? configRootPath : std::filesystem::path{});
+                               configRootPathSet ? configRootPath : std::filesystem::path{},
+                               getSynthRunningTime());
   
   if (!paused) {
     emit(Synth::SOURCE_COMPOSITE_FBO, compositeRenderer->getCompositeFbo());
@@ -821,6 +830,12 @@ void Synth::initParameters() {
   parameters.add(hibernationController->getFadeOutDurationParameter());
   parameters.add(hibernationController->getFadeInDurationParameter());
   parameters.add(configTransitionManager->getDurationParameter());
+  // Expose delegated controller parameters in the Synth parameter group (flattened),
+  // so they are editable in the node editor and configurable like other Mod params.
+  if (memoryBankController) {
+    memoryBankController->buildParameterGroup();
+    addFlattenedParameterGroup(parameters, memoryBankController->getParameterGroup());
+  }
   
   // initialise Mod parameters but do not add them to Synth parameters
   std::for_each(modPtrs.cbegin(), modPtrs.cend(), [this](const auto& pair) {
@@ -1023,7 +1038,6 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   initParameters();
   layerController->buildAlphaParameters();
   layerController->buildPauseParameters();
-  memoryBankController->buildParameterGroup();
   gui.onConfigLoaded();
   
   // Emit load event

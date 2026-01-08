@@ -566,6 +566,44 @@ void Gui::drawMemoryBank() {
           ImGui::BeginTooltip();
           constexpr float tooltipSize = 256.0f;
           ImGui::Image(imguiTexId, ImVec2(tooltipSize, tooltipSize));
+
+          MemoryBankController::AutoCaptureSlotDebug dbg;
+          if (synthPtr->getMemoryBankController().getAutoCaptureSlotDebug(i, synthPtr->getSynthRunningTime(), dbg)) {
+            const char* band = (dbg.band == 0) ? "long" : (dbg.band == 1) ? "mid" : "recent";
+            ImGui::Separator();
+            if (dbg.isAnchorLocked) {
+              ImGui::Text("slot %d (%s) [anchor]", i, band);
+            } else {
+              ImGui::Text("slot %d (%s)", i, band);
+            }
+
+            if (dbg.captureTimeSec >= 0.0f) {
+              float age = synthPtr->getSynthRunningTime() - dbg.captureTimeSec;
+              ImGui::Text("age: %.1fs", age);
+            } else {
+              ImGui::TextUnformatted("age: --");
+            }
+
+            if (dbg.qualityScore >= 0.0f) {
+              ImGui::Text("quality: %.6f", dbg.qualityScore);
+            } else {
+              ImGui::TextUnformatted("quality: --");
+            }
+
+            if (dbg.variance >= 0.0f && dbg.activeFraction >= 0.0f) {
+              ImGui::Text("var: %.6f  active: %.3f", dbg.variance, dbg.activeFraction);
+            }
+
+            if (dbg.nextDueTimeSec >= 0.0f) {
+              float untilDue = dbg.nextDueTimeSec - synthPtr->getSynthRunningTime();
+              if (untilDue < 0.0f) {
+                ImGui::Text("overdue: %.1fs", -untilDue);
+              } else {
+                ImGui::Text("next due: %.1fs", untilDue);
+              }
+            }
+          }
+
           ImGui::EndTooltip();
         }
       } else {
@@ -751,12 +789,14 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   // Input attributes (sinks)
   for (const auto& [name, id] : modPtr->sinkNameIdMap) {
     ImNodes::BeginInputAttribute(NodeEditorModel::sinkId(modId, id));
+
     if (!modPtr->parameters.contains(name)) {
       ImGui::TextUnformatted(name.c_str());
     } else {
       auto& p = modPtr->parameters.get(name);
       addParameter(modPtr, p);
     }
+
     ImNodes::EndInputAttribute();
   }
   ImNodes::BeginInputAttribute(NodeEditorModel::sinkId(modId, FBO_PARAMETER_ID));

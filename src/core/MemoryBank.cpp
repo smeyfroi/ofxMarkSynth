@@ -162,11 +162,34 @@ void MemoryBank::saveToSlot(const ofFbo& source, int slot) {
     updateOrderMostRecent(saveOrder, slot);
 }
 
-void MemoryBank::processPendingSave(const ofFbo& source) {
-    if (pendingSaveSlot >= 0) {
-        saveToSlot(source, pendingSaveSlot);
-        pendingSaveSlot = -1;
+void MemoryBank::saveToSlotCrop(const ofFbo& source, int slot, glm::vec2 cropTopLeft) {
+    if (!allocated) {
+        ofLogError("MemoryBank") << "Cannot save: not allocated";
+        return;
     }
+    if (!isValidSlotIndex(slot)) {
+        ofLogError("MemoryBank") << "Invalid slot index: " << slot;
+        return;
+    }
+
+    captureCrop(slots[slot], source, cropTopLeft);
+
+    if (!occupied[slot]) {
+        occupied[slot] = true;
+        occupiedCount++;
+    }
+
+    updateOrderMostRecent(saveOrder, slot);
+}
+
+int MemoryBank::processPendingSave(const ofFbo& source) {
+    if (pendingSaveSlot >= 0) {
+        int slot = pendingSaveSlot;
+        saveToSlot(source, slot);
+        pendingSaveSlot = -1;
+        return slot;
+    }
+    return -1;
 }
 
 void MemoryBank::captureRandomCrop(ofFbo& dest, const ofFbo& source) {
@@ -181,15 +204,31 @@ void MemoryBank::captureRandomCrop(ofFbo& dest, const ofFbo& source) {
     float x = ofRandom(0, maxX);
     float y = ofRandom(0, maxY);
 
+    captureCrop(dest, source, glm::vec2 { x, y });
+}
+
+void MemoryBank::captureCrop(ofFbo& dest, const ofFbo& source, glm::vec2 cropTopLeft) {
+    float sourceW = source.getWidth();
+    float sourceH = source.getHeight();
+    float destW = dest.getWidth();
+    float destH = dest.getHeight();
+
+    float maxX = std::max(0.0f, sourceW - destW);
+    float maxY = std::max(0.0f, sourceH - destH);
+
+    float x = ofClamp(cropTopLeft.x, 0.0f, maxX);
+    float y = ofClamp(cropTopLeft.y, 0.0f, maxY);
+
     dest.begin();
     ofClear(0, 0, 0, 0);
     ofPushStyle();
     ofEnableBlendMode(OF_BLENDMODE_DISABLED);
     ofSetColor(255);
-    source.getTexture().drawSubsection(0, 0, destW, destH, x, y);
+    source.getTexture().drawSubsection(0, 0, destW, destH, x, y, destW, destH);
     ofPopStyle();
     dest.end();
 }
+
 
 const ofTexture* MemoryBank::select(float centre, float width) const {
     if (occupiedCount == 0 || saveOrder.empty()) return nullptr;
