@@ -1,0 +1,661 @@
+#!/usr/bin/env python3
+"""Validate MarkSynth synth config JSON connections.
+
+This tool checks:
+- JSON parses
+- All connection endpoints are valid for the referenced Mod types
+
+It is designed to run in a stable Dockerized Python runtime.
+
+How it stays in sync with MarkSynth:
+- It parses the ofxMarkSynth C++ sources and extracts the literal keys used in
+  `sourceNameIdMap` and `sinkNameIdMap`.
+- It also parses `ofParameter<...> foo { "Name", ... }` declarations and resolves
+  entries like `{ foo.getName(), SOME_ID }`.
+
+Exit codes:
+- 0: all configs valid
+- 2: at least one config invalid
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
+
+@dataclass(frozen=True)
+class ModSpec:
+    type_name: str
+    sources: Set[str]
+    sinks: Set[str]
+    source_files: List[str]
+
+
+class ValidationError(Exception):
+    pass
+
+
+PARAM_RE = re.compile(
+    r"ofParameter\s*<[^>]+>\s+(\w+)\s*\{\s*\"([^\"]+)\"", re.MULTILINE
+)
+MAP_RE = re.compile(r"(sourceNameIdMap|sinkNameIdMap)\s*=\s*\{(.*?)\};", re.DOTALL)
+# Special-case extraction for Synth memory bank sinks, which are returned from a helper.
+MEMORYBANK_SINK_RETURN_RE = re.compile(
+    r"MemoryBankController::getSinkNameIdMap\s*\([^)]*\)\s*const\s*\{.*?return\s*\{(.*?)\}\s*;",
+    re.DOTALL,
+)
+ENTRY_STRING_RE = re.compile(r"\{\s*\"([^\"]+)\"\s*,")
+ENTRY_GETNAME_RE = re.compile(r"\{\s*(\w+)\s*\.\s*getName\s*\(\s*\)\s*,")
+# Also support entries added outside initializer lists, e.g. `sinkNameIdMap["Trigger"] = ...`.
+ENTRY_BRACKET_ASSIGN_RE = re.compile(
+    r"(sourceNameIdMap|sinkNameIdMap)\s*\[\s*\"([^\"]+)\"\s*\]"
+)
+
+# Semantic validation: which Mods can actually seed a layer with non-empty pixels.
+# Used to detect drawn Fluid value layers that never receive marks.
+SEED_MARK_MOD_TYPES: Set[str] = {
+    "SoftCircle",
+    "SandLine",
+    "ParticleSet",
+    "ParticleField",
+    "DividedArea",
+    "Collage",
+    "Path",
+    "Text",
+}
+
+
+def iter_config_paths(target: Path) -> List[Path]:
+    if target.is_file():
+        return [target]
+    if target.is_dir():
+        return sorted([p for p in target.glob("*.json") if p.is_file()])
+    raise ValidationError(f"Path not found: {target}")
+
+
+def load_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise ValidationError(f"JSON parse failed: {path}: {exc}")
+
+
+def _read_text_if_exists(path: Path) -> str:
+    if path.exists() and path.is_file():
+        return path.read_text(encoding="utf-8", errors="replace")
+    return ""
+
+
+def _extract_param_names(contents: str) -> Dict[str, str]:
+    """Return mapping of parameter variable name -> parameter display name."""
+    return {m.group(1): m.group(2) for m in PARAM_RE.finditer(contents)}
+
+
+def _extract_map_keys(
+    contents: str, map_name: str, param_names: Dict[str, str]
+) -> Set[str]:
+    keys: Set[str] = set()
+
+    # Initializer-list style: `sinkNameIdMap = { { "Foo", ... }, { bar.getName(), ... } };`
+    for m in MAP_RE.finditer(contents):
+        if m.group(1) != map_name:
+            continue
+        block = m.group(2)
+        for s in ENTRY_STRING_RE.finditer(block):
+            keys.add(s.group(1))
+        for g in ENTRY_GETNAME_RE.finditer(block):
+            var = g.group(1)
+            if var in param_names:
+                keys.add(param_names[var])
+
+    # Bracket-assignment style: `sinkNameIdMap["Trigger"] = ...;`
+    # (PathMod uses this to conditionally expose Trigger.)
+    for s in ENTRY_BRACKET_ASSIGN_RE.finditer(contents):
+        if s.group(1) == map_name:
+            keys.add(s.group(2))
+
+    return keys
+
+
+def _find_mod_files(src_root: Path, mod_type: str) -> List[Path]:
+    """Find C++ files likely defining a given mod type."""
+    # Typical convention: <Type>Mod.cpp/.hpp
+    cpp_name = f"{mod_type}Mod.cpp"
+    hpp_name = f"{mod_type}Mod.hpp"
+
+    candidates: List[Path] = []
+    for p in src_root.rglob(cpp_name):
+        candidates.append(p)
+    for p in src_root.rglob(hpp_name):
+        candidates.append(p)
+
+    # Special case: Synth sink/source mappings live in Synth.cpp and are extended
+    # at runtime with MemoryBankController sinks.
+    if mod_type == "Synth":
+        synth_cpp = src_root / "core" / "Synth.cpp"
+        synth_hpp = src_root / "core" / "Synth.hpp"
+        mem_cpp = src_root / "controller" / "MemoryBankController.cpp"
+        mem_hpp = src_root / "controller" / "MemoryBankController.hpp"
+        candidates = [
+            p for p in [synth_cpp, synth_hpp, mem_cpp, mem_hpp] if p.exists()
+        ] + candidates
+
+    # Deduplicate
+    dedup: List[Path] = []
+    seen = set()
+    for p in candidates:
+        if str(p) in seen:
+            continue
+        seen.add(str(p))
+        dedup.append(p)
+    return dedup
+
+
+def _extract_memorybank_sink_keys(
+    contents: str, param_names: Dict[str, str]
+) -> Set[str]:
+    keys: Set[str] = set()
+    m = MEMORYBANK_SINK_RETURN_RE.search(contents)
+    if not m:
+        return keys
+    block = m.group(1)
+    for s in ENTRY_STRING_RE.finditer(block):
+        keys.add(s.group(1))
+    for g in ENTRY_GETNAME_RE.finditer(block):
+        var = g.group(1)
+        if var in param_names:
+            keys.add(param_names[var])
+    return keys
+
+
+def build_specs(
+    ofxmarksynth_root: Path, mod_types: Set[str], strict: bool
+) -> Dict[str, ModSpec]:
+    src_root = ofxmarksynth_root / "src"
+    if not src_root.exists():
+        raise ValidationError(
+            f"Invalid ofxMarkSynth root (no src/): {ofxmarksynth_root}"
+        )
+
+    specs: Dict[str, ModSpec] = {}
+
+    for mod_type in sorted(mod_types):
+        files = _find_mod_files(src_root, mod_type)
+        if not files:
+            if strict:
+                raise ValidationError(
+                    f"No C++ files found for mod type '{mod_type}' under: {src_root}"
+                )
+            continue
+
+        # Parse parameter names across all candidate files
+        param_names: Dict[str, str] = {}
+        all_contents: List[Tuple[str, str]] = []
+        for f in files:
+            text = _read_text_if_exists(f)
+            all_contents.append((str(f), text))
+            param_names.update(_extract_param_names(text))
+
+        sources: Set[str] = set()
+        sinks: Set[str] = set()
+        for _, text in all_contents:
+            sources |= _extract_map_keys(text, "sourceNameIdMap", param_names)
+            sinks |= _extract_map_keys(text, "sinkNameIdMap", param_names)
+
+        # Synth: extend sink list with MemoryBankController sinks.
+        if mod_type == "Synth":
+            for _, text in all_contents:
+                sinks |= _extract_memorybank_sink_keys(text, param_names)
+
+        # If a file exists but we couldn't find any map assignments, keep empty sets.
+        specs[mod_type] = ModSpec(
+            type_name=mod_type,
+            sources=sources,
+            sinks=sinks,
+            source_files=[str(f) for f in files],
+        )
+
+    return specs
+
+
+def parse_connection(conn: str) -> Optional[tuple[str, str, str, str]]:
+    """Parse 'A.Source -> B.Sink Name' or '.Source -> B.Sink' or 'A.Source -> .Sink'."""
+    if "->" not in conn:
+        return None
+    left, right = [s.strip() for s in conn.split("->", 1)]
+
+    if left.startswith("."):
+        src_mod = "."
+        src_name = left[1:]
+    else:
+        if "." not in left:
+            return None
+        src_mod, src_name = left.split(".", 1)
+
+    if right.startswith("."):
+        dst_mod = "."
+        dst_name = right[1:]
+    else:
+        if "." not in right:
+            return None
+        dst_mod, dst_name = right.split(".", 1)
+
+    return src_mod, src_name, dst_mod, dst_name
+
+
+def validate_connections(
+    config: dict, path: Path, specs: Dict[str, ModSpec], strict: bool
+) -> List[str]:
+    mods: dict = config.get("mods", {})
+    if not isinstance(mods, dict):
+        return ["mods must be an object"]
+
+    mod_types: Dict[str, str] = {}
+    for mod_name, mod_spec in mods.items():
+        if not isinstance(mod_spec, dict):
+            continue
+        mod_types[mod_name] = str(mod_spec.get("type", ""))
+
+    issues: List[str] = []
+
+    conns = config.get("connections", [])
+    if not isinstance(conns, list):
+        return ["connections must be an array"]
+
+    for i, conn in enumerate(conns):
+        if not isinstance(conn, str):
+            issues.append(f"connections[{i}] must be a string")
+            continue
+
+        parsed = parse_connection(conn)
+        if not parsed:
+            issues.append(f"Bad connection format: {conn}")
+            continue
+
+        src_mod, src_name, dst_mod, dst_name = parsed
+
+        if src_mod != "." and src_mod not in mods:
+            issues.append(f"Unknown source mod '{src_mod}' in: {conn}")
+            continue
+        if dst_mod != "." and dst_mod not in mods:
+            issues.append(f"Unknown sink mod '{dst_mod}' in: {conn}")
+            continue
+
+        # Source validation
+        if src_mod == ".":
+            synth_spec = specs.get("Synth")
+            if synth_spec and synth_spec.sources and src_name not in synth_spec.sources:
+                issues.append(
+                    f"Bad source '.{src_name}' in: {conn} (allowed: {sorted(synth_spec.sources)})"
+                )
+        else:
+            src_type = mod_types.get(src_mod, "")
+            src_spec = specs.get(src_type)
+            if not src_spec:
+                if strict and src_type:
+                    issues.append(
+                        f"No validator spec for mod type '{src_type}' (source side) in: {conn}"
+                    )
+            else:
+                if src_spec.sources and src_name not in src_spec.sources:
+                    issues.append(
+                        f"Bad source '{src_mod}.{src_name}' in: {conn} (allowed: {sorted(src_spec.sources)})"
+                    )
+
+        # Sink validation
+        if dst_mod == ".":
+            synth_spec = specs.get("Synth")
+            if synth_spec and synth_spec.sinks and dst_name not in synth_spec.sinks:
+                issues.append(
+                    f"Bad sink '.{dst_name}' in: {conn} (allowed: {sorted(synth_spec.sinks)})"
+                )
+        else:
+            dst_type = mod_types.get(dst_mod, "")
+            dst_spec = specs.get(dst_type)
+            if not dst_spec:
+                if strict and dst_type:
+                    issues.append(
+                        f"No validator spec for mod type '{dst_type}' (sink side) in: {conn}"
+                    )
+            else:
+                if dst_spec.sinks and dst_name not in dst_spec.sinks:
+                    issues.append(
+                        f"Bad sink '{dst_mod}.{dst_name}' in: {conn} (allowed: {sorted(dst_spec.sinks)})"
+                    )
+
+    return issues
+
+
+def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
+    """Config-level semantic checks beyond endpoint name validation.
+
+    Returns:
+      (errors, warnings)
+    """
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    layers = config.get("drawingLayers", {})
+    mods = config.get("mods", {})
+    if not isinstance(layers, dict) or not isinstance(mods, dict):
+        return (errors, warnings)
+
+    # Build mod type map
+    mod_types: Dict[str, str] = {}
+    for mod_name, mod_spec in mods.items():
+        if isinstance(mod_spec, dict):
+            mod_types[mod_name] = str(mod_spec.get("type", ""))
+
+    def iter_assigned_layers(mod_spec: dict) -> Set[str]:
+        layer_map = mod_spec.get("layers", {})
+        if not isinstance(layer_map, dict):
+            return set()
+        out: Set[str] = set()
+        for layer_list in layer_map.values():
+            if not isinstance(layer_list, list):
+                continue
+            for layer in layer_list:
+                if isinstance(layer, str):
+                    out.add(layer)
+        return out
+
+    def layer_is_seeded(layer_name: str, *, exclude_mod: Optional[str] = None) -> bool:
+        for name, m in mods.items():
+            if exclude_mod and name == exclude_mod:
+                continue
+            if not isinstance(m, dict):
+                continue
+            if mod_types.get(name, "") not in SEED_MARK_MOD_TYPES:
+                continue
+            if layer_name in iter_assigned_layers(m):
+                return True
+        return False
+
+    clearing_layers: Set[str] = set()
+    for layer_name, layer_spec in layers.items():
+        if isinstance(layer_spec, dict) and layer_spec.get("clearOnUpdate", False):
+            clearing_layers.add(layer_name)
+
+    fade_mods_by_layer: Dict[str, List[str]] = {}
+    for mod_name, mod_spec in mods.items():
+        if not isinstance(mod_spec, dict):
+            continue
+        if mod_types.get(mod_name, "") != "Fade":
+            continue
+        for layer_name in iter_assigned_layers(mod_spec):
+            fade_mods_by_layer.setdefault(layer_name, []).append(mod_name)
+
+    fluid_values_layers: Set[str] = set()
+
+    # Fluid values layer should either be intentionally unused (isDrawn=false and small)
+    # or it should be seeded by a mark-making Mod.
+    # Additionally: never apply Fade to a Fluid values layer (use Value Dissipation instead).
+    for fluid_name, mod_spec in mods.items():
+        if not isinstance(mod_spec, dict):
+            continue
+        if mod_spec.get("type") != "Fluid":
+            continue
+
+        layer_map = mod_spec.get("layers", {})
+        if not isinstance(layer_map, dict):
+            continue
+
+        for layer_name in iter_assigned_layers(mod_spec):
+            if layer_name in clearing_layers:
+                errors.append(
+                    f"Fluid targets layer '{layer_name}' but that layer has clearOnUpdate=true. "
+                    "Layers that clear each frame are not valid targets for Fluid."
+                )
+
+        values_layers = layer_map.get("default", [])
+        if not isinstance(values_layers, list):
+            continue
+
+        for values_layer in values_layers:
+            if not isinstance(values_layer, str):
+                continue
+
+            values_layer_spec = layers.get(values_layer)
+            if not isinstance(values_layer_spec, dict):
+                errors.append(
+                    f"Fluid values layer '{values_layer}' is not defined in drawingLayers"
+                )
+                continue
+
+            fluid_values_layers.add(values_layer)
+
+            if values_layer in clearing_layers:
+                errors.append(
+                    f"Fluid values layer '{values_layer}' has clearOnUpdate=true. "
+                    "Remove clearOnUpdate and rely on Fluid 'Value Dissipation' for decay."
+                )
+
+            if values_layer in fade_mods_by_layer:
+                fade_names = ", ".join(sorted(fade_mods_by_layer[values_layer]))
+                errors.append(
+                    f"Fluid values layer '{values_layer}' also has Fade mod(s): {fade_names}. "
+                    "Remove Fade and use Fluid 'Value Dissipation' for decay."
+                )
+
+            is_drawn = values_layer_spec.get("isDrawn", True)
+
+            # If values are drawn, require that at least one mark-making Mod targets that layer.
+            if is_drawn:
+                seeded = False
+                for other_name, other_mod in mods.items():
+                    if other_name == fluid_name or not isinstance(other_mod, dict):
+                        continue
+
+                    other_type = mod_types.get(other_name, "")
+                    if other_type not in SEED_MARK_MOD_TYPES:
+                        continue
+
+                    other_layers = other_mod.get("layers", {})
+                    if not isinstance(other_layers, dict):
+                        continue
+
+                    for layer_list in other_layers.values():
+                        if isinstance(layer_list, list) and values_layer in layer_list:
+                            seeded = True
+                            break
+                    if seeded:
+                        break
+
+                if not seeded:
+                    errors.append(
+                        "Fluid values layer '"
+                        + values_layer
+                        + "' isDrawn=true but no mark-making Mod draws into it. "
+                        + "Either: (1) switch to velocity-only carrier mode (set isDrawn=false and consider shrinking the values layer), "
+                        + "or (2) add a mark Mod (e.g. SoftCircle) targeting that layer."
+                    )
+
+            # If values are not drawn, we assume velocity-only carrier mode.
+            # In that mode, it’s usually a mistake if nothing consumes velocitiesTexture.
+            else:
+                conns = config.get("connections", [])
+                used_velocities_texture = False
+                if isinstance(conns, list):
+                    for c in conns:
+                        if not isinstance(c, str):
+                            continue
+                        parsed = parse_connection(c)
+                        if not parsed:
+                            continue
+                        src_mod, src_name, _dst_mod, _dst_name = parsed
+                        if src_mod == fluid_name and src_name == "velocitiesTexture":
+                            used_velocities_texture = True
+                            break
+
+                if not used_velocities_texture:
+                    warnings.append(
+                        "Fluid is in velocity-only mode (values layer '"
+                        + values_layer
+                        + "' isDrawn=false) but "
+                        + fluid_name
+                        + ".velocitiesTexture is not used by any connection. "
+                        + "Either connect it (e.g. to Smear/ParticleField) or remove Fluid/velocities layer."
+                    )
+
+    # Fade/Smear are layer processors: their target layer must be seeded with marks.
+    # This remains valid for latent-world and fresh-entrance layers.
+    # Additional rule: avoid stacking Fade+Smear on the same layer.
+
+    layer_to_processors: Dict[str, Set[str]] = {}
+    for proc_name, mod_spec in mods.items():
+        if not isinstance(mod_spec, dict):
+            continue
+        mod_type = str(mod_spec.get("type", ""))
+        if mod_type not in {"Fade", "Smear"}:
+            continue
+
+        for layer_name in sorted(iter_assigned_layers(mod_spec)):
+            if layer_name not in layers:
+                errors.append(
+                    f"{mod_type} targets layer '{layer_name}' but that layer is not defined in drawingLayers"
+                )
+                continue
+
+            if layer_name in clearing_layers:
+                errors.append(
+                    f"{mod_type} targets layer '{layer_name}' but that layer has clearOnUpdate=true. "
+                    "Layers that clear each frame are not valid targets for Fade/Smear."
+                )
+                continue
+
+            layer_to_processors.setdefault(layer_name, set()).add(mod_type)
+
+            if not layer_is_seeded(layer_name, exclude_mod=proc_name):
+                errors.append(
+                    f"{mod_type} targets layer '{layer_name}' but no mark-making Mod draws into it. "
+                    "Add a mark Mod targeting the same layer (e.g. SoftCircle/SandLine/DividedArea), or remove the processor."
+                )
+
+    for layer_name, processors in sorted(layer_to_processors.items()):
+        if processors == {"Fade", "Smear"}:
+            errors.append(
+                f"Layer '{layer_name}' has both Fade and Smear. Use only one layer processor per layer (prefer Smear's MixNew/AlphaMultiplier for persistence)."
+            )
+
+    # ParticleField must draw into a layer that decays.
+    # This prevents fast accumulation and blown-out registers.
+    decay_layers = (
+        set(layer_to_processors.keys()) | fluid_values_layers | clearing_layers
+    )
+    for mod_name, mod_spec in mods.items():
+        if not isinstance(mod_spec, dict):
+            continue
+        if mod_types.get(mod_name, "") != "ParticleField":
+            continue
+
+        for layer_name in sorted(iter_assigned_layers(mod_spec)):
+            if layer_name not in layers:
+                errors.append(
+                    f"ParticleField '{mod_name}' targets layer '{layer_name}' but that layer is not defined in drawingLayers"
+                )
+                continue
+
+            if layer_name not in decay_layers:
+                errors.append(
+                    f"ParticleField '{mod_name}' targets layer '{layer_name}' but that layer has no decay. "
+                    "ParticleField layers must also be targeted by a Fade, Smear, Fluid (values) Mod, or have clearOnUpdate=true."
+                )
+
+    return (errors, warnings)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Validate MarkSynth synth config JSON files"
+    )
+    parser.add_argument("target", help="Path to a .json file or directory of configs")
+    parser.add_argument(
+        "--ofxmarksynth-root",
+        default=None,
+        help="Path to ofxMarkSynth addon root (must contain src/)",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Fail if validator cannot find a spec for a referenced mod type",
+    )
+
+    args = parser.parse_args(argv)
+    target = Path(args.target)
+
+    try:
+        config_paths = iter_config_paths(target)
+    except ValidationError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    if not config_paths:
+        print(f"No .json files found in: {target}", file=sys.stderr)
+        return 2
+
+    ofx_root_str = args.ofxmarksynth_root or os.environ.get("OFXMARKSYNTH_ROOT")
+    if not ofx_root_str:
+        print(
+            "Missing --ofxmarksynth-root (or env OFXMARKSYNTH_ROOT). "
+            "This is required so we can parse sourceNameIdMap/sinkNameIdMap from C++.",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        ofx_root = Path(ofx_root_str)
+        # determine mod types referenced
+        referenced_types: Set[str] = {"Synth"}
+        for p in config_paths:
+            cfg = load_json(p)
+            mods = cfg.get("mods", {})
+            if isinstance(mods, dict):
+                for m in mods.values():
+                    if isinstance(m, dict) and m.get("type"):
+                        referenced_types.add(str(m.get("type")))
+
+        specs = build_specs(ofx_root, referenced_types, args.strict)
+
+        failed = 0
+        warnings_total = 0
+        for p in config_paths:
+            cfg = load_json(p)
+            issues = validate_connections(cfg, p, specs, args.strict)
+            semantic_errors, semantic_warnings = validate_semantics(cfg)
+            issues.extend(semantic_errors)
+
+            if semantic_warnings:
+                warnings_total += len(semantic_warnings)
+                print(f"\nWARN {p}:")
+                for w in semantic_warnings:
+                    print(f"  - {w}")
+
+            if issues:
+                failed += 1
+                print(f"\n{p}:\n  " + "\n  ".join(issues), file=sys.stderr)
+
+        if failed:
+            print(
+                f"\nFAILED: {failed}/{len(config_paths)} configs invalid",
+                file=sys.stderr,
+            )
+            return 2
+
+        print(f"OK: {len(config_paths)} configs valid")
+        return 0
+
+    except ValidationError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

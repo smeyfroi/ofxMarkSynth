@@ -254,8 +254,8 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| G | Impulse Radius | lin |
-| E (80%) + C (20%) | Impulse Strength | custom weighted |
+| G | Impulse Radius | exp |
+| E (80%) + C (20%) | Impulse Strength | exp(4.0)(0.0 -> 0.6×max) weighted |
 | (none) | dt | manual (UI-controlled time step) |
 
 

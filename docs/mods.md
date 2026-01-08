@@ -470,6 +470,8 @@ Physics-based particle system with attraction, connections, and trails.
 
 **Visual Characteristics**: Organic motion • Dynamic • Connective lines • Physics-driven behavior
 
+**Layer guidance**: When using connection lines (default strategy), treat this as hard-edged geometry and prefer a `7200×7200` drawing layer to avoid aliasing. You can tune line distance via `connectionRadius`; beyond the connection radius it renders points.
+
 **Sinks**:
 - `Point` (vec2): Particle spawn position
 - `PointVelocity` (vec2): Particle with initial velocity (vec4: x,y,dx,dy)
@@ -622,8 +624,12 @@ Composites texture snapshots within path boundaries.
 - `Strategy`: 0=tint, 1=add tinted pixels, 2=add pixels
 
 **Layers**:
-- Default layer: Filled shapes
-- `outlines` layer: Shape outlines
+- Default layer: Filled shapes (requires `useStencil: true` in the drawing layer when using snapshot strategies)
+- `outlines` layer: Shape outlines (can be mapped onto an existing high-res geometry layer to avoid adding another large layer)
+
+**Layer interactions**:
+- Collage outlines are event-driven (they only draw when a new `Path` arrives), so they need a persistent outlines layer (`clearOnUpdate=false`) and often a slow `Fade` to remain visible.
+- When sharing the outlines layer with continuously redrawn geometry (e.g. DividedArea), a `Fade` will decay the event-driven outlines while the geometry stays present via redraw.
 
 **Intent Integration**: E/S/D control tint colour and saturation. S and C control outline visibility (high structure + low chaos = visible outlines). E and G control outline width (energy = bold, granularity = refined). S controls outline brightness for contrast with fills.
 
@@ -788,10 +794,14 @@ Applies displacement-based smearing using vector fields with various spatial str
 **Visual Characteristics**: Smeared/distorted • Echo effects • Displacement patterns • Glitchy artifacts (depending on strategy)
 
 **Sinks**:
-- `Vec2` (vec2): Direct displacement offset
-- `Float` (float): Scalar multiplier for displacement
+- `Translation` (vec2): Direct translation offset
+- `MixNew` (float): Blend with previous frame (0.3–1.0)
+- `AlphaMultiplier` (float): Fade rate multiplier (0.95–0.999)
+- `Field1Multiplier` (float): Primary field strength (pre-scale is applied separately)
+- `Field2Multiplier` (float): Secondary field strength
 - `Field1Texture` (texture): Primary displacement field (RG channels)
 - `Field2Texture` (texture): Secondary displacement field
+- `ChangeLayer` (float): Control command (change/disable/reset drawing layer depending on value)
 
 **Key Parameters**:
 - `MixNew`: Blend with previous frame (0.3-1.0)
@@ -1079,8 +1089,8 @@ The Synth maintains a **Memory Bank** of 8 texture slots that store random crops
 - `MemoryEmitRandomOld` (float): Trigger emits with old-memory weighting
 
 *Parameter Updates*:
-- `MemorySaveCentre` (float): Centre of save slot selection (0-1)
-- `MemorySaveWidth` (float): Width/spread of save slot selection (0-1)
+- `MemorySaveCentre` (float): Legacy/manual overwrite selection for `MemorySave` (auto-capture ignores)
+- `MemorySaveWidth` (float): Legacy/manual overwrite spread for `MemorySave` (auto-capture ignores)
 - `MemoryEmitCentre` (float): Centre of emit slot selection (0-1)
 - `MemoryEmitWidth` (float): Width/spread of emit slot selection (0-1)
 
@@ -1093,6 +1103,25 @@ The Synth maintains a **Memory Bank** of 8 texture slots that store random crops
 - Structure → MemorySaveWidth (more structure = more predictable saves)
 
 **GUI**: The Memory Bank section shows thumbnails of all 8 slots with manual Save buttons.
+
+**Auto Capture (Performance Safety Net)**:
+- Enabled by default via `MemoryAutoCaptureEnabled`
+- Warmup: fills all 8 slots quickly (target `MemoryAutoCaptureWarmupTargetSec` = 120s)
+- After warmup: maintains time-banded coverage across the whole performance (slots 0-2 refresh ~10min, 6-7 refresh ~15s by default)
+- Uses a tiny downsampled density check to avoid saving mostly-empty frames; warmup thresholds relax over ~120s to guarantee the bank fills
+
+**Auto Capture Parameters**:
+- `MemoryAutoCaptureEnabled` (bool)
+- `MemoryAutoCaptureWarmupTargetSec` (float)
+- `MemoryAutoCaptureWarmupIntervalSec` (float)
+- `MemoryAutoCaptureRetryIntervalSec` (float)
+- `MemoryAutoCaptureRecentIntervalSec` (float)
+- `MemoryAutoCaptureMidIntervalSec` (float)
+- `MemoryAutoCaptureLongIntervalSec` (float)
+- `MemoryAutoCaptureMinVariance` (float)
+- `MemoryAutoCaptureMinActiveFraction` (float)
+- `MemoryAutoCaptureWarmupBurstCount` (int)
+- `MemoryAutoCaptureAnalysisSize` (int)
 
 **Example Connections**:
 ```
