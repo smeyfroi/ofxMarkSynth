@@ -569,6 +569,55 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
                     "ParticleField layers must also be targeted by a Fade, Smear, Fluid (values) Mod, or have clearOnUpdate=true."
                 )
 
+    # Collage Colour sink semantics:
+    # - Strategy 2 draws an untinted snapshot, so Colour sink is ignored.
+    # - Strategies 0/1 use the Colour parameter (either via connection or manual config).
+    conns = config.get("connections", [])
+    collage_colour_connected: Set[str] = set()
+    if isinstance(conns, list):
+        for c in conns:
+            if not isinstance(c, str):
+                continue
+            parsed = parse_connection(c)
+            if not parsed:
+                continue
+            _src_mod, _src_name, dst_mod, dst_name = parsed
+            if dst_name != "Colour":
+                continue
+            if mod_types.get(dst_mod, "") == "Collage":
+                collage_colour_connected.add(dst_mod)
+
+    for mod_name, mod_spec in mods.items():
+        if not isinstance(mod_spec, dict):
+            continue
+        if mod_types.get(mod_name, "") != "Collage":
+            continue
+
+        mod_cfg = mod_spec.get("config", {})
+        if not isinstance(mod_cfg, dict):
+            mod_cfg = {}
+
+        strategy_raw = mod_cfg.get("Strategy")
+        try:
+            strategy = int(strategy_raw) if strategy_raw is not None else 1
+        except Exception:
+            strategy = 1
+
+        has_manual_colour = "Colour" in mod_cfg
+        has_colour_connection = mod_name in collage_colour_connected
+
+        if strategy == 2 and has_colour_connection:
+            warnings.append(
+                f"Collage '{mod_name}' has Strategy=2 (untinted snapshot) but receives '{mod_name}.Colour' via connections. "
+                "This sink is ignored for Strategy=2."
+            )
+
+        if strategy != 2 and (not has_colour_connection) and (not has_manual_colour):
+            warnings.append(
+                f"Collage '{mod_name}' uses Strategy={strategy} but has no 'Colour' in its config and no connection to '{mod_name}.Colour'. "
+                "It will default to white."
+            )
+
     return (errors, warnings)
 
 

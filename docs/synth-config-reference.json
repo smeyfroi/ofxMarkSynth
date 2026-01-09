@@ -264,9 +264,17 @@
       "config": {
         "Colour": "1, 1, 1, 1",
         "Saturation": "1.5",
-        "Outline": "1",
+        "OutlineAlphaFactor": "0.5",
+        "OutlineWidth": "12",
+        "OutlineColour": "0, 0, 0, 1",
         "Strategy": "1",
+        "BlendMode": "1",
+        "Opacity": "0.45",
+        "MinDrawInterval": "0.10",
         "_comment_strategy": "0=tint; 1=add tinted pixels; 2=add pixels",
+        "_comment_BlendMode": "0=ALPHA, 1=SCREEN, 2=ADD, 3=MULTIPLY, 4=SUBTRACT",
+        "_comment_Opacity": "Multiplies tint alpha before drawing (0.0-1.0)",
+        "_comment_MinDrawInterval": "Minimum seconds between draws (rate limiting)",
         "AgencyFactor": "1"
       }
     },

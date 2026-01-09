@@ -622,6 +622,14 @@ Composites texture snapshots within path boundaries.
 - `OutlineWidth`: Outline stroke width in pixels (1.0-50.0, default 12.0)
 - `OutlineColour`: Outline stroke color (RGBA)
 - `Strategy`: 0=tint, 1=add tinted pixels, 2=add pixels
+- `BlendMode`: 0=ALPHA, 1=SCREEN, 2=ADD, 3=MULTIPLY, 4=SUBTRACT
+- `Opacity`: Multiplies tint alpha before drawing (0.0-1.0)
+- `MinDrawInterval`: Minimum seconds between draws (rate limiting)
+
+**Recommended Usage**:
+- To reduce blowout with SCREEN blending: set `Opacity` to ~0.3-0.5
+- To switch to non-additive blending: set `BlendMode` to 0 (ALPHA)
+- To throttle rapid path reception: set `MinDrawInterval` to ~0.1 (max 10 draws/sec)
 
 **Layers**:
 - Default layer: Filled shapes (requires `useStencil: true` in the drawing layer when using snapshot strategies)
@@ -1109,6 +1117,7 @@ The Synth maintains a **Memory Bank** of 8 texture slots that store random crops
 - Warmup: fills all 8 slots quickly (target `MemoryAutoCaptureWarmupTargetSec` = 120s)
 - After warmup: maintains time-banded coverage across the whole performance (slots 0-2 refresh ~10min, 6-7 refresh ~15s by default)
 - Uses a tiny downsampled density check to avoid saving mostly-empty frames; warmup thresholds relax over ~120s to guarantee the bank fills
+- Most performance configs should not need explicit `MemorySave` triggers when auto-capture is enabled (prefer keeping Memory wiring minimal and using `MemoryEmit*` to recall)
 
 **Auto Capture Parameters**:
 - `MemoryAutoCaptureEnabled` (bool)
@@ -1125,14 +1134,16 @@ The Synth maintains a **Memory Bank** of 8 texture slots that store random crops
 
 **Example Connections**:
 ```
-# Auto-save every 30 seconds
-Timer.Tick -> Synth.MemorySave
+# Optional: manual/forced save (usually unnecessary when auto-capture is enabled)
+# Timer.Tick -> Synth.MemorySave
 
 # Emit random memory on audio onset
 AudioData.Onset -> Synth.MemoryEmitRandom
 
 # Connect emitted memory to CollageMod
-Synth.Memory -> Collage.SnapshotTexture
+Synth.Memory -> CollageA.SnapshotTexture
+# Optional second collage voice
+Synth.Memory -> CollageB.SnapshotTexture
 ```
 
 **Use Cases**:

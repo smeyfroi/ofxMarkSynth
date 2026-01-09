@@ -21,10 +21,17 @@ Random sources (`Random*`) are allowed but should be used sparingly; `SomPalette
 
 ## Synth defaults (config-wide)
 
-- `synth.agency = 0.20` (background colour reads more immediately; can still be raised live)
+- `synth.agency = 0.25` (brings palette colour in earlier; can still be raised live)
 - `initialIntent.strength = 0.75` (headroom for performance)
 - Background aesthetic is mostly dark:
   - boot fallback: `backgroundColor = 0, 0, 0, 1`
+- Visibility floors (current Improvisation1 policy):
+  - If a drawn `ground` layer defines `alpha`, keep `alpha >= 0.25` (visible substrate)
+  - If a `wash` layer is present, keep `alpha >= 0.5` (wash should read)
+- Layers as registers:
+  - Avoid `paused: true` with `alpha: 0.0` in shipped configs; prefer low-but-visible live layers
+- Grid ergonomics:
+  - Reserve column `x=3` in each row as a “quiet” variant (still active, just lower density/contrast)
 
 ## Background colour (Pattern A)
 
@@ -313,18 +320,18 @@ Or the same layer for additive complexity:
 
 ## Layers as performance registers
 
-Two overlay styles are used:
+Two register styles are supported:
 
-- **Fresh entrance** (default): `paused: true`, `alpha: 0.0`
+- **Live register** (current default): `paused: false` with low-but-visible `alpha`
+  - runs continuously so it can accumulate and receive auto values
+  - recommended starting alphas (as seen in Improvisation1 configs):
+    - subtle particles: `alpha ~ 0.08–0.12`
+    - subtle geometry: `alpha ~ 0.08–0.12`
+
+- **Fresh entrance** (optional / future): `paused: true`, `alpha: 0.0`
   - minimal GPU cost until activated
   - starts clean (no buffered events)
-
-- **Latent world** (rare): `paused: false`, very low `alpha`
-  - runs continuously so it can accumulate and receive auto values
-  - GPU-costly, so limit to 0–1 latent layers per config
-  - suggested starting alphas:
-    - latent particles: `alpha ~ 0.005–0.02`
-    - latent geometry: `alpha ~ 0.02–0.05`
+  - not used in the current Improvisation1 config set (kept for later layer-switch workflows)
 
 A pragmatic third pattern is a **shared optional register pack** used across multiple rows/configs:
 
@@ -466,9 +473,9 @@ These are designed so each row is an "instrument family" and columns remain the 
 
 - Row 2: `fluid-carriers` — Fluid as substrate; camera/audio impulses inject velocity; downstream marks ride the carrier.
 - Row 3: `dualfield-particles` — Two ParticleFields (ink into fluid + foreground particles); DividedArea with split layer routing.
-- Row 4: `geometry-architecture` — DividedArea and structured paths; mostly fresh-entrance overlays (high res).
+- Row 4: `geometry-architecture` — DividedArea and structured paths; high-res overlays are live at low alpha.
 - Row 5: `memory-collage` — Memory bank + Collage; optional text remains commented out.
-- Row 6: `chaos-bank` — denser configs, but still organized into layers and registers; use fresh-entrance overlays heavily to protect GPU.
+- Row 6: `chaos-bank` — denser configs, but still organized into layers and registers; keep layers live and control density via alpha, fade/dissipation, and throttling.
 
 ## Row 3 (dualfield-particles bank)
 
@@ -568,7 +575,7 @@ DividedArea as primary voice with ParticleSet connection-line webs as contrastin
 - Point source: `Camera.PointVelocity` (A/V, Video), `Audio.PolarPitchRmsPoint` (Audio)
 
 **ParticleSet layer variations:**
-- **Dedicated `particleset` layer (Fade persistence)**: 7200×7200, `paused: true`, `alpha: 0.0`, `FadeParticleSet.Alpha`: 0.002–0.004
+- **Dedicated `particleset` layer (Fade persistence)**: 7200×7200, `paused: false`, low alpha (~0.08–0.12), `FadeParticleSet.Alpha`: 0.002–0.004
 - **Drawing to `ground` (fluid dye)**: lower `particleDrawRadius` (1–2), lower color alpha (~0.4–0.6), decays via `Fluid.Value Dissipation`
 - **Drawing to `marks` (smeared)**: higher `colourMultiplier` (0.7–1.0), smear fields from `Fluid.velocitiesTexture` + `Palette.FieldTexture`
 
@@ -585,7 +592,7 @@ DividedArea as primary voice with ParticleSet connection-line webs as contrastin
 
 ## Row 5 (memory-collage bank)
 
-CollageMod as primary voice with Memory bank textures. Memory bank is pre-seeded automatically; configs wire `Synth.Memory` → `CollageMod.SnapshotTexture` and use audio onsets/timbre/pitch changes to trigger memory emission.
+CollageMod as primary voice with Memory bank textures. Memory bank is pre-seeded automatically (auto-capture), so configs typically only need `Synth.Memory` → `CollageA.SnapshotTexture` (and optionally `CollageB.SnapshotTexture`) plus audio onsets/timbre/pitch changes to trigger memory emission (`MemoryEmitRandom*`).
 
 **Design goals:**
 - Collage as the central visual element across all configs
@@ -622,21 +629,28 @@ CollageMod as primary voice with Memory bank textures. Memory bank is pre-seeded
 **Memory bank wiring pattern:**
 ```
 Audio.[Onset1|TimbreChange|PitchChange] → Synth.MemoryEmit[Random|RandomNew|RandomOld]
-Synth.Memory → Collage.SnapshotTexture
+Synth.Memory → CollageA.SnapshotTexture
+# Optional second voice
+Synth.Memory → CollageB.SnapshotTexture
 ```
 
 **CollageMod configuration:**
-- `Colour`: neutral gray base (~0.5, 0.5, 0.5, 0.6–0.7), tinted by palette
-- `Saturation`: 1.6–1.8 (enhances memory texture colors)
-- `Strategy`: 1 (tinted snapshot) or 2 (palette-blended)
-- `OutlineAlphaFactor`: 0.0 (no outlines) to 0.5 (visible outlines)
-- `OutlineWidth`: 12–18 (when outlines enabled)
+- Use **two Collage mods** where possible: `CollageA` (primary) + `CollageB` (secondary/ghost).
+- Prefer non-0 strategies for the primary read (`CollageA.Strategy` usually 1 or 2). Keep `Strategy: 0` for secondary texture/layering when useful.
+- `BlendMode` + `Opacity` control the draw compositing:
+  - SCREEN (`BlendMode: 1`) tends to blow out; keep `Opacity` ~0.3–0.5.
+  - Use ALPHA (`BlendMode: 0`) for non-additive layering.
+  - Use MULTIPLY/SUBTRACT (`BlendMode: 3/4`) at low opacity for carving/patina.
+- Always set `MinDrawInterval` (rate limiting):
+  - Audio-driven paths: ~0.08–0.12
+  - Video-driven (`Camera.Point`) paths: ~0.33 (≈3 draws/sec)
 
 **PathMod configuration:**
+- Use `CollagePathA` + `CollagePathB` to give two different “shape characters” in the same preset.
 - `Strategy`: 0–3 (varied path generation)
-- `ClusterRadius`: 0.08–0.15
-- `MaxVertices`: 6–10
-- `TriggerBased`: false (continuous path generation)
+- `ClusterRadius`: 0.08–0.25
+- `MaxVertices`: 6–12
+- `TriggerBased`: false for continuous accumulation, true for event-gated paths
 
 **DividedArea (config 50):**
 - `majorLineStyle`: 0 (Solid) — architectural feel without refractive complexity

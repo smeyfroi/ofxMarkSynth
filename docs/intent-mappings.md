@@ -226,6 +226,11 @@ Strategy selection (commented out in code):
 | 1-S | OutlineColour.brightness | invExp(0.3 -> 1.0) for contrast |
 | E | OutlineColour.warmth | lin(0.0 -> 0.15) subtle warm shift |
 
+**Non-intent compositing controls (manual):**
+- `BlendMode` (0..4): Selects blend mode for Collage drawing (0=ALPHA, 1=SCREEN, 2=ADD, 3=MULTIPLY, 4=SUBTRACT).
+- `Opacity` (0.0..1.0): Multiplies `Colour.alpha` before drawing (useful to tame SCREEN/ADD blowout).
+- `MinDrawInterval` (seconds): Rate limits drawing; when throttled, pending `Path`/`SnapshotTexture` are kept until the next eligible draw.
+
 ### DividedAreaMod
 
 | Dimension | Parameter | Function |
