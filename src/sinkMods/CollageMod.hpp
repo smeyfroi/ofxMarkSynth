@@ -58,7 +58,13 @@ protected:
   ofParameter<ofFloatColor> outlineColorParameter { "OutlineColour", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> outlineColorController { outlineColorParameter };
   ofParameter<int> strategyParameter { "Strategy", 1, 0, 2 }; // 0=tint; 1=add tinted pixels; 2=add pixels
+  ofParameter<int> blendModeParameter { "BlendMode", 1, 0, 4 }; // 0=ALPHA, 1=SCREEN, 2=ADD, 3=MULTIPLY, 4=SUBTRACT
+  ofParameter<float> opacityParameter { "Opacity", 1.0f, 0.0f, 1.0f };
+  ParamController<float> opacityController { opacityParameter };
+  ofParameter<float> minDrawIntervalParameter { "MinDrawInterval", 0.0f, 0.0f, 1.0f }; // seconds
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
+
+  float lastDrawTime { 0.0f };
 };
 
 

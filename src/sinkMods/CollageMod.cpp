@@ -31,10 +31,14 @@ CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name,
   registerControllerForSource(outlineAlphaFactorParameter, outlineAlphaFactorController);
   registerControllerForSource(outlineWidthParameter, outlineWidthController);
   registerControllerForSource(outlineColorParameter, outlineColorController);
+  registerControllerForSource(opacityParameter, opacityController);
 }
 
 void CollageMod::initParameters() {
   parameters.add(strategyParameter);
+  parameters.add(blendModeParameter);
+  parameters.add(opacityParameter);
+  parameters.add(minDrawIntervalParameter);
   parameters.add(colorParameter);
   parameters.add(saturationParameter);
   parameters.add(outlineAlphaFactorParameter);
@@ -130,6 +134,7 @@ void CollageMod::update() {
   outlineAlphaFactorController.update();
   outlineWidthController.update();
   outlineColorController.update();
+  opacityController.update();
 
   auto drawingLayerPtrOpt0 = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt0) {
@@ -141,6 +146,12 @@ void CollageMod::update() {
 
   if (path.getCommands().size() <= 3) return;
   if (strategyParameter != 0 && !snapshotTexture.isAllocated()) return;
+
+  // Rate limiting: skip draw if not enough time has passed since last draw
+  float currentTime = ofGetElapsedTimef();
+  if (minDrawIntervalParameter > 0.0f && (currentTime - lastDrawTime) < minDrawIntervalParameter) {
+    return; // Skip this draw, keep path and texture for next attempt
+  }
 
   auto drawingLayerPtr0 = drawingLayerPtrOpt0.value();
   auto fboPtr0 = drawingLayerPtr0->fboPtr;
@@ -174,7 +185,18 @@ void CollageMod::update() {
     tintColor = ofFloatColor(1.0, 1.0, 1.0, 1.0);
   }
 
-  ofEnableBlendMode(OF_BLENDMODE_SCREEN);
+  // Apply opacity to tint color alpha
+  tintColor.a *= opacityController.value;
+
+  // Select blend mode based on parameter
+  switch (blendModeParameter.get()) {
+    case 0: ofEnableBlendMode(OF_BLENDMODE_ALPHA); break;
+    case 1: ofEnableBlendMode(OF_BLENDMODE_SCREEN); break;
+    case 2: ofEnableBlendMode(OF_BLENDMODE_ADD); break;
+    case 3: ofEnableBlendMode(OF_BLENDMODE_MULTIPLY); break;
+    case 4: ofEnableBlendMode(OF_BLENDMODE_SUBTRACT); break;
+    default: ofEnableBlendMode(OF_BLENDMODE_SCREEN); break;
+  }
 
   // Execute the appropriate drawing strategy
   if (strategyParameter == 0) {
@@ -185,6 +207,7 @@ void CollageMod::update() {
 
   ofPopStyle();
   fboPtr0->getSource().end();
+  lastDrawTime = currentTime;
   path.clear();
   snapshotTexture = ofTexture{}; // Reset to unallocated state so we wait for fresh texture
 }
