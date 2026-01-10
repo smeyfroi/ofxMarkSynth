@@ -35,6 +35,21 @@ public:
   bool keyPressed(int key) override;
   void applyIntent(const Intent& intent, float strength) override;
 
+  UiState captureUiState() const override {
+    UiState state;
+    setUiStateBool(state, "videoVisible", motionFromVideo.isVideoVisible());
+    setUiStateBool(state, "motionVisible", motionFromVideo.isMotionVisible());
+    return state;
+  }
+
+  void restoreUiState(const UiState& state) override {
+    bool defaultVideoVisible = motionFromVideo.isVideoVisible();
+    motionFromVideo.setVideoVisible(getUiStateBool(state, "videoVisible", defaultVideoVisible));
+
+    bool defaultMotionVisible = motionFromVideo.isMotionVisible();
+    motionFromVideo.setMotionVisible(getUiStateBool(state, "motionVisible", defaultMotionVisible));
+  }
+
   static constexpr int SOURCE_FLOW_FIELD = 10;
   static constexpr int SOURCE_POINT_VELOCITY = 20;
   static constexpr int SOURCE_POINT = 21;

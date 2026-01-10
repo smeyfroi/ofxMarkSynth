@@ -26,6 +26,16 @@ public:
   bool keyPressed(int key) override;
   void applyIntent(const Intent& intent, float strength) override;
 
+  UiState captureUiState() const override {
+    UiState state;
+    setUiStateBool(state, "visible", visible);
+    return state;
+  }
+
+  void restoreUiState(const UiState& state) override {
+    visible = getUiStateBool(state, "visible", visible);
+  }
+
   static constexpr int SOURCE_SNAPSHOT_TEXTURE = 11;
 
 protected:

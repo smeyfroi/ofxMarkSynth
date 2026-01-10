@@ -220,6 +220,12 @@ private:
 
   ModPtrMap modPtrs;
 
+  // Cache of per-Mod UI/debug state, preserved across config reloads.
+  // Keyed by Mod name (global across configs).
+  std::unordered_map<std::string, Mod::UiState> modUiStateCache;
+  void captureModUiStateCache();
+  void restoreModUiStateCache();
+
   // >>> Layer system (delegated to helper class)
   std::unique_ptr<LayerController> layerController;
   // <<<

@@ -119,6 +119,27 @@ class Mod : public std::enable_shared_from_this<Mod> {
 
 public:
   using ParamValueMap = std::unordered_map<std::string, std::string>;
+  using UiState = std::unordered_map<std::string, std::string>;
+
+  // Optional UI/debug state for preserving non-parameter toggles across config reloads.
+  // This is keyed by Mod name in Synth and intentionally does not persist to disk.
+  virtual UiState captureUiState() const { return {}; }
+  virtual void restoreUiState(const UiState& state) { (void)state; }
+
+  static void setUiStateBool(UiState& state, const std::string& key, bool value) {
+    state[key] = value ? "1" : "0";
+  }
+
+  static bool getUiStateBool(const UiState& state, const std::string& key, bool defaultValue) {
+    auto it = state.find(key);
+    if (it == state.end()) return defaultValue;
+
+    const std::string& v = it->second;
+    if (v == "1" || v == "true" || v == "TRUE" || v == "True") return true;
+    if (v == "0" || v == "false" || v == "FALSE" || v == "False") return false;
+
+    return defaultValue;
+  }
 
   Mod(std::shared_ptr<Synth> synth, const std::string& name, ModConfig config);
   virtual ~Mod() = default;

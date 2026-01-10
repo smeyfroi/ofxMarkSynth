@@ -348,6 +348,24 @@ void Synth::unload() {
   // Rebuild of parameter groups happens when reloading config (configureGui/init* called then)
 }
 
+void Synth::captureModUiStateCache() {
+  for (const auto& [modName, modPtr] : modPtrs) {
+    if (!modPtr) continue;
+    modUiStateCache[modName] = modPtr->captureUiState();
+  }
+}
+
+void Synth::restoreModUiStateCache() {
+  for (const auto& [modName, modPtr] : modPtrs) {
+    if (!modPtr) continue;
+
+    auto it = modUiStateCache.find(modName);
+    if (it == modUiStateCache.end()) continue;
+
+    modPtr->restoreUiState(it->second);
+  }
+}
+
 DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
   return layerController->addLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
 }
@@ -1010,6 +1028,9 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
     ofNotifyEvent(configWillUnloadEvent, willEv, this);
   }
   
+  // Preserve per-Mod debug/UI state by mod name.
+  captureModUiStateCache();
+
   // Unload and reload
   unload();
   
@@ -1029,6 +1050,9 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
     return;
   }
   
+  // Restore per-Mod UI state after reload.
+  restoreModUiStateCache();
+
   // Sync background color controller with newly loaded parameter value to prevent
   // old color bleeding through due to internal smoothing state
   backgroundColorController.syncWithParameter();

@@ -27,6 +27,16 @@ public:
   void receive(int sinkId, const float& v) override;
   void applyIntent(const Intent& intent, float strength) override;
 
+  UiState captureUiState() const override {
+    UiState state;
+    setUiStateBool(state, "visible", visible);
+    return state;
+  }
+
+  void restoreUiState(const UiState& state) override {
+    visible = getUiStateBool(state, "visible", visible);
+  }
+
   static constexpr int SINK_VEC2 = 1;
   static constexpr int SINK_TRIGGER = 2;
   static constexpr int SOURCE_PATH = 10;

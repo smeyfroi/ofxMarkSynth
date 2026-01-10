@@ -30,6 +30,21 @@ public:
   void receive(int sinkId, const glm::vec2& point) override;
   bool keyPressed(int key) override;
 
+  UiState captureUiState() const override {
+    UiState state;
+    if (introspectorPtr) {
+      setUiStateBool(state, "visible", introspectorPtr->visible);
+    }
+    return state;
+  }
+
+  void restoreUiState(const UiState& state) override {
+    if (introspectorPtr) {
+      bool defaultVisible = introspectorPtr->visible;
+      introspectorPtr->visible = getUiStateBool(state, "visible", defaultVisible);
+    }
+  }
+
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_HORIZONTAL_LINES_1 = 10;
   static constexpr int SINK_HORIZONTAL_LINES_2 = 11;

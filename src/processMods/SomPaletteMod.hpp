@@ -28,6 +28,18 @@ public:
   void update() override;
   void draw() override;
   bool keyPressed(int key) override;
+
+  UiState captureUiState() const override {
+    UiState state;
+    setUiStateBool(state, "visible", somPalette.isVisible());
+    return state;
+  }
+
+  void restoreUiState(const UiState& state) override {
+    bool defaultVisible = somPalette.isVisible();
+    somPalette.setVisible(getUiStateBool(state, "visible", defaultVisible));
+  }
+
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const float& v) override;
   void applyIntent(const Intent& intent, float strength) override;

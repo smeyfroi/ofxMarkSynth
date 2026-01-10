@@ -29,6 +29,23 @@ public:
   void draw() override;
   bool keyPressed(int key) override;
 
+  UiState captureUiState() const override {
+    UiState state;
+    setUiStateBool(state, "tuningVisible", tuningVisible);
+    if (audioDataPlotsPtr) {
+      setUiStateBool(state, "plotsVisible", audioDataPlotsPtr->plotsVisible);
+    }
+    return state;
+  }
+
+  void restoreUiState(const UiState& state) override {
+    tuningVisible = getUiStateBool(state, "tuningVisible", tuningVisible);
+    if (audioDataPlotsPtr) {
+      bool defaultPlotsVisible = audioDataPlotsPtr->plotsVisible;
+      audioDataPlotsPtr->plotsVisible = getUiStateBool(state, "plotsVisible", defaultPlotsVisible);
+    }
+  }
+
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
   static constexpr int SOURCE_POLAR_PITCH_RMS_POINTS = 2;
   static constexpr int SOURCE_SPECTRAL_3D_POINTS = 5;
