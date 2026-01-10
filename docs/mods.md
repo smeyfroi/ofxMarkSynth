@@ -306,6 +306,38 @@ Applies linear transformation (multiply + add) to float values.
 
 ---
 
+### VectorMagnitudeMod
+
+Computes a normalized scalar magnitude from incoming vectors, and exposes both a mean and a peak signal.
+
+**Purpose**: Turn vector streams (e.g. video motion velocity, 3D tracking) into stable 0–1 scalar envelopes.
+
+**Sinks**:
+- `Vec2` (vec2): input vectors
+- `Vec3` (vec3): input vectors
+- `Vec4` (vec4): input vectors
+- `PointVelocity` (vec4): alias for `Vec4` (useful with `VideoFlowSourceMod.PointVelocity`)
+
+**Sources**:
+- `MeanScalar` (float): mean magnitude per update (smoothed)
+- `MaxScalar` (float): max magnitude per update (smoothed)
+
+**Key Parameters**:
+- `Components`: which components to measure
+  - `"xy"`, `"zw"`, `"xyz"`, `"xyzw"`
+- `Min`, `Max`: normalization range for the selected magnitude
+- `MeanSmoothing`, `MaxSmoothing`: smoothing factors (0=immediate, 1=held)
+- `DecayWhenNoInput`: decay toward 0 when no samples arrive
+
+**Intent Integration**: None (currently).
+
+**Use Cases**:
+- Derive a "video RMS" from `VideoFlowSourceMod.PointVelocity`.
+- Drive agency-aware sinks (fade rate, alpha multipliers, impulse strength) from motion intensity.
+- Convert 3D tracking vectors into stable scalar control signals.
+
+---
+
 ### ClusterMod
 
 Groups 2D points into clusters using k-means algorithm and outputs cluster centers.

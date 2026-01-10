@@ -150,6 +150,7 @@ This visual distinction helps identify at a glance which parts of the synth grap
 |-----|--------|--------------|-------------------|
 | ClusterMod | Yes | Yes | C |
 | MultiplyAddMod | Yes | Yes | E, D, G |
+| VectorMagnitudeMod | No | No | — |
 | PathMod | Yes | Yes | D, G, C, S |
 | PixelSnapshotMod | Yes | Yes | S, G |
 | SomPaletteMod | Yes* | Yes | — (empty implementation) |
@@ -169,6 +170,10 @@ This visual distinction helps identify at a glance which parts of the synth grap
 |-----------|-----------|----------|
 | E | Multiplier | exp |
 | D*0.6 + G*0.4 | Adder | exp |
+
+### VectorMagnitudeMod
+
+No Intent mapping (currently). This is a utility mod for deriving scalar envelopes from vector streams.
 
 ### PathMod
 

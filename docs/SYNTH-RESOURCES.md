@@ -145,7 +145,7 @@ resources.add("textSourcesPath", ofToDataPath("text"));
 These Mods are constructed without `ResourceManager` dependencies:
 
 - Source Mods: `AudioDataSource`, `StaticTextSource`, `TimerSource`, `RandomFloatSource`, `RandomHslColor`, `RandomVecSource`
-- Process Mods: `Cluster`, `Fluid`, `FluidRadialImpulse`, `MultiplyAdd`, `ParticleField`, `ParticleSet`, `Path`, `PixelSnapshot`, `Smear`, `SoftCircle`
+- Process Mods: `Cluster`, `Fluid`, `FluidRadialImpulse`, `MultiplyAdd`, `VectorMagnitude`, `ParticleField`, `ParticleSet`, `Path`, `PixelSnapshot`, `Smear`, `SoftCircle`
 - Sink Mods: `Collage`, `DividedArea`, `Introspector`, `SandLine`, `SomPalette`
 - Layer Mods: `Fade`
 

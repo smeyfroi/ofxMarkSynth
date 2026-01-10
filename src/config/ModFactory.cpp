@@ -138,6 +138,10 @@ void ModFactory::registerProcessMods() {
     return std::make_shared<MultiplyAddMod>(s, n, std::move(c));
   });
   
+  registerType("VectorMagnitude", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<VectorMagnitudeMod>(s, n, std::move(c));
+  });
+  
   registerType("Path", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     bool triggerBased = false;
     auto it = c.find("TriggerBased");

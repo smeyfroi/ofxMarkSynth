@@ -32,6 +32,7 @@
 #include "processMods/PathMod.hpp"
 #include "processMods/PixelSnapshotMod.hpp"
 #include "processMods/SomPaletteMod.hpp"
+#include "processMods/VectorMagnitudeMod.hpp"
 
 // Layer Mods - full-layer effects
 #include "layerMods/FadeMod.hpp"
