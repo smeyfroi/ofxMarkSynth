@@ -2,6 +2,8 @@ An art project for improvisational live music/drawing performances. Built around
 
 ![drawing-2025-12-06-15-44-15-219 copy](https://github.com/user-attachments/assets/b7f2f123-1216-4804-a76c-ddf892cf0cdc)
 
+<img width="2880" height="1620" alt="Screenshot 2026-01-12 at 17 47 20" src="https://github.com/user-attachments/assets/48e534c2-a4f3-4761-b9de-8240c1908f17" />
+
 <img width="2133" height="1242" alt="Screenshot 2025-11-09 at 20 29 44" src="https://github.com/user-attachments/assets/ecca4f78-41a3-43e3-82e3-524100c76768" />
 
 <img width="1956" height="1195" alt="Screenshot 2025-08-26 at 15 18 25" src="https://github.com/user-attachments/assets/cebfb0d8-2c15-4888-b291-838900f59cdf" />
