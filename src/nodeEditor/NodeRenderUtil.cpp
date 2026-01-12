@@ -48,9 +48,8 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
   if (paramGroup.size() == 0) return;
   
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
-  const ImVec2 sliderSize(24, 140);
-  const float colW = sliderSize.x + 8.0f;   // column width (slider + padding for layer names)
-  const float colH = sliderSize.y + 28.0f;   // add room for label below
+  const ImVec2 sliderSize(24, 124);
+  const float colW = sliderSize.x + 8.0f;   // column width (slider + padding)
   
   if (ImGui::BeginTable(paramGroup.getName().c_str(), paramGroup.size(),
                         ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX)) {
@@ -98,12 +97,6 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
         ImGui::SetItemTooltip("Enable/disable layer %s", name.c_str());
       }
       
-      // Center the label text under the slider
-      std::string labelText = name.substr(0, 3);
-      float textWidth = ImGui::CalcTextSize(labelText.c_str()).x;
-      float textPad = (colW - textWidth) * 0.5f;
-      ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textPad - xPad);
-      ImGui::TextUnformatted(labelText.c_str());
       ImGui::EndGroup();
       
       ImGui::PopID();

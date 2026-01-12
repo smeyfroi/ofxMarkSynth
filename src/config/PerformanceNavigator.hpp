@@ -7,12 +7,13 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
+#include <array>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
-#include <cstdint>
-
+#include <optional>
+#include <string>
+#include <vector>
 
 
 namespace ofxMarkSynth {
@@ -36,6 +37,21 @@ public:
   // Load configs from folder
   void loadFromFolder(const std::filesystem::path& folderPath);
   
+  struct RgbColor {
+    uint8_t r { 0 };
+    uint8_t g { 0 };
+    uint8_t b { 0 };
+  };
+
+  struct GridCoord {
+    int x { 0 };
+    int y { 0 };
+  };
+
+  static constexpr int GRID_WIDTH = 8;
+  static constexpr int GRID_HEIGHT = 7;
+  static constexpr int GRID_CELL_COUNT = GRID_WIDTH * GRID_HEIGHT;
+
   // State accessors
   const std::vector<std::string>& getConfigs() const { return configs; }
   int getCurrentIndex() const { return currentIndex; }
@@ -45,6 +61,11 @@ public:
   std::string getConfigName(int index) const;
   std::string getConfigDescription(int index) const;
   const std::filesystem::path& getFolderPath() const { return folderPath; }
+
+  // Config grid (used by GUI + controllers)
+  int getGridConfigIndex(int x, int y) const;
+  RgbColor getConfigGridColor(int configIndex) const;
+  bool isConfigAssignedToGrid(int configIndex) const;
   
   // Actions (called when hold completes)
   void next();
@@ -95,8 +116,17 @@ private:
   Synth* synth;
   std::vector<std::string> configs;      // Full paths
   std::vector<std::string> configDescriptions; // Parallel to configs
+
   std::filesystem::path folderPath;
   int currentIndex = -1;                 // -1 means no config loaded
+
+  // Performance config grid mapping.
+  // - gridConfigIndices: size 56, maps (x,y) -> config index, or -1 if empty.
+  // - configAssignedGridIndex: per-config assigned cell index, or -1.
+  // - configGridColors: per-config base color (usually from buttonGrid.color).
+  std::array<int, GRID_CELL_COUNT> gridConfigIndices;
+  std::vector<int> configAssignedGridIndex;
+  std::vector<RgbColor> configGridColors;
   
   // Hold state
   HoldAction activeHold = HoldAction::NONE;
@@ -108,6 +138,11 @@ private:
   
   // Load first config on init
   void loadCurrentConfig();
+
+  static constexpr int gridXYToIndex(int x, int y) {
+    return x + y * GRID_WIDTH;
+  }
+  void buildConfigGrid(const std::vector<std::optional<GridCoord>>& explicitGridCoords);
   
   // Config duration (0 = no duration specified)
   int configDurationSec { 0 };

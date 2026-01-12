@@ -4,6 +4,8 @@
 - Build (in any example dir): `make` | Clean: `make clean && make` | Debug: `make Debug` | Release: `make Release`
 - Xcode: open the example `.xcodeproj` and build the target (Debug/Release)
 - Single-run: `make -C example_simple run` (if supported); otherwise launch app binary in `bin/`
+- ImGui GUI: not all examples enable ImGui. `example_simple` does not use the full ImGui GUI; `example_memory_collage` does.
+- For validating ImGui changes in real usage, build/run a host app that embeds the addon (e.g. `apps/myApps/fingerprint2`).
 - Tests: none provided; create C++ tests under `tests/` if needed
 
 ## Code Style

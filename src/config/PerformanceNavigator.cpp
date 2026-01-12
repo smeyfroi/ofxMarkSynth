@@ -21,8 +21,9 @@ namespace ofxMarkSynth {
 
 
 PerformanceNavigator::PerformanceNavigator(Synth* synth_)
-: synth(synth_)
-{}
+: synth(synth_) {
+    gridConfigIndices.fill(-1);
+}
 
 bool PerformanceNavigator::keyPressed(int key) {
   if (key == OF_KEY_RIGHT) {
@@ -44,63 +45,218 @@ bool PerformanceNavigator::keyReleased(int key) {
   return false;
 }
 
-static std::string parseConfigDescription(const std::filesystem::path& filepath) {
-  try {
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
-      return "";
+namespace {
+
+struct ParsedConfigMetadata {
+    std::string description;
+    std::optional<PerformanceNavigator::GridCoord> explicitGrid;
+    PerformanceNavigator::RgbColor color { 128, 128, 128 };
+    bool hasExplicitColor { false };
+};
+
+PerformanceNavigator::RgbColor parseHexColor(const std::string& hex) {
+    std::string s = ofTrim(hex);
+    if (!s.empty() && s[0] == '#') {
+        s = s.substr(1);
     }
 
-    nlohmann::json j;
-    file >> j;
-
-    if (j.contains("description") && j["description"].is_string()) {
-      return j["description"].get<std::string>();
+    if (s.size() != 6) {
+        return { 128, 128, 128 };
     }
-  } catch (const std::exception& e) {
-    ofLogVerbose("PerformanceNavigator") << "Failed to parse description from " << filepath << ": " << e.what();
-  }
 
-  return "";
+    auto hexByte = [](const std::string& str, size_t offset) -> std::optional<uint8_t> {
+        try {
+            unsigned int v = std::stoul(str.substr(offset, 2), nullptr, 16);
+            return static_cast<uint8_t>(v & 0xFF);
+        } catch (...) {
+            return std::nullopt;
+        }
+    };
+
+    auto r = hexByte(s, 0);
+    auto g = hexByte(s, 2);
+    auto b = hexByte(s, 4);
+    if (!r || !g || !b) {
+        return { 128, 128, 128 };
+    }
+
+    return { *r, *g, *b };
 }
 
-void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
-  configs.clear();
-  configDescriptions.clear();
-  folderPath = folder;
-  currentIndex = -1;
-  
-  if (!std::filesystem::exists(folder)) {
-    ofLogWarning("PerformanceNavigator") << "Folder does not exist: " << folder;
-    return;
-  }
-  
-  if (!std::filesystem::is_directory(folder)) {
-    ofLogWarning("PerformanceNavigator") << "Path is not a directory: " << folder;
-    return;
-  }
-  
-  std::vector<std::filesystem::path> jsonFiles;
-  for (const auto& entry : std::filesystem::directory_iterator(folder)) {
-    if (entry.is_regular_file() && entry.path().extension() == ".json") {
-      jsonFiles.push_back(entry.path());
-    }
-  }
-  
-  std::sort(jsonFiles.begin(), jsonFiles.end(), [](const auto& a, const auto& b) {
-    return a.filename().string() < b.filename().string();
-  });
-  
-  for (const auto& path : jsonFiles) {
-    configs.push_back(path.string());
-    configDescriptions.push_back(parseConfigDescription(path));
-  }
-  
-  ofLogNotice("PerformanceNavigator") << "Loaded " << configs.size() << " configs from " << folder;
-  
-  if (configs.empty()) return;
+ParsedConfigMetadata parseConfigMetadata(const std::filesystem::path& filepath) {
+    ParsedConfigMetadata meta;
 
-  currentIndex = 0;
+    try {
+        std::ifstream file(filepath);
+        if (!file.is_open()) {
+            return meta;
+        }
+
+        nlohmann::json j;
+        file >> j;
+
+        if (j.contains("description") && j["description"].is_string()) {
+            meta.description = j["description"].get<std::string>();
+        }
+
+        if (j.contains("buttonGrid") && j["buttonGrid"].is_object()) {
+            const auto& bg = j["buttonGrid"];
+
+            if (bg.contains("x") && bg.contains("y") && bg["x"].is_number() && bg["y"].is_number()) {
+                PerformanceNavigator::GridCoord gc;
+                gc.x = bg["x"].get<int>();
+                gc.y = bg["y"].get<int>();
+                meta.explicitGrid = gc;
+            }
+
+            if (bg.contains("color") && bg["color"].is_string()) {
+                meta.color = parseHexColor(bg["color"].get<std::string>());
+                meta.hasExplicitColor = true;
+            }
+        }
+    } catch (const std::exception& e) {
+        ofLogVerbose("PerformanceNavigator") << "Failed to parse metadata from " << filepath << ": " << e.what();
+    }
+
+    return meta;
+}
+
+} // namespace
+
+void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
+    configs.clear();
+    configDescriptions.clear();
+    folderPath = folder;
+    currentIndex = -1;
+
+    gridConfigIndices.fill(-1);
+    configAssignedGridIndex.clear();
+    configGridColors.clear();
+
+    if (!std::filesystem::exists(folder)) {
+        ofLogWarning("PerformanceNavigator") << "Folder does not exist: " << folder;
+        return;
+    }
+
+    if (!std::filesystem::is_directory(folder)) {
+        ofLogWarning("PerformanceNavigator") << "Path is not a directory: " << folder;
+        return;
+    }
+
+    std::vector<std::filesystem::path> jsonFiles;
+    for (const auto& entry : std::filesystem::directory_iterator(folder)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".json") {
+            jsonFiles.push_back(entry.path());
+        }
+    }
+
+    std::sort(jsonFiles.begin(), jsonFiles.end(), [](const auto& a, const auto& b) {
+        return a.filename().string() < b.filename().string();
+    });
+
+    std::vector<std::optional<GridCoord>> explicitGridCoords;
+    explicitGridCoords.reserve(jsonFiles.size());
+
+    RgbColor lastColor { 128, 128, 128 };
+
+    for (const auto& path : jsonFiles) {
+        configs.push_back(path.string());
+
+        auto meta = parseConfigMetadata(path);
+        configDescriptions.push_back(meta.description);
+        explicitGridCoords.push_back(meta.explicitGrid);
+
+        if (meta.hasExplicitColor) {
+            lastColor = meta.color;
+        }
+        configGridColors.push_back(meta.hasExplicitColor ? meta.color : lastColor);
+    }
+
+    ofLogNotice("PerformanceNavigator") << "Loaded " << configs.size() << " configs from " << folder;
+
+    if (configs.empty()) {
+        return;
+    }
+
+    configAssignedGridIndex.assign(configs.size(), -1);
+    buildConfigGrid(explicitGridCoords);
+
+    currentIndex = 0;
+}
+
+void PerformanceNavigator::buildConfigGrid(const std::vector<std::optional<GridCoord>>& explicitGridCoords) {
+    gridConfigIndices.fill(-1);
+
+    if (configs.empty()) {
+        return;
+    }
+
+    if (configAssignedGridIndex.size() != configs.size()) {
+        configAssignedGridIndex.assign(configs.size(), -1);
+    }
+
+    if (explicitGridCoords.size() != configs.size()) {
+        ofLogWarning("PerformanceNavigator") << "buildConfigGrid: metadata size mismatch";
+    }
+
+    // First pass: place configs with explicit (x,y).
+    for (int configIdx = 0; configIdx < static_cast<int>(configs.size()); ++configIdx) {
+        if (configIdx >= static_cast<int>(explicitGridCoords.size())) {
+            continue;
+        }
+
+        const auto& maybeCoord = explicitGridCoords[configIdx];
+        if (!maybeCoord) {
+            continue;
+        }
+
+        const int x = maybeCoord->x;
+        const int y = maybeCoord->y;
+
+        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
+            ofLogWarning("PerformanceNavigator") << "Invalid buttonGrid coords for " << configs[configIdx]
+                                                 << " (" << x << "," << y << ")";
+            continue;
+        }
+
+        const int cellIndex = gridXYToIndex(x, y);
+        if (gridConfigIndices[cellIndex] != -1) {
+            ofLogWarning("PerformanceNavigator") << "buttonGrid conflict at (" << x << "," << y << ") for " << configs[configIdx];
+            continue;
+        }
+
+        gridConfigIndices[cellIndex] = configIdx;
+        configAssignedGridIndex[configIdx] = cellIndex;
+    }
+
+    // Second pass: auto-assign unplaced configs (top-left → bottom-right).
+    std::vector<int> freeCells;
+    freeCells.reserve(GRID_CELL_COUNT);
+
+    for (int y = 0; y < GRID_HEIGHT; ++y) {
+        for (int x = 0; x < GRID_WIDTH; ++x) {
+            const int cellIndex = gridXYToIndex(x, y);
+            if (gridConfigIndices[cellIndex] == -1) {
+                freeCells.push_back(cellIndex);
+            }
+        }
+    }
+
+    size_t nextFree = 0;
+    for (int configIdx = 0; configIdx < static_cast<int>(configs.size()); ++configIdx) {
+        if (configIdx < static_cast<int>(configAssignedGridIndex.size()) && configAssignedGridIndex[configIdx] != -1) {
+            continue;
+        }
+
+        if (nextFree >= freeCells.size()) {
+            ofLogWarning("PerformanceNavigator") << "No free grid cell for config index " << configIdx;
+            break;
+        }
+
+        const int cellIndex = freeCells[nextFree++];
+        gridConfigIndices[cellIndex] = configIdx;
+        configAssignedGridIndex[configIdx] = cellIndex;
+    }
 }
 
 std::string PerformanceNavigator::getCurrentConfigName() const {
@@ -120,10 +276,34 @@ std::string PerformanceNavigator::getConfigName(int index) const {
 }
 
 std::string PerformanceNavigator::getConfigDescription(int index) const {
-  if (index < 0 || index >= static_cast<int>(configDescriptions.size())) {
-    return "";
-  }
-  return configDescriptions[index];
+    if (index < 0 || index >= static_cast<int>(configDescriptions.size())) {
+        return "";
+    }
+    return configDescriptions[index];
+}
+
+int PerformanceNavigator::getGridConfigIndex(int x, int y) const {
+    if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
+        return -1;
+    }
+
+    return gridConfigIndices[gridXYToIndex(x, y)];
+}
+
+PerformanceNavigator::RgbColor PerformanceNavigator::getConfigGridColor(int configIndex) const {
+    if (configIndex < 0 || configIndex >= static_cast<int>(configGridColors.size())) {
+        return { 0, 0, 0 };
+    }
+
+    return configGridColors[configIndex];
+}
+
+bool PerformanceNavigator::isConfigAssignedToGrid(int configIndex) const {
+    if (configIndex < 0 || configIndex >= static_cast<int>(configAssignedGridIndex.size())) {
+        return false;
+    }
+
+    return configAssignedGridIndex[configIndex] >= 0;
 }
 
 void PerformanceNavigator::next() {

@@ -166,14 +166,18 @@ void Gui::buildInitialDockLayout(ImGuiID dockspaceId) {
   ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
   
   ImGuiID dockMain = dockspaceId;
-  ImGuiID dockLeft, dockRight, dockBottom, dockCenter;
-  
-  ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down,  0.15f, &dockBottom, &dockMain);
+  ImGuiID dockLeft, dockRight, dockCenter;
+
+  // First split right so the Synth pane keeps full height.
   ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.30f, &dockRight, &dockCenter);
-  
+
+  // Then split the center area down so Log is only as wide as NodeEditor.
+  ImGuiID dockBottomCenter, dockCenterTop;
+  ImGui::DockBuilderSplitNode(dockCenter, ImGuiDir_Down, 0.15f, &dockBottomCenter, &dockCenterTop);
+
   ImGui::DockBuilderDockWindow("Synth", dockRight);
-  ImGui::DockBuilderDockWindow("Log", dockBottom);
-  ImGui::DockBuilderDockWindow("NodeEditor", dockCenter);
+  ImGui::DockBuilderDockWindow("Log", dockBottomCenter);
+  ImGui::DockBuilderDockWindow("NodeEditor", dockCenterTop);
   
   ImGui::DockBuilderFinish(dockspaceId);
 }
@@ -249,7 +253,7 @@ void Gui::drawSynthControls() {
 void Gui::drawIntentSlotSliders() {
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8)); // tighter spacing
 
-  const ImVec2 sliderSize(24, 140);
+  const ImVec2 sliderSize(24, 124);
   const float colW = sliderSize.x + 0.0f;
 
   constexpr int kActivationSlots = 7;
@@ -283,11 +287,6 @@ void Gui::drawIntentSlotSliders() {
         drawDisabledSlider(sliderSize, i);
       }
 
-      if (hasIntentParam) {
-        ImGui::Text("%d", i + 1);
-      } else {
-        ImGui::TextDisabled("--");
-      }
       ImGui::EndGroup();
       ImGui::PopID();
     }
@@ -309,7 +308,6 @@ void Gui::drawIntentSlotSliders() {
         ImGui::SetItemTooltip("%s", param.getName().c_str());
       }
 
-      ImGui::TextUnformatted("M");
     }
     ImGui::EndGroup();
     ImGui::PopID();
@@ -1107,133 +1105,171 @@ void Gui::drawPerformanceNavigator() {
     }
   }
   
-  // Config list with scrolling
-  const float listHeight = 120.0f;
-  
-  // Check if selection changed and we should scroll
-  // Only suppress scrolling when user is mouse-holding a list item (JUMP action from MOUSE)
   int currentIndex = nav.getCurrentIndex();
-  bool indexChanged = (currentIndex != lastPerformanceNavIndex);
-  bool isMouseHoldingListItem = (nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
-                                  nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE);
-  
-  if (indexChanged && !isMouseHoldingListItem) {
-    scrollToSelectedConfig = true;
-  }
-  lastPerformanceNavIndex = currentIndex;
-  
-  bool anyConfigItemHovered = false;
-  ImGui::BeginChild("ConfigList", ImVec2(0, listHeight), true);
-  {
-    const auto& configs = nav.getConfigs();
-    
-    for (int i = 0; i < static_cast<int>(configs.size()); ++i) {
-      std::string configName = nav.getConfigName(i);
-      bool isCurrentConfig = (i == currentIndex);
-      bool isNextConfig = (i == currentIndex + 1);
-      
-      // Highlight current and next configs
-      if (isCurrentConfig) {
-        ImGui::PushStyleColor(ImGuiCol_Text, GREEN_COLOR);
-      } else if (isNextConfig) {
-        ImGui::PushStyleColor(ImGuiCol_Text, YELLOW_COLOR);
-      }
-      
-      // Check if this item is being held for jump
-      bool isJumpTarget = (nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
-                           nav.getJumpTargetIndex() == i);
-      
-      // Selectable item with hold-to-jump
-      std::string label = isCurrentConfig ? "> " + configName : "  " + configName;
-      if (isNextConfig) label = "  " + configName + " (next)";
-      
-      ImGui::PushID(i);
-      
-      // Draw progress bar overlay if holding this item
-      if (isJumpTarget) {
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        float progress = nav.getHoldProgress();
-        float width = ImGui::GetContentRegionAvail().x * progress;
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        drawList->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + ImGui::GetTextLineHeight()),
-                                IM_COL32(100, 200, 100, 80));
-      }
-      
-      if (ImGui::Selectable(label.c_str(), isCurrentConfig)) {
-        // Single click does nothing - need hold
-      }
-
-      if (ImGui::IsItemHovered()) {
-        anyConfigItemHovered = true;
-
-        const std::string description = nav.getConfigDescription(i);
-
-        ImGui::BeginTooltip();
-        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 28.0f);
-
-        ImGui::TextUnformatted(configName.c_str());
-        ImGui::Separator();
-
-        if (!description.empty()) {
-          ImGui::TextUnformatted(description.c_str());
-        } else {
-          ImGui::TextColored(GREY_COLOR, "No description");
-        }
-
-        ImGui::Separator();
-        ImGui::TextColored(GREY_COLOR, "Click and hold to jump");
-
-        ImGui::PopTextWrapPos();
-        ImGui::EndTooltip();
-      }
-      
-      // Auto-scroll to keep selected config visible (upper third)
-      // ImGui clamps scroll position automatically, so first/last items are handled correctly
-      if (isCurrentConfig && scrollToSelectedConfig) {
-        ImGui::SetScrollHereY(0.3f);  // 0.3 = upper third
-        scrollToSelectedConfig = false;
-      }
-      
-      // Handle mouse hold for jump
-      if (ImGui::IsItemActive() && !isCurrentConfig) {
-        if (nav.getActiveHold() != PerformanceNavigator::HoldAction::JUMP ||
-            nav.getJumpTargetIndex() != i) {
-          nav.beginHold(PerformanceNavigator::HoldAction::JUMP, PerformanceNavigator::HoldSource::MOUSE, i);
-        }
-      } else if (!ImGui::IsItemActive() && nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
-                 nav.getJumpTargetIndex() == i && nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
-        nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
-      }
-      
-      ImGui::PopID();
-      
-      if (isCurrentConfig || isNextConfig) {
-        ImGui::PopStyleColor();
-      }
-    }
-  }
-  ImGui::EndChild();
-  if (ImGui::IsItemHovered() && !anyConfigItemHovered) {
-    ImGui::SetTooltip("Click and hold to jump");
-  }
-  
-  // PREV / NEXT buttons with progress rings
-  constexpr float buttonSize = 60.0f;
-  constexpr float spacing = 20.0f;
-  
-  // currentIndex already declared above for scroll detection
   int configCount = nav.getConfigCount();
   bool canPrev = currentIndex > 0;
   bool canNext = currentIndex < configCount - 1;
-  
-  // Center the buttons
-  float totalWidth = buttonSize * 2 + spacing;
-  float startX = (ImGui::GetContentRegionAvail().x - totalWidth) / 2.0f;
-  ImGui::SetCursorPosX(ImGui::GetCursorPosX() + startX);
-  
-  drawNavigationButton("##prev", -1, canPrev, buttonSize);
-  ImGui::SameLine(0, spacing);
-  drawNavigationButton("##next", +1, canNext, buttonSize);
+
+  // Place prev/next to the right of the grid (vertical space is precious).
+  constexpr float buttonSize = 60.0f;
+  constexpr float navGapY = 14.0f;
+
+  float gridH = 0.0f;
+
+  if (ImGui::BeginTable("##perf_grid_layout", 2,
+                        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_NoBordersInBody)) {
+    ImGui::TableSetupColumn("##grid", ImGuiTableColumnFlags_WidthStretch);
+    ImGui::TableSetupColumn("##nav", ImGuiTableColumnFlags_WidthFixed, buttonSize + 4.0f);
+    ImGui::TableNextRow();
+
+    // 8x7 config pad grid (y=0 is top row)
+    ImGui::TableSetColumnIndex(0);
+    {
+      constexpr float kGap = 4.0f;
+      constexpr float kMidExtraGap = 6.0f; // between x=3|4 and y=3|4
+      constexpr float kMinPad = 14.0f;
+      constexpr float kMaxPad = 28.0f;
+      constexpr float kDimFactor = 0.20f;
+
+      const float availW = ImGui::GetContentRegionAvail().x;
+      float padSize = std::floor((availW - (PerformanceNavigator::GRID_WIDTH - 1) * kGap - kMidExtraGap) /
+                                 PerformanceNavigator::GRID_WIDTH);
+      padSize = ofClamp(padSize, kMinPad, kMaxPad);
+
+      const float gridW = PerformanceNavigator::GRID_WIDTH * padSize + (PerformanceNavigator::GRID_WIDTH - 1) * kGap + kMidExtraGap;
+      gridH = PerformanceNavigator::GRID_HEIGHT * padSize + (PerformanceNavigator::GRID_HEIGHT - 1) * kGap + kMidExtraGap;
+
+      auto scaleColor = [](PerformanceNavigator::RgbColor c, float factor) -> PerformanceNavigator::RgbColor {
+        auto clamp255 = [](float v) -> uint8_t {
+          if (v < 0.0f) return 0;
+          if (v > 255.0f) return 255;
+          return static_cast<uint8_t>(v);
+        };
+
+        return {
+          clamp255(static_cast<float>(c.r) * factor),
+          clamp255(static_cast<float>(c.g) * factor),
+          clamp255(static_cast<float>(c.b) * factor),
+        };
+      };
+
+      auto toU32 = [](PerformanceNavigator::RgbColor c, uint8_t a = 255) -> ImU32 {
+        return IM_COL32(c.r, c.g, c.b, a);
+      };
+
+      ImDrawList* drawList = ImGui::GetWindowDrawList();
+      const ImVec2 start = ImGui::GetCursorScreenPos();
+
+      for (int y = 0; y < PerformanceNavigator::GRID_HEIGHT; ++y) {
+        for (int x = 0; x < PerformanceNavigator::GRID_WIDTH; ++x) {
+          const float extraX = (x >= 4) ? kMidExtraGap : 0.0f;
+          const float extraY = (y >= 4) ? kMidExtraGap : 0.0f;
+
+          const ImVec2 pos(start.x + x * (padSize + kGap) + extraX,
+                           start.y + y * (padSize + kGap) + extraY);
+          const ImVec2 pos2(pos.x + padSize, pos.y + padSize);
+
+          const int configIdx = nav.getGridConfigIndex(x, y);
+          const bool isCurrent = (configIdx >= 0 && configIdx == currentIndex);
+          const bool isJumpTarget = (configIdx >= 0 && nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
+                                     nav.getJumpTargetIndex() == configIdx);
+
+          // Simulate "LED off" for empty/unassigned slots.
+          PerformanceNavigator::RgbColor base = { 0, 0, 0 };
+          if (configIdx >= 0) {
+            base = nav.getConfigGridColor(configIdx);
+            if (!isCurrent) {
+              base = scaleColor(base, kDimFactor);
+            }
+          }
+
+          const PerformanceNavigator::RgbColor holdAmber = { 255, 140, 0 };
+          const PerformanceNavigator::RgbColor fill = isJumpTarget ? holdAmber : base;
+
+          drawList->AddRectFilled(pos, pos2, toU32(fill), 2.0f);
+
+          ImU32 borderColor = IM_COL32(60, 60, 60, 200);
+          float borderThickness = 1.0f;
+
+          if (configIdx >= 0) {
+            borderColor = IM_COL32(90, 90, 90, 220);
+          }
+
+          if (isCurrent) {
+            borderColor = IM_COL32(240, 240, 240, 255);
+            borderThickness = 2.0f;
+          } else if (isJumpTarget) {
+            borderColor = IM_COL32(100, 200, 100, 255);
+            borderThickness = 2.0f;
+          }
+
+          drawList->AddRect(pos, pos2, borderColor, 2.0f, 0, borderThickness);
+
+          if (isJumpTarget) {
+            float progress = nav.getHoldProgress();
+            float w = padSize * progress;
+            drawList->AddRectFilled(pos, ImVec2(pos.x + w, pos.y + padSize), IM_COL32(100, 200, 100, 80), 2.0f);
+          }
+
+          ImGui::SetCursorScreenPos(pos);
+          ImGui::PushID(y * PerformanceNavigator::GRID_WIDTH + x);
+          ImGui::InvisibleButton("##pad", ImVec2(padSize, padSize));
+          ImGui::PopID();
+
+          if (configIdx >= 0 && ImGui::IsItemHovered()) {
+            const std::string configName = nav.getConfigName(configIdx);
+            const std::string description = nav.getConfigDescription(configIdx);
+
+            ImGui::BeginTooltip();
+            ImGui::PushTextWrapPos(ImGui::GetFontSize() * 28.0f);
+            ImGui::TextUnformatted(configName.c_str());
+            if (!description.empty()) {
+              ImGui::Separator();
+              ImGui::TextUnformatted(description.c_str());
+            }
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+          }
+
+          // Hold-to-confirm jump (mouse).
+          if (configIdx >= 0 && !isCurrent) {
+            if (ImGui::IsItemActive()) {
+              if (nav.getActiveHold() != PerformanceNavigator::HoldAction::JUMP ||
+                  nav.getJumpTargetIndex() != configIdx ||
+                  nav.getActiveHoldSource() != PerformanceNavigator::HoldSource::MOUSE) {
+                nav.beginHold(PerformanceNavigator::HoldAction::JUMP, PerformanceNavigator::HoldSource::MOUSE, configIdx);
+              }
+            } else if (!ImGui::IsItemActive() &&
+                       nav.getActiveHold() == PerformanceNavigator::HoldAction::JUMP &&
+                       nav.getJumpTargetIndex() == configIdx &&
+                       nav.getActiveHoldSource() == PerformanceNavigator::HoldSource::MOUSE) {
+              nav.endHold(PerformanceNavigator::HoldSource::MOUSE);
+            }
+          }
+        }
+      }
+
+      // Advance cursor past manually positioned grid.
+      ImGui::SetCursorScreenPos(ImVec2(start.x, start.y));
+      ImGui::Dummy(ImVec2(gridW, gridH));
+    }
+
+    // PREV / NEXT buttons
+    ImGui::TableSetColumnIndex(1);
+    {
+      const float navH = buttonSize * 2.0f + navGapY;
+      float yPad = (gridH > navH) ? (gridH - navH) * 0.5f : 0.0f;
+      if (yPad > 0.0f) {
+        ImGui::Dummy(ImVec2(0.0f, yPad));
+      }
+
+      drawNavigationButton("##prev", -1, canPrev, buttonSize);
+      ImGui::Dummy(ImVec2(0.0f, navGapY));
+      drawNavigationButton("##next", +1, canNext, buttonSize);
+    }
+
+    ImGui::EndTable();
+  }
 }
 
 void Gui::drawNavigationButton(const char* id, int direction, bool canNavigate, float buttonSize) {
