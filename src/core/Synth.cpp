@@ -6,6 +6,7 @@
 //
 
 #include "core/Synth.hpp"
+#include "core/SynthConstants.h"
 #include "ofxTimeMeasurements.h"
 #include "ofConstants.h"
 #include "ofUtils.h"
@@ -68,6 +69,7 @@ std::string Synth::saveConfigFilePath(const std::string& filename) {
 }
 
 constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawing";
+constexpr std::string AUTO_SNAPSHOTS_FOLDER_NAME = "drawing-auto";
 constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recording";
 // Also: camera-recording, mic-recording
 // Also: ModSnapshotManager uses "mod-snapshots" and NodeEditorLayoutManager uses "node-layouts"
@@ -571,14 +573,39 @@ void Synth::update() {
   TS_STOP("Synth-updateComposites");
   TSGL_STOP("Synth-updateComposites");
   
-  // Process deferred image save immediately after composite is ready
-  // This timing ensures PBO bind happens while GPU is still working on this frame's data
+  // Process deferred manual image save immediately after composite is ready.
+  // This timing ensures PBO bind happens while GPU is still working on this frame's data.
+  // If the saver is busy, keep the manual request pending and retry next frame.
   if (pendingImageSave) {
-    imageSaver->requestSave(compositeRenderer->getCompositeFbo(), pendingImageSavePath);
-    pendingImageSave = false;
-    pendingImageSavePath.clear();
+    bool accepted = imageSaver->requestSave(compositeRenderer->getCompositeFbo(), pendingImageSavePath);
+    if (accepted) {
+      pendingImageSave = false;
+      pendingImageSavePath.clear();
+    }
   }
-  
+
+  // Auto-save full-res HDR composite snapshots (pre-tonemap, EXR).
+  // Guards:
+  // - Never during pause/hibernation
+  // - No overlap: only when saver is fully idle
+  if (AUTO_SNAPSHOTS_ENABLED &&
+      !paused &&
+      hibernationController && !hibernationController->isHibernating() &&
+      imageSaver &&
+      !pendingImageSave) {
+
+    imageSaver->requestAutoSaveIfDue(
+        compositeRenderer->getCompositeFbo(),
+        getClockTimeSinceFirstRun(),
+        AUTO_SNAPSHOTS_INTERVAL_SEC,
+        AUTO_SNAPSHOTS_JITTER_SEC,
+        [this]() {
+          std::string timestamp = ofGetTimestampString();
+          return Synth::saveArtefactFilePath(
+              AUTO_SNAPSHOTS_FOLDER_NAME + "/" + name + "/drawing-" + timestamp + ".exr");
+        });
+  }
+
   // Update memory bank controller (process pending saves, auto-capture, save-all requests)
   memoryBankController->update(compositeRenderer->getCompositeFbo(),
                                configRootPathSet ? configRootPath : std::filesystem::path{},

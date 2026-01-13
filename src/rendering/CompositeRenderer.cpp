@@ -28,7 +28,7 @@ float easeInCubic(float x) {
 void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, float windowHeight, float panelGapPx) {
     size = compositeSize;
     
-     .allocate(size.x, size.y, GL_RGB16F);
+    compositeFbo.allocate(size.x, size.y, GL_RGB16F);
     scale = std::min(windowWidth / compositeFbo.getWidth(), windowHeight / compositeFbo.getHeight());
     
     // Side panels
