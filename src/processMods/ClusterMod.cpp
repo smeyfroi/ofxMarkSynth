@@ -72,7 +72,7 @@ void ClusterMod::receive(int sinkId, const float& v) {
     case SINK_CHANGE_CLUSTER_NUM:
       {
         int newSize = pointClusters.getMinClusters() + v * static_cast<float>(pointClusters.getMaxClusters() - pointClusters.getMinClusters());
-        ofLogNotice("ClusterMod") << "ClusterMod::SINK_CHANGE_CLUSTER_NUM: changing size to " << newSize;
+//        ofLogNotice("ClusterMod") << "ClusterMod::SINK_CHANGE_CLUSTER_NUM: changing size to " << newSize;
         clustersControllerPtr->updateAuto(static_cast<float>(newSize), getAgency());
       }
       break;
