@@ -4,6 +4,7 @@
 //
 
 #include "controller/ConfigTransitionManager.hpp"
+
 #include "ofGraphics.h"
 #include "ofUtils.h"
 #include "glm/glm.hpp"
@@ -33,11 +34,15 @@ void ConfigTransitionManager::captureSnapshot(const ofFbo& sourceFbo) {
 void ConfigTransitionManager::beginTransition() {
     state = State::CROSSFADING;
     startTime = ofGetElapsedTimef();
+    snapshotWeight = 1.0f;
+    liveWeight = 0.0f;
     alpha = 0.0f;
 }
 
 void ConfigTransitionManager::cancelTransition() {
     state = State::NONE;
+    snapshotWeight = 1.0f;
+    liveWeight = 0.0f;
     alpha = 0.0f;
 }
 
@@ -48,21 +53,40 @@ void ConfigTransitionManager::update() {
     float delaySec = delaySecParameter.get();
     float duration = durationParameter.get();
 
-    // Hold the snapshot at full strength for a moment, so the new config has time
-    // to draw something meaningful before we start mixing it in.
+    // During the delay window we show only the snapshot (old config), giving the
+    // new config a moment to start rendering before it becomes visible.
     if (elapsed < delaySec) {
+        snapshotWeight = 1.0f;
+        liveWeight = 0.0f;
         alpha = 0.0f;
         return;
     }
 
-    float t = (elapsed - delaySec) / duration;
+    float t = ofClamp((elapsed - delaySec) / duration, 0.0f, 1.0f);
 
     if (t >= 1.0f) {
+        snapshotWeight = 0.0f;
+        liveWeight = 1.0f;
         alpha = 1.0f;
         state = State::NONE;
-    } else {
-        alpha = glm::smoothstep(0.0f, 1.0f, t);
+        return;
     }
+
+    // Weighted crossfade: bring the live config in quickly, while keeping the
+    // snapshot visually dominant for a little longer.
+    constexpr float SNAPSHOT_START_WEIGHT = 2.0f;
+    constexpr float LIVE_MAX_WEIGHT = 1.0f;
+    constexpr float LIVE_RAMP_FRAC = 0.2f;        // live reaches full strength quickly
+    constexpr float SNAPSHOT_FADE_START = 0.4f;   // snapshot holds longer, then fades
+
+    float liveRampT = ofClamp(t / LIVE_RAMP_FRAC, 0.0f, 1.0f);
+    liveWeight = LIVE_MAX_WEIGHT * glm::smoothstep(0.0f, 1.0f, liveRampT);
+
+    float snapshotFadeT = ofClamp((t - SNAPSHOT_FADE_START) / (1.0f - SNAPSHOT_FADE_START), 0.0f, 1.0f);
+    snapshotWeight = SNAPSHOT_START_WEIGHT * (1.0f - glm::smoothstep(0.0f, 1.0f, snapshotFadeT));
+
+    float weightSum = snapshotWeight + liveWeight;
+    alpha = (weightSum > 0.0f) ? (liveWeight / weightSum) : 1.0f;
 }
 
 ConfigTransitionManager::State ConfigTransitionManager::getState() const {
@@ -75,6 +99,14 @@ bool ConfigTransitionManager::isTransitioning() const {
 
 float ConfigTransitionManager::getAlpha() const {
     return alpha;
+}
+
+float ConfigTransitionManager::getSnapshotWeight() const {
+    return snapshotWeight;
+}
+
+float ConfigTransitionManager::getLiveWeight() const {
+    return liveWeight;
 }
 
 const ofFbo& ConfigTransitionManager::getSnapshotFbo() const {

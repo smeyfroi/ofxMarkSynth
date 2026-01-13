@@ -30,13 +30,19 @@ public:
     /// Cancel any in-progress transition
     void cancelTransition();
 
-    /// Update transition alpha (call each frame)
+    /// Update transition weights (call each frame)
     void update();
 
     // State accessors
     State getState() const;
     bool isTransitioning() const;
-    float getAlpha() const;  // 0.0 = all snapshot, 1.0 = all live
+
+    // Normalized blend alpha (derived): 0.0 = all snapshot, 1.0 = all live
+    float getAlpha() const;
+
+    // Unnormalized weights for weighted compositing
+    float getSnapshotWeight() const;
+    float getLiveWeight() const;
 
     // FBO access for rendering
     const ofFbo& getSnapshotFbo() const;
@@ -52,6 +58,8 @@ private:
     State state { State::NONE };
     ofFbo snapshotFbo;
     float startTime { 0.0f };
+    float snapshotWeight { 1.0f };
+    float liveWeight { 0.0f };
     float alpha { 0.0f };
     ofParameter<float> delaySecParameter { "Crossfade Delay Sec", 0.5f, 0.0f, 9999.0f };
     ofParameter<float> durationParameter { "Crossfade Duration", 2.5f, 0.5f, 10.0f };

@@ -22,7 +22,8 @@ public:
              float saturation,
              float brightness,
              float hueShift,
-             float crossfadeAlpha,
+             float weightA,
+             float weightB,
              bool flipTextureA,
              bool flipTextureB,
              const ofTexture& textureA,
@@ -38,7 +39,8 @@ public:
     shader.setUniform1f("u_brightness", brightness);
     shader.setUniform1f("u_hueShift", hueShift);
 
-    shader.setUniform1f("u_crossfadeAlpha", crossfadeAlpha);
+    shader.setUniform1f("u_weightA", weightA);
+    shader.setUniform1f("u_weightB", weightB);
     shader.setUniform1i("u_flipTextureA", flipTextureA ? 1 : 0);
     shader.setUniform1i("u_flipTextureB", flipTextureB ? 1 : 0);
 
@@ -63,7 +65,10 @@ public:
       uniform float u_brightness;
       uniform float u_hueShift;
 
-      uniform float u_crossfadeAlpha;
+       uniform float u_weightA;
+       uniform float u_weightB;
+
+
       uniform int u_flipTextureA;
       uniform int u_flipTextureB;
 
@@ -138,7 +143,11 @@ public:
       void main() {
         vec3 hdrA = sampleTexture(u_textureA, texCoordVarying, u_flipTextureA);
         vec3 hdrB = sampleTexture(u_textureB, texCoordVarying, u_flipTextureB);
-        vec3 hdrColor = mix(hdrA, hdrB, u_crossfadeAlpha);
+
+        float wA = max(u_weightA, 0.0);
+        float wB = max(u_weightB, 0.0);
+        float wSum = max(wA + wB, 1e-6);
+        vec3 hdrColor = (hdrA * wA + hdrB * wB) / wSum;
 
         // Apply exposure
         hdrColor *= u_exposure;

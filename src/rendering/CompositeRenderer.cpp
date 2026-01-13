@@ -28,7 +28,7 @@ float easeInCubic(float x) {
 void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, float windowHeight, float panelGapPx) {
     size = compositeSize;
     
-    compositeFbo.allocate(size.x, size.y, GL_RGB16F);
+     .allocate(size.x, size.y, GL_RGB16F);
     scale = std::min(windowWidth / compositeFbo.getWidth(), windowHeight / compositeFbo.getHeight());
     
     // Side panels
@@ -191,15 +191,23 @@ void CompositeRenderer::drawMiddlePanel(float w, float h, float drawScale,
         const auto& snapshotTexData = transition->getSnapshotFbo().getTexture().getTextureData();
         const auto& liveTexData = compositeFbo.getTexture().getTextureData();
         
-        beginTonemapShader(display, transition->getAlpha(),
-                           snapshotTexData.bFlipTexture, liveTexData.bFlipTexture,
-                           transition->getSnapshotFbo().getTexture(), compositeFbo.getTexture());
+        beginTonemapShader(display,
+                           transition->getSnapshotWeight(),
+                           transition->getLiveWeight(),
+                           snapshotTexData.bFlipTexture,
+                           liveTexData.bFlipTexture,
+                           transition->getSnapshotFbo().getTexture(),
+                           compositeFbo.getTexture());
     } else {
         const auto& texData = compositeFbo.getTexture().getTextureData();
         
-        beginTonemapShader(display, 1.0f,
-                           texData.bFlipTexture, texData.bFlipTexture,
-                           compositeFbo.getTexture(), compositeFbo.getTexture());
+        beginTonemapShader(display,
+                           0.0f,
+                           1.0f,
+                           texData.bFlipTexture,
+                           texData.bFlipTexture,
+                           compositeFbo.getTexture(),
+                           compositeFbo.getTexture());
     }
     
     ofSetColor(255);
@@ -227,9 +235,13 @@ void CompositeRenderer::drawPanel(SidePanel& panel, float x, float w, float h,
     const auto& oldTexData = panel.fbo.getTarget().getTexture().getTextureData();
     const auto& newTexData = panel.fbo.getSource().getTexture().getTextureData();
     
-    beginTonemapShader(display, alphaIn,
-                       oldTexData.bFlipTexture, newTexData.bFlipTexture,
-                       panel.fbo.getTarget().getTexture(), panel.fbo.getSource().getTexture());
+    beginTonemapShader(display,
+                       1.0f - alphaIn,
+                       alphaIn,
+                       oldTexData.bFlipTexture,
+                       newTexData.bFlipTexture,
+                       panel.fbo.getTarget().getTexture(),
+                       panel.fbo.getSource().getTexture());
     
     ofPushMatrix();
     ofTranslate(x, 0.0f);
@@ -242,9 +254,12 @@ void CompositeRenderer::drawPanel(SidePanel& panel, float x, float w, float h,
 }
 
 void CompositeRenderer::beginTonemapShader(const DisplayController::Settings& display,
-                                            float crossfadeAlpha,
-                                            bool flipTextureA, bool flipTextureB,
-                                            const ofTexture& textureA, const ofTexture& textureB) {
+                                           float weightA,
+                                           float weightB,
+                                           bool flipTextureA,
+                                           bool flipTextureB,
+                                           const ofTexture& textureA,
+                                           const ofTexture& textureB) {
     tonemapShader.begin(display.toneMapType,
                         display.exposure,
                         display.gamma,
@@ -253,7 +268,8 @@ void CompositeRenderer::beginTonemapShader(const DisplayController::Settings& di
                         display.saturation,
                         display.brightness,
                         display.hueShift,
-                        crossfadeAlpha,
+                        weightA,
+                        weightB,
                         flipTextureA,
                         flipTextureB,
                         textureA,

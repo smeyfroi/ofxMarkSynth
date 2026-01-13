@@ -103,9 +103,12 @@ private:
     
     /// Begin tonemap shader with display settings and crossfade textures
     void beginTonemapShader(const DisplayController::Settings& display,
-                            float crossfadeAlpha,
-                            bool flipTextureA, bool flipTextureB,
-                            const ofTexture& textureA, const ofTexture& textureB);
+                             float weightA,
+                             float weightB,
+                             bool flipTextureA,
+                             bool flipTextureB,
+                             const ofTexture& textureA,
+                             const ofTexture& textureB);
 };
 
 } // namespace ofxMarkSynth
