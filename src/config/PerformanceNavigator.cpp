@@ -10,6 +10,7 @@
 #include "nlohmann/json.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
+#include "ofImage.h"
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -52,6 +53,7 @@ struct ParsedConfigMetadata {
     std::optional<PerformanceNavigator::GridCoord> explicitGrid;
     PerformanceNavigator::RgbColor color { 128, 128, 128 };
     bool hasExplicitColor { false };
+    std::shared_ptr<ofTexture> thumbnail;
 };
 
 PerformanceNavigator::RgbColor parseHexColor(const std::string& hex) {
@@ -81,6 +83,25 @@ PerformanceNavigator::RgbColor parseHexColor(const std::string& hex) {
     }
 
     return { *r, *g, *b };
+}
+
+constexpr int MAX_THUMBNAIL_DIM_PX = 256;
+
+std::optional<std::filesystem::path> findThumbnailPath(const std::filesystem::path& configJsonPath) {
+    const std::filesystem::path dir = configJsonPath.parent_path();
+    const std::string stem = configJsonPath.stem().string();
+
+    const std::filesystem::path jpg = dir / (stem + ".jpg");
+    if (std::filesystem::exists(jpg) && std::filesystem::is_regular_file(jpg)) {
+        return jpg;
+    }
+
+    const std::filesystem::path jpeg = dir / (stem + ".jpeg");
+    if (std::filesystem::exists(jpeg) && std::filesystem::is_regular_file(jpeg)) {
+        return jpeg;
+    }
+
+    return std::nullopt;
 }
 
 ParsedConfigMetadata parseConfigMetadata(const std::filesystem::path& filepath) {
@@ -114,6 +135,32 @@ ParsedConfigMetadata parseConfigMetadata(const std::filesystem::path& filepath) 
                 meta.hasExplicitColor = true;
             }
         }
+
+        // Optional thumbnail next to config JSON: <stem>.jpg or <stem>.jpeg
+        const auto thumbPathOpt = findThumbnailPath(filepath);
+        if (thumbPathOpt) {
+            ofImage img;
+            if (!img.load(thumbPathOpt->string())) {
+                ofLogError("PerformanceNavigator") << "Failed to load thumbnail: " << *thumbPathOpt;
+            } else {
+                const int w = static_cast<int>(img.getWidth());
+                const int h = static_cast<int>(img.getHeight());
+                if (w <= 0 || h <= 0) {
+                    ofLogError("PerformanceNavigator") << "Invalid thumbnail dimensions: " << *thumbPathOpt;
+                } else if (w > MAX_THUMBNAIL_DIM_PX || h > MAX_THUMBNAIL_DIM_PX) {
+                    ofLogError("PerformanceNavigator") << "Thumbnail too large (max " << MAX_THUMBNAIL_DIM_PX << "px): "
+                                                      << *thumbPathOpt << " (" << w << "x" << h << ")";
+                } else {
+                    auto tex = std::make_shared<ofTexture>();
+                    tex->loadData(img.getPixels());
+                    if (!tex->isAllocated()) {
+                        ofLogError("PerformanceNavigator") << "Failed to upload thumbnail texture: " << *thumbPathOpt;
+                    } else {
+                        meta.thumbnail = tex;
+                    }
+                }
+            }
+        }
     } catch (const std::exception& e) {
         ofLogVerbose("PerformanceNavigator") << "Failed to parse metadata from " << filepath << ": " << e.what();
     }
@@ -126,6 +173,7 @@ ParsedConfigMetadata parseConfigMetadata(const std::filesystem::path& filepath) 
 void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
     configs.clear();
     configDescriptions.clear();
+    configThumbnails.clear();
     folderPath = folder;
     currentIndex = -1;
 
@@ -164,6 +212,7 @@ void PerformanceNavigator::loadFromFolder(const std::filesystem::path& folder) {
 
         auto meta = parseConfigMetadata(path);
         configDescriptions.push_back(meta.description);
+        configThumbnails.push_back(meta.thumbnail);
         explicitGridCoords.push_back(meta.explicitGrid);
 
         if (meta.hasExplicitColor) {
@@ -281,6 +330,20 @@ std::string PerformanceNavigator::getConfigDescription(int index) const {
     }
     return configDescriptions[index];
 }
+
+const ofTexture* PerformanceNavigator::getConfigThumbnail(int index) const {
+    if (index < 0 || index >= static_cast<int>(configThumbnails.size())) {
+        return nullptr;
+    }
+    const auto& tex = configThumbnails[index];
+    return tex ? tex.get() : nullptr;
+}
+
+bool PerformanceNavigator::hasConfigThumbnail(int index) const {
+    const ofTexture* tex = getConfigThumbnail(index);
+    return tex != nullptr && tex->isAllocated();
+}
+
 
 int PerformanceNavigator::getGridConfigIndex(int x, int y) const {
     if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {

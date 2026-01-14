@@ -1227,6 +1227,28 @@ void Gui::drawPerformanceNavigator() {
               ImGui::Separator();
               ImGui::TextUnformatted(description.c_str());
             }
+
+            const ofTexture* thumb = nav.getConfigThumbnail(configIdx);
+            if (thumb && thumb->isAllocated()) {
+              ImGui::Separator();
+              const auto& textureData = thumb->getTextureData();
+              ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
+
+              constexpr float kMaxPreviewPx = 256.0f;
+              float w = thumb->getWidth();
+              float h = thumb->getHeight();
+              if (w < 1.0f) w = 1.0f;
+              if (h < 1.0f) h = 1.0f;
+
+              float scale = 1.0f;
+              float scaleW = kMaxPreviewPx / w;
+              float scaleH = kMaxPreviewPx / h;
+              scale = (scaleW < scaleH) ? scaleW : scaleH;
+              if (scale > 1.0f) scale = 1.0f;
+
+              ImGui::Image(imguiTexId, ImVec2(w * scale, h * scale));
+            }
+
             ImGui::PopTextWrapPos();
             ImGui::EndTooltip();
           }

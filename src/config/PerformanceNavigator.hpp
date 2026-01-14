@@ -16,6 +16,9 @@
 #include <vector>
 
 
+
+class ofTexture;
+
 namespace ofxMarkSynth {
 
 
@@ -60,6 +63,8 @@ public:
   std::string getCurrentConfigName() const;
   std::string getConfigName(int index) const;
   std::string getConfigDescription(int index) const;
+  const ::ofTexture* getConfigThumbnail(int index) const;
+  bool hasConfigThumbnail(int index) const;
   const std::filesystem::path& getFolderPath() const { return folderPath; }
 
   // Config grid (used by GUI + controllers)
@@ -116,6 +121,7 @@ private:
   Synth* synth;
   std::vector<std::string> configs;      // Full paths
   std::vector<std::string> configDescriptions; // Parallel to configs
+  std::vector<std::shared_ptr<::ofTexture>> configThumbnails; // Parallel to configs
 
   std::filesystem::path folderPath;
   int currentIndex = -1;                 // -1 means no config loaded
