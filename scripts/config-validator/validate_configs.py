@@ -621,6 +621,345 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
     return (errors, warnings)
 
 
+def _safe_float(value: object) -> Optional[float]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except Exception:
+            return None
+    return None
+
+
+def _infer_rc_from_filename(path: Path) -> Optional[tuple[int, int]]:
+    m = re.match(r"^(\d)(\d)-", path.name)
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)))
+
+
+def _iter_mods_of_type(mods: dict, type_name: str) -> List[tuple[str, dict]]:
+    out: List[tuple[str, dict]] = []
+    if not isinstance(mods, dict):
+        return out
+    for name, spec in mods.items():
+        if not isinstance(spec, dict):
+            continue
+        if str(spec.get("type", "")) == type_name:
+            out.append((name, spec))
+    return out
+
+
+def _mod_types_map(mods: dict) -> Dict[str, str]:
+    mod_types: Dict[str, str] = {}
+    if not isinstance(mods, dict):
+        return mod_types
+    for mod_name, mod_spec in mods.items():
+        if isinstance(mod_spec, dict):
+            mod_types[mod_name] = str(mod_spec.get("type", ""))
+    return mod_types
+
+
+def validate_policy_improvisation1(
+    config: dict, path: Path
+) -> tuple[List[str], List[str]]:
+    """Improvisation1-specific checks based on the design notes.
+
+    Kept opt-in via --policy improvisation1 to avoid constraining other config sets.
+    """
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    button_grid = config.get("buttonGrid")
+    if not isinstance(button_grid, dict):
+        errors.append("Missing/invalid buttonGrid (required for Improvisation1 policy)")
+        return (errors, warnings)
+
+    x = button_grid.get("x")
+    y = button_grid.get("y")
+    color = button_grid.get("color")
+
+    if not isinstance(x, int) or not isinstance(y, int):
+        errors.append("buttonGrid.x and buttonGrid.y must be integers")
+        return (errors, warnings)
+
+    if x < 0 or x > 7 or y < 0 or y > 6:
+        errors.append(f"buttonGrid out of range: x={x}, y={y} (expected 0–7, 0–6)")
+
+    # Filename prefix must map to controller grid slot.
+    rc = _infer_rc_from_filename(path)
+    if rc is None:
+        errors.append(
+            f"Filename must start with RC- prefix (e.g. '00-...'): got '{path.name}'"
+        )
+    else:
+        row_from_name, col_from_name = rc
+        if row_from_name != y or col_from_name != x:
+            errors.append(
+                f"Filename RC prefix {row_from_name}{col_from_name} disagrees with buttonGrid x/y {x},{y}"
+            )
+
+    # Controller pad color scheme (from design notes).
+    expected_colors_by_row: Dict[int, List[str]] = {
+        0: [
+            "#FF0000",
+            "#FF5500",
+            "#FFAA00",
+            "#FFFF00",
+            "#00FF00",
+            "#00FFAA",
+            "#0055FF",
+            "#8000FF",
+        ],
+        1: [
+            "#FF1919",
+            "#FF6619",
+            "#FFB219",
+            "#FFFF19",
+            "#19FF19",
+            "#19FFB2",
+            "#1966FF",
+            "#8C19FF",
+        ],
+        2: [
+            "#FF3333",
+            "#FF7733",
+            "#FFBB33",
+            "#FFFF33",
+            "#33FF33",
+            "#33FFBB",
+            "#3377FF",
+            "#9933FF",
+        ],
+        3: [
+            "#FF4D4D",
+            "#FF884D",
+            "#FFC34D",
+            "#FFFF4D",
+            "#4DFF4D",
+            "#4DFFC3",
+            "#4D88FF",
+            "#A64DFF",
+        ],
+        4: [
+            "#FF6666",
+            "#FF9966",
+            "#FFCC66",
+            "#FFFF66",
+            "#66FF66",
+            "#66FFCC",
+            "#6699FF",
+            "#B266FF",
+        ],
+        5: [
+            "#FF8080",
+            "#FFAA80",
+            "#FFD480",
+            "#FFFF80",
+            "#80FF80",
+            "#80FFD4",
+            "#80AAFF",
+            "#BF80FF",
+        ],
+        6: [
+            "#FF9999",
+            "#FFBB99",
+            "#FFDD99",
+            "#FFFF99",
+            "#99FF99",
+            "#99FFDD",
+            "#99BBFF",
+            "#CC99FF",
+        ],
+    }
+
+    if not isinstance(color, str):
+        errors.append("buttonGrid.color must be a hex string")
+    else:
+        expected = expected_colors_by_row.get(y, [None] * 8)[x]
+        if expected and color.upper() != expected:
+            errors.append(
+                f"buttonGrid.color {color} does not match expected {expected} for x={x}, y={y}"
+            )
+
+    # Background color wiring policy: use palette darkest as an agency lane.
+    # Enforce that BackgroundColour is connected from a SomPalette.Darkest source.
+    conns = config.get("connections", [])
+    if not isinstance(conns, list):
+        conns = []
+
+    mods = config.get("mods", {})
+    mod_types = _mod_types_map(mods)
+
+    palette_mod_names = [
+        name
+        for name, t in mod_types.items()
+        if t == "SomPalette" and isinstance(name, str)
+    ]
+
+    bg_conns = [
+        c
+        for c in conns
+        if isinstance(c, str) and c.strip().endswith("-> .BackgroundColour")
+    ]
+    if not bg_conns:
+        errors.append(
+            "Missing connection to '.BackgroundColour' (expected palette-derived background)"
+        )
+    else:
+        # Allow exactly one background connection; multiple likely indicates accidental layering.
+        if len(bg_conns) > 1:
+            warnings.append(
+                f"Multiple BackgroundColour connections found ({len(bg_conns)}); expected 1"
+            )
+
+        ok = False
+        for c in bg_conns:
+            parsed = parse_connection(c)
+            if not parsed:
+                continue
+            src_mod, src_name, dst_mod, dst_name = parsed
+            if dst_mod == "." and dst_name == "BackgroundColour":
+                if (
+                    src_mod != "."
+                    and mod_types.get(src_mod) == "SomPalette"
+                    and src_name == "Darkest"
+                ):
+                    ok = True
+                    break
+        if not ok:
+            if palette_mod_names:
+                errors.append(
+                    "BackgroundColour must be driven by SomPalette.Darkest (e.g. 'Palette.Darkest -> .BackgroundColour')"
+                )
+            else:
+                errors.append(
+                    "BackgroundColour connection present but no SomPalette mod exists (Improvisation1 requires SomPalette)"
+                )
+
+    # Visibility floors (Improvisation1 policy): row-specific minima for substrate layers.
+    # Only enforce if the layer is drawn and defines alpha.
+    layer_alpha_mins_by_row: Dict[int, Dict[str, float]] = {
+        0: {"ground": 0.35, "wash": 0.35},
+        1: {"ground": 0.30, "wash": 0.30},
+        2: {"ground": 0.35, "wash": 0.35},
+        3: {"ground": 0.35, "wash": 0.35},
+        4: {"ground": 0.30, "wash": 0.30},
+        5: {"ground": 0.50, "wash": 0.50},
+        6: {"ground": 0.38, "wash": 0.38},
+    }
+
+    layers = config.get("drawingLayers", {})
+    if isinstance(layers, dict):
+        for layer_name, min_alpha in layer_alpha_mins_by_row.get(y, {}).items():
+            layer_spec = layers.get(layer_name)
+            if not isinstance(layer_spec, dict):
+                continue
+            if not layer_spec.get("isDrawn", True):
+                continue
+            alpha_val = _safe_float(layer_spec.get("alpha"))
+            if alpha_val is None:
+                warnings.append(
+                    f"drawingLayers.{layer_name} isDrawn=true but has no numeric alpha; expected >= {min_alpha}"
+                )
+            elif alpha_val < min_alpha:
+                errors.append(
+                    f"drawingLayers.{layer_name}.alpha={alpha_val} below row {y} minimum {min_alpha}"
+                )
+
+            if layer_spec.get("paused") is True:
+                warnings.append(
+                    f"drawingLayers.{layer_name} is paused=true; Improvisation1 prefers live, low-alpha layers"
+                )
+
+    # Bed-ish SoftCircle visibility floors: any SoftCircle drawing into ground/wash.
+    bed_softcircle_alpha_mins_by_row: Dict[int, float] = {
+        0: 0.12,
+        1: 0.12,
+        2: 0.16,
+        3: 0.14,
+        4: 0.12,
+        5: 0.12,
+        6: 0.14,
+    }
+    bed_min = bed_softcircle_alpha_mins_by_row.get(y)
+
+    def _softcircle_targets_bed_layer(mod_spec: dict) -> bool:
+        layer_map = mod_spec.get("layers", {})
+        if not isinstance(layer_map, dict):
+            return False
+        for layer_list in layer_map.values():
+            if not isinstance(layer_list, list):
+                continue
+            for layer in layer_list:
+                if layer in {"ground", "wash"}:
+                    return True
+        return False
+
+    for mod_name, mod_spec in _iter_mods_of_type(mods, "SoftCircle"):
+        if not _softcircle_targets_bed_layer(mod_spec):
+            continue
+
+        mod_cfg = mod_spec.get("config", {})
+        if not isinstance(mod_cfg, dict):
+            mod_cfg = {}
+
+        alpha_mult = _safe_float(mod_cfg.get("AlphaMultiplier"))
+        if alpha_mult is None:
+            warnings.append(
+                f"SoftCircle '{mod_name}' targets ground/wash but has no numeric config.AlphaMultiplier; expected >= {bed_min}"
+            )
+        elif bed_min is not None and alpha_mult < bed_min:
+            errors.append(
+                f"SoftCircle '{mod_name}' targets ground/wash with AlphaMultiplier={alpha_mult} below row {y} minimum {bed_min}"
+            )
+
+    # ParticleSet performance rule: explicitly specify the three expensive defaults.
+    for mod_name, mod_spec in _iter_mods_of_type(mods, "ParticleSet"):
+        mod_cfg = mod_spec.get("config", {})
+        if not isinstance(mod_cfg, dict):
+            mod_cfg = {}
+        required = ["maxParticles", "maxParticleAge", "connectionRadius"]
+        missing = [k for k in required if k not in mod_cfg]
+        if missing:
+            errors.append(
+                f"ParticleSet '{mod_name}' missing config keys: {', '.join(missing)} (must override ofxParticleSet defaults)"
+            )
+
+    # Fade alpha mapping rule: never wire raw Audio.RmsScalar directly into Fade.Alpha.
+    fade_mod_names = {name for name, t in mod_types.items() if t == "Fade"}
+    for c in conns:
+        if not isinstance(c, str):
+            continue
+        parsed = parse_connection(c)
+        if not parsed:
+            continue
+        src_mod, src_name, dst_mod, dst_name = parsed
+        if (
+            src_mod == "Audio"
+            and src_name == "RmsScalar"
+            and dst_mod in fade_mod_names
+            and dst_name == "Alpha"
+        ):
+            errors.append(
+                f"Direct 'Audio.RmsScalar -> {dst_mod}.Alpha' is forbidden; map via MultiplyAdd to a safe fade range"
+            )
+
+    # Description tag policy: include [audPts: ...] tag for quick reference.
+    desc = config.get("description")
+    if isinstance(desc, str):
+        if "[audPts:" not in desc:
+            warnings.append("description missing '[audPts: ...]' tag")
+    else:
+        warnings.append("description missing or not a string")
+
+    return (errors, warnings)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Validate MarkSynth synth config JSON files"
@@ -635,6 +974,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--strict",
         action="store_true",
         help="Fail if validator cannot find a spec for a referenced mod type",
+    )
+    parser.add_argument(
+        "--policy",
+        default="none",
+        choices=["none", "improvisation1"],
+        help=(
+            "Enable additional opinionated checks. 'improvisation1' enforces the "
+            "Improvisation1 performance-set policies documented in the design notes."
+        ),
     )
 
     args = parser.parse_args(argv)
@@ -681,10 +1029,17 @@ def main(argv: Optional[List[str]] = None) -> int:
             semantic_errors, semantic_warnings = validate_semantics(cfg)
             issues.extend(semantic_errors)
 
-            if semantic_warnings:
-                warnings_total += len(semantic_warnings)
+            policy_errors: List[str] = []
+            policy_warnings: List[str] = []
+            if args.policy == "improvisation1":
+                policy_errors, policy_warnings = validate_policy_improvisation1(cfg, p)
+                issues.extend(policy_errors)
+
+            all_warnings = list(semantic_warnings) + list(policy_warnings)
+            if all_warnings:
+                warnings_total += len(all_warnings)
                 print(f"\nWARN {p}:")
-                for w in semantic_warnings:
+                for w in all_warnings:
                     print(f"  - {w}")
 
             if issues:

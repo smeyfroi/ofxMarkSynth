@@ -7,11 +7,12 @@ IMAGE_NAME="ofxmarksynth-config-validator:local"
 usage() {
   cat <<'EOF'
 Usage:
-  ./run.sh <path-to-config-or-directory> [--strict]
+  ./run.sh <path-to-config-or-directory> [--strict] [--policy none|improvisation1]
 
 Examples:
   ./run.sh /Users/steve/Documents/MarkSynth-performances/Improvisation1/config/synth
   ./run.sh /Users/steve/Documents/MarkSynth-performances/Improvisation1/config/synth/00-minimal-av-softmarks.json
+  ./run.sh /Users/steve/Documents/MarkSynth-performances/Improvisation1/config/synth --policy improvisation1
 
 Notes:
 - This script builds a local Docker image (Python 3.12) and runs the validator.
@@ -26,7 +27,8 @@ if [[ ${1:-} == "" || ${1:-} == "-h" || ${1:-} == "--help" ]]; then
 fi
 
 TARGET_PATH="$1"
-STRICT="${2:-}"
+shift
+EXTRA_ARGS=("$@")
 
 TARGET_ABS="$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$TARGET_PATH")"
 
@@ -48,14 +50,7 @@ else
   exit 2
 fi
 
-if [[ "$STRICT" == "--strict" ]]; then
-  docker run --rm \
-    -v "$ADDON_ROOT:/ofx:ro" \
-    -v "$TARGET_MOUNT_SRC:/input:ro" \
-    "$IMAGE_NAME" --strict --ofxmarksynth-root /ofx "$CONTAINER_PATH"
-else
-  docker run --rm \
-    -v "$ADDON_ROOT:/ofx:ro" \
-    -v "$TARGET_MOUNT_SRC:/input:ro" \
-    "$IMAGE_NAME" --ofxmarksynth-root /ofx "$CONTAINER_PATH"
-fi
+docker run --rm \
+  -v "$ADDON_ROOT:/ofx:ro" \
+  -v "$TARGET_MOUNT_SRC:/input:ro" \
+  "$IMAGE_NAME" "${EXTRA_ARGS[@]}" --ofxmarksynth-root /ofx "$CONTAINER_PATH"
