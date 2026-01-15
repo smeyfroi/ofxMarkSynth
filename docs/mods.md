@@ -627,7 +627,7 @@ Divides the drawing space with lines using various geometric strategies.
   - 5: **Blur/Refraction** - Screen-space blur with mild refraction (requires background FBO)
   - 6: **Chromatic Aberration** - RGB channel split at edges (requires background FBO)
 
-**Intent Integration**: Responds to Chaos, Granularity, Energy, Density, and Structure dimensions. Structure controls line smoothness (high structure = smooth/stable, low structure = responsive).
+**Intent Integration**: Responds to Chaos, Granularity, Energy, Density, and Structure dimensions. Structure controls line smoothness (high structure = smooth/stable, low structure = responsive). Minor line colour/alpha is intent-aware; major line colour is not (keep majors stable; drive `MajorLineColour` via connections if desired).
 
 **Use Cases**:
 - Create geometric compositions responding to audio

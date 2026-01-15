@@ -257,11 +257,10 @@ void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   minorColor.a = ofxMarkSynth::linearMap(intent.getDensity(), 0.7f, 1.0f);
   minorLineColorController.updateIntent(minorColor, strength, "E->color, D->alpha");
 
-  // Major color composition
-  ofFloatColor majorColor = ofxMarkSynth::energyToColor(intent) * 0.7f;
-  majorColor.setBrightness(ofxMarkSynth::structureToBrightness(intent) * 0.8f);
-  majorColor.setSaturation(intent.getEnergy() * intent.getStructure() * 0.5f);
-  majorLineColorController.updateIntent(majorColor, strength, "E,S->hsv");
+  // Major line colour is intentionally *not* driven by Intent.
+  // Rationale: major divider lines are often used as a stable structural register
+  // (e.g. solid black architectural lines). If you want major lines to respond
+  // to performance, drive `MajorLineColour` via connections (palette, audio, etc.).
 }
 
 void DividedAreaMod::drawOverlay() {

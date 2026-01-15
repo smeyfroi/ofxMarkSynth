@@ -244,10 +244,6 @@ Strategy selection (commented out in code):
 | G | PathWidth | exp(1.0) |
 | E | MinorLineColour | energyToColor |
 | D | MinorLineColour.alpha | lin(0.7 -> 1.0) |
-| E | MajorLineColour | energyToColor * 0.7 |
-| S | MajorLineColour.brightness | structureToBrightness * 0.8 |
-| E*S | MajorLineColour.saturation | * 0.5 |
-| D | MajorLineColour.alpha | exp(0.5)(0.0 -> 1.0) |
 | C | MaxUnconstrainedLines | exp(2.0)(1 -> 9) |
 | G | MajorLineWidth | lin |
 | S | Strategy | conditional (see below) |
