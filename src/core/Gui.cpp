@@ -1247,6 +1247,14 @@ void Gui::drawPerformanceNavigator() {
               if (scale > 1.0f) scale = 1.0f;
 
               ImGui::Image(imguiTexId, ImVec2(w * scale, h * scale));
+
+              // Add a visible border so thumbnails don't blend into the tooltip background.
+              {
+                ImDrawList* tooltipDrawList = ImGui::GetWindowDrawList();
+                const ImVec2 p0 = ImGui::GetItemRectMin();
+                const ImVec2 p1 = ImGui::GetItemRectMax();
+                tooltipDrawList->AddRect(p0, p1, IM_COL32(255, 255, 255, 255), 0.0f, 0, 2.0f);
+              }
             }
 
             ImGui::PopTextWrapPos();
