@@ -39,6 +39,7 @@ void PathMod::initParameters() {
   parameters.add(strategyParameter);
   parameters.add(maxVerticesParameter);
   parameters.add(clusterRadiusParameter);
+  parameters.add(minClusterPointsParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -140,7 +141,7 @@ void PathMod::update() {
   
   // Continuous mode: auto-emit when cluster found
   auto points = findCloseNewPoints();
-  if (points.size() < 4) {
+  if (points.size() < static_cast<size_t>(minClusterPointsParameter.get())) {
     if (newVecs.size() > maxVerticesController.value * 3.0) newVecs.pop_front(); // not finding anything so pop one to avoid growing too large
     return;
   }
@@ -171,7 +172,7 @@ void PathMod::update() {
 void PathMod::emitPathFromClusteredPoints() {
   // Find points within clusterRadius of the newest point
   auto points = findCloseNewPoints();
-  if (points.size() < 4) {
+  if (points.size() < static_cast<size_t>(minClusterPointsParameter.get())) {
     // Not enough clustered points - keep accumulating
     return;
   }

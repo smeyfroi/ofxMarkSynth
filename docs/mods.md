@@ -384,11 +384,12 @@ Converts a stream of points into geometric paths using various strategies.
 - `Strategy`: 0=polypath, 1=bounds, 2=horizontals, 3=convex hull
 - `MaxVertices`: Maximum points in path (0-20). In trigger-based mode, up to 7× this value are retained.
 - `ClusterRadius`: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy.
+- `MinClusterPoints`: Minimum clustered points required before emitting a path (default 4). Useful to prevent tiny/degenerate paths when triggers are frequent or point sources are stable.
 
 **Intent Integration**: Responds to Granularity (cluster radius) and Density (max vertices) dimensions.
 
 **Modes**:
-- **Continuous mode** (default): Automatically emits a path when 4+ points cluster within `ClusterRadius`. All points are cleared after emission.
+- **Continuous mode** (default): Automatically emits a path when `MinClusterPoints` points cluster within `ClusterRadius` (defaults to 4). All points are cleared after emission.
 - **Trigger-based mode**: Points accumulate continuously. On receiving a trigger, emits a path from clustered points and retains non-clustered points for the next trigger. This mode is useful for synchronizing path emission with other events (e.g., audio onsets, memory bank emissions).
 
 **Use Cases**:
