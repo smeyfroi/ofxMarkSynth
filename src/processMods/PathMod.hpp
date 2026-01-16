@@ -53,6 +53,7 @@ private:
   ofParameter<float> clusterRadiusParameter { "ClusterRadius", 0.15, 0.01, 1.0 };
   ParamController<float> clusterRadiusController { clusterRadiusParameter };
   ofParameter<int> minClusterPointsParameter { "MinClusterPoints", 4, 1, 50 };
+  ofParameter<float> minBoundsSizeParameter { "MinBoundsSize", 0.0, 0.0, 1.0 };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   std::deque<glm::vec2> newVecs;

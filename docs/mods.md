@@ -385,6 +385,7 @@ Converts a stream of points into geometric paths using various strategies.
 - `MaxVertices`: Maximum points in path (0-20). In trigger-based mode, up to 7× this value are retained.
 - `ClusterRadius`: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy.
 - `MinClusterPoints`: Minimum clustered points required before emitting a path (default 4). Useful to prevent tiny/degenerate paths when triggers are frequent or point sources are stable.
+- `MinBoundsSize`: Minimum bounding-box extent (max of width/height) required before emitting a path (default 0, disabled). Useful when you want to avoid tiny paths that disappear into textured layers like Smear.
 
 **Intent Integration**: Responds to Granularity (cluster radius) and Density (max vertices) dimensions.
 
@@ -660,6 +661,8 @@ Composites texture snapshots within path boundaries.
 - `MinDrawInterval`: Minimum seconds between draws (rate limiting)
 
 **Recommended Usage**:
+- For solid coloured shapes: use `Strategy: 0` (tint fill), drive `Colour` from a palette, and prefer `BlendMode: 0` (ALPHA). Using `BlendMode: 1` (SCREEN) with tint-fill often reads as pale/white shapes.
+- If `Synth.agency` is low/moderate, palette-driven tint can be “washed out” by the manual default colour (often grey). Compensate by increasing `Saturation` (e.g. 2.0–3.0) and/or setting a less-neutral default `Colour`.
 - To reduce blowout with SCREEN blending: set `Opacity` to ~0.3-0.5
 - To switch to non-additive blending: set `BlendMode` to 0 (ALPHA)
 - To throttle rapid path reception: set `MinDrawInterval` to ~0.1 (max 10 draws/sec)

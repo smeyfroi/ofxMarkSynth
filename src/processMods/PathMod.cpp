@@ -40,6 +40,7 @@ void PathMod::initParameters() {
   parameters.add(maxVerticesParameter);
   parameters.add(clusterRadiusParameter);
   parameters.add(minClusterPointsParameter);
+  parameters.add(minBoundsSizeParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -146,6 +147,24 @@ void PathMod::update() {
     return;
   }
 
+  // Suppress tiny/degenerate paths (useful when point sources are stable or triggers are frequent)
+  float minBounds = minBoundsSizeParameter.get();
+  if (minBounds > 0.0f) {
+    float minX = points[0].x, maxX = points[0].x;
+    float minY = points[0].y, maxY = points[0].y;
+    for (const auto& p : points) {
+      minX = std::min(minX, p.x);
+      maxX = std::max(maxX, p.x);
+      minY = std::min(minY, p.y);
+      maxY = std::max(maxY, p.y);
+    }
+    float extent = std::max(maxX - minX, maxY - minY);
+    if (extent < minBounds) {
+      if (newVecs.size() > maxVerticesController.value * 3.0) newVecs.pop_front();
+      return;
+    }
+  }
+
   switch (strategyParameter) {
     case 0:
       path = makePolyPath(points);
@@ -175,6 +194,23 @@ void PathMod::emitPathFromClusteredPoints() {
   if (points.size() < static_cast<size_t>(minClusterPointsParameter.get())) {
     // Not enough clustered points - keep accumulating
     return;
+  }
+
+  // Suppress tiny/degenerate paths
+  float minBounds = minBoundsSizeParameter.get();
+  if (minBounds > 0.0f) {
+    float minX = points[0].x, maxX = points[0].x;
+    float minY = points[0].y, maxY = points[0].y;
+    for (const auto& p : points) {
+      minX = std::min(minX, p.x);
+      maxX = std::max(maxX, p.x);
+      minY = std::min(minY, p.y);
+      maxY = std::max(maxY, p.y);
+    }
+    float extent = std::max(maxX - minX, maxY - minY);
+    if (extent < minBounds) {
+      return;
+    }
   }
 
   // Build path using selected strategy
