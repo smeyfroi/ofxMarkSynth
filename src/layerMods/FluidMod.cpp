@@ -25,6 +25,18 @@ FluidMod::FluidMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   };
 }
 
+void FluidMod::logValidationOnce(const std::string& message) {
+  if (message.empty()) {
+    lastValidationLog.clear();
+    return;
+  }
+
+  if (message == lastValidationLog) return;
+
+  lastValidationLog = message;
+  ofLogError("FluidMod") << message;
+}
+
 float FluidMod::getAgency() const {
   return Mod::getAgency() * agencyFactorParameter;
 }
@@ -50,15 +62,17 @@ void FluidMod::initParameters() {
 }
 
 void FluidMod::setup() {
-  if (!fluidSimulation.isSetup()) {
-    auto valuesDrawingLayerPtr = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME, 0); // getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-    auto velocitiesDrawingLayerPtr = getNamedDrawingLayerPtr(VELOCITIES_LAYERPTR_NAME, 0); // special case for velocities
-    if (valuesDrawingLayerPtr && velocitiesDrawingLayerPtr) {
-      fluidSimulation.setup(valuesDrawingLayerPtr.value()->fboPtr, velocitiesDrawingLayerPtr.value()->fboPtr);
-    } else {
-      return;
-    }
+  if (fluidSimulation.isSetup()) return;
+
+  auto valuesDrawingLayerPtr = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME, 0);
+  auto velocitiesDrawingLayerPtr = getNamedDrawingLayerPtr(VELOCITIES_LAYERPTR_NAME, 0);
+
+  if (!valuesDrawingLayerPtr || !velocitiesDrawingLayerPtr) {
+    logValidationOnce("FluidMod '" + getName() + "': missing required drawing layers ('default' and 'velocities').");
+    return;
   }
+
+  fluidSimulation.setup(valuesDrawingLayerPtr.value()->fboPtr, velocitiesDrawingLayerPtr.value()->fboPtr);
 }
 
 void FluidMod::update() {
@@ -71,14 +85,21 @@ void FluidMod::update() {
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) return;
   
-  setup();  
+  setup();
+  if (!fluidSimulation.isSetup()) return;
+
   fluidSimulation.update();
-  
+  if (!fluidSimulation.isValid()) {
+    logValidationOnce("FluidMod '" + getName() + "': " + fluidSimulation.getValidationError());
+    return;
+  }
+
+  logValidationOnce("");
   emit(SOURCE_VELOCITIES_TEXTURE, fluidSimulation.getFlowVelocitiesFbo().getSource().getTexture());
 }
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {
-  if (!fluidSimulation.isSetup()) return;
+  if (!fluidSimulation.isValid()) return;
   
   IntentMap im(intent);
   im.E().exp(*dtControllerPtr, strength);

@@ -33,6 +33,8 @@ protected:
   void initParameters() override;
 
 private:
+  void logValidationOnce(const std::string& message);
+
   FluidSimulation fluidSimulation;
   
   std::unique_ptr<ParamController<float>> dtControllerPtr;
@@ -40,6 +42,9 @@ private:
   std::unique_ptr<ParamController<float>> valueDissipationControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDissipationControllerPtr;
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
+
+  // Tracks the last fatal setup/validation error we logged, to avoid per-frame spam.
+  std::string lastValidationLog;
 
 };
 
