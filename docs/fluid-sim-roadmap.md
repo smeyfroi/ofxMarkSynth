@@ -199,4 +199,5 @@ At the end of each phase (especially 2–6):
   - Impulse translation: old radial impulse multiplied by `dt` (acceleration-like); new impulses are specified as **pixels of desired displacement per step** (vector + radial + swirl). Internally these are resolution-normalized and divided by `dtEffective` to become UV velocity.
     - TODO: Update MarkSynth `RadialImpulseMod` to accept both `position` and a `velocity` vector (so it can drive the new directional impulse path)
   - Pressure iteration translation: map iterations to a 0..1 quality knob (once implemented)
+    - High-res budget note (e.g. MarkSynth `~2400x2400`): start with `Pressure≈10`, `Velocity diffusion≈1`, `Value diffusion≈1` and adjust using divergence view
   - Preserve dye injection when radius changes: keep `points * radius^2 * alpha` approximately constant
