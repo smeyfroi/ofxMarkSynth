@@ -103,18 +103,33 @@ Files:
 Manual check:
 - With drift, dye/velocity respects walls and no longer produces unexplained dead bands.
 
-## Phase 5 — Correct core math (expect retuning; minimize effort via heuristics)
+## Phase 5 — Correct core math (hybrid: correct backbone, artist knobs)
 
-Goal: make `dt`, iterations, diffusion, projection behave more consistently with resolution.
+Goal: make the solver more portable (resolution/FPS) while keeping the UI/configs artist-friendly.
 
+Key decisions:
+- Baseline configs assume ~30 FPS (MarkSynth performance target).
+- `Fluid.dt` is a dimensionless *Sim Speed* scalar tuned around 30fps; internal solver uses `dtEffective = ofGetLastFrameTime() * 30 * dt`.
+- `Vorticity` is treated as a normalized 0..1 *Swirl* control and mapped internally (currently `0..1 -> 0..0.3`).
+- `Value Dissipation` / `Velocity Dissipation` are normalized *persistence* knobs (0..1) mapped internally to half-life seconds (separate ranges for value vs velocity).
+- We will not hand-tune configs; instead we will derive a mechanical translation heuristic to migrate configs once the implementation stabilizes.
+
+Backbone correctness work:
 - Introduce explicit `dx` (cell size) semantics:
   - divergence computation
   - pressure gradient subtraction
   - pressure solve alpha
 - Fix Jacobi diffusion parameterization:
   - remove constant `rBeta=0.25` assumption
-  - compute rBeta consistently from alpha
-- Optional: warm-start pressure (don’t clear to 0 every frame).
+  - compute `rBeta = 1 / (4 + alpha)` consistently
+  - diffusion must use a stable `b` (snapshot the field once per solve)
+- Add stability clamps where needed:
+  - CFL-style clamp for injected impulses
+  - CFL-style clamp after vorticity confinement (to prevent runaway)
+  - optional `Value Max` clamp after advection to prevent dye blowout
+- Startup responsiveness:
+  - purely radial impulses tend to be projected away at cold start (divergence-heavy, curl-light)
+  - add a tangential/swirl impulse option so curl is visible from frame 1
 
 Files:
 - `ofxRenderer/src/fluid/FluidSimulation.h`
@@ -178,7 +193,9 @@ At the end of each phase (especially 2–6):
   - persistence
   - stability
 - Iterate on a small set of migration heuristics (rules of thumb), starting with:
-  - Dissipation rescale when `dt` changes meaning: `d_new = pow(d_old, dt_new / dt_old)`
-  - Global vorticity multiplier if swirl shifts uniformly
-  - Pressure iteration guidance using divergence view
-  - Impulse strength scaling if injection feels globally off
+  - `dt` translation: **tentative** (old sim used `dtEffective = frameDt * dt_old`, new uses `dtEffective = frameDt * 30 * dt_new`): `dt_new ≈ dt_old / 30`
+  - Dissipation translation: old per-frame dissipation `d` -> half-life at 30fps -> invert persistence mapping
+    - half-life seconds: `halfLife = (1/30) * ln(0.5) / ln(d)`
+  - Impulse translation: old radial impulse multiplied by `dt` (acceleration-like); new impulses are specified as **pixels of desired displacement per step** (vector + radial + swirl). Internally these are resolution-normalized and divided by `dtEffective` to become UV velocity.
+  - Pressure iteration translation: map iterations to a 0..1 quality knob (once implemented)
+  - Preserve dye injection when radius changes: keep `points * radius^2 * alpha` approximately constant
