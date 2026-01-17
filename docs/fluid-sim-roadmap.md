@@ -157,8 +157,8 @@ Goal: keep MarkSynth integration stable while the sim’s parameters and outputs
   - if invalid: log error and skip update.
 - Expand `FluidMod` sources for debugging/downstream usage:
   - velocities (existing)
-  - divergence/pressure/curl (new)
-
+  - divergence/pressure/curl (new) — consider exposing as named layers (e.g. `fluid_divergence`, `fluid_pressure`, `fluid_curl`) so they can be inspected/recorded
+ 
 Files:
 - `ofxMarkSynth/src/layerMods/FluidMod.cpp`
 - `ofxMarkSynth/src/layerMods/FluidMod.hpp`
@@ -202,13 +202,14 @@ At the end of each phase (especially 2–6):
   - Dissipation translation: old per-frame dissipation `d` -> half-life at 30fps -> invert persistence mapping
     - half-life seconds: `halfLife = (1/30) * ln(0.5) / ln(d)`
   - Impulse translation: old radial impulse multiplied by `dt` (acceleration-like); new impulses are specified as **pixels of desired displacement per step** (vector + radial + swirl). Internally these are resolution-normalized and divided by `dtEffective` to become UV velocity.
-    - TODO: Update MarkSynth `RadialImpulseMod` to accept both `position` and a `velocity` vector (so it can drive the new directional impulse path)
+    - MarkSynth: `FluidRadialImpulseMod` supports `PointVelocity` (`vec4 {x,y,dx,dy}`), `Velocity` (`vec2` global), and `SwirlVelocity` (`float`) sinks.
   - Pressure iteration translation: map iterations to a 0..1 quality knob (once implemented)
     - High-res budget note (e.g. MarkSynth `~2400x2400`): start with `Pressure≈10`, `Velocity diffusion≈1`, `Value diffusion≈1` and adjust using divergence view
   - Preserve dye injection when radius changes: keep `points * radius^2 * alpha` approximately constant
 
 Observed heuristics from `Improvisation1/config/synth/01-minimal-av-fluidwash.json` (a working but partly-artistic tuning):
-- Keep `Fluid.dt` and all `FluidRadialImpulse.dt` values identical (in this setup `0.0032`). If they diverge, the same normalized impulse settings produce different advection displacement.
+- Recommended: keep `Fluid.dt` and all `FluidRadialImpulse.dt` values identical (in this setup `0.0032`). If they diverge, the same normalized impulse settings produce different advection displacement.
+- Decision: we will not try to auto-sync or “solve” dt consistency between Fluid and impulses; at most add runtime validation (e.g. log a warning once if they differ beyond an epsilon).
 - Treat `FluidRadialImpulse.Impulse Strength` as a normalized fraction of the current radius (so effective displacement scales with `Impulse Radius` and stays resolution-independent).
 - Use per-source swirl, separate from vorticity:
   - `FluidRadialImpulse.SwirlVelocity` is a normalized input.

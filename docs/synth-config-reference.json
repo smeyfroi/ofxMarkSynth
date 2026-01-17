@@ -350,9 +350,12 @@
     "ExampleFluidRadialImpulse": {
       "type": "FluidRadialImpulse",
       "config": {
-        "Impulse Radius": "0.001",
-        "Impulse Strength": "1.0",
+        "Impulse Radius": "0.03",
+        "Impulse Strength": "0.2",
         "dt": "0.1",
+        "VelocityScale": "1.0",
+        "SwirlStrength": "1.0",
+        "SwirlVelocity": "0.0",
         "AgencyFactor": "1"
       }
     },

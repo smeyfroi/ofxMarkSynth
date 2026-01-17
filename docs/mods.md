@@ -725,27 +725,32 @@ For accumulating layers (`clearOnUpdate=false`), TextMod uses incremental alpha 
 
 #### FluidRadialImpulseMod
 
-Adds radial velocity impulses to a fluid simulation layer.
+Adds energy to a `FluidMod` velocity layer via radial, directional, and swirl impulses.
 
-**Visual Characteristics**: Fluid distortion • Ripple effects • Dynamic flow patterns
+**Visual Characteristics**: Fluid distortion • Ripples • Directional flow injection • Vortex seeds
 
 **Sinks**:
-- `Point` (vec2): Impulse centers
+- `Point` (vec2): Impulse centers (normalized 0–1)
+- `PointVelocity` (vec4): `{x, y, dx, dy}` (normalized) per-impulse directional injection
+- `Velocity` (vec2): Global `{dx, dy}` (normalized) used when only `Point` is provided
+- `SwirlVelocity` (float): Normalized 0–1 additional swirl term (overrides config value)
 - `Impulse Radius` (float): Impulse size
-- `Impulse Strength` (float): Force magnitude
+- `Impulse Strength` (float): Normalized strength
 
 **Key Parameters**:
-- `Impulse Radius`: Size of force field (0.0-0.3)
-- `Impulse Strength`: Force magnitude (0.0-10.0)
-- `dt`: Time step scaling for impulses (0.001-1.0)
- 
-**Intent Integration**: Responds to Intent.
+- `Impulse Radius` (0.0–0.10): Radius as a fraction of the target buffer’s min dimension
+- `Impulse Strength` (0.0–1.0): Interpreted as a **fraction of radius displacement per step** (resolution-independent feel)
+- `dt` (0.001–1.0): dt passed to the impulse shader (should match the fluid solver’s dt semantics)
+- `VelocityScale` (0.0–50.0): Scales normalized `Velocity` / `PointVelocity` into pixel displacement per step
+- `SwirlStrength` (0.0–2.0): Multiplier for `SwirlVelocity`
+- `SwirlVelocity` (0.0–1.0): Base swirl term (config/manual); effective swirl = `clamp(SwirlVelocity * SwirlStrength, 0..1)`
 
+**Intent Integration**: Responds to Intent (radius + strength). Other parameters are manual-only.
 
 **Use Cases**:
-- Create fluid ripples from audio onsets
-- Add energy to fluid simulations
-- Generate dynamic flow disturbances
+- Inject flow from video motion (e.g. `VideoFlowSourceMod.PointVelocity → FluidRadialImpulseMod.PointVelocity`)
+- Create audio-driven ripples that don’t “die” at cold start (add swirl)
+- Add energy/turbulence into a fluid motion field used downstream (Smear/Particles)
 
 ---
 
@@ -1004,6 +1009,7 @@ FadeMod (medium fade rate)
 ```
 VideoFlowSourceMod (camera input)
   └─ PointVelocity → ParticleSetMod.PointVelocity
+  └─ PointVelocity → FluidRadialImpulseMod.PointVelocity (optional: inject camera flow into fluid)
   └─ FlowField → SmearMod.Field1Texture
 
 ParticleSetMod (particles follow camera motion)
