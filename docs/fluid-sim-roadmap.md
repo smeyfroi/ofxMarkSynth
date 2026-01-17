@@ -197,5 +197,6 @@ At the end of each phase (especially 2–6):
   - Dissipation translation: old per-frame dissipation `d` -> half-life at 30fps -> invert persistence mapping
     - half-life seconds: `halfLife = (1/30) * ln(0.5) / ln(d)`
   - Impulse translation: old radial impulse multiplied by `dt` (acceleration-like); new impulses are specified as **pixels of desired displacement per step** (vector + radial + swirl). Internally these are resolution-normalized and divided by `dtEffective` to become UV velocity.
+    - TODO: Update MarkSynth `RadialImpulseMod` to accept both `position` and a `velocity` vector (so it can drive the new directional impulse path)
   - Pressure iteration translation: map iterations to a 0..1 quality knob (once implemented)
   - Preserve dye injection when radius changes: keep `points * radius^2 * alpha` approximately constant
