@@ -206,3 +206,14 @@ At the end of each phase (especially 2–6):
   - Pressure iteration translation: map iterations to a 0..1 quality knob (once implemented)
     - High-res budget note (e.g. MarkSynth `~2400x2400`): start with `Pressure≈10`, `Velocity diffusion≈1`, `Value diffusion≈1` and adjust using divergence view
   - Preserve dye injection when radius changes: keep `points * radius^2 * alpha` approximately constant
+
+Observed heuristics from `Improvisation1/config/synth/01-minimal-av-fluidwash.json` (a working but partly-artistic tuning):
+- Keep `Fluid.dt` and all `FluidRadialImpulse.dt` values identical (in this setup `0.0032`). If they diverge, the same normalized impulse settings produce different advection displacement.
+- Treat `FluidRadialImpulse.Impulse Strength` as a normalized fraction of the current radius (so effective displacement scales with `Impulse Radius` and stays resolution-independent).
+- Use per-source swirl, separate from vorticity:
+  - `FluidRadialImpulse.SwirlVelocity` is a normalized input.
+  - `FluidRadialImpulse.SwirlStrength` is a multiplier (so `effectiveSwirl = SwirlVelocity * SwirlStrength`).
+- For motion sources like `VideoFlowSourceMod` feeding `PointVelocity`, expect to need a `FluidRadialImpulse.VelocityScale` to get a useful displacement magnitude.
+- Persistence split is important for readability:
+  - value persistence often stays high (e.g. `Value Dissipation≈0.95`), while velocity persistence is lower (e.g. `Velocity Dissipation≈0.8`) so motion doesn’t accumulate forever.
+- If stronger flow makes marks look “too dim”, prefer adjusting `Value Dissipation` / `Value Max` before globally doubling mark alpha; revisit higher-order advection (BFECC/MacCormack) later if needed.

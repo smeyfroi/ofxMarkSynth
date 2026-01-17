@@ -42,6 +42,7 @@ void FluidRadialImpulseMod::initParameters() {
   parameters.add(dtParameter);
   parameters.add(velocityScaleParameter);
   parameters.add(swirlStrengthParameter);
+  parameters.add(swirlVelocityParameter);
   parameters.add(agencyFactorParameter);
 }
 
@@ -71,7 +72,7 @@ void FluidRadialImpulseMod::update() {
   // Interpret strength as a fraction of radius displacement per step.
   const float radialVelocityPx = impulseStrengthController.value * radiusPx;
 
-  const float swirlNorm = std::clamp(swirlStrengthParameter.get() + currentSwirlVelocityNorm, 0.0f, 1.0f);
+  const float swirlNorm = std::clamp(swirlVelocityParameter.get() * swirlStrengthParameter.get(), 0.0f, 1.0f);
   const float swirlVelocityPx = swirlNorm * radiusPx;
 
   const float velScale = velocityScaleParameter.get();
@@ -120,7 +121,7 @@ void FluidRadialImpulseMod::receive(int sinkId, const float& value) {
       impulseStrengthController.updateAuto(value, getAgency());
       break;
     case SINK_SWIRL_VELOCITY:
-      currentSwirlVelocityNorm = std::clamp(value, 0.0f, 1.0f);
+      swirlVelocityParameter = std::clamp(value, 0.0f, 1.0f);
       break;
     default:
       ofLogError("FluidRadialImpulseMod") << "Float receive for unknown sinkId " << sinkId;

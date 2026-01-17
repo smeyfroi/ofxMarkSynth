@@ -49,9 +49,12 @@ private:
   // For a W×H velocity buffer: px = VelocityScale * (dxNorm*W, dyNorm*H)
   ofParameter<float> velocityScaleParameter { "VelocityScale", 1.0f, 0.0f, 50.0f };
 
-  // Normalized tangential component added to every impulse (fraction of radius).
-  // This is config/manual only (no controller) and can be driven via the SwirlVelocity sink.
-  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 0.0f, 0.0f, 1.0f };
+  // Multiplier for SwirlVelocity (0..1). Config/manual only (no controller).
+  // Effective swirl = clamp(SwirlVelocity * SwirlStrength, 0..1).
+  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 1.0f, 0.0f, 2.0f };
+
+  // Additional normalized swirl term that can be set from config OR driven via the SwirlVelocity sink.
+  ofParameter<float> swirlVelocityParameter { "SwirlVelocity", 0.0f, 0.0f, 1.0f };
 
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
@@ -59,7 +62,6 @@ private:
   std::vector<glm::vec4> newPointVelocities; // { x, y, dx, dy } normalized
 
   glm::vec2 currentVelocityNorm { 0.0f, 0.0f };
-  float currentSwirlVelocityNorm = 0.0f;
   
   AddRadialImpulseShader addRadialImpulseShader;
 };
