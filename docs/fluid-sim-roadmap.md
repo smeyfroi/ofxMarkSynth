@@ -112,6 +112,8 @@ Key decisions:
 - `Fluid.dt` is a dimensionless *Sim Speed* scalar tuned around 30fps; internal solver uses `dtEffective = ofGetLastFrameTime() * 30 * dt`.
 - `Vorticity` is treated as a normalized 0..1 *Swirl* control and mapped internally (currently `0..1 -> 0..0.3`).
 - `Value Dissipation` / `Velocity Dissipation` are normalized *persistence* knobs (0..1) mapped internally to half-life seconds (separate ranges for value vs velocity).
+  - Keep them exposed for now (despite the legacy names); they remain key controls for how long dye/motion persists.
+  - Rename to `Value Persistence` / `Velocity Persistence` during config migration, not before.
 - We will not hand-tune configs; instead we will derive a mechanical translation heuristic to migrate configs once the implementation stabilizes.
 
 Backbone correctness work:
