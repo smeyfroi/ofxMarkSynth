@@ -24,9 +24,13 @@ public:
   void update() override;
   void receive(int sinkId, const float& value) override;
   void receive(int sinkId, const glm::vec2& point) override;
+  void receive(int sinkId, const glm::vec4& pointVelocity) override;
   void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_POINTS = 1;
+  static constexpr int SINK_POINT_VELOCITY = 2;
+  static constexpr int SINK_VELOCITY = 3;
+  static constexpr int SINK_SWIRL_VELOCITY = 4;
   static constexpr int SINK_IMPULSE_RADIUS = 10;
   static constexpr int SINK_IMPULSE_STRENGTH = 20;
 
@@ -38,10 +42,24 @@ private:
   ParamController<float> impulseRadiusController { impulseRadiusParameter };
   ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.5, 0.0, 1.0 };
   ParamController<float> impulseStrengthController { impulseStrengthParameter };
+  // Interpreted as the dt used by the impulse injection shader (must match the fluid solver's dt semantics).
   ofParameter<float> dtParameter { "dt", 0.1, 0.001, 1.0 };
+
+  // Scales incoming normalized velocity sinks to pixel displacement per step.
+  // For a W×H velocity buffer: px = VelocityScale * (dxNorm*W, dyNorm*H)
+  ofParameter<float> velocityScaleParameter { "VelocityScale", 1.0f, 0.0f, 50.0f };
+
+  // Normalized tangential component added to every impulse (fraction of radius).
+  // This is config/manual only (no controller) and can be driven via the SwirlVelocity sink.
+  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 0.0f, 0.0f, 1.0f };
+
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
 
   std::vector<glm::vec2> newPoints;
+  std::vector<glm::vec4> newPointVelocities; // { x, y, dx, dy } normalized
+
+  glm::vec2 currentVelocityNorm { 0.0f, 0.0f };
+  float currentSwirlVelocityNorm = 0.0f;
   
   AddRadialImpulseShader addRadialImpulseShader;
 };

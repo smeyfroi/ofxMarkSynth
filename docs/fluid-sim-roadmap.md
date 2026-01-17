@@ -132,6 +132,9 @@ Backbone correctness work:
 - Startup responsiveness:
   - purely radial impulses tend to be projected away at cold start (divergence-heavy, curl-light)
   - add a tangential/swirl impulse option so curl is visible from frame 1
+- Advection quality (later):
+  - BFECC / MacCormack advection can preserve contrast/tendrils better than semi-Lagrangian (reduces the need to "compensate" with higher mark alpha)
+  - too GPU-expensive at current MarkSynth resolutions (e.g. values ~2400^2) to implement now; revisit after performance budget review
 
 Files:
 - `ofxRenderer/src/fluid/FluidSimulation.h`
