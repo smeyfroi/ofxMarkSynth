@@ -20,6 +20,10 @@ This section intentionally lists the externally visible controls (parameters/sin
   - Core: `dt`, `Vorticity`, `Value Dissipation`, `Velocity Dissipation`, `Value Spread`, `Velocity Spread`, `Value Max`
   - `Temperature`: `TempEnabled`, `Temperature Dissipation`, `Temperature Spread`, `Temperature Iterations`
   - `Buoyancy`: `Buoyancy Strength`, `Buoyancy Density Scale`, `Buoyancy Threshold`, `Gravity Force X`, `Gravity Force Y`, `Use Temperature`, `Ambient Temperature`, `Temperature Threshold`
+  - `Obstacles`: `ObstaclesEnabled`, `Obstacle Threshold`, `Obstacle Invert`
+- `FluidMod` layers:
+  - Optional: `layers.obstacles` (mask layer sampled as `max(alpha, luma(rgb))`; must match velocity resolution + boundary-mode wrap)
+
 - `FluidMod` sinks:
   - `TempImpulsePoint` (vec2), `TempImpulseRadius` (float), `TempImpulseDelta` (float)
 - `FluidRadialImpulseMod` (new impulse surface):
@@ -220,9 +224,10 @@ Files:
 
 ## Phase 8 — Obstacles/masks (later)
 
-- Add obstacle mask field.
-- Make divergence/projection/advection obstacle-aware.
-- Add MarkSynth integration via an `obstacles` layer key and an injection/drawing mod.
+- Add obstacle mask field (sampled as `max(alpha, luma(rgb))`).
+- Make advection/diffusion/divergence/projection obstacle-aware; optionally mask vorticity/buoyancy/impulses.
+- MarkSynth integration: allow passing an arbitrary drawing layer as `layers.obstacles` (must match velocity resolution and boundary-mode wrap).
+- Potential future refinement: add an optional “rigid obstacle guard” pass that forcibly clears fields inside solid cells each frame (prevents dye/temperature bleed at boundaries, but costs extra fullscreen passes—especially expensive for very large values buffers).
 
 ## Manual backtest loop (per phase)
 
