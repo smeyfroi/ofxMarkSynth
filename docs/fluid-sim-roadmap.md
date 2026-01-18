@@ -1,8 +1,8 @@
 # Fluid Simulation Roadmap (ofxRenderer + ofxMarkSynth)
 
-This document captures a staged plan for improving the fluid simulation used by `ofxMarkSynth`’s `FluidMod` (which wraps `ofxRenderer`’s `FluidSimulation`).
+This document started as a staged plan for improving the fluid simulation used by `ofxMarkSynth`’s `FluidMod` (which wraps `ofxRenderer`’s `FluidSimulation`).
 
-The work is intentionally paced over multiple sessions: fix defects first, then add correctness, then add new functionality (temperature/buoyancy/obstacles).
+It now also serves as a running record of what has been implemented, plus a short list of explicitly deferred items ("for later").
 
 ## Defaults / Policy
 
@@ -10,6 +10,45 @@ The work is intentionally paced over multiple sessions: fix defects first, then 
 - Wrap mismatch: **hard error** (disable sim and log one actionable message).
 - External-FBO support stays first-class: `FluidSimulation` must accept `PingPongFbo`s passed in from MarkSynth drawing layers.
 - Manual testing: changes are evaluated by running a fixed set of configs and noting qualitative deltas (edges, flow scale, swirl, persistence, stability). Automated testing is not a goal.
+
+## Status (implemented)
+
+High-level implementation record (as of 2026-01):
+
+- `ofxRenderer/example_fluid` is a working debug harness:
+  - Debug draw modes include divergence/pressure/curl/temperature/obstacles.
+  - Reset buttons exist for temperature/obstacles.
+- `FluidSimulation` is strict and introspectable:
+  - Validity state (`isSetup()`/`isValid()`), actionable validation errors.
+  - Boundary mode validation against wrap mode.
+  - Debug getters: divergence/pressure/curl/temperature/obstacles.
+  - `dt` parameter range clamped to `0.0–0.003`.
+- Impulse system upgraded:
+  - Directional injection (`PointVelocity`/`Velocity`) and optional swirl controls.
+  - Normalized/portable semantics (displacement-per-step feel).
+- Buoyancy + temperature implemented:
+  - Buoyancy v1 (dye-driven) and temperature v2 (separate field) both available.
+  - `TempEnabled` leaf param (renamed from `Enabled` to avoid flattening ambiguity).
+- Obstacles implemented:
+  - Optional `layers.obstacles` input supported (mask sampled as `max(alpha, luma(rgb))`).
+  - Obstacle-aware advection/diffusion/divergence/projection + masking for impulses/vorticity/buoyancy.
+  - Known issue: obstacle-edge dye bleed can still occur; we chose not to add the heavier “rigid guard” passes yet.
+- MarkSynth integration hardened:
+  - `FluidMod` logs-once and skips update when the underlying sim is invalid.
+  - `FluidMod` supports temperature injection sinks (`TempImpulsePoint/Radius/Delta`) + `TempEnabled`.
+  - `FluidMod` supports optional `layers.obstacles` forwarding to the sim.
+- Config validator upgraded:
+  - Hard errors for `Fluid.dt` vs `FluidRadialImpulse.dt` mismatches.
+  - Hard errors for boundary-mode ↔ wrap mismatches (now includes optional obstacles layers).
+- Config migrations executed in MarkSynth-performances repos:
+  - Improvisation1: grid-wide param normalization + dt halving pass; docs updated with dt range learnings.
+  - CaldewRiver: migrated to SolidWalls/clamp, dt scaling (`dt/30` when legacy), spreads defaults, impulse dt sync; docs updated.
+
+For later (explicitly deferred):
+- BFECC/MacCormack advection (quality vs performance).
+- Optional “rigid obstacle guard” passes to fully eliminate bleed (extra fullscreen passes; costly for large values buffers).
+- MarkSynth debug sources for divergence/pressure/curl as explicit `FluidMod` emitted sources (currently velocities only).
+- Replace string-based parameter grabs in `FluidMod` with typed accessors (current approach is consistent with other mods; defer).
 
 ## External Surface Additions (migration-relevant)
 
@@ -32,6 +71,8 @@ This section intentionally lists the externally visible controls (parameters/sin
   - Parameters: `VelocityScale`, `SwirlStrength`, `SwirlVelocity`
 
 ## Phase 1 — Make `ofxRenderer/example_fluid` a debugging reference
+
+Status: implemented.
 
 Goal: quickly see what each pipeline change does, without MarkSynth complexity.
 
@@ -57,6 +98,8 @@ Manual check:
 - Reproduce the margin/top-right dead band quickly and consistently.
 
 ## Phase 2 — Strict validation + debug outputs in `FluidSimulation`
+
+Status: implemented.
 
 Goal: fail fast instead of producing mysterious artifacts.
 
@@ -86,6 +129,8 @@ Manual check:
 
 ## Phase 3 — Fix edge/margin defect by making UV domain explicit in shaders
 
+Status: deferred (current implementation relies on normalized UVs and strict texture validation).
+
 Goal: eliminate dependence on implicit `texCoordVarying` mapping.
 
 - Change all fluid passes to compute UV from pixel coordinates:
@@ -104,6 +149,8 @@ Manual check:
 - The ~10% top/right margin disappears in `example_fluid` with clamp + SolidWalls.
 
 ## Phase 4 — Implement explicit boundary mode (start with SolidWalls)
+
+Status: implemented.
 
 Goal: boundary behavior becomes intentional.
 
@@ -124,6 +171,8 @@ Manual check:
 - With drift, dye/velocity respects walls and no longer produces unexplained dead bands.
 
 ## Phase 5 — Correct core math (hybrid: correct backbone, artist knobs)
+
+Status: mostly implemented (the remaining quality work is explicitly deferred).
 
 Goal: make the solver more portable (resolution/FPS) while keeping the UI/configs artist-friendly.
 
@@ -168,6 +217,8 @@ Manual check:
 
 ## Phase 6 — Update MarkSynth wrapper (`FluidMod`) to survive sim evolution
 
+Status: partially implemented (validation + temp impulses + obstacles forwarding done; typed parameter accessors and debug sources deferred).
+
 Goal: keep MarkSynth integration stable while the sim’s parameters and outputs grow.
 
 - Replace string-based parameter grabs in `FluidMod` with typed accessors on `FluidSimulation`:
@@ -188,6 +239,8 @@ Manual check:
 - MarkSynth configs that use `GL_REPEAT` for fluid fields hard-error with a clear fix instruction.
 
 ## Phase 7 — Temperature + buoyancy (new functionality after stability)
+
+Status: implemented (v1 dye buoyancy + v2 temperature field + MarkSynth injection sinks).
 
 ### Phase 7a — Buoyancy v1 (dye-driven)
 
@@ -223,6 +276,8 @@ Files:
 - (new) temperature advect/diffuse shader or reuse `AdvectShader` with scalar target
 
 ## Phase 8 — Obstacles/masks (later)
+
+Status: implemented (with a known remaining edge-bleed issue; rigid guard deferred).
 
 - Add obstacle mask field (sampled as `max(alpha, luma(rgb))`).
 - Make advection/diffusion/divergence/projection obstacle-aware; optionally mask vorticity/buoyancy/impulses.
