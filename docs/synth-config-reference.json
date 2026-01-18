@@ -182,13 +182,67 @@
       "type": "Fluid",
       "_params_from": "ofxRenderer FluidSimulation",
       "config": {
-        "dt": "0.003",
-        "Vorticity": "50",
-        "Value Dissipation": "0.999",
-        "Velocity Dissipation": "0.999",
+        "Boundary Mode": "0",
+        "dt": "0.0032",
+        "Vorticity": "0.10",
+        "Value Dissipation": "0.95",
+        "Velocity Dissipation": "0.80",
+        "Value Spread": "0.2",
+        "Velocity Spread": "0.7",
+        "Value Max": "1.0",
         "Value Iterations": "1",
         "Velocity Iterations": "1",
-        "Pressure Iterations": "25",
+        "Pressure Iterations": "10",
+        "AgencyFactor": "1"
+      }
+    },
+
+    "ExampleFluidBuoyancyV1_DyeDriven": {
+      "type": "Fluid",
+      "_params_from": "ofxRenderer FluidSimulation",
+      "config": {
+        "Boundary Mode": "0",
+        "dt": "0.0032",
+        "Vorticity": "0.10",
+        "Value Dissipation": "0.95",
+        "Velocity Dissipation": "0.80",
+
+        "Buoyancy Strength": "0.4",
+        "Buoyancy Density Scale": "2.0",
+        "Buoyancy Threshold": "0.0",
+        "Gravity Force X": "0.0",
+        "Gravity Force Y": "-1.0",
+        "Use Temperature": "0",
+
+        "AgencyFactor": "1"
+      }
+    },
+
+    "ExampleFluidBuoyancyV2_TemperatureDriven": {
+      "type": "Fluid",
+      "_params_from": "ofxRenderer FluidSimulation + MarkSynth TempImpulse",
+      "config": {
+        "Boundary Mode": "0",
+        "dt": "0.0032",
+        "Vorticity": "0.10",
+        "Value Dissipation": "0.95",
+        "Velocity Dissipation": "0.80",
+
+        "TempEnabled": "1",
+        "Temperature Dissipation": "0.90",
+        "Temperature Spread": "0.0",
+        "Temperature Iterations": "0",
+
+        "Buoyancy Strength": "0.6",
+        "Gravity Force X": "0.0",
+        "Gravity Force Y": "-1.0",
+        "Use Temperature": "1",
+        "Ambient Temperature": "0.0",
+        "Temperature Threshold": "0.0",
+
+        "TempImpulseRadius": "0.03",
+        "TempImpulseDelta": "0.6",
+
         "AgencyFactor": "1"
       }
     },

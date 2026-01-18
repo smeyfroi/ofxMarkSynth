@@ -364,6 +364,8 @@ Strategy selection:
 | 1-D | Value Dissipation | inv |
 | 1-G | Velocity Dissipation | invExp |
 
+**Manual-only (not Intent-driven)**: `Boundary Mode`, `Value Spread`, `Velocity Spread`, `Value Max`, all `Temperature` params (including `TempEnabled`), `TempImpulseRadius`, `TempImpulseDelta`, and `Buoyancy` params.
+
 ### SmearMod
 
 | Dimension | Parameter | Function |

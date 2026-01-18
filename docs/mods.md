@@ -790,28 +790,51 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 
 2D fluid simulation that creates flowing, organic effects on a layer.
 
-**Visual Characteristics**: Flowing • Organic motion • Vortex formation • Smooth blending
+**Visual Characteristics**: Flowing • Organic motion • Vortex formation • Smooth blending • Plumes (buoyancy)
 
 **Sources**:
 - `velocitiesTexture` (texture): Velocity field texture
+
+**Sinks** (temperature injection):
+- `TempImpulsePoint` (vec2): Normalized 0–1 injection centers (queued and applied each frame)
+- `TempImpulseRadius` (float): Overrides `TempImpulseRadius` parameter via controller
+- `TempImpulseDelta` (float): Overrides `TempImpulseDelta` parameter via controller
 
 **Layers**:
 - Default layer: Visual simulation output
 - `velocities` layer: Velocity field (can drive ParticleFieldMod)
 
 **Key Parameters**:
+- `Boundary Mode`: 0=SolidWalls, 1=Wrap, 2=Open (must match GL wrap)
 - `dt`: Time step (simulation speed)
 - `Vorticity`: Vortex formation strength
-- `Value Dissipation`: Color/value fade rate
-- `Velocity Dissipation`: Motion decay rate
+- `Value Dissipation`: Dye persistence (normalized 0–1)
+- `Velocity Dissipation`: Motion persistence (normalized 0–1)
+- `Value Spread`: Dye diffusion (normalized 0–1)
+- `Velocity Spread`: Velocity diffusion/viscosity (normalized 0–1)
+- `Value Max`: Clamp after advection (0 = disabled)
+
+**Temperature (v2 scalar field)**:
+- `TempEnabled`: Enables temperature advection/diffusion
+- `Temperature Dissipation`, `Temperature Spread`, `Temperature Iterations`: Temperature evolution controls
+- `TempImpulseRadius`: Default injection radius (normalized 0–0.10)
+- `TempImpulseDelta`: Default injected delta (-1.0–1.0)
+
+**Buoyancy**:
+- **v1 (dye-driven)**: set `Buoyancy Strength` > 0 and keep `Use Temperature` off
+  - `Buoyancy Density Scale`, `Buoyancy Threshold`, `Gravity Force X/Y`
+- **v2 (temperature-driven)**: set `Use Temperature` on + configure temperature
+  - `Ambient Temperature`, `Temperature Threshold`, `Gravity Force X/Y`
+
 - `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
 
-**Intent Integration**: Full Intent support with agency.
+**Intent Integration**: Core sim parameters support Intent with agency; temperature and buoyancy parameters are currently manual-only.
 
 **Use Cases**:
 - Create flowing organic backgrounds
 - Add fluid motion to particle systems
-- Generate evolving abstract patterns
+- Create “invisible forces” (temperature-driven buoyancy without adding dye)
+- Add plumes/smoke behavior to marks (dye-driven buoyancy)
 
 ---
 

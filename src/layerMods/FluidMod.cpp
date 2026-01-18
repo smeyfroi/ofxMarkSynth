@@ -6,6 +6,9 @@
 //
 
 #include "FluidMod.hpp"
+
+#include <algorithm>
+
 #include "core/Intent.hpp"
 #include "core/IntentMapper.hpp"
 #include "core/IntentMapping.hpp"
@@ -23,6 +26,15 @@ FluidMod::FluidMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   sourceNameIdMap = {
     { "velocitiesTexture", SOURCE_VELOCITIES_TEXTURE }
   };
+
+  sinkNameIdMap = {
+    { "TempImpulsePoint", SINK_TEMP_IMPULSE_POINT },
+    { tempImpulseRadiusParameter.getName(), SINK_TEMP_IMPULSE_RADIUS },
+    { tempImpulseDeltaParameter.getName(), SINK_TEMP_IMPULSE_DELTA },
+  };
+
+  registerControllerForSource(tempImpulseRadiusParameter, tempImpulseRadiusController);
+  registerControllerForSource(tempImpulseDeltaParameter, tempImpulseDeltaController);
 }
 
 void FluidMod::logValidationOnce(const std::string& message) {
@@ -45,6 +57,12 @@ void FluidMod::initParameters() {
   auto& group = fluidSimulation.getParameterGroup();
   addFlattenedParameterGroup(parameters, group);
   parameters.add(agencyFactorParameter);
+
+  // Temperature enable is part of FluidSimulation's parameter group (flattened).
+  tempEnabledParamPtr = &group.getGroup("Temperature").get("TempEnabled").cast<bool>();
+
+  parameters.add(tempImpulseRadiusParameter);
+  parameters.add(tempImpulseDeltaParameter);
   
   dtControllerPtr = std::make_unique<ParamController<float>>(group.get("dt").cast<float>());
   vorticityControllerPtr = std::make_unique<ParamController<float>>(group.get("Vorticity").cast<float>());
@@ -81,12 +99,44 @@ void FluidMod::update() {
   vorticityControllerPtr->update();
   valueDissipationControllerPtr->update();
   velocityDissipationControllerPtr->update();
-  
+  tempImpulseRadiusController.update();
+  tempImpulseDeltaController.update();
+
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
-  if (!drawingLayerPtrOpt) return;
-  
+  if (!drawingLayerPtrOpt) {
+    newTempImpulsePoints.clear();
+    return;
+  }
+
   setup();
-  if (!fluidSimulation.isSetup()) return;
+  if (!fluidSimulation.isSetup()) {
+    newTempImpulsePoints.clear();
+    return;
+  }
+
+  const bool tempEnabled = (tempEnabledParamPtr != nullptr) ? tempEnabledParamPtr->get() : false;
+  if (tempEnabled) tempSinksUsedWhileDisabledLogged = false;
+
+  if (!newTempImpulsePoints.empty()) {
+    if (!tempEnabled) {
+      if (!tempSinksUsedWhileDisabledLogged) {
+        tempSinksUsedWhileDisabledLogged = true;
+        ofLogWarning("FluidMod") << "'" << getName() << "': TempImpulse sinks used but TempEnabled is false; enable 'TempEnabled' under Fluid Simulation > Temperature";
+      }
+      newTempImpulsePoints.clear();
+    } else {
+      const auto& velFbo = fluidSimulation.getFlowVelocitiesFbo().getSource();
+      const float w = velFbo.getWidth();
+      const float h = velFbo.getHeight();
+      const float radiusPx = tempImpulseRadiusController.value * std::min(w, h);
+
+      for (const auto& p : newTempImpulsePoints) {
+        fluidSimulation.applyTemperatureImpulse({ p.x * w, p.y * h }, radiusPx, tempImpulseDeltaController.value);
+      }
+
+      newTempImpulsePoints.clear();
+    }
+  }
 
   fluidSimulation.update();
   if (!fluidSimulation.isValid()) {
@@ -96,6 +146,47 @@ void FluidMod::update() {
 
   logValidationOnce("");
   emit(SOURCE_VELOCITIES_TEXTURE, fluidSimulation.getFlowVelocitiesFbo().getSource().getTexture());
+}
+
+void FluidMod::receive(int sinkId, const float& value) {
+  if (!canDrawOnNamedLayer()) return;
+
+  const bool tempEnabled = (tempEnabledParamPtr != nullptr) ? tempEnabledParamPtr->get() : false;
+  if (!tempEnabled && !tempSinksUsedWhileDisabledLogged) {
+    tempSinksUsedWhileDisabledLogged = true;
+    ofLogWarning("FluidMod") << "'" << getName() << "': TempImpulse sinks used but TempEnabled is false; enable 'TempEnabled' under Fluid Simulation > Temperature";
+  }
+
+  switch (sinkId) {
+    case SINK_TEMP_IMPULSE_RADIUS:
+      tempImpulseRadiusController.updateAuto(value, getAgency());
+      break;
+    case SINK_TEMP_IMPULSE_DELTA:
+      tempImpulseDeltaController.updateAuto(value, getAgency());
+      break;
+    default:
+      ofLogError("FluidMod") << "Float receive for unknown sinkId " << sinkId;
+  }
+}
+
+void FluidMod::receive(int sinkId, const glm::vec2& point) {
+  if (!canDrawOnNamedLayer()) return;
+
+  if (sinkId != SINK_TEMP_IMPULSE_POINT) {
+    ofLogError("FluidMod") << "glm::vec2 receive for unknown sinkId " << sinkId;
+    return;
+  }
+
+  const bool tempEnabled = (tempEnabledParamPtr != nullptr) ? tempEnabledParamPtr->get() : false;
+  if (!tempEnabled) {
+    if (!tempSinksUsedWhileDisabledLogged) {
+      tempSinksUsedWhileDisabledLogged = true;
+      ofLogWarning("FluidMod") << "'" << getName() << "': TempImpulse sinks used but TempEnabled is false; enable 'TempEnabled' under Fluid Simulation > Temperature";
+    }
+    return;
+  }
+
+  newTempImpulsePoints.push_back(point);
 }
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {

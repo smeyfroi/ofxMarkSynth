@@ -545,6 +545,118 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
                 f"Layer '{layer_name}' has both Fade and Smear. Use only one layer processor per layer (prefer Smear's MixNew/AlphaMultiplier for persistence)."
             )
 
+    # Fluid boundary mode must match layer wrap.
+    # The sim validates this strictly (e.g. SolidWalls/Open => clamp, Wrap => repeat).
+    expected_wrap_by_boundary_mode: Dict[int, str] = {
+        0: "GL_CLAMP_TO_EDGE",  # SolidWalls
+        1: "GL_REPEAT",  # Wrap
+        2: "GL_CLAMP_TO_EDGE",  # Open
+    }
+
+    for fluid_name, fluid_spec in _iter_mods_of_type(mods, "Fluid"):
+        fluid_cfg = fluid_spec.get("config", {})
+        if not isinstance(fluid_cfg, dict):
+            fluid_cfg = {}
+
+        boundary_mode_raw = fluid_cfg.get("Boundary Mode")
+        boundary_mode_f = _safe_float(boundary_mode_raw)
+        boundary_mode = int(boundary_mode_f) if boundary_mode_f is not None else 0
+        expected_wrap = expected_wrap_by_boundary_mode.get(
+            boundary_mode, "GL_CLAMP_TO_EDGE"
+        )
+
+        layer_map = fluid_spec.get("layers", {})
+        if not isinstance(layer_map, dict):
+            continue
+
+        values_layers = layer_map.get("default", [])
+        vel_layers = layer_map.get("velocities", [])
+        if not isinstance(values_layers, list) or not isinstance(vel_layers, list):
+            continue
+
+        def check_layer_wrap(layer_name: str) -> None:
+            spec = layers.get(layer_name)
+            if not isinstance(spec, dict):
+                return
+            wrap = spec.get("wrap")
+            if wrap != expected_wrap:
+                errors.append(
+                    f"Fluid '{fluid_name}' boundary mode {boundary_mode} expects wrap={expected_wrap} but layer '{layer_name}' has wrap={wrap}"
+                )
+
+        for layer_name in values_layers:
+            if isinstance(layer_name, str):
+                check_layer_wrap(layer_name)
+
+        for layer_name in vel_layers:
+            if isinstance(layer_name, str):
+                check_layer_wrap(layer_name)
+
+    # dt consistency: if a FluidRadialImpulse draws into a Fluid's velocities layer, their dt must match.
+    # (We intentionally do not auto-sync this in code; enforce it in configs.)
+
+    # Map: layerName -> list of Fluid mods that bind it as a velocities layer
+    fluid_vel_layers: Dict[str, List[str]] = {}
+    fluid_dt_by_name: Dict[str, Optional[float]] = {}
+
+    for fluid_name, fluid_spec in _iter_mods_of_type(mods, "Fluid"):
+        fluid_cfg = fluid_spec.get("config", {})
+        if not isinstance(fluid_cfg, dict):
+            fluid_cfg = {}
+        fluid_dt_by_name[fluid_name] = _safe_float(fluid_cfg.get("dt"))
+
+        layer_map = fluid_spec.get("layers", {})
+        if not isinstance(layer_map, dict):
+            continue
+
+        vel_layers = layer_map.get("velocities", [])
+        if not isinstance(vel_layers, list):
+            continue
+
+        for layer in vel_layers:
+            if isinstance(layer, str):
+                fluid_vel_layers.setdefault(layer, []).append(fluid_name)
+
+    # Validate impulses that target any velocities layer.
+    for impulse_name, impulse_spec in _iter_mods_of_type(mods, "FluidRadialImpulse"):
+        impulse_cfg = impulse_spec.get("config", {})
+        if not isinstance(impulse_cfg, dict):
+            impulse_cfg = {}
+
+        impulse_dt = _safe_float(impulse_cfg.get("dt"))
+
+        layer_map = impulse_spec.get("layers", {})
+        if not isinstance(layer_map, dict):
+            continue
+
+        target_layers = layer_map.get("default", [])
+        if not isinstance(target_layers, list):
+            continue
+
+        for layer in target_layers:
+            if not isinstance(layer, str):
+                continue
+
+            for fluid_name in fluid_vel_layers.get(layer, []):
+                fluid_dt = fluid_dt_by_name.get(fluid_name)
+
+                if fluid_dt is None:
+                    errors.append(
+                        f"Fluid '{fluid_name}' is missing/invalid config dt; required for dt consistency checks"
+                    )
+                    continue
+
+                if impulse_dt is None:
+                    errors.append(
+                        f"FluidRadialImpulse '{impulse_name}' targets velocities layer '{layer}' but is missing/invalid config dt"
+                    )
+                    continue
+
+                if abs(fluid_dt - impulse_dt) > 1.0e-6:
+                    errors.append(
+                        f"dt mismatch: Fluid '{fluid_name}' dt={fluid_dt} but FluidRadialImpulse '{impulse_name}' dt={impulse_dt} (shared velocities layer '{layer}')"
+                    )
+
     # ParticleField must draw into a layer that decays.
     # This prevents fast accumulation and blown-out registers.
     decay_layers = (

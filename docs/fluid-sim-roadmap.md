@@ -11,6 +11,22 @@ The work is intentionally paced over multiple sessions: fix defects first, then 
 - External-FBO support stays first-class: `FluidSimulation` must accept `PingPongFbo`s passed in from MarkSynth drawing layers.
 - Manual testing: changes are evaluated by running a fixed set of configs and noting qualitative deltas (edges, flow scale, swirl, persistence, stability). Automated testing is not a goal.
 
+## External Surface Additions (migration-relevant)
+
+This section intentionally lists the externally visible controls (parameters/sinks) that need to be considered when migrating older configs.
+
+- `FluidMod` / `FluidSimulation` parameters:
+  - `Boundary Mode` (0=SolidWalls, 1=Wrap, 2=Open)
+  - Core: `dt`, `Vorticity`, `Value Dissipation`, `Velocity Dissipation`, `Value Spread`, `Velocity Spread`, `Value Max`
+  - `Temperature`: `TempEnabled`, `Temperature Dissipation`, `Temperature Spread`, `Temperature Iterations`
+  - `Buoyancy`: `Buoyancy Strength`, `Buoyancy Density Scale`, `Buoyancy Threshold`, `Gravity Force X`, `Gravity Force Y`, `Use Temperature`, `Ambient Temperature`, `Temperature Threshold`
+- `FluidMod` sinks:
+  - `TempImpulsePoint` (vec2), `TempImpulseRadius` (float), `TempImpulseDelta` (float)
+- `FluidRadialImpulseMod` (new impulse surface):
+  - Directional injection sinks: `PointVelocity`, `Velocity`
+  - Optional artistic control: `SwirlVelocity` sink + `SwirlStrength` parameter (useful for cold-start curl / vortex seeds)
+  - Parameters: `VelocityScale`, `SwirlStrength`, `SwirlVelocity`
+
 ## Phase 1 — Make `ofxRenderer/example_fluid` a debugging reference
 
 Goal: quickly see what each pipeline change does, without MarkSynth complexity.
@@ -169,16 +185,38 @@ Manual check:
 
 ## Phase 7 — Temperature + buoyancy (new functionality after stability)
 
-Goal: implement temperature field correctly (and fix shader version mismatch).
+### Phase 7a — Buoyancy v1 (dye-driven)
 
-- Add temperature ping-pong scalar field + parameters.
-- Modernize `ApplyBouyancyShader` to match `#version 410` pipeline (currently uses legacy `gl_TexCoord/gl_FragColor`).
-- Add temperature injection path in `example_fluid`.
-- Optionally add MarkSynth temperature injection mod later.
+Status: implemented.
+
+- Implement a modern `#version 410` buoyancy pass and apply it before projection.
+- Use the existing dye/values field as “density” (no temperature buffer yet): `density = max(alpha, luma(rgb))`.
+- Parameters live under `Fluid Simulation > Buoyancy`:
+  - `Buoyancy Strength`, `Buoyancy Density Scale`, `Buoyancy Threshold`, `Gravity Force X/Y`
+
+Artistic intent (MarkSynth): makes existing marks/dye behave like “smoke/plumes” without adding a new injection mod.
+
+### Phase 7b — Temperature v2 (separate scalar field)
+
+Goal: decouple “visual dye” from “thermal force” so we can drive motion without brightening marks.
+
+- Add a dedicated temperature ping-pong scalar field (likely single-channel float) + parameters:
+  - `Temperature Dissipation` (persistence)
+  - `Ambient Temperature`
+  - `Buoyancy Strength` (now based on `temperature - ambient`)
+  - Optional: `Temperature Diffusion` (low-iter smoothing)
+- Temperature pipeline per step:
+  - Advect temperature by velocity
+  - Apply dissipation / optional diffusion
+  - Apply buoyancy force from temperature
+  - Project velocity
+- Add temperature injection path in `example_fluid` (mouse/key driven, separate from dye injection).
+- MarkSynth: postpone integration until there is a clean pattern for “external parameter fields” from Mods.
 
 Files:
 - `ofxRenderer/src/fluid/FluidSimulation.h`
 - `ofxRenderer/src/fluid/ApplyBouyancyShader.h`
+- (new) temperature advect/diffuse shader or reuse `AdvectShader` with scalar target
 
 ## Phase 8 — Obstacles/masks (later)
 
@@ -191,30 +229,43 @@ Files:
 At the end of each phase (especially 2–6):
 
 - Run the manual test set (see `fluid-backtest-configs.txt` in the MarkSynth-performances folder).
-- Note qualitative deltas:
-  - edge behavior
-  - flow scale
-  - swirl intensity
-  - persistence
-  - stability
-- Iterate on a small set of migration heuristics (rules of thumb), starting with:
-  - `dt` translation: **tentative** (old sim used `dtEffective = frameDt * dt_old`, new uses `dtEffective = frameDt * 30 * dt_new`): `dt_new ≈ dt_old / 30`
-  - Dissipation translation: old per-frame dissipation `d` -> half-life at 30fps -> invert persistence mapping
-    - half-life seconds: `halfLife = (1/30) * ln(0.5) / ln(d)`
-  - Impulse translation: old radial impulse multiplied by `dt` (acceleration-like); new impulses are specified as **pixels of desired displacement per step** (vector + radial + swirl). Internally these are resolution-normalized and divided by `dtEffective` to become UV velocity.
-    - MarkSynth: `FluidRadialImpulseMod` supports `PointVelocity` (`vec4 {x,y,dx,dy}`), `Velocity` (`vec2` global), and `SwirlVelocity` (`float`) sinks.
-  - Pressure iteration translation: map iterations to a 0..1 quality knob (once implemented)
-    - High-res budget note (e.g. MarkSynth `~2400x2400`): start with `Pressure≈10`, `Velocity diffusion≈1`, `Value diffusion≈1` and adjust using divergence view
-  - Preserve dye injection when radius changes: keep `points * radius^2 * alpha` approximately constant
+- Note qualitative deltas: edge behavior, flow scale, swirl intensity, persistence, stability.
 
-Observed heuristics from `Improvisation1/config/synth/01-minimal-av-fluidwash.json` (a working but partly-artistic tuning):
-- Recommended: keep `Fluid.dt` and all `FluidRadialImpulse.dt` values identical (in this setup `0.0032`). If they diverge, the same normalized impulse settings produce different advection displacement.
-- Decision: we will not try to auto-sync or “solve” dt consistency between Fluid and impulses; at most add runtime validation (e.g. log a warning once if they differ beyond an epsilon).
-- Treat `FluidRadialImpulse.Impulse Strength` as a normalized fraction of the current radius (so effective displacement scales with `Impulse Radius` and stays resolution-independent).
-- Use per-source swirl, separate from vorticity:
-  - `FluidRadialImpulse.SwirlVelocity` is a normalized input.
-  - `FluidRadialImpulse.SwirlStrength` is a multiplier (so `effectiveSwirl = SwirlVelocity * SwirlStrength`).
-- For motion sources like `VideoFlowSourceMod` feeding `PointVelocity`, expect to need a `FluidRadialImpulse.VelocityScale` to get a useful displacement magnitude.
-- Persistence split is important for readability:
-  - value persistence often stays high (e.g. `Value Dissipation≈0.95`), while velocity persistence is lower (e.g. `Velocity Dissipation≈0.8`) so motion doesn’t accumulate forever.
-- If stronger flow makes marks look “too dim”, prefer adjusting `Value Dissipation` / `Value Max` before globally doubling mark alpha; revisit higher-order advection (BFECC/MacCormack) later if needed.
+## Config migration guide (one pass)
+
+This is the “mechanical” porting checklist for converting legacy fluid configs to the current external surface. It focuses on correctness/compatibility first; treat aesthetic compensation as a second pass.
+
+### Required (functional)
+
+- **Wrap + boundary mode**
+  - If values/velocities layers use `GL_CLAMP_TO_EDGE`, set `Fluid.Boundary Mode = 0` (SolidWalls).
+  - If they use `GL_REPEAT`, set `Fluid.Boundary Mode = 1` (Wrap).
+  - Avoid mixed wrap across values/velocities; the sim validates this strictly.
+
+- **Velocity layer exists and is compatible**
+  - Ensure there is a `velocities` drawing layer and that Fluid binds it via `layers.velocities`.
+  - Recommended for the velocities layer: `GL_RG32F`, `OF_BLENDMODE_DISABLED`, `GL_CLAMP_TO_EDGE`, `isDrawn=false`.
+
+- **dt consistency (do not auto-sync in code; do sync in configs)**
+  - For every config, make `Fluid.dt` equal to all `FluidRadialImpulse.dt` values that draw into the same velocities layer.
+  - If migrating from a legacy dt convention, a starting point is: `dt_new ≈ dt_old / 30`.
+
+- **Directional injection (optional functional upgrade)**
+  - If you have a flow source that emits point velocity (e.g. camera motion), you may connect:
+    - `VideoFlowSourceMod.PointVelocity -> FluidRadialImpulseMod.PointVelocity`
+  - If you do not add this connection, point-only impulses still work (radial only).
+
+### Optional (artist controls)
+
+- **Swirl impulses (optional artistic control)**
+  - Use `FluidRadialImpulseMod.SwirlVelocity` (sink or parameter) with `SwirlStrength` as a multiplier.
+  - Purpose: add immediate curl/vortex “seeding” and keep cold-start flow visible.
+
+- **Buoyancy + temperature (new feature surface)**
+  - Buoyancy v1 (dye-driven): enable `Buoyancy Strength` and keep `Use Temperature = 0`.
+  - Buoyancy v2 (temperature-driven): set `TempEnabled = 1`, `Use Temperature = 1`, then inject via `FluidMod` temp sinks (`TempImpulsePoint/Radius/Delta`).
+
+### Likely requires an artistic pass (do not try to fully automate)
+
+- Mark alpha / fade compensation (e.g. `AlphaMultiplier`, `ground.alpha`, `Fade.Alpha` mappings).
+- Dissipation semantics: numeric keys are still named `Value Dissipation` / `Velocity Dissipation`, but they now behave as normalized persistence controls; expect to retune by eye.
