@@ -247,6 +247,21 @@
       }
     },
 
+    "ExampleFluidObstacles": {
+      "type": "Fluid",
+      "_params_from": "ofxRenderer FluidSimulation + MarkSynth layers.obstacles",
+      "_note": "Requires a drawing layer named in Fluid.layers.obstacles. Mask is sampled as max(alpha, luma(rgb)) and must match velocity resolution + wrap.",
+      "config": {
+        "Boundary Mode": "0",
+
+        "ObstaclesEnabled": "1",
+        "Obstacle Threshold": "0.5",
+        "Obstacle Invert": "0",
+
+        "AgencyFactor": "1"
+      }
+    },
+
     "ExampleMultiplyAdd": {
       "type": "MultiplyAdd",
       "config": {

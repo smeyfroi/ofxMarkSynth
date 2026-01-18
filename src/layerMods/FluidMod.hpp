@@ -36,6 +36,7 @@ public:
   static constexpr int SINK_TEMP_IMPULSE_DELTA = 120;
  
   static constexpr std::string VELOCITIES_LAYERPTR_NAME { "velocities" };
+  static constexpr std::string OBSTACLES_LAYERPTR_NAME { "obstacles" };
   
 protected:
   void initParameters() override;

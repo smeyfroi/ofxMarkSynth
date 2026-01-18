@@ -571,7 +571,12 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
 
         values_layers = layer_map.get("default", [])
         vel_layers = layer_map.get("velocities", [])
-        if not isinstance(values_layers, list) or not isinstance(vel_layers, list):
+        obstacle_layers = layer_map.get("obstacles", [])
+        if (
+            not isinstance(values_layers, list)
+            or not isinstance(vel_layers, list)
+            or not isinstance(obstacle_layers, list)
+        ):
             continue
 
         def check_layer_wrap(layer_name: str) -> None:
@@ -591,6 +596,42 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
         for layer_name in vel_layers:
             if isinstance(layer_name, str):
                 check_layer_wrap(layer_name)
+
+        for layer_name in obstacle_layers:
+            if isinstance(layer_name, str):
+                check_layer_wrap(layer_name)
+
+        # Obstacle buffer must match velocities resolution (hard error) when sizes are known.
+        vel_size = None
+        for layer_name in vel_layers:
+            if not isinstance(layer_name, str):
+                continue
+            spec = layers.get(layer_name)
+            if (
+                isinstance(spec, dict)
+                and isinstance(spec.get("width"), int)
+                and isinstance(spec.get("height"), int)
+            ):
+                vel_size = (spec["width"], spec["height"])
+                break
+
+        obs_size = None
+        for layer_name in obstacle_layers:
+            if not isinstance(layer_name, str):
+                continue
+            spec = layers.get(layer_name)
+            if (
+                isinstance(spec, dict)
+                and isinstance(spec.get("width"), int)
+                and isinstance(spec.get("height"), int)
+            ):
+                obs_size = (spec["width"], spec["height"])
+                break
+
+        if vel_size is not None and obs_size is not None and vel_size != obs_size:
+            errors.append(
+                f"Fluid '{fluid_name}' obstacles layer size {obs_size[0]}x{obs_size[1]} must match velocities size {vel_size[0]}x{vel_size[1]}"
+            )
 
     # dt consistency: if a FluidRadialImpulse draws into a Fluid's velocities layer, their dt must match.
     # (We intentionally do not auto-sync this in code; enforce it in configs.)

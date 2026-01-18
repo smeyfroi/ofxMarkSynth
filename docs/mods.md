@@ -803,6 +803,7 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 **Layers**:
 - Default layer: Visual simulation output
 - `velocities` layer: Velocity field (can drive ParticleFieldMod)
+- `obstacles` layer (optional): Obstacle mask sampled by the fluid solver
 
 **Key Parameters**:
 - `Boundary Mode`: 0=SolidWalls, 1=Wrap, 2=Open (must match GL wrap)
@@ -819,6 +820,12 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 - `Temperature Dissipation`, `Temperature Spread`, `Temperature Iterations`: Temperature evolution controls
 - `TempImpulseRadius`: Default injection radius (normalized 0–0.10)
 - `TempImpulseDelta`: Default injected delta (-1.0–1.0)
+
+**Obstacles** (optional):
+- `ObstaclesEnabled`: Enables obstacle masking (requires `layers.obstacles`)
+- `Obstacle Threshold`: Threshold for `max(alpha, luma(rgb))`
+- `Obstacle Invert`: Invert mask
+- Requirements: obstacle layer must match velocity resolution and boundary-mode wrap (hard error if mismatched)
 
 **Buoyancy**:
 - **v1 (dye-driven)**: set `Buoyancy Strength` > 0 and keep `Use Temperature` off

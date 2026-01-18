@@ -84,13 +84,20 @@ void FluidMod::setup() {
 
   auto valuesDrawingLayerPtr = getNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME, 0);
   auto velocitiesDrawingLayerPtr = getNamedDrawingLayerPtr(VELOCITIES_LAYERPTR_NAME, 0);
+  auto obstaclesDrawingLayerPtr = getNamedDrawingLayerPtr(OBSTACLES_LAYERPTR_NAME, 0);
 
   if (!valuesDrawingLayerPtr || !velocitiesDrawingLayerPtr) {
     logValidationOnce("FluidMod '" + getName() + "': missing required drawing layers ('default' and 'velocities').");
     return;
   }
 
-  fluidSimulation.setup(valuesDrawingLayerPtr.value()->fboPtr, velocitiesDrawingLayerPtr.value()->fboPtr);
+  if (obstaclesDrawingLayerPtr) {
+    fluidSimulation.setup(valuesDrawingLayerPtr.value()->fboPtr,
+                         velocitiesDrawingLayerPtr.value()->fboPtr,
+                         obstaclesDrawingLayerPtr.value()->fboPtr);
+  } else {
+    fluidSimulation.setup(valuesDrawingLayerPtr.value()->fboPtr, velocitiesDrawingLayerPtr.value()->fboPtr);
+  }
 }
 
 void FluidMod::update() {
