@@ -9,7 +9,6 @@
 
 #include "core/Mod.hpp"
 #include "core/ParamController.h"
-#include "core/IntentMapping.hpp"
 
 
 
@@ -24,7 +23,6 @@ public:
   float getAgency() const override;
   void update() override;
   void receive(int sinkId, const float& value) override;
-  void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_MULTIPLIER = 10;
   static constexpr int SINK_ADDER = 11;

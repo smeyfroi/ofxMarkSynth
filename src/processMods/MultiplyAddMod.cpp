@@ -6,7 +6,6 @@
 //
 
 #include "MultiplyAddMod.hpp"
-#include "core/IntentMapper.hpp"
 
 
 
@@ -61,18 +60,5 @@ void MultiplyAddMod::receive(int sinkId, const float& value) {
       ofLogError("MultiplyAddMod") << "Float receive for unknown sinkId " << sinkId;
   }
 }
-
-void MultiplyAddMod::applyIntent(const Intent& intent, float strength) {
-  IntentMap im(intent);
-  
-  im.E().exp(multiplierController, strength);
-
-  // Weighted blend: density (60%) + granularity (40%)
-  float combinedAdd = im.D().get() * 0.6f + im.G().get() * 0.4f;
-  float addI = exponentialMap(combinedAdd, adderController);
-  adderController.updateIntent(addI, strength, "D*.6+G -> exp");
-}
-
-
 
 } // ofxMarkSynth
