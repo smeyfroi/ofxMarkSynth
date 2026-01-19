@@ -33,10 +33,6 @@ static std::string getConfigBasenameKey(const std::string& configPath, const std
   return synthName;
 }
 
-static std::string getLegacyLayoutFilePath(const std::string& synthName) {
-  return Synth::saveConfigFilePath(std::string(LAYOUT_FOLDER_NAME) + "/" + synthName + "/layout.json");
-}
-
 static std::string getPreferredLayoutFilePath(const std::string& synthName, const std::string& configPath) {
   const std::string key = getConfigBasenameKey(configPath, synthName);
   return Synth::saveConfigFilePath(std::string(LAYOUT_FOLDER_NAME) + "/" + key + "/layout.json");
@@ -53,11 +49,7 @@ std::string NodeEditorLayoutSerializer::getLayoutFilePath(const std::string& syn
 bool NodeEditorLayoutSerializer::exists(const std::string& synthName,
                                     const std::string& configPath) {
   std::string preferred = getPreferredLayoutFilePath(synthName, configPath);
-  if (std::filesystem::exists(preferred)) return true;
-
-  // TEMPORARY: legacy synth-name key fallback (keep CaldewRiver working).
-  std::string legacy = getLegacyLayoutFilePath(synthName);
-  return std::filesystem::exists(legacy);
+  return std::filesystem::exists(preferred);
 }
 
 nlohmann::json NodeEditorLayoutSerializer::toJson(const NodeEditorModel& model) {
@@ -99,16 +91,7 @@ bool NodeEditorLayoutSerializer::save(const NodeEditorModel& model,
   }
   
   try {
-    std::string preferred = getPreferredLayoutFilePath(synthName, configPath);
-    std::string legacy = getLegacyLayoutFilePath(synthName);
-
-    std::string filepath = preferred;
-    if (std::filesystem::exists(preferred)) {
-      filepath = preferred;
-    } else if (std::filesystem::exists(legacy)) {
-      // TEMPORARY: keep saving into the legacy location if it exists.
-      filepath = legacy;
-    }
+    std::string filepath = getPreferredLayoutFilePath(synthName, configPath);
 
     std::filesystem::path dir = std::filesystem::path(filepath).parent_path();
     std::filesystem::create_directories(dir);
@@ -174,17 +157,10 @@ bool NodeEditorLayoutSerializer::load(NodeEditorModel& model,
     return false;
   }
   
-  std::string preferred = getPreferredLayoutFilePath(synthName, configPath);
-  std::string legacy = getLegacyLayoutFilePath(synthName);
-
-  std::string filepath = preferred;
-  if (!std::filesystem::exists(filepath)) {
-    // TEMPORARY: legacy synth-name key fallback (keep old layouts working).
-    filepath = legacy;
-  }
+  std::string filepath = getPreferredLayoutFilePath(synthName, configPath);
 
   if (!std::filesystem::exists(filepath)) {
-    ofLogNotice("NodeEditorLayoutSerializer") << "No layout file: " << preferred << " (or legacy: " << legacy << ")";
+    ofLogNotice("NodeEditorLayoutSerializer") << "No layout file: " << filepath;
     return false;
   }
   

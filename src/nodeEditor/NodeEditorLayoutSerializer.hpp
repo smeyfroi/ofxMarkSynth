@@ -33,7 +33,6 @@ public:
                    const std::string& configPath);
     
     // Check if layout file exists
-    // TEMPORARY: also checks legacy synth-name layouts for backward compatibility.
     static bool exists(const std::string& synthName,
                      const std::string& configPath);
     
