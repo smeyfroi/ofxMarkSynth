@@ -72,7 +72,7 @@ void SoftCircleMod::update() {
 
   alphaMultiplierController.update();
   float alphaMultiplier = alphaMultiplierController.value;
-  color.a *= alphaMultiplierParameter;
+  color.a *= alphaMultiplier;
 
   softnessController.update();
   float softness = softnessController.value;

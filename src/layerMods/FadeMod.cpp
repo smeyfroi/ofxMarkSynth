@@ -72,7 +72,7 @@ void FadeMod::update() {
   fboPtr->getSource().begin();
   ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  ofSetColor(ofFloatColor { 0.0f, 0.0f, 0.0f, alphaMultiplierParameter.get() }); // TODO: fade to a color not just to black
+  ofSetColor(ofFloatColor { 0.0f, 0.0f, 0.0f, alphaMultiplierController.value }); // TODO: fade to a color not just to black
   unitQuadMesh.draw({ 0.0f, 0.0f }, fboPtr->getSource().getSize());
   ofPopStyle();
   fboPtr->getSource().end();
