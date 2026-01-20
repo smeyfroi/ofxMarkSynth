@@ -198,14 +198,18 @@ void FluidMod::receive(int sinkId, const glm::vec2& point) {
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {
   if (!fluidSimulation.isValid()) return;
-  
+
   IntentMap im(intent);
   im.E().exp(*dtControllerPtr, strength);
-  im.C().lin(*vorticityControllerPtr, strength);
+
+  // High Structure should read as more ordered/laminar flow.
+  // Keep Chaos as the primary vorticity driver, but attenuate it as S rises.
+  float vorticityDim = im.C().get() * (1.0f - im.S().get() * 0.75f); // S=1 -> 25% of Chaos
+  vorticityDim = std::clamp(vorticityDim, 0.0f, 1.0f);
+  float vorticityI = linearMap(vorticityDim, vorticityControllerPtr->getManualMin(), vorticityControllerPtr->getManualMax());
+  vorticityControllerPtr->updateIntent(vorticityI, strength, "C*(1-0.75*S) -> lin");
+
   im.D().inv().lin(*valueDissipationControllerPtr, strength);
   im.G().inv().exp(*velocityDissipationControllerPtr, strength);
 }
-
-
-
 } // ofxMarkSynth

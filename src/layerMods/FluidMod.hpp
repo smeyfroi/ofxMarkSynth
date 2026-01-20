@@ -50,6 +50,10 @@ private:
   std::unique_ptr<ParamController<float>> vorticityControllerPtr;
   std::unique_ptr<ParamController<float>> valueDissipationControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDissipationControllerPtr;
+
+  FluidSimulation::ParameterOverrides lastAppliedParameterOverrides;
+  bool hasLastAppliedParameterOverrides = false;
+
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
   ofParameter<float> tempImpulseRadiusParameter { "TempImpulseRadius", 0.03f, 0.0f, 0.10f };

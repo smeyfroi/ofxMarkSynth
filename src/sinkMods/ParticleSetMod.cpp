@@ -1,4 +1,3 @@
-//
 //  ParticleSetMod.cpp
 //  example_particles
 //
@@ -86,6 +85,44 @@ void ParticleSetMod::update() {
   }
   auto fboPtr = drawingLayerPtrOpt.value()->fboPtr;
 
+  {
+    ParticleSet::ParameterOverrides overrides;
+    overrides.timeStep = std::clamp(timeStepControllerPtr->value, particleSet.timeStep.getMin(), particleSet.timeStep.getMax());
+    overrides.velocityDamping = std::clamp(velocityDampingControllerPtr->value,
+                                          particleSet.velocityDamping.getMin(),
+                                          particleSet.velocityDamping.getMax());
+    overrides.attractionStrength = std::clamp(attractionStrengthControllerPtr->value,
+                                             particleSet.attractionStrength.getMin(),
+                                             particleSet.attractionStrength.getMax());
+    overrides.attractionRadius = std::clamp(attractionRadiusControllerPtr->value,
+                                           particleSet.attractionRadius.getMin(),
+                                           particleSet.attractionRadius.getMax());
+    overrides.forceScale = std::clamp(forceScaleControllerPtr->value, particleSet.forceScale.getMin(), particleSet.forceScale.getMax());
+    overrides.connectionRadius = std::clamp(connectionRadiusControllerPtr->value,
+                                           particleSet.connectionRadius.getMin(),
+                                           particleSet.connectionRadius.getMax());
+    overrides.colourMultiplier = std::clamp(colourMultiplierControllerPtr->value,
+                                           particleSet.colourMultiplier.getMin(),
+                                           particleSet.colourMultiplier.getMax());
+    overrides.maxSpeed = std::clamp(maxSpeedControllerPtr->value, particleSet.maxSpeed.getMin(), particleSet.maxSpeed.getMax());
+
+    const bool overridesChanged = !hasLastAppliedParameterOverrides
+                                 || overrides.timeStep != lastAppliedParameterOverrides.timeStep
+                                 || overrides.velocityDamping != lastAppliedParameterOverrides.velocityDamping
+                                 || overrides.attractionStrength != lastAppliedParameterOverrides.attractionStrength
+                                 || overrides.attractionRadius != lastAppliedParameterOverrides.attractionRadius
+                                 || overrides.forceScale != lastAppliedParameterOverrides.forceScale
+                                 || overrides.connectionRadius != lastAppliedParameterOverrides.connectionRadius
+                                 || overrides.colourMultiplier != lastAppliedParameterOverrides.colourMultiplier
+                                 || overrides.maxSpeed != lastAppliedParameterOverrides.maxSpeed;
+
+    if (overridesChanged) {
+      particleSet.setParameterOverrides(overrides);
+      lastAppliedParameterOverrides = overrides;
+      hasLastAppliedParameterOverrides = true;
+    }
+  }
+
   particleSet.update();
 
   std::for_each(newPoints.begin(), newPoints.end(), [this](const auto& vec) {
@@ -164,6 +201,7 @@ void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
   im.E().lin(*colourMultiplierControllerPtr, strength);
   im.C().lin(*maxSpeedControllerPtr, strength);
 }
+
 
 
 } // ofxMarkSynth

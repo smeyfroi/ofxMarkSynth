@@ -60,6 +60,9 @@ private:
   std::unique_ptr<ParamController<float>> speedThresholdControllerPtr;
   std::unique_ptr<ParamController<float>> field1MultiplierControllerPtr;
   std::unique_ptr<ParamController<float>> field2MultiplierControllerPtr;
+
+  ofxParticleField::ParticleField::ParameterOverrides lastAppliedParameterOverrides;
+  bool hasLastAppliedParameterOverrides = false;
 };
 
 

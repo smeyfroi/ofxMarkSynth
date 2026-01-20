@@ -21,7 +21,17 @@ IntentPtr Intent::createPreset(const std::string& name,
   return std::make_shared<Intent>(name, energy, density, structure, chaos, granularity);
 }
 
+void Intent::setUiImpact(const UiImpact& impact) {
+  uiImpact = impact;
+}
+
+void Intent::setUiNotes(const std::string& notes) {
+  uiNotes = notes;
+}
+
 void Intent::setWeightedBlend(const std::vector<std::pair<IntentPtr, float>>& weightedIntents) {
+  uiImpact = std::nullopt;
+  uiNotes = std::nullopt;
   // Calculate total weight for normalization
   float totalWeight = 0.0f;
   for (const auto& pair : weightedIntents) {

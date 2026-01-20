@@ -23,7 +23,7 @@ namespace ofxMarkSynth {
 
 
 class Synth;
-
+class Intent;
 
 
 class Gui {
@@ -48,6 +48,9 @@ private:
   void drawIntentSlotSliders();
   void drawDisabledSlider(const ImVec2& size, int slotIndex);
   void drawIntentCharacteristicsEditor();
+  void drawIntentActivationTooltip(int slotIndex, const Intent* intentPtr, float activationValue);
+  void drawIntentPresetTooltip(const Intent& intent, float activationValue);
+  void drawIntentImpactMiniGrid(const Intent& intent);
   void drawLayerControls();
   void drawDisplayControls();
   void drawInternalState();

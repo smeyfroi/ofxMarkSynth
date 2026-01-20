@@ -109,6 +109,17 @@ void DividedAreaMod::update() {
   smoothnessControllerPtr->update();
   dividedArea.maxUnconstrainedDividerLines = static_cast<int>(maxUnconstrainedLinesController.value);
 
+  float smoothnessOverride = smoothnessControllerPtr->value;
+  smoothnessOverride = ofClamp(smoothnessOverride,
+                              dividedArea.unconstrainedSmoothnessParameter.getMin(),
+                              dividedArea.unconstrainedSmoothnessParameter.getMax());
+  if (!lastAppliedSmoothnessOverride || *lastAppliedSmoothnessOverride != smoothnessOverride) {
+    DividedArea::ParameterOverrides overrides;
+    overrides.unconstrainedSmoothness = smoothnessOverride;
+    dividedArea.setParameterOverrides(overrides);
+    lastAppliedSmoothnessOverride = smoothnessOverride;
+  }
+
   // Check major-lines layer for unconstrained line updates
   auto majorLayerPtrOpt = getCurrentNamedDrawingLayerPtr(MAJOR_LINES_LAYERPTR_NAME);
   if (majorLayerPtrOpt) {
@@ -212,7 +223,6 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
         float newAngle = v;
         ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_ANGLE: changing angle to " << newAngle;
         angleController.updateAuto(newAngle, getAgency());
-        angleParameter = newAngle;
       }
     } break;
     case SINK_CHANGE_STRATEGY: {

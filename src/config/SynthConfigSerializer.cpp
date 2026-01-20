@@ -6,6 +6,8 @@
 //
 
 #include "config/SynthConfigSerializer.hpp"
+#include <algorithm>
+#include <cmath>
 #include "core/Synth.hpp"
 #include "core/Intent.hpp"
 #include "TimeStringUtil.h"
@@ -355,6 +357,28 @@ bool SynthConfigSerializer::parseIntents(const OrderedJson& j, std::shared_ptr<S
       float granularity = getJsonFloat(intentJson, "granularity", 0.5f);
       
       auto intentPtr = Intent::createPreset(name, energy, density, structure, chaos, granularity);
+
+      // Optional per-intent UI metadata for tooltips (safe to omit in configs).
+      if (intentJson.contains("ui") && intentJson["ui"].is_object()) {
+        const auto& ui = intentJson["ui"];
+        if (ui.contains("notes") && ui["notes"].is_string()) {
+          intentPtr->setUiNotes(ui["notes"].get<std::string>());
+        }
+        if (ui.contains("impact") && ui["impact"].is_object()) {
+          Intent::UiImpact impact;
+          for (auto& item : ui["impact"].items()) {
+            const std::string& key = item.key();
+            const auto& value = item.value();
+            if (!value.is_number()) continue;
+            int v = value.is_number_integer() ? value.get<int>() : static_cast<int>(std::lround(value.get<float>()));
+            v = std::clamp(v, -3, 3);
+            impact.emplace_back(key, v);
+          }
+          if (!impact.empty()) {
+            intentPtr->setUiImpact(impact);
+          }
+        }
+      }
       intentPresets.push_back(intentPtr);
       ofLogNotice("SynthConfigSerializer") << "Created intent: " << name;
     }

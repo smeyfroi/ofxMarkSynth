@@ -13,6 +13,8 @@
 #include "gui/ImGuiUtil.hpp"
 #include "nodeEditor/NodeRenderUtil.hpp"
 #include "gui/HelpContent.hpp"
+#include <algorithm>
+#include <cmath>
 
 
 
@@ -282,7 +284,11 @@ void Gui::drawIntentSlotSliders() {
         if (ImGui::VSliderFloat("##v", sliderSize, &v, param.getMin(), param.getMax(), "%.1f", ImGuiSliderFlags_NoRoundToFormat)) {
           param.set(v);
         }
-        ImGui::SetItemTooltip("%s", param.getName().c_str());
+        const auto& activations = synthPtr->intentController->getActivations();
+        const Intent* intentPtr = (i < (int)activations.size() && activations[i].intentPtr)
+          ? activations[i].intentPtr.get()
+          : nullptr;
+        drawIntentActivationTooltip(i, intentPtr, v);
       } else {
         drawDisabledSlider(sliderSize, i);
       }
@@ -313,6 +319,87 @@ void Gui::drawIntentSlotSliders() {
     ImGui::PopID();
 
     ImGui::EndTable();
+  }
+
+  ImGui::PopStyleVar();
+}
+
+
+static ImU32 impactToColorU32(int impact) {
+  impact = std::clamp(impact, -3, 3);
+  if (impact == 0) return IM_COL32(150, 150, 150, 255); // pale grey
+
+  float t = std::abs(impact) / 3.0f; // 0..1
+  if (impact > 0) {
+    // grey -> green
+    int r = static_cast<int>(ofLerp(150, 60, t));
+    int g = static_cast<int>(ofLerp(150, 220, t));
+    int b = static_cast<int>(ofLerp(150, 90, t));
+    return IM_COL32(r, g, b, 255);
+  }
+
+  // grey -> red
+  int r = static_cast<int>(ofLerp(150, 235, t));
+  int g = static_cast<int>(ofLerp(150, 70, t));
+  int b = static_cast<int>(ofLerp(150, 70, t));
+  return IM_COL32(r, g, b, 255);
+}
+
+void Gui::drawIntentActivationTooltip(int slotIndex, const Intent* intentPtr, float activationValue) {
+  if (!ImGui::IsItemHovered()) return;
+
+  ImGui::BeginTooltip();
+  if (!intentPtr) {
+    ImGui::Text("No intent assigned to slot %d", slotIndex + 1);
+    ImGui::EndTooltip();
+    return;
+  }
+
+  drawIntentPresetTooltip(*intentPtr, activationValue);
+  ImGui::EndTooltip();
+}
+
+void Gui::drawIntentPresetTooltip(const Intent& intent, float activationValue) {
+  ImGui::TextUnformatted(intent.getName().c_str());
+  ImGui::Text("activation: %.2f", activationValue);
+  ImGui::Separator();
+  ImGui::Text("E %.2f  D %.2f  S %.2f  C %.2f  G %.2f",
+              intent.getEnergy(), intent.getDensity(), intent.getStructure(), intent.getChaos(), intent.getGranularity());
+
+  if (intent.getUiImpact().has_value()) {
+    ImGui::Separator();
+    drawIntentImpactMiniGrid(intent);
+  }
+
+  if (intent.getUiNotes().has_value() && !intent.getUiNotes()->empty()) {
+    ImGui::Separator();
+    ImGui::PushTextWrapPos(320.0f);
+    ImGui::TextUnformatted(intent.getUiNotes()->c_str());
+    ImGui::PopTextWrapPos();
+  }
+}
+
+void Gui::drawIntentImpactMiniGrid(const Intent& intent) {
+  const auto& impactOpt = intent.getUiImpact();
+  if (!impactOpt.has_value()) return;
+
+  constexpr float swatchSize = 14.0f;
+  constexpr float swatchPad = 6.0f;
+
+  // Dense layout inside tooltip.
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 0.0f));
+
+  for (const auto& [label, impact] : *impactOpt) {
+    ImGui::AlignTextToFramePadding();
+
+    ImVec2 p = ImGui::GetCursorScreenPos();
+    ImGui::GetWindowDrawList()->AddRectFilled(p,
+                                              ImVec2(p.x + swatchSize, p.y + swatchSize),
+                                              impactToColorU32(impact));
+    ImGui::Dummy(ImVec2(swatchSize, swatchSize));
+
+    ImGui::SameLine(0.0f, swatchPad);
+    ImGui::TextUnformatted(label.c_str());
   }
 
   ImGui::PopStyleVar();

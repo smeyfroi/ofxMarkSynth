@@ -1,4 +1,3 @@
-//
 //  ParticleFieldMod.cpp
 //  fingerprint1
 //
@@ -103,6 +102,62 @@ void ParticleFieldMod::update() {
     particleField.updateRandomColorBlocks(updateBlocks, 64, [&color](size_t) {
       return color;
     });
+  }
+
+  {
+    ofxParticleField::ParticleField::ParameterOverrides overrides;
+    overrides.velocityDamping = std::clamp(velocityDampingControllerPtr->value,
+                                          particleField.velocityDampingParameter.getMin(),
+                                          particleField.velocityDampingParameter.getMax());
+    overrides.forceMultiplier = std::clamp(forceMultiplierControllerPtr->value,
+                                          particleField.forceMultiplierParameter.getMin(),
+                                          particleField.forceMultiplierParameter.getMax());
+    overrides.maxVelocity = std::clamp(maxVelocityControllerPtr->value,
+                                       particleField.maxVelocityParameter.getMin(),
+                                       particleField.maxVelocityParameter.getMax());
+    overrides.particleSize = std::clamp(particleSizeControllerPtr->value,
+                                        particleField.particleSizeParameter.getMin(),
+                                        particleField.particleSizeParameter.getMax());
+    overrides.jitterStrength = std::clamp(jitterStrengthControllerPtr->value,
+                                         particleField.jitterStrengthParameter.getMin(),
+                                         particleField.jitterStrengthParameter.getMax());
+    overrides.jitterSmoothing = std::clamp(jitterSmoothingControllerPtr->value,
+                                          particleField.jitterSmoothingParameter.getMin(),
+                                          particleField.jitterSmoothingParameter.getMax());
+    overrides.speedThreshold = std::clamp(speedThresholdControllerPtr->value,
+                                         particleField.speedThresholdParameter.getMin(),
+                                         particleField.speedThresholdParameter.getMax());
+    overrides.minWeight = std::clamp(minWeightControllerPtr->value,
+                                     particleField.minWeightParameter.getMin(),
+                                     particleField.minWeightParameter.getMax());
+    overrides.maxWeight = std::clamp(maxWeightControllerPtr->value,
+                                     particleField.maxWeightParameter.getMin(),
+                                     particleField.maxWeightParameter.getMax());
+    overrides.field1Multiplier = std::clamp(field1MultiplierControllerPtr->value,
+                                           particleField.field1MultiplierParameter.getMin(),
+                                           particleField.field1MultiplierParameter.getMax());
+    overrides.field2Multiplier = std::clamp(field2MultiplierControllerPtr->value,
+                                           particleField.field2MultiplierParameter.getMin(),
+                                           particleField.field2MultiplierParameter.getMax());
+
+    const bool overridesChanged = !hasLastAppliedParameterOverrides
+                                 || overrides.velocityDamping != lastAppliedParameterOverrides.velocityDamping
+                                 || overrides.forceMultiplier != lastAppliedParameterOverrides.forceMultiplier
+                                 || overrides.maxVelocity != lastAppliedParameterOverrides.maxVelocity
+                                 || overrides.particleSize != lastAppliedParameterOverrides.particleSize
+                                 || overrides.jitterStrength != lastAppliedParameterOverrides.jitterStrength
+                                 || overrides.jitterSmoothing != lastAppliedParameterOverrides.jitterSmoothing
+                                 || overrides.speedThreshold != lastAppliedParameterOverrides.speedThreshold
+                                 || overrides.minWeight != lastAppliedParameterOverrides.minWeight
+                                 || overrides.maxWeight != lastAppliedParameterOverrides.maxWeight
+                                 || overrides.field1Multiplier != lastAppliedParameterOverrides.field1Multiplier
+                                 || overrides.field2Multiplier != lastAppliedParameterOverrides.field2Multiplier;
+
+    if (overridesChanged) {
+      particleField.setParameterOverrides(overrides);
+      lastAppliedParameterOverrides = overrides;
+      hasLastAppliedParameterOverrides = true;
+    }
   }
 
   particleField.update();

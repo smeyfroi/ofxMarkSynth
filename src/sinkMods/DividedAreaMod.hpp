@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 #include "ofxGui.h"
 #include "core/Mod.hpp"
@@ -69,6 +70,7 @@ private:
   
   // Controller for smoothness - wraps DividedArea's parameter for Intent integration
   std::unique_ptr<ParamController<float>> smoothnessControllerPtr;
+  std::optional<float> lastAppliedSmoothnessOverride;
   
   std::vector<glm::vec2> newMajorAnchors;
   std::vector<glm::vec2> newMinorAnchors;

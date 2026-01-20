@@ -1,4 +1,3 @@
-//
 //  ClusterMod.cpp
 //  example_audio_clusters
 //
@@ -6,6 +5,10 @@
 //
 
 #include "ClusterMod.hpp"
+
+#include <algorithm>
+#include <cmath>
+
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 #include "config/Parameter.hpp"
@@ -32,7 +35,7 @@ void ClusterMod::initParameters() {
   addFlattenedParameterGroup(parameters, pointClusters.getParameterGroup());
   parameters.add(agencyFactorParameter);
   clustersControllerPtr = std::make_unique<ParamController<float>>(pointClusters.clustersParameter);
-  
+
   registerControllerForSource(pointClusters.clustersParameter, *clustersControllerPtr);
 }
 
@@ -44,6 +47,18 @@ void ClusterMod::update() {
   syncControllerAgencies();
   clustersControllerPtr->update();
 
+  {
+    int effectiveNumClusters = static_cast<int>(std::lround(clustersControllerPtr->value));
+    effectiveNumClusters = std::clamp(effectiveNumClusters, pointClusters.getMinClusters(), pointClusters.getMaxClusters());
+
+    if (!lastAppliedNumClustersOverride.has_value() || lastAppliedNumClustersOverride.value() != effectiveNumClusters) {
+      PointClusters::ParameterOverrides overrides;
+      overrides.numClusters = effectiveNumClusters;
+      pointClusters.setParameterOverrides(overrides);
+      lastAppliedNumClustersOverride = effectiveNumClusters;
+    }
+  }
+
   std::for_each(newVecs.cbegin(), newVecs.cend(), [this](const auto& v) {
     pointClusters.add(v);
   });
@@ -53,7 +68,7 @@ void ClusterMod::update() {
   std::for_each(clusters.cbegin(), clusters.cend(), [this](const auto& v) {
     emit(SOURCE_CLUSTER_CENTRE_VEC2, v);
   });
-  
+
   pointClusters.update();
 }
 
@@ -85,6 +100,7 @@ void ClusterMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   im.C().lin(*clustersControllerPtr, strength);
 }
+
 
 
 } // ofxMarkSynth

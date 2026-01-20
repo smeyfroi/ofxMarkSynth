@@ -55,6 +55,10 @@ private:
   std::unique_ptr<ParamController<float>> connectionRadiusControllerPtr;
   std::unique_ptr<ParamController<float>> colourMultiplierControllerPtr;
   std::unique_ptr<ParamController<float>> maxSpeedControllerPtr;
+
+  ParticleSet::ParameterOverrides lastAppliedParameterOverrides;
+  bool hasLastAppliedParameterOverrides = false;
+
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
   std::vector<glm::vec4> newPoints; // { x, y, dx, dy }

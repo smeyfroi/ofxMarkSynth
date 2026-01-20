@@ -1,4 +1,3 @@
-//
 //  ClusterMod.hpp
 //  example_audio_clusters
 //
@@ -8,7 +7,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <vector>
+
 #include "ofxGui.h"
 #include "core/Mod.hpp"
 #include "ofxPointClusters.h"
@@ -39,6 +40,8 @@ protected:
 private:
   std::unique_ptr<ParamController<float>> clustersControllerPtr;
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
+
+  std::optional<int> lastAppliedNumClustersOverride;
 
   PointClusters pointClusters;
 
