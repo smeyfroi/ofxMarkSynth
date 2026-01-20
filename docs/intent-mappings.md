@@ -296,6 +296,7 @@ Strategy selection:
 | S | PointColour.brightness | structureToBrightness * 0.5 |
 | E*C | PointColour.saturation | direct |
 | D | PointColour.alpha | lin(0.1 -> 0.5) |
+| D | ln2ParticleCount | exp — density = more particles |
 | 1-G | minWeight | inv |
 | C | maxWeight | lin |
 | 1-G | velocityDamping | inv — high G = low damping (more motion) |

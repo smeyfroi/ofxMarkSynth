@@ -51,6 +51,7 @@ private:
   std::unique_ptr<ParamController<float>> maxWeightControllerPtr;
   std::unique_ptr<ParamController<ofFloatColor>> pointColorControllerPtr;
   
+  std::unique_ptr<ParamController<float>> ln2ParticleCountControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDampingControllerPtr;
   std::unique_ptr<ParamController<float>> forceMultiplierControllerPtr;
   std::unique_ptr<ParamController<float>> maxVelocityControllerPtr;

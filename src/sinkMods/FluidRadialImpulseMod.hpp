@@ -40,10 +40,10 @@ protected:
 private:
   ofParameter<float> impulseRadiusParameter { "Impulse Radius", 0.01, 0.0, 0.10 };
   ParamController<float> impulseRadiusController { impulseRadiusParameter };
-  ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.5, 0.0, 1.0 };
+  ofParameter<float> impulseStrengthParameter { "Impulse Strength", 0.3, 0.0, 0.7 };
   ParamController<float> impulseStrengthController { impulseStrengthParameter };
   // Interpreted as the dt used by the impulse injection shader (must match the fluid solver's dt semantics).
-  ofParameter<float> dtParameter { "dt", 0.0015f, 0.0f, 0.003f };
+  ofParameter<float> dtParameter { "dt", 0.001f, 0.0f, 0.002f };
 
   // Scales incoming normalized velocity sinks to pixel displacement per step.
   // For a W×H velocity buffer: px = VelocityScale * (dxNorm*W, dyNorm*H)

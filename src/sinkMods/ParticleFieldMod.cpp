@@ -39,6 +39,8 @@ void ParticleFieldMod::initParameters() {
   maxWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxWeight").cast<float>());
   pointColorControllerPtr = std::make_unique<ParamController<ofFloatColor>>(pointColorParameter);
 
+  ln2ParticleCountControllerPtr = std::make_unique<ParamController<float>>(parameters.get("ln2ParticleCount").cast<float>());
+
   velocityDampingControllerPtr = std::make_unique<ParamController<float>>(parameters.get("velocityDamping").cast<float>());
   forceMultiplierControllerPtr = std::make_unique<ParamController<float>>(parameters.get("forceMultiplier").cast<float>());
   maxVelocityControllerPtr = std::make_unique<ParamController<float>>(parameters.get("maxVelocity").cast<float>());
@@ -55,6 +57,7 @@ void ParticleFieldMod::initParameters() {
   registerControllerForSource(maxWeightParam, *maxWeightControllerPtr);
   registerControllerForSource(pointColorParameter, *pointColorControllerPtr);
 
+  registerControllerForSource(parameters.get("ln2ParticleCount").cast<float>(), *ln2ParticleCountControllerPtr);
   registerControllerForSource(parameters.get("velocityDamping").cast<float>(), *velocityDampingControllerPtr);
   registerControllerForSource(parameters.get("forceMultiplier").cast<float>(), *forceMultiplierControllerPtr);
   registerControllerForSource(parameters.get("maxVelocity").cast<float>(), *maxVelocityControllerPtr);
@@ -75,6 +78,7 @@ void ParticleFieldMod::update() {
   if (minWeightControllerPtr) minWeightControllerPtr->update();
   if (maxWeightControllerPtr) maxWeightControllerPtr->update();
   if (pointColorControllerPtr) pointColorControllerPtr->update();
+  if (ln2ParticleCountControllerPtr) ln2ParticleCountControllerPtr->update();
   if (velocityDampingControllerPtr) velocityDampingControllerPtr->update();
   if (forceMultiplierControllerPtr) forceMultiplierControllerPtr->update();
   if (maxVelocityControllerPtr) maxVelocityControllerPtr->update();
@@ -237,6 +241,9 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   if (pointColorControllerPtr) {
     pointColorControllerPtr->updateIntent(intentColor, strength, "E,S,C,D → PointColour");
   }
+
+  // Density should be a strong "more particles" control.
+  im.D().exp(*ln2ParticleCountControllerPtr, strength);
 
   im.G().inv().lin(*minWeightControllerPtr, strength);
   im.C().lin(*maxWeightControllerPtr, strength);
