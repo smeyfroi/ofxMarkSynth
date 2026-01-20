@@ -149,11 +149,11 @@ This visual distinction helps identify at a glance which parts of the synth grap
 | Mod | Intent | AgencyFactor | Primary Dimensions |
 |-----|--------|--------------|-------------------|
 | ClusterMod | Yes | Yes | C |
-| MultiplyAddMod | Yes | Yes | E, D, G |
+| MultiplyAddMod | No (by design) | Yes | — |
 | VectorMagnitudeMod | No | No | — |
-| PathMod | Yes | Yes | D, G, C, S |
+| PathMod | Yes (partial) | Yes | D, G |
 | PixelSnapshotMod | Yes | Yes | S, G |
-| SomPaletteMod | Yes* | Yes | — (empty implementation) |
+| SomPaletteMod | No (by design) | Yes | — |
 | VaryingValueMod | No | — | (commented out) |
 
 ## Process Mods - Detail
@@ -166,10 +166,12 @@ This visual distinction helps identify at a glance which parts of the synth grap
 
 ### MultiplyAddMod
 
-| Dimension | Parameter | Function |
-|-----------|-----------|----------|
-| E | Multiplier | exp |
-| D*0.6 + G*0.4 | Adder | exp |
+No Intent mapping (by design).
+
+Rationale:
+- `MultiplyAddMod` is used as a low-level utility for scaling/offsetting envelopes.
+- Driving it from high-level Intent tends to create confusing global side effects (it changes the meaning of upstream signals).
+- If you want Intent to shape a derived envelope, prefer mapping Intent directly on the target Mod, or add a dedicated "IntentMap" mod with performer-visible semantics.
 
 ### VectorMagnitudeMod
 
@@ -181,12 +183,21 @@ No Intent mapping (currently). This is a utility mod for deriving scalar envelop
 |-----------|-----------|----------|
 | G | ClusterRadius | exp — higher granularity = larger cluster radius (bigger shapes) |
 | D | MaxVertices | exp |
-| C, S | Strategy | conditional (see below, currently disabled) |
+
+**Not Intent-driven (by design):** `Strategy`
+
+Rationale:
+- Strategy switching is a discontinuous jump (it can read like a glitch or mode change).
+- In performance it’s often preferable to switch `Strategy` explicitly (via config choice, triggers, or dedicated controls), rather than having it drift with Intent.
+
+Note: there is commented-out experimental code for Strategy selection based on Chaos/Structure in `src/processMods/PathMod.cpp:275`.
 
 **Parameter semantics:**
 - **ClusterRadius**: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). All points within this radius of the newest point are collected, then shaped by the Strategy (polypath, bounds, convex hull, etc.).
 
-Strategy selection (commented out in code):
+(Intentionally not used for Intent in current design.)
+
+The codebase contains a commented-out experimental Strategy mapping based on Chaos/Structure in `src/processMods/PathMod.cpp:275`:
 - C > 0.6 AND S < 0.4 -> 2 (horizontals)
 - S > 0.7 -> 3 (convex hull)
 - S < 0.3 -> 0 (polypath)
@@ -198,6 +209,14 @@ Strategy selection (commented out in code):
 |-----------|-----------|----------|
 | (1-S)*0.6 + G*0.4 | Size | lin |
 
+### SomPaletteMod
+
+No Intent mapping (by design).
+
+Rationale:
+- The palette is treated as an external “world state” driven by samples, palette switching, and/or explicit performer controls.
+- Keeping it out of Intent helps preserve stable color identity within a config.
+
 ---
 
 ## Sink Mods - Overview
@@ -206,7 +225,7 @@ Strategy selection (commented out in code):
 |-----|--------|--------------|-------------------|
 | CollageMod | Yes | Yes | E, S, D, C, G |
 | DividedAreaMod | Yes | Yes | C, G, E, D, S |
-| FluidRadialImpulseMod | Yes | Yes | G, E, C |
+| FluidRadialImpulseMod | Yes | Yes | G, E, C, S |
 | IntrospectorMod | No | — | — |
 | ParticleFieldMod | Yes | Yes | E, S, C, D, G |
 | ParticleSetMod | Yes | Yes | E, C, S, D, G |
@@ -260,11 +279,13 @@ Strategy selection:
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| G | Impulse Radius | exp |
-| E (80%) + C (20%) | Impulse Strength | exp(4.0)(0.0 -> 0.6×max) weighted |
+| G * (1 - 0.4*S) | Impulse Radius | exp(G) then attenuate by Structure |
+| (E*0.8 + C*0.2) * (1 - 0.7*S) | Impulse Strength | exp(4.0)(0.0 -> 0.6×max) weighted, then attenuate by Structure |
+| C * (1 - 0.7*S) | SwirlStrength | exp(2.0) — increases with Chaos, reduced by Structure |
+| C * (1 - 0.7*S) | SwirlVelocity | exp(2.0) — increases with Chaos, reduced by Structure |
 | (none) | dt | manual (UI-controlled time step) |
 
-**Manual-only (not Intent-driven)**: `VelocityScale`, `SwirlStrength`, `SwirlVelocity`.
+**Manual-only (not Intent-driven)**: `VelocityScale`.
 
 
 ### ParticleFieldMod
@@ -344,7 +365,7 @@ Strategy selection:
 | Mod | Intent | AgencyFactor | Primary Dimensions |
 |-----|--------|--------------|-------------------|
 | FadeMod | Yes | Yes | D, G |
-| FluidMod | Yes | Yes | E, C, D, G |
+| FluidMod | Yes | Yes | E, C, D, G, S |
 | SmearMod | Yes | Yes | E, D, C, G, S |
 
 ## Layer Mods - Detail
@@ -360,7 +381,7 @@ Strategy selection:
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
 | E | dt | exp |
-| C | Vorticity | lin |
+| C * (1 - 0.75*S) | Vorticity | lin — Structure attenuates Chaos for laminar flow |
 | 1-D | Value Dissipation | inv |
 | 1-G | Velocity Dissipation | invExp |
 
@@ -396,17 +417,23 @@ Strategy selection:
 
 ## Summary
 
-**Active Intent implementations**: 18 Mods
+**Mods with `applyIntent()`**: 23 total (includes `Synth` + `MemoryBankController`).
 
-**AgencyFactor support**: 16 Mods (all Mods we updated with per-Mod agency control)
+**Performer-visible Intent mappings**:
+- Most mark-making Mods implement meaningful mappings.
+- Intent is intentionally excluded from:
+  - `MultiplyAddMod` (utility scaling/offset)
+  - `SomPaletteMod` (palette is treated as external world state)
+  - `PathMod` Strategy switching (discontinuous; keep explicit)
 
-**Mods without Intent**:
-- AudioDataSourceMod, StaticTextSourceMod (source)
-- VaryingValueMod (commented out)
-- IntrospectorMod (sink)
-- AddTextureMod, TranslateMod (commented out)
+**AgencyFactor support**:
+- Most Mods that can receive automation also support per-Mod `AgencyFactor`.
 
-*Note: SomPaletteMod has AgencyFactor but empty applyIntent() body (ready for future implementation)*
+**Mods without Intent** (non-exhaustive):
+- `AudioDataSourceMod`, `StaticTextSourceMod` (source)
+- `VectorMagnitudeMod` (process utility)
+- `IntrospectorMod` (sink)
+- `VaryingValueMod`, `AddTextureMod`, `TranslateMod` (commented out)
 
 **Dimension usage frequency**:
 | Dimension | Mods Using |
@@ -420,4 +447,4 @@ Strategy selection:
 ---
 
 **Document Version**: 1.0
-**Last Updated**: December 5, 2025
+**Last Updated**: January 19, 2026

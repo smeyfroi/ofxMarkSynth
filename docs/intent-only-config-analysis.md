@@ -56,7 +56,51 @@ This yields the most “pure” intent behavior without changing engine settings
 
 ---
 
+## Intent Scope (What to Ignore)
+
+When doing performer-facing Intent analysis, it helps to explicitly exclude Mods that are intentionally *not* part of Intent.
+
+- `MultiplyAddMod`: utility scaling/offset; not Intent-driven by design.
+- `SomPaletteMod`: palette behavior is not Intent-driven by design.
+- `PathMod`: Intent affects shape scale (`D`, `G`), but Strategy switching is intentionally not Intent-driven.
+
+These decisions are recorded in `docs/intent-mappings.md`.
+
+---
+
 ## Repeatable analysis method
+
+### First-pass analysis across a whole config set
+
+This is the recommended workflow for generating a first-pass printable summary for a performance set (e.g. 56 configs).
+
+1. **Pick the mod set you care about** (the “mark types”).
+   - Start from the sink/layer mods that visibly draw: `Smear`, `SoftCircle`, `SandLine`, `ParticleSet`, `ParticleField`, `DividedArea`, `Collage`, `Text`, plus motion drivers like `Fluid`/`FluidRadialImpulse`.
+   - Ignore utility/process mods unless they create a clearly visible register.
+
+2. **Define a stable row taxonomy (scene stack)** you will reuse everywhere.
+   - Example: `Surface`, `Motion`, `Particles`, `Accents`, `Overlay`.
+   - If you annotate row labels with Mod *types*, omit `AudioDataSource` and `SomPalette` (they are ubiquitous and clutter the label).
+
+3. **Choose the baseline** you will standardize on.
+   - For performer prep, baseline = **No intent** (Intent Strength = 0) is usually most informative.
+   - Use `agency = 0` while analyzing if you want to isolate intent from auto.
+
+4. **For each config**, map Mods → rows.
+   - Identify which Mods draw into which layers.
+   - Collapse them into your mark-type rows (e.g. two ParticleSets both go into `Particles`).
+
+5. **Fill the table cells** by reading `applyIntent()` and applying the `+ + / + / - / - -` heuristics.
+   - Use the Mod’s actual intent-driven parameters (from code) and your intensity proxies.
+   - Reserve `+ + +` / `- - -` for rare “dominance flip” extremes.
+
+6. **Record any config-specific exceptions** (one-liners under the table).
+   - Example: “Geometry overlay is always + + because minor alpha is intent-driven high.”
+
+7. **Rebuild for other mod sets** by reusing steps 1–6.
+   - The key reusable artifacts are: (a) your row taxonomy, (b) your baseline choice, (c) your per-mark intensity proxies.
+
+---
 
 ### Step 1: Read the config and list visible layers/mods
 
@@ -173,10 +217,12 @@ Example proxy interpretations:
 
 When writing delta tables, annotate each cell using:
 
-- `++` = high change, increase
-- `+`  = medium change, increase
-- `-`  = medium change, reduction
-- `--` = high change, reduction
+- `+ + +` = extreme change, increase (rare: becomes a dominant voice)
+- `+ +` = high change, increase
+- `+` = medium change, increase
+- `-` = medium change, reduction
+- `- -` = high change, reduction
+- `- - -` = extreme change, reduction (rare: effectively drops out)
 - *(blank)* = little effect (low delta)
 
 ### Table layout (easy to scan live)
@@ -199,6 +245,23 @@ Notes:
 - If the chosen baseline is one of the intents (e.g. baseline = Still), the baseline column will usually be blank.
 - Some parameters don’t have a clean “more/less” axis (e.g. angle). In those cases, treat `+/-` as a dominance/visibility cue rather than a literal increase/decrease.
 
+### Intent dimension coverage matrix (gap finder)
+
+Before (or alongside) per-config impact tables, it’s useful to build a **dimension coverage matrix**: Mod type × {E,D,S,C,G}.
+
+Purpose:
+- Find under-utilized dimensions (e.g. `S` rarely mapped) in the Mod set you’re actually using.
+- Find Mods that only respond to 1–2 dimensions (so some intents cannot meaningfully affect them).
+
+Method (repeatable, code-driven):
+1. Enumerate unique Mod `type`s in the config set (e.g. all `config/synth/*.json`).
+2. For each Mod type, consult `docs/intent-mappings.md` and extract which intent dimensions appear in that Mod’s mapping tables.
+   - Treat expressions like `1-S` as still using `S`.
+3. Render a Markdown matrix with a mark per dimension.
+
+Reference output (Improvisation1):
+- See `docs/intent-dimension-coverage-matrix.md`.
+
 ---
 
 ## Example Tables (Configs 10, 30, 60)
@@ -213,42 +276,43 @@ Assumptions:
 
 | Mark \ Intent | Still | Sparse | Flow | Grain | Structure | Turbulence | Maximum |
 |---|---|---|---|---|---|---|---|
-| Surface: Smear | -- | -- | - | - | -- | + | + |
-| Motion: FluidMotion |  |  |  | - |  | + | ++ |
-| Accents: SoftMarks |  |  | + |  |  | ++ | ++ |
+| Surface: Smear | - - | - - | - | - | - - | + | + |
+| Motion: FluidMotion | | | | - | | + | + + + |
+| Accents: SoftMarks | | | + | | | + + | + + + |
 
 ### Config 30 — `config/synth/30-dualfield-particles-av-inkflow.json`
 
 | Mark \ Intent | Still | Sparse | Flow | Grain | Structure | Turbulence | Maximum |
 |---|---|---|---|---|---|---|---|
-| Motion: FluidMotion | -- | -- | - | -- | - |  | ++ |
-| Particles: ParticleField |  |  | + | ++ | + | ++ | ++ |
-| Accents: SoftMarks |  |  | + |  |  | ++ | ++ |
-| Overlay: Geometry | + | + | + | ++ | + | ++ | ++ |
+| Motion: FluidMotion | - - | - - | - | - - | - | | + + + |
+| Particles: ParticleField | | | + | + + | + | + + | + + + |
+| Accents: SoftMarks | | | + | | | + + | + + + |
+| Overlay: Geometry | + | + | + | + + | + | + + | + + + |
 
 ### Config 60 — `config/synth/60-chaos-av-dualparticle.json`
 
 | Mark \ Intent | Still | Sparse | Flow | Grain | Structure | Turbulence | Maximum |
 |---|---|---|---|---|---|---|---|
-| Surface: Smear | -- | -- | -- | - | -- | + | + |
-| Motion: FluidMotion | -- | -- | - | - | -- |  | ++ |
-| Particles: Webs | -- | -- | -- | + | -- |  |  |
-| Accents: SoftMarks | - | - | + |  | - | ++ | ++ |
-| Overlay: Geometry | ++ | ++ | ++ | ++ | ++ | ++ | ++ |
+| Surface: Smear | - - | - - | - - | - | - - | + | + |
+| Motion: FluidMotion | - - | - - | - | - | - - | | + + + |
+| Particles: Webs | - - | - - | - - | + | - - | | |
+| Accents: SoftMarks | - | - | + | | - | + + | + + + |
+| Overlay: Geometry | + + | + + | + + | + + | + + | + + | + + + |
 
 ---
 
 ## Worked example: config 60 (Row 6 chaos A/V dualparticle)
 
-### Accuracy caveat (important)
+### Intent coverage sanity-check
 
-This delta-table approach can be used immediately, but its accuracy depends on whether each Mod actually uses its `ParamController` outputs.
+When doing analysis for a new Mod (or a new external simulation wrapper), sanity-check that Intent values actually reach the rendered/updated behavior.
 
-- If a Mod updates controllers in `applyIntent()` but later reads raw `ofParameter.get()` values (or a downstream simulation reads its own internal parameters), then the table will overestimate intent impact for that Mod.
-- Once the intent/controller defects are fixed, re-running the analysis should make particle/fluid-related rows notably more accurate.
+Recommended checklist:
+- `applyIntent()` updates one or more `ParamController`s.
+- `update()`/draw consumes `controller.value`, or pushes `controller.value` into downstream simulation parameters.
+- If the Mod wraps an external engine, prefer a `ParameterOverrides` + `setParameterOverrides(...)` pattern (see `docs/wrapper-param-controllers.md`).
 
-A quick way to sanity-check a Mod:
-- In `update()`/draw, look for `controller.value` usage (good) vs `parameter.get()` usage (often a red flag).
+If this checklist isn’t satisfied, either (a) fix the Mod, or (b) treat it as “not Intent-driven” for performer-facing tables.
 
 Config file:
 - `config/synth/60-chaos-av-dualparticle.json`
@@ -284,7 +348,7 @@ From the involved `applyIntent()` methods:
 3. For each of those Mods: open its `applyIntent()` implementation and list the parameters it updates.
 4. Translate each parameter into a performer-relevant visual description.
 5. Decide the analysis baseline (Still vs No intent).
-6. Build an impact table with intents as columns using `++/+/-/--` (leave blanks for low deltas) as a Markdown pipe table.
+6. Build an impact table with intents as columns using `+ + + / + + / + / - / - - / - - -` (leave blanks for low deltas) as a Markdown pipe table.
 7. Optionally add a one-line “look” description per intent.
 8. Decide which dimensions are primary/secondary levers for that config.
 
