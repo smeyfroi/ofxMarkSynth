@@ -327,7 +327,7 @@ void Gui::drawIntentSlotSliders() {
 
 static ImU32 impactToColorU32(int impact) {
   impact = std::clamp(impact, -3, 3);
-  if (impact == 0) return IM_COL32(150, 150, 150, 255); // pale grey
+  if (impact == 0) return IM_COL32(110, 110, 110, 255); // neutral grey
 
   float t = std::abs(impact) / 3.0f; // 0..1
   if (impact > 0) {
@@ -345,6 +345,91 @@ static ImU32 impactToColorU32(int impact) {
   return IM_COL32(r, g, b, 255);
 }
 
+
+int Gui::getIntentImpactValue(const Intent& intent, const std::string& key) const {
+  const auto& impactOpt = intent.getUiImpact();
+  if (!impactOpt.has_value()) return 0;
+  for (const auto& kv : *impactOpt) {
+    if (kv.first == key) return kv.second;
+  }
+  return 0;
+}
+
+void Gui::drawImpactSwatch(int impact, float size, bool highlight) const {
+  ImVec2 p = ImGui::GetCursorScreenPos();
+  ImVec2 p2 = ImVec2(p.x + size, p.y + size);
+  ImDrawList* dl = ImGui::GetWindowDrawList();
+
+  dl->AddRectFilled(p, p2, impactToColorU32(impact));
+  if (highlight) {
+    dl->AddRect(p, p2, IM_COL32(235, 235, 235, 255), 0.0f, 0, 1.5f);
+  }
+
+  ImGui::Dummy(ImVec2(size, size));
+}
+
+void Gui::drawIntentImpactComparisonGrid(int selectedSlotIndex) {
+  const auto& activations = synthPtr->intentController->getActivations();
+
+  // Collect all slot intents in GUI order (skip empty slots).
+  struct Col {
+    int slotIndex;
+    const Intent* intentPtr;
+  };
+
+  std::vector<Col> cols;
+  cols.reserve(activations.size());
+  for (int i = 0; i < (int)activations.size(); ++i) {
+    const auto& ia = activations[i];
+    if (!ia.intentPtr) continue;
+    cols.push_back(Col{ i, ia.intentPtr.get() });
+  }
+
+  if (cols.empty()) return;
+
+  // Stable keys (written into configs by intent_impact.py)
+  static const std::vector<std::pair<std::string, const char*>> rows = {
+    {"Motion", "Mot"},
+    {"Particles", "Part"},
+    {"Marks", "Mark"},
+    {"Geometry", "Geom"},
+  };
+
+  constexpr float swatchBig = 12.0f;
+  constexpr float swatchSmall = 7.0f;
+
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f, 0.0f));
+
+  if (ImGui::BeginTable("##intentImpactCompare", (int)cols.size() + 1,
+                       ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings)) {
+    // No headers (by design). Column 0 is row labels.
+
+    for (const auto& row : rows) {
+      ImGui::TableNextRow();
+
+      // Row label
+      ImGui::TableSetColumnIndex(0);
+      ImGui::AlignTextToFramePadding();
+      ImGui::TextUnformatted(row.second);
+
+      // Impact swatches
+      for (int ci = 0; ci < (int)cols.size(); ++ci) {
+        const bool isSelected = cols[ci].slotIndex == selectedSlotIndex;
+        const float size = isSelected ? swatchBig : swatchSmall;
+
+        ImGui::TableSetColumnIndex(ci + 1);
+        const Intent& intent = *cols[ci].intentPtr;
+        int impact = getIntentImpactValue(intent, row.first);
+        drawImpactSwatch(impact, size, isSelected);
+      }
+    }
+
+    ImGui::EndTable();
+  }
+
+  ImGui::PopStyleVar();
+}
+
 void Gui::drawIntentActivationTooltip(int slotIndex, const Intent* intentPtr, float activationValue) {
   if (!ImGui::IsItemHovered()) return;
 
@@ -355,21 +440,18 @@ void Gui::drawIntentActivationTooltip(int slotIndex, const Intent* intentPtr, fl
     return;
   }
 
-  drawIntentPresetTooltip(*intentPtr, activationValue);
+  drawIntentPresetTooltip(slotIndex, *intentPtr, activationValue);
   ImGui::EndTooltip();
 }
 
-void Gui::drawIntentPresetTooltip(const Intent& intent, float activationValue) {
+void Gui::drawIntentPresetTooltip(int slotIndex, const Intent& intent, float activationValue) {
   ImGui::TextUnformatted(intent.getName().c_str());
   ImGui::Text("activation: %.2f", activationValue);
   ImGui::Separator();
   ImGui::Text("E %.2f  D %.2f  S %.2f  C %.2f  G %.2f",
               intent.getEnergy(), intent.getDensity(), intent.getStructure(), intent.getChaos(), intent.getGranularity());
-
-  if (intent.getUiImpact().has_value()) {
-    ImGui::Separator();
-    drawIntentImpactMiniGrid(intent);
-  }
+  ImGui::Separator();
+  drawIntentImpactComparisonGrid(slotIndex);
 
   if (intent.getUiNotes().has_value() && !intent.getUiNotes()->empty()) {
     ImGui::Separator();

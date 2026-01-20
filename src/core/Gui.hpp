@@ -49,7 +49,10 @@ private:
   void drawDisabledSlider(const ImVec2& size, int slotIndex);
   void drawIntentCharacteristicsEditor();
   void drawIntentActivationTooltip(int slotIndex, const Intent* intentPtr, float activationValue);
-  void drawIntentPresetTooltip(const Intent& intent, float activationValue);
+  void drawIntentPresetTooltip(int slotIndex, const Intent& intent, float activationValue);
+  void drawIntentImpactComparisonGrid(int selectedSlotIndex);
+  int getIntentImpactValue(const Intent& intent, const std::string& key) const;
+  void drawImpactSwatch(int impact, float size, bool highlight) const;
   void drawIntentImpactMiniGrid(const Intent& intent);
   void drawLayerControls();
   void drawDisplayControls();
