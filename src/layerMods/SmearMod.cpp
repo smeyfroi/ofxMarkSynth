@@ -152,16 +152,9 @@ void SmearMod::receive(int sinkId, const float& value) {
       field2MultiplierController.updateAuto(value, getAgency());
       break;
     case SINK_CHANGE_LAYER:
-      if (value > 0.9) {
-        ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: disable layer";
-        disableDrawingLayer();
-      } else if (value > 0.6) { // FIXME: temp until connections have weights
+      if (value > 0.5f) {
         ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: changing layer";
         changeDrawingLayer();
-      } else if (value > 0.3) {
-        // higher chance to return to default layer
-        ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: default layer";
-        resetDrawingLayer();
       }
       break;
     default:

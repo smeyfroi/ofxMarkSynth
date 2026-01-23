@@ -14,33 +14,18 @@ We start with **CaldewRiver** as the proving ground.
 
 ---
 
-## Current State (as implemented)
+## Current State (compact)
 
-### Agency in ParamController
-`ParamController<T>` blends three contributions:
-- **Auto** (external connections / generated values)
-- **Intent** (intent mappings)
-- **Manual** (GUI-set / config-set)
+- **Continuous influence** already exists via `ParamController<T>` auto/intent/manual mixing; Agency mainly scales the *auto* weight.
+  - Key file: `src/core/ParamController.h`
+- **Manual baseline** is `synth.agency` → `Synth Agency` (and many Mods apply an `AgencyFactor`).
+  - Key files: `src/config/SynthConfigSerializer.cpp`, `src/core/Synth.hpp`, `src/core/Mod.*`
+- **Discrete hooks** already exist (but aren’t exploited in many configs yet):
+  - `ChangeLayer` sinks on several Mods
+  - `DividedArea.ChangeStrategy`
+  - Key files: `src/core/Mod.*`, `src/layerMods/SmearMod.cpp`, `src/sinkMods/ParticleFieldMod.cpp`, `src/sinkMods/DividedAreaMod.cpp`
 
-Agency affects the **outer weighting** between auto vs human:
-- `effectiveAgency = hasReceivedAutoValue ? agency : 0.0f`
-- `wAuto = effectiveAgency`
-- `wManual` and `wIntent` share the remainder, modulated by manual bias.
-
-See: `src/core/ParamController.h`
-
-### Synth Agency parameter
-- Config `synth.agency` currently sets `Synth Agency` (manual baseline), parsed in `src/config/SynthConfigSerializer.cpp`.
-- Mods frequently scale it using an `AgencyFactor` parameter (e.g. `getAgency() = Mod::getAgency() * AgencyFactor`).
-
-See: `src/core/Synth.hpp`, `src/core/Mod.*`
-
-### Existing event-style sinks
-Multiple Mods already support discrete sinks that can serve as “Agency-triggered” events:
-- `ChangeLayer` (various Mods)
-- `DividedArea.ChangeStrategy`
-
-However, in CaldewRiver many Mods target a single drawing layer, so `ChangeLayer` often has no effect.
+In CaldewRiver, `ChangeLayer` often does nothing because many Mods are assigned only one drawing layer.
 
 ---
 

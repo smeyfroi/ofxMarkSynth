@@ -17,6 +17,7 @@
 #include "ofxImGui.h"
 #include "ofxAudioAnalysisClient.h"
 #include "nlohmann/json.hpp"
+#include <algorithm>
 #include <fstream>
 
 
@@ -257,7 +258,8 @@ void Synth::initSinkSourceMappings() {
   
   sinkNameIdMap = {
     { backgroundColorParameter.getName(), SINK_BACKGROUND_COLOR },
-    { "ResetRandomness", SINK_RESET_RANDOMNESS }
+    { "ResetRandomness", SINK_RESET_RANDOMNESS },
+    { "AgencyAuto", SINK_AGENCY_AUTO }
   };
   
   for (const auto& [name, id] : memoryBankController->getSinkNameIdMap()) {
@@ -425,6 +427,10 @@ void Synth::addLiveTexturePtrFn(std::string name, std::function<const ofTexture*
   liveTexturePtrFns[name] = textureAccessor;
 }
 
+float Synth::getAgency() const {
+  return std::clamp(agencyParameter + autoAgencyAggregatePrev, 0.0f, 1.0f);
+}
+
 void Synth::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_BACKGROUND_COLOR:
@@ -437,6 +443,10 @@ void Synth::receive(int sinkId, const glm::vec4& v) {
 
 void Synth::receive(int sinkId, const float& v) {
   switch (sinkId) {
+    case SINK_AGENCY_AUTO:
+      autoAgencyAggregateThisFrame = std::max(autoAgencyAggregateThisFrame, std::clamp(v, 0.0f, 1.0f));
+      break;
+
     case SINK_RESET_RANDOMNESS:
       {
         // Use bucketed onset value as seed for repeatability
@@ -470,6 +480,10 @@ void Synth::applyIntent(const Intent& intent, float intentStrength) {
 }
 
 void Synth::update() {
+  // Aggregate max auto agency from any .AgencyAuto connections.
+  // This intentionally affects `getAgency()` on the next frame to avoid reliance on Mod update ordering.
+  autoAgencyAggregateThisFrame = 0.0f;
+
   pauseStatus = paused ? "Yes" : "No";
 #ifdef TARGET_MAC
   recorderStatus = (videoRecorderPtr && videoRecorderPtr->isRecording()) ? "Yes" : "No";
@@ -541,6 +555,8 @@ void Synth::update() {
       TS_STOP(name);
       TSGL_STOP(name);
     });
+
+    autoAgencyAggregatePrev = autoAgencyAggregateThisFrame;
   }
   
   // Always update composites (whether paused or not) when hibernating

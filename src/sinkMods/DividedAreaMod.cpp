@@ -213,7 +213,7 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
 
   switch (sinkId) {
     case SINK_CHANGE_LAYER:
-      if (v > 0.6) { // FIXME: temp until connections have weights
+      if (v > 0.5f) {
         ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_LAYER: changing layer";
         changeDrawingLayer();
       }
@@ -226,6 +226,7 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
       }
     } break;
     case SINK_CHANGE_STRATEGY: {
+      if (v <= 0.5f) break;
       if (ofGetElapsedTimef() < strategyChangeInvalidUntilTimestamp) break;
       int newStrategy = (strategyParameter + 1) % 3;
       ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_STRATEGY: changing strategy to " << newStrategy;

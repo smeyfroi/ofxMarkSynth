@@ -7,6 +7,7 @@
 
 #include "core/Gui.hpp"
 #include "core/Synth.hpp"
+#include "processMods/AgencyControllerMod.hpp"
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
@@ -241,7 +242,52 @@ void Gui::drawSynthControls() {
   
 //  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
   addParameter(synthPtr, synthPtr->agencyParameter);
-  
+
+  {
+    const float manual = std::clamp(synthPtr->agencyParameter.get(), 0.0f, 1.0f);
+    const float autoA = std::clamp(synthPtr->getAutoAgencyAggregate(), 0.0f, 1.0f);
+    const float autoClamped = std::clamp(autoA, 0.0f, 1.0f - manual);
+    const float effective = manual + autoClamped;
+
+    ImGui::Text("Agency: effective %.2f (manual %.2f + auto %.2f)", effective, manual, autoClamped);
+
+    const ImU32 bg = IM_COL32(35, 35, 35, 255);
+    const ImU32 border = IM_COL32(80, 80, 80, 255);
+    const ImU32 manualCol = IM_COL32(151, 151, 255, 255);
+    const ImU32 autoCol = IM_COL32(255, 51, 51, 255);
+
+    const float w = 200.0f;
+    const float h = 8.0f;
+    ImVec2 p0 = ImGui::GetCursorScreenPos();
+    ImVec2 p1(p0.x + w, p0.y + h);
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    dl->AddRectFilled(p0, p1, bg, 2.0f);
+
+    if (manual > 0.0f) {
+      ImVec2 m1(p0.x + w * manual, p1.y);
+      dl->AddRectFilled(p0, m1, manualCol, 2.0f);
+    }
+
+    if (autoClamped > 0.0f) {
+      ImVec2 a0(p0.x + w * manual, p0.y);
+      ImVec2 a1(p0.x + w * (manual + autoClamped), p1.y);
+      dl->AddRectFilled(a0, a1, autoCol, 2.0f);
+    }
+
+    dl->AddRect(p0, p1, border, 2.0f);
+    ImGui::Dummy(ImVec2(w, h + 6.0f));
+
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text("Manual:  %.3f", manual);
+      ImGui::Text("Auto:    %.3f", autoClamped);
+      ImGui::Text("Unused:  %.3f", 1.0f - effective);
+      ImGui::TextUnformatted("Auto is aggregated from .AgencyAuto inputs (1-frame delayed).");
+      ImGui::EndTooltip();
+    }
+  }
+
   drawPerformanceNavigator();
   drawIntentControls();
   drawLayerControls();
@@ -942,7 +988,30 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   ImNodes::BeginNodeTitleBar();
   ImGui::TextUnformatted(modPtr->getName().c_str());
   
-  if (isAgencyActive) {
+  if (auto agencyControllerPtr = std::dynamic_pointer_cast<AgencyControllerMod>(modPtr)) {
+    float budget = agencyControllerPtr->getBudget();
+
+    // Flash the bar briefly when an event trigger fires.
+    bool flash = agencyControllerPtr->wasTriggeredThisFrame() || agencyControllerPtr->getSecondsSinceTrigger() < 0.25f;
+    if (flash) {
+      ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(255, 220, 80, 255));
+    }
+    ImGui::ProgressBar(budget, ImVec2(64.0f, 4.0f), "");
+    if (flash) {
+      ImGui::PopStyleColor();
+    }
+
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text("Characteristic %.3f", agencyControllerPtr->getCharacteristicSmooth());
+      ImGui::Text("Stimulus        %.3f", agencyControllerPtr->getStimulus());
+      ImGui::Text("Budget          %.3f", agencyControllerPtr->getBudget());
+      ImGui::Text("AutoAgency      %.3f", agencyControllerPtr->getAutoAgency());
+      ImGui::Text("Pulse(max)      %.3f", agencyControllerPtr->getLastPulse());
+      ImGui::Text("Triggered       %s", agencyControllerPtr->wasTriggeredThisFrame() ? "YES" : "no");
+      ImGui::EndTooltip();
+    }
+  } else if (isAgencyActive) {
     ImGui::ProgressBar(agency, ImVec2(64.0f, 4.0f), "");
   } else {
     // Subtle placeholder that blends with the title bar

@@ -211,12 +211,9 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
 
   switch (sinkId) {
     case SINK_CHANGE_LAYER:
-      if (value > 0.8) { // FIXME: temp until connections have weights
+      if (value > 0.5f) {
         ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::SINK_CHANGE_LAYER: changing layer";
         changeDrawingLayer();
-      } else if (value > 0.2) {
-        ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::SINK_CHANGE_LAYER: resetting layer";
-        resetDrawingLayer();
       }
       break;
     case SINK_MIN_WEIGHT:

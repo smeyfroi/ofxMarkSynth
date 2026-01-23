@@ -28,7 +28,7 @@ constexpr int MAX_INTENT_SLOTS = 7;
 // NOTE: Autosaves are also gated by runtime conditions (paused/hibernation, no overlap,
 // manual save priority). See Synth::update().
 // Set false during tuning/development.
-constexpr bool AUTO_SNAPSHOTS_ENABLED = true;
+constexpr bool AUTO_SNAPSHOTS_ENABLED = false;
 constexpr float AUTO_SNAPSHOTS_INTERVAL_SEC = 20.0f;
 constexpr float AUTO_SNAPSHOTS_JITTER_SEC = 7.0f;
 

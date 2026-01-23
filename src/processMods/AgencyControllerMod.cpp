@@ -1,0 +1,136 @@
+//
+//  AgencyControllerMod.cpp
+//  ofxMarkSynth
+//
+//  Created by Steve Meyfroidt on 21/01/2026.
+//
+
+#include "AgencyControllerMod.hpp"
+
+#include "ofAppRunner.h"
+#include "ofMath.h"
+
+#include <cmath>
+#include <limits>
+
+namespace ofxMarkSynth {
+
+namespace {
+
+float smoothTo(float current, float target, float dt, float timeConstantSec) {
+  if (timeConstantSec <= 0.0f) return target;
+  dt = std::max(dt, 0.0f);
+  // Exponential decay: current += (target-current) * (1 - exp(-dt/tau))
+  float a = 1.0f - std::exp(-dt / std::max(1e-6f, timeConstantSec));
+  return current + (target - current) * a;
+}
+
+} // namespace
+
+AgencyControllerMod::AgencyControllerMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
+: Mod { synthPtr, name, std::move(config) }
+{
+  sinkNameIdMap = {
+    { "Characteristic", SINK_CHARACTERISTIC },
+    { "Pulse", SINK_PULSE },
+  };
+
+  sourceNameIdMap = {
+    { "AutoAgency", SOURCE_AUTO_AGENCY },
+    { "Trigger", SOURCE_TRIGGER },
+  };
+}
+
+void AgencyControllerMod::initParameters() {
+  parameters.add(characteristicSmoothSecParameter);
+  parameters.add(stimulusSmoothSecParameter);
+
+  parameters.add(chargeGainParameter);
+  parameters.add(decayPerSecParameter);
+
+  parameters.add(autoAgencyScaleParameter);
+  parameters.add(autoAgencyGammaParameter);
+
+  parameters.add(pulseThresholdParameter);
+  parameters.add(eventCostParameter);
+  parameters.add(cooldownSecParameter);
+}
+
+float AgencyControllerMod::getDt() const {
+  // Note: Synth caps dt for time tracking; we accept small inconsistencies here.
+  float frameTime = static_cast<float>(ofGetLastFrameTime());
+  return std::min(std::max(frameTime, 0.0f), 0.1f);
+}
+
+void AgencyControllerMod::update() {
+  syncControllerAgencies();
+  triggeredThisFrame = false;
+
+  float dt = getDt();
+
+  // 1) Smooth characteristic and compute stimulus
+  float characteristicRaw = std::clamp(characteristicMaxThisFrame, 0.0f, 1.0f);
+  characteristicMaxThisFrame = 0.0f;
+
+  characteristicSmooth = smoothTo(characteristicSmooth, characteristicRaw, dt, characteristicSmoothSecParameter);
+
+  float stimulusRaw = std::abs(characteristicSmooth - characteristicPrev);
+  characteristicPrev = characteristicSmooth;
+
+  stimulusSmooth = smoothTo(stimulusSmooth, stimulusRaw, dt, stimulusSmoothSecParameter);
+
+  // 2) Budget integrates stimulus, decays slowly
+  budget += chargeGainParameter * stimulusSmooth;
+  budget -= decayPerSecParameter * dt;
+  budget = std::clamp(budget, 0.0f, 1.0f);
+
+  // 3) Convert budget to auto agency
+  float gamma = std::max(0.1f, static_cast<float>(autoAgencyGammaParameter));
+  autoAgency = autoAgencyScaleParameter * std::pow(budget, gamma);
+  autoAgency = std::clamp(autoAgency, 0.0f, 1.0f);
+
+  emit(SOURCE_AUTO_AGENCY, autoAgency);
+
+  // 4) Event gating from pulses
+  bool shouldTrigger = false;
+  float pulse = pulseMaxThisFrame;
+  pulseMaxThisFrame = 0.0f;
+  lastPulse = pulse;
+
+  if (pulse > pulseThresholdParameter && budget >= eventCostParameter) {
+    float now = ofGetElapsedTimef();
+    bool cooldownOk = (lastTriggerTimeSec < 0.0f) || (now - lastTriggerTimeSec >= cooldownSecParameter);
+    if (cooldownOk) {
+      shouldTrigger = true;
+      lastTriggerTimeSec = now;
+      budget = std::max(0.0f, budget - static_cast<float>(eventCostParameter));
+    }
+  }
+
+  if (shouldTrigger) {
+    triggeredThisFrame = true;
+    emit(SOURCE_TRIGGER, 1.0f);
+  }
+}
+
+void AgencyControllerMod::receive(int sinkId, const float& value) {
+  switch (sinkId) {
+    case SINK_CHARACTERISTIC:
+      characteristicMaxThisFrame = std::max(characteristicMaxThisFrame, value);
+      break;
+
+    case SINK_PULSE:
+      pulseMaxThisFrame = std::max(pulseMaxThisFrame, value);
+      break;
+
+    default:
+      ofLogError("AgencyControllerMod") << "Float receive for unknown sinkId " << sinkId;
+  }
+}
+
+float AgencyControllerMod::getSecondsSinceTrigger() const {
+  if (lastTriggerTimeSec < 0.0f) return std::numeric_limits<float>::infinity();
+  return ofGetElapsedTimef() - lastTriggerTimeSec;
+}
+
+} // namespace ofxMarkSynth

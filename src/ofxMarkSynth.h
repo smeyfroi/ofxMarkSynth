@@ -27,6 +27,7 @@
 #include "sourceMods/VideoFlowSourceMod.hpp"
 
 // Process Mods - transform data
+#include "processMods/AgencyControllerMod.hpp"
 #include "processMods/ClusterMod.hpp"
 #include "processMods/MultiplyAddMod.hpp"
 #include "processMods/PathMod.hpp"

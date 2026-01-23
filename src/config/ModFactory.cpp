@@ -130,6 +130,10 @@ void ModFactory::registerSourceMods() {
 }
 
 void ModFactory::registerProcessMods() {
+  registerType("AgencyController", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<AgencyControllerMod>(s, n, std::move(c));
+  });
+
   registerType("Cluster", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<ClusterMod>(s, n, std::move(c));
   });

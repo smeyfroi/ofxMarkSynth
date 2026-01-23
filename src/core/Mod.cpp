@@ -8,6 +8,8 @@
 #include "core/Mod.hpp"
 #include "core/Synth.hpp"
 
+#include <algorithm>
+
 
 
 namespace ofxMarkSynth {
@@ -302,13 +304,18 @@ void Mod::changeDrawingLayer() {
 // Return to the default layer 0 between drawing on other layers
 void Mod::changeDrawingLayer(const std::string& layerName) {
   if (currentDrawingLayerIndices[layerName] == 0) {
-    int newIndex = ofRandom(0, namedDrawingLayerPtrs[layerName].size());
-    if (newIndex == 0) newIndex = -1;
+    const auto& layers = namedDrawingLayerPtrs[layerName];
+    if (layers.size() <= 1) {
+      return;
+    }
+    // Select a non-default layer index [1..N-1].
+    int newIndex = 1 + static_cast<int>(ofRandom(0, static_cast<float>(layers.size() - 1)));
+    newIndex = std::clamp(newIndex, 1, static_cast<int>(layers.size() - 1));
     currentDrawingLayerIndices[layerName] = newIndex;
   } else {
     currentDrawingLayerIndices[layerName] = 0;
   }
-  ofLogNotice("Mod") << "'" << name << "' changing current drawing layer '" << layerName << "' to index " << currentDrawingLayerIndices[layerName] << " : " << ((currentDrawingLayerIndices[layerName] >= 0) ? namedDrawingLayerPtrs[layerName][currentDrawingLayerIndices[layerName]]->name : "NONE");
+  ofLogNotice("Mod") << "'" << name << "' changing current drawing layer '" << layerName << "' to index " << currentDrawingLayerIndices[layerName] << " : " << namedDrawingLayerPtrs[layerName][currentDrawingLayerIndices[layerName]]->name;
 }
 
 // Return to the default layer 0

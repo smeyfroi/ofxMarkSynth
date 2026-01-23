@@ -118,8 +118,9 @@ public:
   static void setConfigRootPath(const std::filesystem::path& root);
   static std::string saveConfigFilePath(const std::string& relative);
 
-  float getAgency() const override { return agencyParameter; }
+  float getAgency() const override;
   void setAgency(float agency) { agencyParameter = agency; }
+  float getAutoAgencyAggregate() const { return autoAgencyAggregatePrev; }
   float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
   float getBaseManualBias() const { return baseManualBiasParameter; }
   float getHibernationFadeDurationSec() const;
@@ -152,6 +153,7 @@ public:
 
   static constexpr int SINK_BACKGROUND_COLOR = 100;
   static constexpr int SINK_RESET_RANDOMNESS = 200;
+  static constexpr int SINK_AGENCY_AUTO = 201;
   
   // Memory bank controller accessor (for Gui)
   MemoryBankController& getMemoryBankController() { return *memoryBankController; }
@@ -267,6 +269,8 @@ private:
   // <<<
 
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
+  float autoAgencyAggregatePrev { 0.0f };      // Used for current frame getAgency() (intentionally 1-frame delayed)
+  float autoAgencyAggregateThisFrame { 0.0f }; // Max of .AgencyAuto inputs received this frame
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   
