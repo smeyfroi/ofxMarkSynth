@@ -46,6 +46,11 @@ private:
     ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f },
     ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f }
   };
+
+  // Config-only field normalization (mirrors SmearMod Field1PreScaleExp/Field2PreScaleExp).
+  // Log10 exponent: 10^exp gives preScale (range 0.00001 to 100).
+  ofParameter<float> field1PreScaleExpParameter { "Field1PreScaleExp", -2.0f, -5.0f, 2.0f };
+  ofParameter<float> field2PreScaleExpParameter { "Field2PreScaleExp", -2.0f, -5.0f, 2.0f };
   
   std::unique_ptr<ParamController<float>> minWeightControllerPtr;
   std::unique_ptr<ParamController<float>> maxWeightControllerPtr;

@@ -456,6 +456,10 @@
         "speedThreshold": "2",
         "minWeight": "0.5",
         "maxWeight": "2",
+        "field1Multiplier": "1",
+        "field2Multiplier": "1",
+        "Field1PreScaleExp": "-2",
+        "Field2PreScaleExp": "-2",
         "PointColour": "1, 1, 1, 0.3",
         "AgencyFactor": "1"
       }

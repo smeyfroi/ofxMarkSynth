@@ -41,7 +41,6 @@ public:
   static constexpr int SINK_CHANGE_ANGLE = 200;
   
   static constexpr int SINK_CHANGE_STRATEGY = 201;
-  static constexpr int SINK_CHANGE_LAYER = 202;
   
   // MAJOR_LINES_LAYERPTR_NAME is for drawing unconstrained (major) lines.
   // - If targeting an overlay layer: draws in drawOverlay() with background FBO access (supports all styles)

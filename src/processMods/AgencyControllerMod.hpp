@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "core/Mod.hpp"
+#include "../core/Mod.hpp"
 
 #include <algorithm>
 
@@ -25,6 +25,14 @@ public:
   float getAutoAgency() const { return autoAgency; }
   float getCharacteristicSmooth() const { return characteristicSmooth; }
   float getLastPulse() const { return lastPulse; }
+  float getPulseThreshold() const { return pulseThresholdParameter.get(); }
+  float getEventCost() const { return eventCostParameter.get(); }
+  float getCooldownSec() const { return cooldownSecParameter.get(); }
+  float getChargeGain() const { return chargeGainParameter.get(); }
+  float getDecayPerSec() const { return decayPerSecParameter.get(); }
+  float getLastDt() const { return lastDt; }
+  float getLastChargeDelta() const { return lastChargeDelta; }
+  float getLastDecayDelta() const { return lastDecayDelta; }
   float getSecondsSinceTrigger() const;
   bool wasTriggeredThisFrame() const { return triggeredThisFrame; }
 
@@ -51,6 +59,9 @@ private:
 
   float budget { 0.0f };
   float autoAgency { 0.0f };
+  float lastDt { 0.0f };
+  float lastChargeDelta { 0.0f };
+  float lastDecayDelta { 0.0f };
 
   float lastPulse { 0.0f };
   bool triggeredThisFrame { false };

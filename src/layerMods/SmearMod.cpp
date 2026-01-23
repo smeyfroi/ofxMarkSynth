@@ -29,7 +29,7 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
     { field2MultiplierParameter.getName(), SINK_FIELD2_MULTIPLIER },
     { "Field1Texture", SINK_FIELD_1_TEX },
     { "Field2Texture", SINK_FIELD_2_TEX },
-    { "ChangeLayer", SINK_CHANGE_LAYER }
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 
   registerControllerForSource(mixNewParameter, mixNewController);
@@ -136,7 +136,7 @@ void SmearMod::update() {
 
 void SmearMod::receive(int sinkId, const float& value) {
   // Allow ChangeLayer even when inactive so the Mod can recover from disableDrawingLayer().
-  if (sinkId != SINK_CHANGE_LAYER && !canDrawOnNamedLayer()) return;
+  if (sinkId != Mod::SINK_CHANGE_LAYER && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_FLOAT:
@@ -151,9 +151,9 @@ void SmearMod::receive(int sinkId, const float& value) {
     case SINK_FIELD2_MULTIPLIER:
       field2MultiplierController.updateAuto(value, getAgency());
       break;
-    case SINK_CHANGE_LAYER:
+    case Mod::SINK_CHANGE_LAYER:
       if (value > 0.5f) {
-        ofLogNotice("SmearMod") << "SmearMod::SINK_CHANGE_LAYER: changing layer";
+        ofLogNotice("SmearMod") << "SmearMod::ChangeLayer: changing layer";
         changeDrawingLayer();
       }
       break;

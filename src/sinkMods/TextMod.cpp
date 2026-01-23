@@ -29,7 +29,8 @@ TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
     { colorParameter.getName(), SINK_COLOR },
     { alphaParameter.getName(), SINK_ALPHA },
     { drawDurationSecParameter.getName(), SINK_DRAW_DURATION_SEC },
-    { alphaFactorParameter.getName(), SINK_ALPHA_FACTOR }
+    { alphaFactorParameter.getName(), SINK_ALPHA_FACTOR },
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 
   registerControllerForSource(positionParameter, positionController);
@@ -126,9 +127,9 @@ void TextMod::receive(int sinkId, const float& value) {
     case SINK_ALPHA_FACTOR:
       alphaFactorController.updateAuto(value, getAgency());
       break;
-    case SINK_CHANGE_LAYER:
-      if (value > 0.5) {
-        ofLogNotice("TextMod") << "SINK_CHANGE_LAYER: changing layer";
+    case Mod::SINK_CHANGE_LAYER:
+      if (value > 0.5f) {
+        ofLogNotice("TextMod") << "TextMod::ChangeLayer: changing layer";
         changeDrawingLayer();
       }
       break;

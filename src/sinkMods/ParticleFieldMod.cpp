@@ -26,13 +26,16 @@ ParticleFieldMod::ParticleFieldMod(std::shared_ptr<Synth> synthPtr, const std::s
     { "ColourFieldTexture", SINK_COLOR_FIELD_FBO },
     { pointColorParameter.getName(), SINK_POINT_COLOR },
     { "minWeight", SINK_MIN_WEIGHT },
-    { "maxWeight", SINK_MAX_WEIGHT }
+    { "maxWeight", SINK_MAX_WEIGHT },
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 }
 
 void ParticleFieldMod::initParameters() {
   addFlattenedParameterGroup(parameters, particleField.getParameterGroup());
   parameters.add(pointColorParameter);
+  parameters.add(field1PreScaleExpParameter);
+  parameters.add(field2PreScaleExpParameter);
   parameters.add(agencyFactorParameter);
 
   minWeightControllerPtr = std::make_unique<ParamController<float>>(parameters.get("minWeight").cast<float>());
@@ -137,12 +140,14 @@ void ParticleFieldMod::update() {
     overrides.maxWeight = std::clamp(maxWeightControllerPtr->value,
                                      particleField.maxWeightParameter.getMin(),
                                      particleField.maxWeightParameter.getMax());
-    overrides.field1Multiplier = std::clamp(field1MultiplierControllerPtr->value,
-                                           particleField.field1MultiplierParameter.getMin(),
-                                           particleField.field1MultiplierParameter.getMax());
-    overrides.field2Multiplier = std::clamp(field2MultiplierControllerPtr->value,
-                                           particleField.field2MultiplierParameter.getMin(),
-                                           particleField.field2MultiplierParameter.getMax());
+
+    const float field1PreScale = std::pow(10.0f, field1PreScaleExpParameter.get());
+    const float field2PreScale = std::pow(10.0f, field2PreScaleExpParameter.get());
+    const float field1MultEffective = field1MultiplierControllerPtr->value * field1PreScale;
+    const float field2MultEffective = field2MultiplierControllerPtr->value * field2PreScale;
+    // Allow effective multipliers beyond the underlying parameter range: preScaleExp is a normalization stage.
+    overrides.field1Multiplier = std::clamp(field1MultEffective, 0.0f, 200.0f);
+    overrides.field2Multiplier = std::clamp(field2MultEffective, 0.0f, 200.0f);
 
     const bool overridesChanged = !hasLastAppliedParameterOverrides
                                  || overrides.velocityDamping != lastAppliedParameterOverrides.velocityDamping
@@ -210,9 +215,9 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
   if (!canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
-    case SINK_CHANGE_LAYER:
+    case Mod::SINK_CHANGE_LAYER:
       if (value > 0.5f) {
-        ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::SINK_CHANGE_LAYER: changing layer";
+        ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::ChangeLayer: changing layer";
         changeDrawingLayer();
       }
       break;

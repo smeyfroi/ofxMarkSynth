@@ -27,7 +27,7 @@ SoftCircleMod::SoftCircleMod(std::shared_ptr<Synth> synthPtr, const std::string&
     { colorMultiplierParameter.getName(), SINK_COLOR_MULTIPLIER },
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
     { softnessParameter.getName(), SINK_SOFTNESS },
-    { "ChangeLayer", SINK_CHANGE_LAYER }
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 
   registerControllerForSource(radiusParameter, radiusController);
@@ -119,9 +119,9 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
     case SINK_SOFTNESS:
       softnessController.updateAuto(value, getAgency());
       break;
-    case SINK_CHANGE_LAYER:
-      if (value > 0.5) { // FIXME: temp until connections have weights
-        ofLogNotice("SoftCircleMod") << "SoftCircleMod::SINK_CHANGE_LAYER: changing layer";
+    case Mod::SINK_CHANGE_LAYER:
+      if (value > 0.5f) {
+        ofLogNotice("SoftCircleMod") << "SoftCircleMod::ChangeLayer: changing layer";
         changeDrawingLayer();
       }
       break;

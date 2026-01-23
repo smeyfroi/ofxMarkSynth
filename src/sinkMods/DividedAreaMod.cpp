@@ -31,7 +31,7 @@ DividedAreaMod::DividedAreaMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "ChangeAngle", SINK_CHANGE_ANGLE },
 
     { "ChangeStrategy", SINK_CHANGE_STRATEGY },
-    { "ChangeLayer", SINK_CHANGE_LAYER }
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 
   registerControllerForSource(angleParameter, angleController);
@@ -212,9 +212,9 @@ void DividedAreaMod::receive(int sinkId, const float& v) {
   if (!canDrawOnNamedLayer(DEFAULT_DRAWING_LAYER_PTR_NAME)) return;
 
   switch (sinkId) {
-    case SINK_CHANGE_LAYER:
+    case Mod::SINK_CHANGE_LAYER:
       if (v > 0.5f) {
-        ofLogNotice("DividedAreaMod") << "DividedAreaMod::SINK_CHANGE_LAYER: changing layer";
+        ofLogNotice("DividedAreaMod") << "DividedAreaMod::ChangeLayer: changing layer";
         changeDrawingLayer();
       }
       break;

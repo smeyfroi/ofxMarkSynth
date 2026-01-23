@@ -5,9 +5,9 @@
 //  Created by Steve Meyfroidt on 05/11/2025.
 //
 
-#include "core/Gui.hpp"
-#include "core/Synth.hpp"
-#include "processMods/AgencyControllerMod.hpp"
+#include "Gui.hpp"
+#include "Synth.hpp"
+#include "../processMods/AgencyControllerMod.hpp"
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
@@ -1005,9 +1005,22 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
       ImGui::BeginTooltip();
       ImGui::Text("Characteristic %.3f", agencyControllerPtr->getCharacteristicSmooth());
       ImGui::Text("Stimulus        %.3f", agencyControllerPtr->getStimulus());
-      ImGui::Text("Budget          %.3f", agencyControllerPtr->getBudget());
       ImGui::Text("AutoAgency      %.3f", agencyControllerPtr->getAutoAgency());
-      ImGui::Text("Pulse(max)      %.3f", agencyControllerPtr->getLastPulse());
+      ImGui::Text("Budget Δ        +%.5f  -%.5f  (dt %.3f)", agencyControllerPtr->getLastChargeDelta(), agencyControllerPtr->getLastDecayDelta(), agencyControllerPtr->getLastDt());
+      float pulse = agencyControllerPtr->getLastPulse();
+      float pulseThreshold = agencyControllerPtr->getPulseThreshold();
+      float budgetValue = agencyControllerPtr->getBudget();
+      float eventCost = agencyControllerPtr->getEventCost();
+      float cooldownSec = agencyControllerPtr->getCooldownSec();
+      float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
+
+      bool pulseDetected = pulse > pulseThreshold;
+      bool budgetEnough = budgetValue >= eventCost;
+      bool cooldownOk = sinceTrigger >= cooldownSec;
+
+      ImGui::Text("Pulse(max)      %.3f  (thr %.3f)  %s", pulse, pulseThreshold, pulseDetected ? "DETECTED" : "-");
+      ImGui::Text("Budget         %.3f  (cost %.3f) %s", budgetValue, eventCost, budgetEnough ? "ENOUGH" : "-");
+      ImGui::Text("Cooldown       %.2fs / %.2fs   %s", sinceTrigger, cooldownSec, cooldownOk ? "OK" : "BLOCK");
       ImGui::Text("Triggered       %s", agencyControllerPtr->wasTriggeredThisFrame() ? "YES" : "no");
       ImGui::EndTooltip();
     }

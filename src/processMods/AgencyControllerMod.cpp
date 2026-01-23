@@ -67,6 +67,7 @@ void AgencyControllerMod::update() {
   triggeredThisFrame = false;
 
   float dt = getDt();
+  lastDt = dt;
 
   // 1) Smooth characteristic and compute stimulus
   float characteristicRaw = std::clamp(characteristicMaxThisFrame, 0.0f, 1.0f);
@@ -80,8 +81,12 @@ void AgencyControllerMod::update() {
   stimulusSmooth = smoothTo(stimulusSmooth, stimulusRaw, dt, stimulusSmoothSecParameter);
 
   // 2) Budget integrates stimulus, decays slowly
-  budget += chargeGainParameter * stimulusSmooth;
-  budget -= decayPerSecParameter * dt;
+  // Note: stimulus is derived from per-frame delta of a smoothed signal.
+  // ChargeGain is therefore effectively a scale on |Δ characteristic|.
+  lastChargeDelta = chargeGainParameter * stimulusSmooth;
+  lastDecayDelta = decayPerSecParameter * dt;
+  budget += lastChargeDelta;
+  budget -= lastDecayDelta;
   budget = std::clamp(budget, 0.0f, 1.0f);
 
   // 3) Convert budget to auto agency
