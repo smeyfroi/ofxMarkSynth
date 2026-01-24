@@ -49,13 +49,15 @@ private:
   // For a W×H velocity buffer: px = VelocityScale * (dxNorm*W, dyNorm*H)
   ofParameter<float> velocityScaleParameter { "VelocityScale", 1.0f, 0.0f, 50.0f };
 
-  // Multiplier for SwirlVelocity (0..1).
+  // Multiplier for SwirlVelocity.
   // Effective swirl = clamp(SwirlVelocity * SwirlStrength, 0..1).
-  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 1.0f, 0.0f, 2.0f };
+  // Note: max range intentionally capped to avoid obvious whirlpools.
+  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 0.25f, 0.0f, 0.5f };
   ParamController<float> swirlStrengthController { swirlStrengthParameter };
 
   // Additional normalized swirl term that can be set from config and/or driven by the SwirlVelocity sink.
-  ofParameter<float> swirlVelocityParameter { "SwirlVelocity", 0.0f, 0.0f, 1.0f };
+  // Note: max range intentionally capped to avoid obvious whirlpools.
+  ofParameter<float> swirlVelocityParameter { "SwirlVelocity", 0.0f, 0.0f, 0.25f };
   ParamController<float> swirlVelocityController { swirlVelocityParameter };
 
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };

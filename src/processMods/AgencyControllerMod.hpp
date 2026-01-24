@@ -34,7 +34,13 @@ public:
   float getLastChargeDelta() const { return lastChargeDelta; }
   float getLastDecayDelta() const { return lastDecayDelta; }
   float getSecondsSinceTrigger() const;
+  float getSecondsSincePulseDetected() const;
   bool wasTriggeredThisFrame() const { return triggeredThisFrame; }
+  bool wasPulseDetectedThisFrame() const { return pulseDetectedThisFrame; }
+  bool didLastPulseTrigger() const { return lastPulseDidTrigger; }
+  bool wasLastPulseBudgetEnough() const { return lastPulseBudgetEnough; }
+  bool wasLastPulseCooldownOk() const { return lastPulseCooldownOk; }
+  float getLastPulseBudget() const { return lastPulseBudget; }
 
   static constexpr int SINK_CHARACTERISTIC = 10;
   static constexpr int SINK_PULSE = 20;
@@ -64,6 +70,15 @@ private:
   float lastDecayDelta { 0.0f };
 
   float lastPulse { 0.0f };
+
+  // For tuning: keep recent pulse/trigger status visible beyond one frame.
+  bool pulseDetectedThisFrame { false };
+  float lastPulseDetectedTimeSec { -1.0f };
+  float lastPulseBudget { 0.0f };
+  bool lastPulseBudgetEnough { false };
+  bool lastPulseCooldownOk { false };
+  bool lastPulseDidTrigger { false };
+
   bool triggeredThisFrame { false };
   float lastTriggerTimeSec { -1.0f };
 

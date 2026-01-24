@@ -991,13 +991,21 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   if (auto agencyControllerPtr = std::dynamic_pointer_cast<AgencyControllerMod>(modPtr)) {
     float budget = agencyControllerPtr->getBudget();
 
-    // Flash the bar briefly when an event trigger fires.
-    bool flash = agencyControllerPtr->wasTriggeredThisFrame() || agencyControllerPtr->getSecondsSinceTrigger() < 0.25f;
-    if (flash) {
+    // Flash the bar briefly when a pulse is detected / trigger fires.
+    float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
+    float sincePulse = agencyControllerPtr->getSecondsSincePulseDetected();
+    bool triggerFlash = agencyControllerPtr->wasTriggeredThisFrame() || sinceTrigger < 0.35f;
+    bool pulseFlash = agencyControllerPtr->wasPulseDetectedThisFrame() || sincePulse < 0.35f;
+
+    if (triggerFlash) {
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(255, 220, 80, 255));
+    } else if (pulseFlash) {
+      ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(80, 220, 255, 255));
     }
+
     ImGui::ProgressBar(budget, ImVec2(64.0f, 4.0f), "");
-    if (flash) {
+
+    if (triggerFlash || pulseFlash) {
       ImGui::PopStyleColor();
     }
 
@@ -1007,21 +1015,52 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
       ImGui::Text("Stimulus        %.3f", agencyControllerPtr->getStimulus());
       ImGui::Text("AutoAgency      %.3f", agencyControllerPtr->getAutoAgency());
       ImGui::Text("Budget Δ        +%.5f  -%.5f  (dt %.3f)", agencyControllerPtr->getLastChargeDelta(), agencyControllerPtr->getLastDecayDelta(), agencyControllerPtr->getLastDt());
+
+      constexpr float HOLD_SEC = 1.0f;
+
       float pulse = agencyControllerPtr->getLastPulse();
       float pulseThreshold = agencyControllerPtr->getPulseThreshold();
       float budgetValue = agencyControllerPtr->getBudget();
       float eventCost = agencyControllerPtr->getEventCost();
       float cooldownSec = agencyControllerPtr->getCooldownSec();
       float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
+      float sincePulse = agencyControllerPtr->getSecondsSincePulseDetected();
 
-      bool pulseDetected = pulse > pulseThreshold;
-      bool budgetEnough = budgetValue >= eventCost;
-      bool cooldownOk = sinceTrigger >= cooldownSec;
+      bool pulseRecent = sincePulse < HOLD_SEC;
+      bool triggerRecent = sinceTrigger < HOLD_SEC;
 
-      ImGui::Text("Pulse(max)      %.3f  (thr %.3f)  %s", pulse, pulseThreshold, pulseDetected ? "DETECTED" : "-");
-      ImGui::Text("Budget         %.3f  (cost %.3f) %s", budgetValue, eventCost, budgetEnough ? "ENOUGH" : "-");
-      ImGui::Text("Cooldown       %.2fs / %.2fs   %s", sinceTrigger, cooldownSec, cooldownOk ? "OK" : "BLOCK");
-      ImGui::Text("Triggered       %s", agencyControllerPtr->wasTriggeredThisFrame() ? "YES" : "no");
+      // Keep a stable tooltip layout: always show the same fields,
+      // using "-" placeholders when no recent pulse/trigger.
+      if (pulseRecent) {
+        ImGui::Text("Pulse(max)      %.3f  (thr %.3f)", pulse, pulseThreshold);
+        ImGui::Text("PulseDetected   YES   (%.2fs ago)", sincePulse);
+        ImGui::Text("AtPulseBudget   %.3f (cost %.3f) %s", agencyControllerPtr->getLastPulseBudget(), eventCost, agencyControllerPtr->wasLastPulseBudgetEnough() ? "ENOUGH" : "-");
+        ImGui::Text("AtPulseCooldown %s", agencyControllerPtr->wasLastPulseCooldownOk() ? "OK" : "BLOCK");
+        ImGui::Text("AtPulseTrigger  %s", agencyControllerPtr->didLastPulseTrigger() ? "YES" : "no");
+      } else {
+        ImGui::Text("Pulse(max)      %.3f  (thr %.3f)", pulse, pulseThreshold);
+        ImGui::Text("PulseDetected   no    (-)");
+        ImGui::Text("AtPulseBudget   -     (cost %.3f) -", eventCost);
+        ImGui::Text("AtPulseCooldown -");
+        ImGui::Text("AtPulseTrigger  -");
+      }
+
+      bool budgetEnoughNow = budgetValue >= eventCost;
+      bool cooldownOkNow = sinceTrigger >= cooldownSec;
+      ImGui::Text("BudgetNow       %.3f (cost %.3f) %s", budgetValue, eventCost, budgetEnoughNow ? "ENOUGH" : "-");
+
+      if (std::isfinite(sinceTrigger)) {
+        ImGui::Text("CooldownNow     %.2fs / %.2fs   %s", sinceTrigger, cooldownSec, cooldownOkNow ? "OK" : "BLOCK");
+      } else {
+        ImGui::Text("CooldownNow     - / %.2fs   -", cooldownSec);
+      }
+
+      if (triggerRecent) {
+        ImGui::Text("Triggered       YES   (%.2fs ago)", sinceTrigger);
+      } else {
+        ImGui::Text("Triggered       no    (-)");
+      }
+
       ImGui::EndTooltip();
     }
   } else if (isAgencyActive) {

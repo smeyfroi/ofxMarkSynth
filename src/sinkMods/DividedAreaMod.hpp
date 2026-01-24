@@ -11,6 +11,7 @@
 #include <vector>
 #include "ofxGui.h"
 #include "core/Mod.hpp"
+#include "core/ColorRegister.hpp"
 #include "ofxDividedArea.h"
 #include "core/ParamController.h"
 
@@ -38,6 +39,8 @@ public:
   static constexpr int SINK_MINOR_PATH = 20;
   static constexpr int SINK_MINOR_LINES_COLOR = 30;
   static constexpr int SINK_MAJOR_LINES_COLOR = 31;
+  static constexpr int SINK_CHANGE_MAJOR_KEY_COLOUR = 90;
+  static constexpr int SINK_CHANGE_MINOR_KEY_COLOUR = 91;
   static constexpr int SINK_CHANGE_ANGLE = 200;
   
   static constexpr int SINK_CHANGE_STRATEGY = 201;
@@ -57,6 +60,15 @@ private:
   ofParameter<ofFloatColor> minorLineColorParameter { "MinorLineColour", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> minorLineColorController { minorLineColorParameter };
   ofParameter<ofFloatColor> majorLineColorParameter { "MajorLineColour", ofFloatColor(0.0, 0.0, 0.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
+
+  // Key colour registers (pipe-separated vec4 list).
+  // Example: "0,0,0,0.3 | 0.5,0.5,0.5,0.3 | 1,1,1,0.3"
+  ofParameter<std::string> majorKeyColoursParameter { "MajorKeyColours", "" };
+  ofParameter<std::string> minorKeyColoursParameter { "MinorKeyColours", "" };
+  ColorRegister majorKeyColourRegister;
+  ColorRegister minorKeyColourRegister;
+  bool majorKeyColourRegisterInitialized { false };
+  bool minorKeyColourRegisterInitialized { false };
   ParamController<ofFloatColor> majorLineColorController { majorLineColorParameter };
   ofParameter<float> pathWidthParameter { "PathWidth", 0.0, 0.0, 0.005 };
   ParamController<float> pathWidthController { pathWidthParameter };

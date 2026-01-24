@@ -21,7 +21,8 @@ SandLineMod::SandLineMod(std::shared_ptr<Synth> synthPtr, const std::string& nam
   sinkNameIdMap = {
     { "Point", SINK_POINTS },
     { pointRadiusParameter.getName(), SINK_POINT_RADIUS },
-    { colorParameter.getName(), SINK_POINT_COLOR }
+    { colorParameter.getName(), SINK_POINT_COLOR },
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR }
   };
 
   registerControllerForSource(densityParameter, densityController);
@@ -37,6 +38,7 @@ void SandLineMod::initParameters() {
   parameters.add(densityParameter);
   parameters.add(pointRadiusParameter);
   parameters.add(colorParameter);
+  parameters.add(keyColoursParameter);
   parameters.add(alphaMultiplierParameter);
   parameters.add(stdDevAlongParameter);
   parameters.add(stdDevPerpendicularParameter);
@@ -120,9 +122,16 @@ void SandLineMod::update() {
 }
 
 void SandLineMod::receive(int sinkId, const float& value) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
+    case SINK_CHANGE_KEY_COLOUR:
+      if (value > 0.5f) {        keyColourRegister.ensureInitialized(keyColourRegisterInitialized, keyColoursParameter.get(), colorParameter.get());
+        keyColourRegister.flip();
+        colorParameter.set(keyColourRegister.getCurrentColour());
+      }
+      break;
+
     case SINK_POINT_RADIUS:
       pointRadiusController.updateAuto(value, getAgency());
       break;
@@ -133,7 +142,7 @@ void SandLineMod::receive(int sinkId, const float& value) {
 }
 
 void SandLineMod::receive(int sinkId, const glm::vec2& point) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_POINTS:
@@ -145,7 +154,7 @@ void SandLineMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void SandLineMod::receive(int sinkId, const glm::vec4& v) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_POINT_COLOR:

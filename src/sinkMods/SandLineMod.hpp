@@ -8,16 +8,11 @@
 #pragma once
 
 #include <vector>
-#include "ofxGui.h"
+#include "core/ColorRegister.hpp"
 #include "core/Mod.hpp"
-#include "PingPongFbo.h"
 #include "core/ParamController.h"
 
-
-
 namespace ofxMarkSynth {
-
-
 
 class SandLineMod : public Mod {
 
@@ -33,6 +28,7 @@ public:
   static constexpr int SINK_POINTS = 1;
   static constexpr int SINK_POINT_RADIUS = 10;
   static constexpr int SINK_POINT_COLOR = 20;
+  static constexpr int SINK_CHANGE_KEY_COLOUR = 90;
 
 protected:
   void initParameters() override;
@@ -44,8 +40,18 @@ private:
   ParamController<float> densityController { densityParameter };
   ofParameter<float> pointRadiusParameter { "PointRadius", 1.0, 0.0, 32.0 };
   ParamController<float> pointRadiusController { pointRadiusParameter };
-  ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor { 1.0, 1.0, 1.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 0.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> colorParameter { "Colour",
+                                            ofFloatColor { 1.0, 1.0, 1.0, 1.0 },
+                                            ofFloatColor { 0.0, 0.0, 0.0, 0.0 },
+                                            ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> colorController { colorParameter };
+
+  // Key colour register: pipe-separated vec4 list. Example:
+  // "0,0,0,1 | 1,1,1,1"
+  ofParameter<std::string> keyColoursParameter { "KeyColours", "" };
+  ColorRegister keyColourRegister;
+  bool keyColourRegisterInitialized { false };
+
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.05, 0.0, 1.0 };
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
   ofParameter<float> stdDevAlongParameter { "StdDevAlong", 0.5, 0.0, 1.0 };
@@ -56,7 +62,5 @@ private:
 
   std::vector<glm::vec2> newPoints;
 };
-
-
 
 } // ofxMarkSynth

@@ -11,6 +11,7 @@
 #include <vector>
 #include "ofxGui.h"
 #include "core/Mod.hpp"
+#include "core/ColorRegister.hpp"
 #include "ofxParticleSet.h"
 #include "core/ParamController.h"
 //#include "AddTextureThresholded.h"
@@ -32,6 +33,7 @@ public:
   void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_POINT = 1;
+  static constexpr int SINK_CHANGE_KEY_COLOUR = 90;
   static constexpr int SINK_POINT_VELOCITY = 2;
   static constexpr int SINK_SPIN = 10;
   static constexpr int SINK_COLOR = 20;
@@ -47,7 +49,13 @@ private:
   ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> colorController { colorParameter };
 
-  std::unique_ptr<ParamController<float>> timeStepControllerPtr;
+    // Key colour register: pipe-separated vec4 list.
+  // Example: "0,0,0,0.3 | 0.5,0.5,0.5,0.3 | 1,1,1,0.3"
+  ofParameter<std::string> keyColoursParameter { "KeyColours", "" };
+  ColorRegister keyColourRegister;
+  bool keyColourRegisterInitialized { false };
+
+std::unique_ptr<ParamController<float>> timeStepControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDampingControllerPtr;
   std::unique_ptr<ParamController<float>> attractionStrengthControllerPtr;
   std::unique_ptr<ParamController<float>> attractionRadiusControllerPtr;

@@ -1,4 +1,3 @@
-//
 //  ParticleFieldMod.hpp
 //  fingerprint1
 //
@@ -8,16 +7,15 @@
 #pragma once
 
 #include <memory>
+#include "core/ColorRegister.hpp"
 #include "core/Mod.hpp"
-#include "ofxParticleField.h"
 #include "core/ParamController.h"
+#include "ofxParticleField.h"
 
 namespace ofxMarkSynth {
 
-
-
 class ParticleFieldMod : public Mod {
-  
+
 public:
   ParticleFieldMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, float field1Bias_ = 0.0, float field2Bias_ = 0.0);
   float getAgency() const override;
@@ -33,29 +31,34 @@ public:
   static constexpr int SINK_POINT_COLOR = 31; // to update color for a block of particles
   static constexpr int SINK_MIN_WEIGHT = 40;
   static constexpr int SINK_MAX_WEIGHT = 41;
+  static constexpr int SINK_CHANGE_KEY_COLOUR = 42;
 
 protected:
   void initParameters() override;
-  
+
 private:
   ofxParticleField::ParticleField particleField;
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
-  ofParameter<ofFloatColor> pointColorParameter {
-    "PointColour",
-    ofFloatColor { 1.0f, 1.0f, 1.0f, 0.3f },
-    ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f },
-    ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f }
-  };
+  ofParameter<ofFloatColor> pointColorParameter { "PointColour",
+                                                 ofFloatColor { 1.0f, 1.0f, 1.0f, 0.3f },
+                                                 ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f },
+                                                 ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f } };
 
   // Config-only field normalization (mirrors SmearMod Field1PreScaleExp/Field2PreScaleExp).
   // Log10 exponent: 10^exp gives preScale (range 0.00001 to 100).
   ofParameter<float> field1PreScaleExpParameter { "Field1PreScaleExp", -2.0f, -5.0f, 2.0f };
   ofParameter<float> field2PreScaleExpParameter { "Field2PreScaleExp", -2.0f, -5.0f, 2.0f };
-  
+
+  // Key colour register: pipe-separated vec4 list. Example:
+  // "0,0,0,0.3 | 0.5,0.5,0.5,0.3 | 1,1,1,0.3"
+  ofParameter<std::string> keyColoursParameter { "KeyColours", "" };
+  ColorRegister keyColourRegister;
+  bool keyColourRegisterInitialized { false };
+
   std::unique_ptr<ParamController<float>> minWeightControllerPtr;
   std::unique_ptr<ParamController<float>> maxWeightControllerPtr;
   std::unique_ptr<ParamController<ofFloatColor>> pointColorControllerPtr;
-  
+
   std::unique_ptr<ParamController<float>> ln2ParticleCountControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDampingControllerPtr;
   std::unique_ptr<ParamController<float>> forceMultiplierControllerPtr;
@@ -70,7 +73,5 @@ private:
   ofxParticleField::ParticleField::ParameterOverrides lastAppliedParameterOverrides;
   bool hasLastAppliedParameterOverrides = false;
 };
-
-
 
 } // ofxMarkSynth

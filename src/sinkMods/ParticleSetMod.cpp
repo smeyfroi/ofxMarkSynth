@@ -21,7 +21,8 @@ ParticleSetMod::ParticleSetMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "Point", SINK_POINT },
     { "PointVelocity", SINK_POINT_VELOCITY },
     { spinParameter.getName(), SINK_SPIN },
-    { colorParameter.getName(), SINK_COLOR }
+    { colorParameter.getName(), SINK_COLOR },
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR }
   };
 
   registerControllerForSource(spinParameter, spinController);
@@ -35,6 +36,7 @@ float ParticleSetMod::getAgency() const {
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);
   parameters.add(colorParameter);
+  parameters.add(keyColoursParameter);
   addFlattenedParameterGroup(parameters, particleSet.getParameterGroup());
   parameters.add(agencyFactorParameter);
 
@@ -142,9 +144,16 @@ void ParticleSetMod::update() {
 }
 
 void ParticleSetMod::receive(int sinkId, const float& value) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
+    case SINK_CHANGE_KEY_COLOUR:
+      if (value > 0.5f) {        keyColourRegister.ensureInitialized(keyColourRegisterInitialized, keyColoursParameter.get(), colorParameter.get());
+        keyColourRegister.flip();
+        colorParameter.set(keyColourRegister.getCurrentColour());
+      }
+      break;
+
     case SINK_SPIN:
       spinController.updateAuto(value, getAgency());
       break;
@@ -154,7 +163,7 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
 }
 
 void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_POINT:
@@ -166,7 +175,7 @@ void ParticleSetMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_POINT_VELOCITY:

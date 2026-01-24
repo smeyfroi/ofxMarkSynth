@@ -733,17 +733,17 @@ Adds energy to a `FluidMod` velocity layer via radial, directional, and swirl im
 - `Point` (vec2): Impulse centers (normalized 0–1)
 - `PointVelocity` (vec4): `{x, y, dx, dy}` (normalized) per-impulse directional injection
 - `Velocity` (vec2): Global `{dx, dy}` (normalized) used when only `Point` is provided
-- `SwirlVelocity` (float): Normalized 0–1 additional swirl term (overrides config value)
+- `SwirlVelocity` (float): Normalized 0–0.25 additional swirl term (overrides config value)
 - `Impulse Radius` (float): Impulse size
 - `Impulse Strength` (float): Normalized strength
 
 **Key Parameters**:
 - `Impulse Radius` (0.0–0.10): Radius as a fraction of the target buffer’s min dimension
-- `Impulse Strength` (0.0–1.0): Interpreted as a **fraction of radius displacement per step** (resolution-independent feel)
-- `dt` (0.001–1.0): dt passed to the impulse shader (should match the fluid solver’s dt semantics)
+- `Impulse Strength` (0.0–0.7): Interpreted as a **fraction of radius displacement per step** (resolution-independent feel)
+- `dt` (0.0–0.002): dt passed to the impulse shader (should match the fluid solver’s dt semantics)
 - `VelocityScale` (0.0–50.0): Scales normalized `Velocity` / `PointVelocity` into pixel displacement per step
-- `SwirlStrength` (0.0–2.0): Multiplier for `SwirlVelocity`
-- `SwirlVelocity` (0.0–1.0): Base swirl term (config/manual); effective swirl = `clamp(SwirlVelocity * SwirlStrength, 0..1)`
+- `SwirlStrength` (0.0–0.5): Multiplier for `SwirlVelocity` (capped to avoid obvious whirlpools)
+- `SwirlVelocity` (0.0–0.25): Base swirl term (config/manual); effective swirl = `clamp(SwirlVelocity * SwirlStrength, 0..1)` (capped to avoid obvious whirlpools)
 
 **Intent Integration**: Responds to Intent (radius + strength). Other parameters are manual-only.
 

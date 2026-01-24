@@ -344,6 +344,7 @@
       "type": "Collage",
       "config": {
         "Colour": "1, 1, 1, 1",
+        "KeyColours": "",
         "Saturation": "1.5",
         "OutlineAlphaFactor": "0.5",
         "OutlineWidth": "12",
@@ -371,6 +372,8 @@
         "MajorLineWidth": "200",
         "MinorLineColour": "0, 0, 0, 1",
         "MajorLineColour": "0, 0, 0, 1",
+        "MinorKeyColours": "",
+        "MajorKeyColours": "",
         "MaxUnconstrainedLines": "3",
         "unconstrainedLerpAmount": "0.5",
         "unconstrainedSmoothness": "0.5",
@@ -423,8 +426,9 @@
         "Impulse Strength": "0.2",
         "dt": "0.1",
         "VelocityScale": "1.0",
-        "SwirlStrength": "1.0",
+        "SwirlStrength": "0.25",
         "SwirlVelocity": "0.0",
+        "_comment_swirl": "Swirl ranges are capped to avoid obvious whirlpools; effective swirl = SwirlVelocity * SwirlStrength."
         "AgencyFactor": "1"
       }
     },
@@ -447,10 +451,12 @@
       "_params_from": "ofxParticleField",
       "config": {
         "ln2ParticleCount": "14",
+        "_comment_ln2ParticleCount_intent": "Intent mapping: Density -> ln2ParticleCount via exp(3.0) (damped).",
         "velocityDamping": "0.997",
         "forceMultiplier": "0.01",
         "maxVelocity": "0.001",
         "particleSize": "8",
+        "_comment_particleSize_intent": "Intent mapping: Granularity -> particleSize via exp(5.0) (heavily damped).",
         "jitterStrength": "0.2",
         "jitterSmoothing": "0.1",
         "speedThreshold": "2",
@@ -461,6 +467,8 @@
         "Field1PreScaleExp": "-2",
         "Field2PreScaleExp": "-2",
         "PointColour": "1, 1, 1, 0.3",
+        "KeyColours": "",
+        "_comment_KeyColours": "KeyColours: Pipe-separated list of RGBA (float) values. Used by ChangeKeyColour sink to flip registers (index 0 <-> random non-zero). Example: \"0,0,0,0.3 | 1,1,1,0.3\"",
         "AgencyFactor": "1"
       }
     },
@@ -471,6 +479,7 @@
       "config": {
         "Spin": "0.03",
         "Colour": "1, 1, 1, 1",
+        "KeyColours": "",
         "strategy": "2",
         "maxParticles": "5000",
         "maxParticleAge": "500",
@@ -496,6 +505,7 @@
         "Density": "0.05",
         "PointRadius": "1",
         "Colour": "1, 1, 1, 1",
+        "KeyColours": "",
         "AlphaMultiplier": "0.05",
         "StdDevAlong": "0.5",
         "StdDevPerpendicular": "0.01",
@@ -508,6 +518,7 @@
       "config": {
         "Radius": "0.005",
         "Colour": "0.5, 0.5, 0.5, 0.5",
+        "KeyColours": "",
         "ColourMultiplier": "0.5",
         "AlphaMultiplier": "0.2",
         "Softness": "0.3",
@@ -524,6 +535,7 @@
         "Position": "0.5, 0.5",
         "FontSize": "0.05",
         "Colour": "1, 1, 1, 1",
+        "KeyColours": "",
         "Alpha": "1",
         "DrawDurationSec": "1.0",
         "AlphaFactor": "0.2",

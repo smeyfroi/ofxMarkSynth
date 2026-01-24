@@ -65,6 +65,7 @@ float AgencyControllerMod::getDt() const {
 void AgencyControllerMod::update() {
   syncControllerAgencies();
   triggeredThisFrame = false;
+  pulseDetectedThisFrame = false;
 
   float dt = getDt();
   lastDt = dt;
@@ -102,13 +103,31 @@ void AgencyControllerMod::update() {
   pulseMaxThisFrame = 0.0f;
   lastPulse = pulse;
 
-  if (pulse > pulseThresholdParameter && budget >= eventCostParameter) {
-    float now = ofGetElapsedTimef();
-    bool cooldownOk = (lastTriggerTimeSec < 0.0f) || (now - lastTriggerTimeSec >= cooldownSecParameter);
+  float now = ofGetElapsedTimef();
+  float pulseThreshold = pulseThresholdParameter;
+  float eventCost = eventCostParameter;
+  float cooldownSec = cooldownSecParameter;
+  bool pulseDetected = pulse > pulseThreshold;
+
+  // Track pulse state even if it fails gating (for tuning visibility).
+  if (pulseDetected) {
+    pulseDetectedThisFrame = true;
+    lastPulseDetectedTimeSec = now;
+    lastPulseBudget = budget;
+    lastPulseBudgetEnough = budget >= eventCost;
+
+    float sinceTrigger = (lastTriggerTimeSec < 0.0f) ? std::numeric_limits<float>::infinity() : (now - lastTriggerTimeSec);
+    lastPulseCooldownOk = sinceTrigger >= cooldownSec;
+    lastPulseDidTrigger = false;
+  }
+
+  if (pulseDetected && budget >= eventCost) {
+    bool cooldownOk = (lastTriggerTimeSec < 0.0f) || (now - lastTriggerTimeSec >= cooldownSec);
     if (cooldownOk) {
       shouldTrigger = true;
       lastTriggerTimeSec = now;
-      budget = std::max(0.0f, budget - static_cast<float>(eventCostParameter));
+      budget = std::max(0.0f, budget - eventCost);
+      lastPulseDidTrigger = true;
     }
   }
 
@@ -136,6 +155,11 @@ void AgencyControllerMod::receive(int sinkId, const float& value) {
 float AgencyControllerMod::getSecondsSinceTrigger() const {
   if (lastTriggerTimeSec < 0.0f) return std::numeric_limits<float>::infinity();
   return ofGetElapsedTimef() - lastTriggerTimeSec;
+}
+
+float AgencyControllerMod::getSecondsSincePulseDetected() const {
+  if (lastPulseDetectedTimeSec < 0.0f) return std::numeric_limits<float>::infinity();
+  return ofGetElapsedTimef() - lastPulseDetectedTimeSec;
 }
 
 } // namespace ofxMarkSynth

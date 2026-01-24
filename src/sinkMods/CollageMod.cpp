@@ -1,21 +1,15 @@
-//
 //  CollageMod.cpp
 //  example_collage
 //
 //  Created by Steve Meyfroidt on 21/05/2025.
 //
 
-
 #include "CollageMod.hpp"
-#include "ofxFatline.h"
+#include "ofxFatLine.h"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 
-
-
 namespace ofxMarkSynth {
-
-
 
 CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
@@ -23,7 +17,8 @@ CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name,
   sinkNameIdMap = {
     { "Path", SINK_PATH },
     { "SnapshotTexture", SINK_SNAPSHOT_TEXTURE },
-    { colorParameter.getName(), SINK_COLOR }
+    { colorParameter.getName(), SINK_COLOR },
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR }
   };
 
   registerControllerForSource(colorParameter, colorController);
@@ -40,6 +35,7 @@ void CollageMod::initParameters() {
   parameters.add(opacityParameter);
   parameters.add(minDrawIntervalParameter);
   parameters.add(colorParameter);
+  parameters.add(keyColoursParameter);
   parameters.add(saturationParameter);
   parameters.add(outlineAlphaFactorParameter);
   parameters.add(outlineWidthParameter);
@@ -248,6 +244,22 @@ void CollageMod::receive(int sinkId, const glm::vec4& v) {
   }
 }
 
+void CollageMod::receive(int sinkId, const float& value) {
+  switch (sinkId) {
+    case SINK_CHANGE_KEY_COLOUR:
+      if (value > 0.5f) {
+        // Key colour flip is independent of agency; agency affects how auto colour mixes in.
+        keyColourRegister.ensureInitialized(keyColourRegisterInitialized, keyColoursParameter.get(), colorParameter.get());
+        keyColourRegister.flip();
+        colorParameter.set(keyColourRegister.getCurrentColour());
+      }
+      break;
+
+    default:
+      ofLogError("CollageMod") << "Float receive for unknown sinkId " << sinkId;
+  }
+}
+
 void CollageMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
@@ -285,7 +297,5 @@ void CollageMod::applyIntent(const Intent& intent, float strength) {
   outlineColor.a = 1.0f; // alpha handled by OutlineAlphaFactor
   outlineColorController.updateIntent(outlineColor, strength, "inv(S)->bright, E->warmth");
 }
-
-
 
 } // ofxMarkSynth

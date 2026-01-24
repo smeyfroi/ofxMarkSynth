@@ -7,24 +7,23 @@
 
 #pragma once
 
+#include "core/ColorRegister.hpp"
+#include "core/FontStash2Cache.hpp"
 #include "core/Mod.hpp"
 #include "core/ParamController.h"
-#include "core/FontStash2Cache.hpp"
 #include <memory>
 #include <vector>
 
-
-
 namespace ofxMarkSynth {
-
-
 
 class TextMod : public Mod {
 
 public:
-  TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, 
+  TextMod(std::shared_ptr<Synth> synthPtr,
+          const std::string& name,
+          ModConfig config,
           std::shared_ptr<FontStash2Cache> fontCache);
-  
+
   void update() override;
   void receive(int sinkId, const std::string& text) override;
   void receive(int sinkId, const float& value) override;
@@ -32,7 +31,7 @@ public:
   void receive(int sinkId, const glm::vec4& v) override;
   void applyIntent(const Intent& intent, float strength) override;
   float getAgency() const override;
-  
+
   static constexpr int SINK_TEXT = 1;
   static constexpr int SINK_POSITION = 10;
   static constexpr int SINK_FONT_SIZE = 20;
@@ -40,6 +39,7 @@ public:
   static constexpr int SINK_ALPHA = 31;
   static constexpr int SINK_DRAW_DURATION_SEC = 40;
   static constexpr int SINK_ALPHA_FACTOR = 41;
+  static constexpr int SINK_CHANGE_KEY_COLOUR = 90;
 
 protected:
   void initParameters() override;
@@ -75,6 +75,12 @@ private:
   ofParameter<ofFloatColor> colorParameter { "Colour", { 1.0, 1.0, 1.0, 1.0 }, { 0.0, 0.0, 0.0, 0.0 }, { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> colorController { colorParameter };
 
+  // Key colour register: pipe-separated vec4 list. Example:
+  // "0,0,0,1 | 1,1,1,1"
+  ofParameter<std::string> keyColoursParameter { "KeyColours", "" };
+  ColorRegister keyColourRegister;
+  bool keyColourRegisterInitialized { false };
+
   ofParameter<float> alphaParameter { "Alpha", 1.0, 0.0, 1.0 };
   ParamController<float> alphaController { alphaParameter };
 
@@ -94,7 +100,5 @@ private:
   void pushDrawEvent(const std::string& text);
   void drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr);
 };
-
-
 
 } // ofxMarkSynth

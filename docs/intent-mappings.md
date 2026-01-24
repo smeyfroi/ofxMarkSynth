@@ -296,13 +296,13 @@ Strategy selection:
 | S | PointColour.brightness | structureToBrightness * 0.5 |
 | E*C | PointColour.saturation | direct |
 | D | PointColour.alpha | lin(0.1 -> 0.5) |
-| D | ln2ParticleCount | exp — density = more particles |
+| D | ln2ParticleCount | exp(3.0) — density = more particles (damped) |
 | 1-G | minWeight | inv |
 | C | maxWeight | lin |
 | 1-G | velocityDamping | inv — high G = low damping (more motion) |
 | E | forceMultiplier | exp — energy = force intensity |
 | E | maxVelocity | lin — energy = speed |
-| G | particleSize | exp — granularity = feature size |
+| G | particleSize | exp(5.0) — granularity = feature size (heavily damped) |
 | C | jitterStrength | lin — chaos = randomness |
 | S | jitterSmoothing | lin — structure = smoothness |
 | E*C | speedThreshold | lin — activity threshold |

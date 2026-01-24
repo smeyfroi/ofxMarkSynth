@@ -8,14 +8,12 @@
 #pragma once
 
 #include <vector>
+#include "SoftCircleShader.h"
+#include "core/ColorRegister.hpp"
 #include "core/Mod.hpp"
 #include "core/ParamController.h"
-#include "SoftCircleShader.h"
-
 
 namespace ofxMarkSynth {
-
-
 
 class SoftCircleMod : public Mod {
 
@@ -34,15 +32,26 @@ public:
   static constexpr int SINK_COLOR_MULTIPLIER = 21;
   static constexpr int SINK_ALPHA_MULTIPLIER = 22;
   static constexpr int SINK_SOFTNESS = 30;
+  static constexpr int SINK_CHANGE_KEY_COLOUR = 90;
 
 protected:
   void initParameters() override;
 
 private:
-  ofParameter<float> radiusParameter { "Radius", 0.005, 0.0, 0.25 };
+  ofParameter<float> radiusParameter { "Radius", 0.005, 0.0, 0.1 };
   ParamController<float> radiusController { radiusParameter };
-  ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor { 0.5f, 0.5f, 0.5f, 0.5f }, ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f }, ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f } };
+  ofParameter<ofFloatColor> colorParameter { "Colour",
+                                            ofFloatColor { 0.5f, 0.5f, 0.5f, 0.5f },
+                                            ofFloatColor { 0.0f, 0.0f, 0.0f, 0.0f },
+                                            ofFloatColor { 1.0f, 1.0f, 1.0f, 1.0f } };
   ParamController<ofFloatColor> colorController { colorParameter };
+
+  // Key colour register: pipe-separated vec4 list. Example:
+  // "0,0,0,0.5 | 1,1,1,0.5"
+  ofParameter<std::string> keyColoursParameter { "KeyColours", "" };
+  ColorRegister keyColourRegister;
+  bool keyColourRegisterInitialized { false };
+
   ofParameter<float> colorMultiplierParameter { "ColourMultiplier", 0.5, 0.0, 1.0 }; // RGB
   ParamController<float> colorMultiplierController { colorMultiplierParameter };
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A
@@ -55,7 +64,5 @@ private:
   std::vector<glm::vec2> newPoints;
   SoftCircleShader softCircleShader;
 };
-
-
 
 } // ofxMarkSynth

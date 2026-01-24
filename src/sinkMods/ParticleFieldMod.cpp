@@ -6,13 +6,11 @@
 
 #include "ParticleFieldMod.hpp"
 #include "cmath"
-#include "core/IntentMapping.hpp"
 #include "config/Parameter.hpp"
 #include "core/IntentMapper.hpp"
-
+#include "core/IntentMapping.hpp"
 
 namespace ofxMarkSynth {
-
 
 ParticleFieldMod::ParticleFieldMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
                                    float field1ValueOffset_, float field2ValueOffset_)
@@ -27,13 +25,15 @@ ParticleFieldMod::ParticleFieldMod(std::shared_ptr<Synth> synthPtr, const std::s
     { pointColorParameter.getName(), SINK_POINT_COLOR },
     { "minWeight", SINK_MIN_WEIGHT },
     { "maxWeight", SINK_MAX_WEIGHT },
-    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER },
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR }
   };
 }
 
 void ParticleFieldMod::initParameters() {
   addFlattenedParameterGroup(parameters, particleField.getParameterGroup());
   parameters.add(pointColorParameter);
+  parameters.add(keyColoursParameter);
   parameters.add(field1PreScaleExpParameter);
   parameters.add(field2PreScaleExpParameter);
   parameters.add(agencyFactorParameter);
@@ -177,7 +177,8 @@ void ParticleFieldMod::update() {
   ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_SCREEN);
 
-  particleField.draw(fboPtr->getSource()); //, !drawingLayerPtr->clearOnUpdate);
+//  particleField.draw(fboPtr->getSource(), !drawingLayerPtr->clearOnUpdate);
+  particleField.draw(fboPtr->getSource());
   ofPopStyle();
 }
 
@@ -212,9 +213,18 @@ void ParticleFieldMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void ParticleFieldMod::receive(int sinkId, const float& value) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
+    case SINK_CHANGE_KEY_COLOUR:
+      if (value > 0.5f) {
+        // Key colour flip is independent of agency; agency affects how auto colour mixes in.
+        keyColourRegister.ensureInitialized(keyColourRegisterInitialized, keyColoursParameter.get(), pointColorParameter.get());
+        keyColourRegister.flip();
+        pointColorParameter.set(keyColourRegister.getCurrentColour());
+      }
+      break;
+
     case Mod::SINK_CHANGE_LAYER:
       if (value > 0.5f) {
         ofLogNotice("ParticleFieldMod") << "ParticleFieldMod::ChangeLayer: changing layer";
@@ -244,8 +254,8 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
     pointColorControllerPtr->updateIntent(intentColor, strength, "E,S,C,D → PointColour");
   }
 
-  // Density should be a strong "more particles" control.
-  im.D().exp(*ln2ParticleCountControllerPtr, strength);
+  // Density controls particle count, but with strong damping to avoid huge swings.
+  im.D().exp(*ln2ParticleCountControllerPtr, strength, 3.0f);
 
   im.G().inv().lin(*minWeightControllerPtr, strength);
   im.C().lin(*maxWeightControllerPtr, strength);
@@ -256,7 +266,8 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   im.E().lin(*maxVelocityControllerPtr, strength);
 
   // Visual parameters
-  im.G().exp(*particleSizeControllerPtr, strength);
+  // Granularity affects feature size, but with heavy damping.
+  im.G().exp(*particleSizeControllerPtr, strength, 5.0f);
 
   // Jitter parameters
   im.C().lin(*jitterStrengthControllerPtr, strength);
@@ -269,7 +280,5 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   im.E().exp(*field1MultiplierControllerPtr, strength, 2.0f);
   im.C().exp(*field2MultiplierControllerPtr, strength, 3.0f);
 }
-
-
 
 } // ofxMarkSynth

@@ -24,6 +24,7 @@ SoftCircleMod::SoftCircleMod(std::shared_ptr<Synth> synthPtr, const std::string&
     { "Point", SINK_POINTS },
     { radiusParameter.getName(), SINK_RADIUS },
     { colorParameter.getName(), SINK_COLOR },
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR },
     { colorMultiplierParameter.getName(), SINK_COLOR_MULTIPLIER },
     { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
     { softnessParameter.getName(), SINK_SOFTNESS },
@@ -40,6 +41,7 @@ SoftCircleMod::SoftCircleMod(std::shared_ptr<Synth> synthPtr, const std::string&
 void SoftCircleMod::initParameters() {
   parameters.add(radiusParameter);
   parameters.add(colorParameter);
+  parameters.add(keyColoursParameter);
   parameters.add(colorMultiplierParameter);
   parameters.add(alphaMultiplierParameter);
   parameters.add(softnessParameter);
@@ -104,9 +106,16 @@ void SoftCircleMod::update() {
 }
 
 void SoftCircleMod::receive(int sinkId, const float& value) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
+    case SINK_CHANGE_KEY_COLOUR:
+      if (value > 0.5f) {        keyColourRegister.ensureInitialized(keyColourRegisterInitialized, keyColoursParameter.get(), colorParameter.get());
+        keyColourRegister.flip();
+        colorParameter.set(keyColourRegister.getCurrentColour());
+      }
+      break;
+
     case SINK_RADIUS:
       radiusController.updateAuto(value, getAgency());
       break;
@@ -131,7 +140,7 @@ void SoftCircleMod::receive(int sinkId, const float& value) {
 }
 
 void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_POINTS:
@@ -143,7 +152,7 @@ void SoftCircleMod::receive(int sinkId, const glm::vec2& point) {
 }
 
 void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
     case SINK_COLOR:

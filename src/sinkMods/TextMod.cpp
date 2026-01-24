@@ -11,13 +11,11 @@
 #include "core/Synth.hpp"
 #include <algorithm>
 
-
-
 namespace ofxMarkSynth {
 
-
-
-TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config,
+TextMod::TextMod(std::shared_ptr<Synth> synthPtr,
+                 const std::string& name,
+                 ModConfig config,
                  std::shared_ptr<FontStash2Cache> fontCache)
 : Mod { synthPtr, name, std::move(config) },
   fontCachePtr { fontCache }
@@ -27,6 +25,7 @@ TextMod::TextMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModCo
     { positionParameter.getName(), SINK_POSITION },
     { fontSizeParameter.getName(), SINK_FONT_SIZE },
     { colorParameter.getName(), SINK_COLOR },
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR },
     { alphaParameter.getName(), SINK_ALPHA },
     { drawDurationSecParameter.getName(), SINK_DRAW_DURATION_SEC },
     { alphaFactorParameter.getName(), SINK_ALPHA_FACTOR },
@@ -45,6 +44,7 @@ void TextMod::initParameters() {
   parameters.add(positionParameter);
   parameters.add(fontSizeParameter);
   parameters.add(colorParameter);
+  parameters.add(keyColoursParameter);
   parameters.add(alphaParameter);
   parameters.add(drawDurationSecParameter);
   parameters.add(alphaFactorParameter);
@@ -82,9 +82,9 @@ void TextMod::update() {
   // Use config running time (pause-aware) instead of wall clock
   float now = getSynth()->getConfigRunningTime();
   drawEvents.erase(std::remove_if(drawEvents.begin(), drawEvents.end(), [&](const DrawEvent& e) {
-                     return (now - e.startTimeSec) >= e.durationSec;
-                   }),
-                   drawEvents.end());
+                   return (now - e.startTimeSec) >= e.durationSec;
+                 }),
+                 drawEvents.end());
   if (drawEvents.empty()) return;
 
   fboPtr->getSource().begin();
@@ -112,9 +112,18 @@ void TextMod::receive(int sinkId, const std::string& text) {
 }
 
 void TextMod::receive(int sinkId, const float& value) {
-  if (!canDrawOnNamedLayer()) return;
+  if (sinkId != SINK_CHANGE_KEY_COLOUR && !canDrawOnNamedLayer()) return;
 
   switch (sinkId) {
+    case SINK_CHANGE_KEY_COLOUR:
+      if (value > 0.5f) {
+        // Key colour flip is independent of agency; agency affects how auto colour mixes in.
+        keyColourRegister.ensureInitialized(keyColourRegisterInitialized, keyColoursParameter.get(), colorParameter.get());
+        keyColourRegister.flip();
+        colorParameter.set(keyColourRegister.getCurrentColour());
+      }
+      break;
+
     case SINK_FONT_SIZE:
       fontSizeController.updateAuto(value, getAgency());
       break;
@@ -282,7 +291,5 @@ void TextMod::drawEvent(DrawEvent& e, const DrawingLayerPtr& drawingLayerPtr) {
   // Draw using ofxFontStash2
   fontCachePtr->draw(e.text, style, x, y);
 }
-
-
 
 } // ofxMarkSynth

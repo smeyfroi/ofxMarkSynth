@@ -31,7 +31,9 @@ DividedAreaMod::DividedAreaMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "ChangeAngle", SINK_CHANGE_ANGLE },
 
     { "ChangeStrategy", SINK_CHANGE_STRATEGY },
-    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER },
+    { "ChangeMajorKeyColour", SINK_CHANGE_MAJOR_KEY_COLOUR },
+    { "ChangeMinorKeyColour", SINK_CHANGE_MINOR_KEY_COLOUR }
   };
 
   registerControllerForSource(angleParameter, angleController);
@@ -53,6 +55,8 @@ void DividedAreaMod::initParameters() {
   parameters.add(majorLineWidthParameter);
   parameters.add(minorLineColorParameter);
   parameters.add(majorLineColorParameter);
+  parameters.add(minorKeyColoursParameter);
+  parameters.add(majorKeyColoursParameter);
   parameters.add(maxUnconstrainedLinesParameter);
   parameters.add(agencyFactorParameter);
   addFlattenedParameterGroup(parameters, dividedArea.getParameterGroup());
@@ -209,9 +213,29 @@ void DividedAreaMod::receive(int sinkId, const ofPath& path) {
 }
 
 void DividedAreaMod::receive(int sinkId, const float& v) {
+  if (sinkId == SINK_CHANGE_MAJOR_KEY_COLOUR) {
+    if (v > 0.5f) {
+      majorKeyColourRegister.ensureInitialized(majorKeyColourRegisterInitialized, majorKeyColoursParameter.get(), majorLineColorParameter.get());
+      majorKeyColourRegister.flip();
+      majorLineColorParameter.set(majorKeyColourRegister.getCurrentColour());
+    }
+    return;
+  }
+
+  if (sinkId == SINK_CHANGE_MINOR_KEY_COLOUR) {
+    if (v > 0.5f) {
+      minorKeyColourRegister.ensureInitialized(minorKeyColourRegisterInitialized, minorKeyColoursParameter.get(), minorLineColorParameter.get());
+      minorKeyColourRegister.flip();
+      minorLineColorParameter.set(minorKeyColourRegister.getCurrentColour());
+    }
+    return;
+  }
+
   if (!canDrawOnNamedLayer(DEFAULT_DRAWING_LAYER_PTR_NAME)) return;
 
   switch (sinkId) {
+
+
     case Mod::SINK_CHANGE_LAYER:
       if (v > 0.5f) {
         ofLogNotice("DividedAreaMod") << "DividedAreaMod::ChangeLayer: changing layer";
