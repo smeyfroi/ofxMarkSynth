@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "util/Lerp.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -150,7 +151,7 @@ public:
   
   void updateIntent(T newIntentValue, float newIntentStrength, 
                     const std::string& mappingDesc = "") {
-    intentValue = newIntentValue;
+    intentValue = clampToManualRange(newIntentValue);
     intentStrength = newIntentStrength;
     hasReceivedIntentValue = true;
     if (!mappingDesc.empty()) {
@@ -160,7 +161,7 @@ public:
   }
   
   void updateAuto(T newAutoValue, float newAgency) {
-    autoValue = newAutoValue;
+    autoValue = clampToManualRange(newAutoValue);
     agency = newAgency;
     hasReceivedAutoValue = true;
     update();
@@ -299,6 +300,8 @@ public:
     } else {
       targetValue = wAuto * autoSmoothed + wManual * manualSmoothed + wIntent * intentSmoothed;
     }
+
+    targetValue = clampToManualRange(targetValue);
     
     // Final smoothing to target
     // For int types, don't smooth - just snap to target
@@ -313,11 +316,35 @@ public:
     } else {
       value = smoothTo(value, targetValue, dt, targetSmoothSec);
     }
+
+    value = clampToManualRange(value);
   }
   
   T value;
   
 private:
+  T clampToManualRange(const T& v) const {
+    if constexpr (std::is_same_v<T, float>) {
+      return ofClamp(v, manualValueParameter.getMin(), manualValueParameter.getMax());
+    } else if constexpr (std::is_same_v<T, int>) {
+      return std::clamp(v, manualValueParameter.getMin(), manualValueParameter.getMax());
+    } else if constexpr (std::is_same_v<T, glm::vec2>) {
+      const auto mn = manualValueParameter.getMin();
+      const auto mx = manualValueParameter.getMax();
+      return { ofClamp(v.x, mn.x, mx.x), ofClamp(v.y, mn.y, mx.y) };
+    } else if constexpr (std::is_same_v<T, glm::vec4>) {
+      const auto mn = manualValueParameter.getMin();
+      const auto mx = manualValueParameter.getMax();
+      return { ofClamp(v.x, mn.x, mx.x), ofClamp(v.y, mn.y, mx.y), ofClamp(v.z, mn.z, mx.z), ofClamp(v.w, mn.w, mx.w) };
+    } else if constexpr (std::is_same_v<T, ofFloatColor>) {
+      const auto mn = manualValueParameter.getMin();
+      const auto mx = manualValueParameter.getMax();
+      return { ofClamp(v.r, mn.r, mx.r), ofClamp(v.g, mn.g, mx.g), ofClamp(v.b, mn.b, mx.b), ofClamp(v.a, mn.a, mx.a) };
+    } else {
+      return v;
+    }
+  }
+
   ofParameter<T>& manualValueParameter;
   ofEventListener paramListener;
   float lastManualUpdateTime;
