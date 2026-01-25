@@ -7,6 +7,7 @@
 
 #include "nodeEditor/NodeRenderUtil.hpp"
 #include "gui/ImGuiUtil.hpp"
+#include <cmath>
 #include <cstdio>
 
 
@@ -150,8 +151,20 @@ void addParameter(const ModPtr& modPtr, ofParameter<float>& parameter) {
   float value = parameter.get();
   
   ImGui::PushItemWidth(sliderWidth);
-  const float r = parameter.getMax() - parameter.getMin();
-  const char* fmt = (r <= 0.01f) ? "%.5f" : (r <= 0.1f) ? "%.4f" : (r <= 1.0f) ? "%.3f" : "%.2f";
+
+  // Default formatting is based on range, but for small nonzero values we want
+  // higher precision so parameters don't appear as "0.0" / "0.00".
+  const float range = parameter.getMax() - parameter.getMin();
+  const char* fmtRange = (range <= 0.01f) ? "%.5f" : (range <= 0.1f) ? "%.4f" : (range <= 1.0f) ? "%.3f" : "%.2f";
+
+  const float absV = std::abs(value);
+  const char* fmt = fmtRange;
+  if (absV > 0.0f && absV < 1.0e-4f) {
+    fmt = "%.2e";
+  } else if (absV > 0.0f && absV < 1.0e-2f) {
+    fmt = "%.5f";
+  }
+
   if (ImGui::SliderFloat(("##" + name).c_str(), &value, parameter.getMin(), parameter.getMax(), fmt, ImGuiSliderFlags_NoRoundToFormat)) {
     parameter.set(value);
     parameterModifiedThisFrame = true;

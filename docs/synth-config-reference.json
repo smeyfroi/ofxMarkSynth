@@ -289,10 +289,10 @@
         "TriggerBased": "false",
         "Strategy": "0",
         "MaxVertices": "3",
-        "ClusterRadius": "0.15",
+        "ClusterRadius": "0.05",
         "AgencyFactor": "1",
         "_comment_TriggerBased": "TriggerBased: When 'true', PathMod only emits paths when triggered via the Trigger sink. Points accumulate continuously and are clustered on trigger. Points outside the cluster are retained for subsequent triggers. When 'false' (default), paths are emitted automatically when enough clustered points accumulate.",
-        "_comment_ClusterRadius": "ClusterRadius: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy."
+        "_comment_ClusterRadius": "ClusterRadius: Maximum distance from the newest point for inclusion in the cluster (0.01-0.5 normalized). Points within this radius form the cluster that gets shaped by the Strategy. Intent mapping uses a capped max (~0.4) to avoid screen-sized paths."
       }
     },
 
@@ -426,7 +426,7 @@
         "Impulse Strength": "0.2",
         "dt": "0.1",
         "VelocityScale": "1.0",
-        "SwirlStrength": "0.25",
+        "SwirlStrength": "0.15",
         "SwirlVelocity": "0.0",
         "_comment_swirl": "Swirl ranges are capped to avoid obvious whirlpools; effective swirl = SwirlVelocity * SwirlStrength."
         "AgencyFactor": "1"

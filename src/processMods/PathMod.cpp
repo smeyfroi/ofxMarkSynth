@@ -9,6 +9,7 @@
 #include "ofxConvexHull.h"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
+#include <algorithm>
 
 
 namespace ofxMarkSynth {
@@ -268,7 +269,13 @@ void PathMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
   
   // Granularity -> larger cluster radius (bigger shapes)
-  im.G().exp(clusterRadiusController, strength);
+  // Use a moderate exponent + a capped max so large radii stay controlled.
+  float maxIntentClusterRadius = std::min(clusterRadiusController.getManualMax(), 0.4f);
+  im.G().exp(clusterRadiusController,
+             strength,
+             clusterRadiusController.getManualMin(),
+             maxIntentClusterRadius,
+             4.0f);
   // Density -> more vertices allowed
   im.D().exp(maxVerticesController, strength);
   

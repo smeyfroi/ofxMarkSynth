@@ -383,9 +383,9 @@ Converts a stream of points into geometric paths using various strategies.
 **Key Parameters**:
 - `Strategy`: 0=polypath, 1=bounds, 2=horizontals, 3=convex hull
 - `MaxVertices`: Maximum points in path (0-20). In trigger-based mode, up to 7× this value are retained.
-- `ClusterRadius`: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). Points within this radius form the cluster that gets shaped by the Strategy.
+- `ClusterRadius`: Maximum distance from the newest point for inclusion in the cluster (0.01-0.5 normalized). Points within this radius form the cluster that gets shaped by the Strategy. (Intent mapping additionally caps this to ~0.4 to prevent screen-sized paths.)
 - `MinClusterPoints`: Minimum clustered points required before emitting a path (default 4). Useful to prevent tiny/degenerate paths when triggers are frequent or point sources are stable.
-- `MinBoundsSize`: Minimum bounding-box extent (max of width/height) required before emitting a path (default 0, disabled). Useful when you want to avoid tiny paths that disappear into textured layers like Smear.
+- `MinBoundsSize`: Minimum bounding-box extent (max of width/height) required before emitting a path (default 0.02). Useful when you want to avoid tiny paths that disappear into textured layers like Smear.
 
 **Intent Integration**: Responds to Granularity (cluster radius) and Density (max vertices) dimensions.
 
@@ -734,7 +734,7 @@ Adds energy to a `FluidMod` velocity layer via radial, directional, and swirl im
 - `Point` (vec2): Impulse centers (normalized 0–1)
 - `PointVelocity` (vec4): `{x, y, dx, dy}` (normalized) per-impulse directional injection
 - `Velocity` (vec2): Global `{dx, dy}` (normalized) used when only `Point` is provided
-- `SwirlVelocity` (float): Normalized 0–0.25 additional swirl term (overrides config value)
+- `SwirlVelocity` (float): Normalized 0–0.1 additional swirl term (overrides config value)
 - `Impulse Radius` (float): Impulse size
 - `Impulse Strength` (float): Normalized strength
 
@@ -743,8 +743,8 @@ Adds energy to a `FluidMod` velocity layer via radial, directional, and swirl im
 - `Impulse Strength` (0.0–0.7): Interpreted as a **fraction of radius displacement per step** (resolution-independent feel)
 - `dt` (0.0–0.002): dt passed to the impulse shader (should match the fluid solver’s dt semantics)
 - `VelocityScale` (0.0–50.0): Scales normalized `Velocity` / `PointVelocity` into pixel displacement per step
-- `SwirlStrength` (0.0–0.5): Multiplier for `SwirlVelocity` (capped to avoid obvious whirlpools)
-- `SwirlVelocity` (0.0–0.25): Base swirl term (config/manual); effective swirl = `clamp(SwirlVelocity * SwirlStrength, 0..1)` (capped to avoid obvious whirlpools)
+- `SwirlStrength` (0.0–0.2): Multiplier for `SwirlVelocity` (capped to avoid obvious whirlpools)
+- `SwirlVelocity` (0.0–0.1): Base swirl term (config/manual); effective swirl = `clamp(SwirlVelocity * SwirlStrength, 0..1)` (capped to avoid obvious whirlpools)
 
 **Intent Integration**: Responds to Intent (radius + strength). Other parameters are manual-only.
 

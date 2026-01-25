@@ -181,7 +181,7 @@ No Intent mapping (currently). This is a utility mod for deriving scalar envelop
 
 | Dimension | Parameter | Function |
 |-----------|-----------|----------|
-| G | ClusterRadius | exp — higher granularity = larger cluster radius (bigger shapes) |
+| G | ClusterRadius | exp(4.0) with capped max — higher granularity = larger cluster radius (bigger shapes), but large radii are kept controlled |
 | D | MaxVertices | exp |
 
 **Not Intent-driven (by design):** `Strategy`
@@ -193,9 +193,9 @@ Rationale:
 Note: there is commented-out experimental code for Strategy selection based on Chaos/Structure in `src/processMods/PathMod.cpp:275`.
 
 **Parameter semantics:**
-- **ClusterRadius**: Maximum distance from the newest point for inclusion in the cluster (0.01-1.0 normalized). All points within this radius of the newest point are collected, then shaped by the Strategy (polypath, bounds, convex hull, etc.).
+- **ClusterRadius**: Maximum distance from the newest point for inclusion in the cluster (0.01-0.5 normalized). All points within this radius of the newest point are collected, then shaped by the Strategy (polypath, bounds, convex hull, etc.). Intent mapping uses a capped max (~0.4) to avoid screen-sized paths.
 
-(Intentionally not used for Intent in current design.)
+(ClusterRadius is Intent-driven, but with a capped max to keep paths controlled.)
 
 The codebase contains a commented-out experimental Strategy mapping based on Chaos/Structure in `src/processMods/PathMod.cpp:275`:
 - C > 0.6 AND S < 0.4 -> 2 (horizontals)
@@ -281,8 +281,8 @@ Strategy selection:
 |-----------|-----------|----------|
 | G * (1 - 0.4*S) | Impulse Radius | exp(G) then attenuate by Structure |
 | (E*0.8 + C*0.2) * (1 - 0.7*S) | Impulse Strength | exp(4.0)(0.0 -> 0.6×max) weighted, then attenuate by Structure |
-| C * (1 - 0.7*S) | SwirlStrength | exp(2.0) — increases with Chaos, reduced by Structure |
-| C * (1 - 0.7*S) | SwirlVelocity | exp(2.0) — increases with Chaos, reduced by Structure |
+| C * (1 - 0.7*S) | SwirlStrength | exp(4.0) — increases with Chaos, reduced by Structure (strongly damped) |
+| C * (1 - 0.7*S) | SwirlVelocity | exp(4.0) — increases with Chaos, reduced by Structure (strongly damped) |
 | (none) | dt | manual (UI-controlled time step) |
 
 **Manual-only (not Intent-driven)**: `VelocityScale`.

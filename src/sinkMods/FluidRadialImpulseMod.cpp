@@ -195,14 +195,14 @@ void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
   float swirlStrengthI = exponentialMap(swirlDim,
                                        swirlStrengthController.getManualMin(),
                                        swirlStrengthController.getManualMax(),
-                                       2.0f);
-  swirlStrengthController.updateIntent(swirlStrengthI, strength, "C*(1-0.7*S) -> exp(2)");
+                                       4.0f);
+  swirlStrengthController.updateIntent(swirlStrengthI, strength, "C*(1-0.7*S) -> exp(4)");
 
   float swirlVelocityI = exponentialMap(swirlDim,
                                        swirlVelocityController.getManualMin(),
                                        swirlVelocityController.getManualMax(),
-                                       2.0f);
-  swirlVelocityController.updateIntent(swirlVelocityI, strength, "C*(1-0.7*S) -> exp(2)");
+                                       4.0f);
+  swirlVelocityController.updateIntent(swirlVelocityI, strength, "C*(1-0.7*S) -> exp(4)");
 
 }
 } // ofxMarkSynth

@@ -50,10 +50,11 @@ private:
   ofParameter<int> strategyParameter { "Strategy", 0, 0, 3 }; // 0=polypath; 1=bounds; 2=horizontals; 3=convex hull
   ofParameter<float> maxVerticesParameter { "MaxVertices", 3, 0, 20 };
   ParamController<float> maxVerticesController { maxVerticesParameter };
-  ofParameter<float> clusterRadiusParameter { "ClusterRadius", 0.15, 0.01, 1.0 };
+  // Max is intentionally capped: large radii quickly produce screen-sized bounding paths.
+  ofParameter<float> clusterRadiusParameter { "ClusterRadius", 0.05, 0.01, 0.5 };
   ParamController<float> clusterRadiusController { clusterRadiusParameter };
   ofParameter<int> minClusterPointsParameter { "MinClusterPoints", 4, 1, 50 };
-  ofParameter<float> minBoundsSizeParameter { "MinBoundsSize", 0.0, 0.0, 1.0 };
+  ofParameter<float> minBoundsSizeParameter { "MinBoundsSize", 0.02, 0.0, 1.0 };
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
   
   std::deque<glm::vec2> newVecs;
