@@ -297,17 +297,17 @@ Strategy selection:
 | E*C | PointColour.saturation | direct |
 | D | PointColour.alpha | lin(0.1 -> 0.5) |
 | D | ln2ParticleCount | exp(3.0) — density = more particles (damped) |
-| 1-G | minWeight | inv |
+| G | minWeight | lin — higher G = heavier (less clumping) |
 | C | maxWeight | lin |
-| 1-G | velocityDamping | inv — high G = low damping (more motion) |
-| E | forceMultiplier | exp — energy = force intensity |
-| E | maxVelocity | lin — energy = speed |
+| 1-G | velocityDamping | inv — higher G = more damping (calmer) |
+| E | forceMultiplier | exp(4.0) — energy = force intensity (damped) |
+| E | maxVelocity | exp(4.0) — energy = speed (damped) |
 | G | particleSize | exp(5.0) — granularity = feature size (heavily damped) |
-| C | jitterStrength | lin — chaos = randomness |
+| C | jitterStrength | exp(5.0) — chaos = randomness (damped) |
 | S | jitterSmoothing | lin — structure = smoothness |
 | E*C | speedThreshold | lin — activity threshold |
-| E | field1Multiplier | exp(2.0) — energy controls primary field |
-| C | field2Multiplier | exp(3.0) — chaos controls secondary field |
+| E | field1Multiplier | exp(3.0) — energy controls primary field (damped) |
+| C | field2Multiplier | exp(4.0) — chaos controls secondary field (damped) |
 
 ### ParticleSetMod
 

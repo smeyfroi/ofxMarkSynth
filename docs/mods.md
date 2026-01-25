@@ -547,7 +547,8 @@ Particle system driven by two texture-based vector fields (like fluid velocities
 
 **Key Parameters**:
 - Field weights control blend between two fields
-- Inherits particle rendering parameters
+- Motion safety: per-frame displacement is clamped in the shader (~6px at 3600px) to prevent runaway
+- Parameter ranges are intentionally capped (`forceMultiplier`, `maxVelocity`, `jitterStrength`) so full Intent stays usable
 
 **Intent Integration**: Responds to Intent system.
 

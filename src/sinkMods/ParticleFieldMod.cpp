@@ -257,28 +257,31 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
   // Density controls particle count, but with strong damping to avoid huge swings.
   im.D().exp(*ln2ParticleCountControllerPtr, strength, 3.0f);
 
-  im.G().inv().lin(*minWeightControllerPtr, strength);
+  // Weight: higher granularity tends to clump more, so increase weight (inertia) as G rises.
+  im.G().lin(*minWeightControllerPtr, strength);
   im.C().lin(*maxWeightControllerPtr, strength);
 
   // Physics parameters
   im.G().inv().lin(*velocityDampingControllerPtr, strength);
-  im.E().exp(*forceMultiplierControllerPtr, strength);
-  im.E().lin(*maxVelocityControllerPtr, strength);
+  im.E().exp(*forceMultiplierControllerPtr, strength, 4.0f);
+  im.E().exp(*maxVelocityControllerPtr, strength, 4.0f);
 
   // Visual parameters
   // Granularity affects feature size, but with heavy damping.
   im.G().exp(*particleSizeControllerPtr, strength, 5.0f);
 
   // Jitter parameters
-  im.C().lin(*jitterStrengthControllerPtr, strength);
+  // Keep particles mostly field-driven even at high Chaos; jitter is mainly an escape from clumping.
+  im.C().exp(*jitterStrengthControllerPtr, strength, 5.0f);
   im.S().lin(*jitterSmoothingControllerPtr, strength);
 
   // Speed threshold
   (im.E() * im.C()).lin(*speedThresholdControllerPtr, strength);
 
   // Field influence
-  im.E().exp(*field1MultiplierControllerPtr, strength, 2.0f);
-  im.C().exp(*field2MultiplierControllerPtr, strength, 3.0f);
+  // Dampen high-intent extremes: fields should remain coherent rather than becoming "teleporty".
+  im.E().exp(*field1MultiplierControllerPtr, strength, 3.0f);
+  im.C().exp(*field2MultiplierControllerPtr, strength, 4.0f);
 }
 
 } // ofxMarkSynth
