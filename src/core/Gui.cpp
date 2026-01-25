@@ -235,58 +235,112 @@ void Gui::drawLog() {
   ImGui::End();
 }
 
-void Gui::drawSynthControls() {
-  ImGui::Begin("Synth");
-  
-  drawStatus();
-  
-//  addParameterGroup(synthPtr, synthPtr->getParameterGroup());
+void Gui::drawAgencyControls() {
+  // addParameterGroup(synthPtr, synthPtr->getParameterGroup());
   addParameter(synthPtr, synthPtr->agencyParameter);
 
+  const float manual = std::clamp(synthPtr->agencyParameter.get(), 0.0f, 1.0f);
+  const float autoA = std::clamp(synthPtr->getAutoAgencyAggregate(), 0.0f, 1.0f);
+  const float autoClamped = std::clamp(autoA, 0.0f, 1.0f - manual);
+  const float effective = manual + autoClamped;
+
+  ImGui::Text("Agency: effective %.2f (manual %.2f + auto %.2f)", effective, manual, autoClamped);
+
+  const ImU32 bg = IM_COL32(35, 35, 35, 255);
+  const ImU32 border = IM_COL32(80, 80, 80, 255);
+  const ImU32 manualCol = IM_COL32(151, 151, 255, 255);
+  const ImU32 autoCol = IM_COL32(255, 51, 51, 255);
+
+  const float w = 200.0f;
+  const float h = 8.0f;
+  ImVec2 p0 = ImGui::GetCursorScreenPos();
+  ImVec2 p1(p0.x + w, p0.y + h);
+
+  ImDrawList* dl = ImGui::GetWindowDrawList();
+  dl->AddRectFilled(p0, p1, bg, 2.0f);
+
+  if (manual > 0.0f) {
+    ImVec2 m1(p0.x + w * manual, p1.y);
+    dl->AddRectFilled(p0, m1, manualCol, 2.0f);
+  }
+
+  if (autoClamped > 0.0f) {
+    ImVec2 a0(p0.x + w * manual, p0.y);
+    ImVec2 a1(p0.x + w * (manual + autoClamped), p1.y);
+    dl->AddRectFilled(a0, a1, autoCol, 2.0f);
+  }
+
+  dl->AddRect(p0, p1, border, 2.0f);
+  ImGui::Dummy(ImVec2(w, h + 6.0f));
+
+  if (ImGui::IsItemHovered()) {
+    ImGui::BeginTooltip();
+    ImGui::Text("Manual:  %.3f", manual);
+    ImGui::Text("Auto:    %.3f", autoClamped);
+    ImGui::Text("Unused:  %.3f", 1.0f - effective);
+    ImGui::TextUnformatted("Auto is aggregated from .AgencyAuto inputs (1-frame delayed).");
+    ImGui::EndTooltip();
+  }
+
+  // Indicator for any AgencyController-triggered register shift in the network.
   {
-    const float manual = std::clamp(synthPtr->agencyParameter.get(), 0.0f, 1.0f);
-    const float autoA = std::clamp(synthPtr->getAutoAgencyAggregate(), 0.0f, 1.0f);
-    const float autoClamped = std::clamp(autoA, 0.0f, 1.0f - manual);
-    const float effective = manual + autoClamped;
+    constexpr float HOLD_SEC = 2.0f;
+    float sinceShift = synthPtr->getSecondsSinceAgencyRegisterShift();
+    float alpha01 = (sinceShift < HOLD_SEC) ? (1.0f - sinceShift / HOLD_SEC) : 0.0f;
 
-    ImGui::Text("Agency: effective %.2f (manual %.2f + auto %.2f)", effective, manual, autoClamped);
+    ImGui::SameLine(0.0f, 8.0f);
+    ImDrawList* dl2 = ImGui::GetWindowDrawList();
+    ImVec2 iconP0 = ImGui::GetCursorScreenPos();
+    const float r = 5.0f;
+    ImVec2 center(iconP0.x + r, iconP0.y + r);
 
-    const ImU32 bg = IM_COL32(35, 35, 35, 255);
-    const ImU32 border = IM_COL32(80, 80, 80, 255);
-    const ImU32 manualCol = IM_COL32(151, 151, 255, 255);
-    const ImU32 autoCol = IM_COL32(255, 51, 51, 255);
+    const ImU32 idleCol = IM_COL32(80, 80, 80, 255);
+    const ImU32 hotCol = IM_COL32(255, 220, 80, static_cast<int>(80 + 175 * alpha01));
 
-    const float w = 200.0f;
-    const float h = 8.0f;
-    ImVec2 p0 = ImGui::GetCursorScreenPos();
-    ImVec2 p1(p0.x + w, p0.y + h);
-
-    ImDrawList* dl = ImGui::GetWindowDrawList();
-    dl->AddRectFilled(p0, p1, bg, 2.0f);
-
-    if (manual > 0.0f) {
-      ImVec2 m1(p0.x + w * manual, p1.y);
-      dl->AddRectFilled(p0, m1, manualCol, 2.0f);
-    }
-
-    if (autoClamped > 0.0f) {
-      ImVec2 a0(p0.x + w * manual, p0.y);
-      ImVec2 a1(p0.x + w * (manual + autoClamped), p1.y);
-      dl->AddRectFilled(a0, a1, autoCol, 2.0f);
-    }
-
-    dl->AddRect(p0, p1, border, 2.0f);
-    ImGui::Dummy(ImVec2(w, h + 6.0f));
+    dl2->AddCircleFilled(center, r, (alpha01 > 0.0f) ? hotCol : idleCol);
+    ImGui::Dummy(ImVec2(r * 2.0f, r * 2.0f + 6.0f));
 
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
-      ImGui::Text("Manual:  %.3f", manual);
-      ImGui::Text("Auto:    %.3f", autoClamped);
-      ImGui::Text("Unused:  %.3f", 1.0f - effective);
-      ImGui::TextUnformatted("Auto is aggregated from .AgencyAuto inputs (1-frame delayed).");
+        if (alpha01 > 0.0f) {
+          ImGui::Text("Agency register shift: %.2fs ago", sinceShift);
+          ImGui::Text("Controllers triggered: %d", synthPtr->getLastAgencyRegisterShiftCount());
+
+          int idCount = synthPtr->getLastAgencyRegisterShiftIdCount();
+          if (idCount > 0) {
+            ImGui::Separator();
+            ImGui::TextUnformatted("Triggered:");
+            for (int i = 0; i < idCount; ++i) {
+              int modId = synthPtr->getLastAgencyRegisterShiftId(i);
+              const Mod* found = nullptr;
+              for (const auto& [name, modPtr] : synthPtr->modPtrs) {
+                if (modPtr && modPtr->getId() == modId) {
+                  found = modPtr.get();
+                  break;
+                }
+              }
+              if (found) {
+                ImGui::BulletText("%s", found->getName().c_str());
+              } else {
+                ImGui::BulletText("<mod %d>", modId);
+              }
+            }
+          }
+        } else {
+          ImGui::TextUnformatted("No recent agency register shift");
+        }
+
       ImGui::EndTooltip();
     }
   }
+}
+
+void Gui::drawSynthControls() {
+  ImGui::Begin("Synth");
+
+  drawStatus();
+
+  drawAgencyControls();
 
   drawPerformanceNavigator();
   drawIntentControls();
@@ -294,7 +348,7 @@ void Gui::drawSynthControls() {
   drawDisplayControls();
   drawInternalState();
   drawMemoryBank();
-  
+
   ImGui::End();
 }
 
@@ -954,6 +1008,95 @@ void Gui::drawStatus() {
 }
 
 constexpr int FBO_PARAMETER_ID = 0;
+
+void Gui::drawAgencyControllerNodeTooltip(AgencyControllerMod* agencyControllerPtr) {
+  if (!agencyControllerPtr) return;
+
+  ImGui::BeginTooltip();
+  ImGui::Text("Characteristic %.3f", agencyControllerPtr->getCharacteristicSmooth());
+  ImGui::Text("Stimulus        %.3f", agencyControllerPtr->getStimulus());
+  ImGui::Text("AutoAgency      %.3f", agencyControllerPtr->getAutoAgency());
+  ImGui::Text("Budget Δ        +%.5f  -%.5f  (dt %.3f)", agencyControllerPtr->getLastChargeDelta(), agencyControllerPtr->getLastDecayDelta(), agencyControllerPtr->getLastDt());
+
+  constexpr float HOLD_SEC = 2.0f;
+
+  float pulseThreshold = agencyControllerPtr->getPulseThreshold();
+  float budgetValue = agencyControllerPtr->getBudget();
+  float eventCost = agencyControllerPtr->getEventCost();
+  float cooldownSec = agencyControllerPtr->getCooldownSec();
+  float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
+  float sincePulse = agencyControllerPtr->getSecondsSincePulseDetected();
+
+  bool pulseRecent = sincePulse < HOLD_SEC;
+  bool triggerRecent = sinceTrigger < HOLD_SEC;
+
+  ImGui::Text("PulseThreshold  %.3f", pulseThreshold);
+
+  // Keep a stable tooltip layout: always show the same fields,
+  // using "-" placeholders when no recent pulse/trigger.
+  if (pulseRecent) {
+    ImGui::Text("PulseValue      %.3f", agencyControllerPtr->getLastPulseDetectedValue());
+    ImGui::Text("PulseDetected   YES   (%.2fs ago)", sincePulse);
+    ImGui::Text("AtPulseBudget   %.3f (cost %.3f) %s", agencyControllerPtr->getLastPulseBudget(), eventCost,
+                agencyControllerPtr->wasLastPulseBudgetEnough() ? "ENOUGH" : "-");
+    ImGui::Text("AtPulseCooldown %s", agencyControllerPtr->wasLastPulseCooldownOk() ? "OK" : "BLOCK");
+    ImGui::Text("AtPulseTrigger  %s", agencyControllerPtr->didLastPulseTrigger() ? "YES" : "no");
+  } else {
+    ImGui::TextUnformatted("PulseValue      -");
+    ImGui::Text("PulseDetected   no    (-)");
+    ImGui::Text("AtPulseBudget   -     (cost %.3f) -", eventCost);
+    ImGui::Text("AtPulseCooldown -");
+    ImGui::Text("AtPulseTrigger  -");
+  }
+
+  bool budgetEnoughNow = budgetValue >= eventCost;
+  bool cooldownOkNow = sinceTrigger >= cooldownSec;
+  ImGui::Text("BudgetNow       %.3f (cost %.3f) %s", budgetValue, eventCost, budgetEnoughNow ? "ENOUGH" : "-");
+
+  if (std::isfinite(sinceTrigger)) {
+    ImGui::Text("CooldownNow     %.2fs / %.2fs   %s", sinceTrigger, cooldownSec, cooldownOkNow ? "OK" : "BLOCK");
+  } else {
+    ImGui::Text("CooldownNow     - / %.2fs   -", cooldownSec);
+  }
+
+  if (triggerRecent) {
+    ImGui::Text("Triggered       YES   (%.2fs ago)", sinceTrigger);
+  } else {
+    ImGui::Text("Triggered       no    (-)");
+  }
+
+  ImGui::EndTooltip();
+}
+
+void Gui::drawAgencyControllerNodeTitleBar(AgencyControllerMod* agencyControllerPtr) {
+  if (!agencyControllerPtr) return;
+
+  float budget = agencyControllerPtr->getBudget();
+
+  // Flash the bar when a pulse is detected / trigger fires.
+  constexpr float HOLD_SEC = 2.0f;
+  float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
+  float sincePulse = agencyControllerPtr->getSecondsSincePulseDetected();
+  bool triggerFlash = agencyControllerPtr->wasTriggeredThisFrame() || sinceTrigger < HOLD_SEC;
+  bool pulseFlash = agencyControllerPtr->wasPulseDetectedThisFrame() || sincePulse < HOLD_SEC;
+
+  if (triggerFlash) {
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(255, 220, 80, 255));
+  } else if (pulseFlash) {
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(80, 220, 255, 255));
+  }
+
+  ImGui::ProgressBar(budget, ImVec2(64.0f, 4.0f), "");
+
+  if (triggerFlash || pulseFlash) {
+    ImGui::PopStyleColor();
+  }
+
+  if (ImGui::IsItemHovered()) {
+    drawAgencyControllerNodeTooltip(agencyControllerPtr);
+  }
+}
+
 void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   int modId = modPtr->getId();
   
@@ -989,80 +1132,7 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   ImGui::TextUnformatted(modPtr->getName().c_str());
   
   if (auto agencyControllerPtr = std::dynamic_pointer_cast<AgencyControllerMod>(modPtr)) {
-    float budget = agencyControllerPtr->getBudget();
-
-    // Flash the bar briefly when a pulse is detected / trigger fires.
-    float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
-    float sincePulse = agencyControllerPtr->getSecondsSincePulseDetected();
-    bool triggerFlash = agencyControllerPtr->wasTriggeredThisFrame() || sinceTrigger < 0.35f;
-    bool pulseFlash = agencyControllerPtr->wasPulseDetectedThisFrame() || sincePulse < 0.35f;
-
-    if (triggerFlash) {
-      ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(255, 220, 80, 255));
-    } else if (pulseFlash) {
-      ImGui::PushStyleColor(ImGuiCol_PlotHistogram, IM_COL32(80, 220, 255, 255));
-    }
-
-    ImGui::ProgressBar(budget, ImVec2(64.0f, 4.0f), "");
-
-    if (triggerFlash || pulseFlash) {
-      ImGui::PopStyleColor();
-    }
-
-    if (ImGui::IsItemHovered()) {
-      ImGui::BeginTooltip();
-      ImGui::Text("Characteristic %.3f", agencyControllerPtr->getCharacteristicSmooth());
-      ImGui::Text("Stimulus        %.3f", agencyControllerPtr->getStimulus());
-      ImGui::Text("AutoAgency      %.3f", agencyControllerPtr->getAutoAgency());
-      ImGui::Text("Budget Δ        +%.5f  -%.5f  (dt %.3f)", agencyControllerPtr->getLastChargeDelta(), agencyControllerPtr->getLastDecayDelta(), agencyControllerPtr->getLastDt());
-
-      constexpr float HOLD_SEC = 1.0f;
-
-      float pulse = agencyControllerPtr->getLastPulse();
-      float pulseThreshold = agencyControllerPtr->getPulseThreshold();
-      float budgetValue = agencyControllerPtr->getBudget();
-      float eventCost = agencyControllerPtr->getEventCost();
-      float cooldownSec = agencyControllerPtr->getCooldownSec();
-      float sinceTrigger = agencyControllerPtr->getSecondsSinceTrigger();
-      float sincePulse = agencyControllerPtr->getSecondsSincePulseDetected();
-
-      bool pulseRecent = sincePulse < HOLD_SEC;
-      bool triggerRecent = sinceTrigger < HOLD_SEC;
-
-      // Keep a stable tooltip layout: always show the same fields,
-      // using "-" placeholders when no recent pulse/trigger.
-      if (pulseRecent) {
-        ImGui::Text("Pulse(max)      %.3f  (thr %.3f)", pulse, pulseThreshold);
-        ImGui::Text("PulseDetected   YES   (%.2fs ago)", sincePulse);
-        ImGui::Text("AtPulseBudget   %.3f (cost %.3f) %s", agencyControllerPtr->getLastPulseBudget(), eventCost, agencyControllerPtr->wasLastPulseBudgetEnough() ? "ENOUGH" : "-");
-        ImGui::Text("AtPulseCooldown %s", agencyControllerPtr->wasLastPulseCooldownOk() ? "OK" : "BLOCK");
-        ImGui::Text("AtPulseTrigger  %s", agencyControllerPtr->didLastPulseTrigger() ? "YES" : "no");
-      } else {
-        ImGui::Text("Pulse(max)      %.3f  (thr %.3f)", pulse, pulseThreshold);
-        ImGui::Text("PulseDetected   no    (-)");
-        ImGui::Text("AtPulseBudget   -     (cost %.3f) -", eventCost);
-        ImGui::Text("AtPulseCooldown -");
-        ImGui::Text("AtPulseTrigger  -");
-      }
-
-      bool budgetEnoughNow = budgetValue >= eventCost;
-      bool cooldownOkNow = sinceTrigger >= cooldownSec;
-      ImGui::Text("BudgetNow       %.3f (cost %.3f) %s", budgetValue, eventCost, budgetEnoughNow ? "ENOUGH" : "-");
-
-      if (std::isfinite(sinceTrigger)) {
-        ImGui::Text("CooldownNow     %.2fs / %.2fs   %s", sinceTrigger, cooldownSec, cooldownOkNow ? "OK" : "BLOCK");
-      } else {
-        ImGui::Text("CooldownNow     - / %.2fs   -", cooldownSec);
-      }
-
-      if (triggerRecent) {
-        ImGui::Text("Triggered       YES   (%.2fs ago)", sinceTrigger);
-      } else {
-        ImGui::Text("Triggered       no    (-)");
-      }
-
-      ImGui::EndTooltip();
-    }
+    drawAgencyControllerNodeTitleBar(agencyControllerPtr.get());
   } else if (isAgencyActive) {
     ImGui::ProgressBar(agency, ImVec2(64.0f, 4.0f), "");
   } else {

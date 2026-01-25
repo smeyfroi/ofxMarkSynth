@@ -24,6 +24,7 @@ namespace ofxMarkSynth {
 
 class Synth;
 class Intent;
+class AgencyControllerMod;
 
 
 class Gui {
@@ -42,6 +43,7 @@ private:
   void buildInitialDockLayout(ImGuiID dockspaceId);
   void drawLog();
   void drawSynthControls();
+  void drawAgencyControls();
   void drawHelpWindow();
   
   void drawIntentControls();
@@ -59,6 +61,8 @@ private:
   void drawInternalState();
   void drawMemoryBank();
   void drawStatus();
+  void drawAgencyControllerNodeTitleBar(AgencyControllerMod* agencyControllerPtr);
+  void drawAgencyControllerNodeTooltip(AgencyControllerMod* agencyControllerPtr);
   void drawNode(const ModPtr& modPtr, bool highlight = false);
   void drawNode(const DrawingLayerPtr& layerPtr);
   void drawNodeEditor();

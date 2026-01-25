@@ -7,6 +7,7 @@
 
 #include "core/Synth.hpp"
 #include "core/SynthConstants.h"
+#include "processMods/AgencyControllerMod.hpp"
 #include "ofxTimeMeasurements.h"
 #include "ofConstants.h"
 #include "ofUtils.h"
@@ -555,6 +556,27 @@ void Synth::update() {
       TS_STOP(name);
       TSGL_STOP(name);
     });
+
+    // Latch "register shift" events from any AgencyController.
+    // This is used only for GUI signaling.
+    int shiftCount = 0;
+    int shiftIdCount = 0;
+    for (const auto& [name, modPtr] : modPtrs) {
+      if (auto agencyControllerPtr = std::dynamic_pointer_cast<AgencyControllerMod>(modPtr)) {
+        if (agencyControllerPtr->wasTriggeredThisFrame()) {
+          shiftCount++;
+          if (shiftIdCount < MAX_AGENCY_REGISTER_SHIFT_IDS) {
+            lastAgencyRegisterShiftIds[static_cast<size_t>(shiftIdCount)] = modPtr->getId();
+            shiftIdCount++;
+          }
+        }
+      }
+    }
+    if (shiftCount > 0) {
+      lastAgencyRegisterShiftTimeSec = ofGetElapsedTimef();
+      lastAgencyRegisterShiftCount = shiftCount;
+      lastAgencyRegisterShiftIdCount = shiftIdCount;
+    }
 
     autoAgencyAggregatePrev = autoAgencyAggregateThisFrame;
   }

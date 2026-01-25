@@ -24,7 +24,7 @@ public:
   float getStimulus() const { return stimulusSmooth; }
   float getAutoAgency() const { return autoAgency; }
   float getCharacteristicSmooth() const { return characteristicSmooth; }
-  float getLastPulse() const { return lastPulse; }
+  float getLastPulseDetectedValue() const { return lastPulseDetectedValue; }
   float getPulseThreshold() const { return pulseThresholdParameter.get(); }
   float getEventCost() const { return eventCostParameter.get(); }
   float getCooldownSec() const { return cooldownSecParameter.get(); }
@@ -69,7 +69,7 @@ private:
   float lastChargeDelta { 0.0f };
   float lastDecayDelta { 0.0f };
 
-  float lastPulse { 0.0f };
+  float lastPulseDetectedValue { 0.0f };
 
   // For tuning: keep recent pulse/trigger status visible beyond one frame.
   bool pulseDetectedThisFrame { false };
@@ -86,13 +86,13 @@ private:
   ofParameter<float> characteristicSmoothSecParameter { "CharacteristicSmoothSec", 0.35f, 0.0f, 5.0f };
   ofParameter<float> stimulusSmoothSecParameter { "StimulusSmoothSec", 0.10f, 0.0f, 5.0f };
 
-  ofParameter<float> chargeGainParameter { "ChargeGain", 8.0f, 0.0f, 50.0f };
+  ofParameter<float> chargeGainParameter { "ChargeGain", 2.0f, 0.0f, 50.0f };
   ofParameter<float> decayPerSecParameter { "DecayPerSec", 0.12f, 0.0f, 2.0f };
 
   ofParameter<float> autoAgencyScaleParameter { "AutoAgencyScale", 0.6f, 0.0f, 1.0f };
   ofParameter<float> autoAgencyGammaParameter { "AutoAgencyGamma", 0.7f, 0.1f, 3.0f };
 
-  ofParameter<float> pulseThresholdParameter { "PulseThreshold", 0.5f, 0.0f, 1.0f };
+  ofParameter<float> pulseThresholdParameter { "PulseThreshold", 0.8f, 0.0f, 1.0f };
   ofParameter<float> eventCostParameter { "EventCost", 0.20f, 0.0f, 1.0f };
   ofParameter<float> cooldownSecParameter { "CooldownSec", 1.5f, 0.0f, 10.0f };
 };

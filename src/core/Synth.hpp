@@ -8,8 +8,10 @@
 #pragma once
 
 #include "core/Mod.hpp"
+#include <array>
 #include <filesystem>
 #include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -124,6 +126,19 @@ public:
   float getManualBiasDecaySec() const { return manualBiasDecaySecParameter; }
   float getBaseManualBias() const { return baseManualBiasParameter; }
   float getHibernationFadeDurationSec() const;
+
+  // Agency-triggered register-shift indicator (latched for GUI display).
+  float getSecondsSinceAgencyRegisterShift() const {
+    if (lastAgencyRegisterShiftTimeSec < 0.0f) return std::numeric_limits<float>::infinity();
+    return ofGetElapsedTimef() - lastAgencyRegisterShiftTimeSec;
+  }
+  int getLastAgencyRegisterShiftCount() const { return lastAgencyRegisterShiftCount; }
+  static constexpr int MAX_AGENCY_REGISTER_SHIFT_IDS = 8;
+  int getLastAgencyRegisterShiftIdCount() const { return lastAgencyRegisterShiftIdCount; }
+  int getLastAgencyRegisterShiftId(int index) const {
+    if (index < 0 || index >= lastAgencyRegisterShiftIdCount) return -1;
+    return lastAgencyRegisterShiftIds[static_cast<size_t>(index)];
+  }
 
   const std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient>& getAudioAnalysisClient() const { return audioAnalysisClientPtr; }
   PerformanceNavigator& getPerformanceNavigator() { return performanceNavigator; }
@@ -271,6 +286,13 @@ private:
   ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   float autoAgencyAggregatePrev { 0.0f };      // Used for current frame getAgency() (intentionally 1-frame delayed)
   float autoAgencyAggregateThisFrame { 0.0f }; // Max of .AgencyAuto inputs received this frame
+
+  // Agency-triggered register shifts (any AgencyController Trigger fired this frame).
+  float lastAgencyRegisterShiftTimeSec { -1.0f };
+  int lastAgencyRegisterShiftCount { 0 };
+  int lastAgencyRegisterShiftIdCount { 0 };
+  std::array<int, MAX_AGENCY_REGISTER_SHIFT_IDS> lastAgencyRegisterShiftIds {};
+
   ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
   ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   

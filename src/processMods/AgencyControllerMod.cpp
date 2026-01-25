@@ -101,7 +101,6 @@ void AgencyControllerMod::update() {
   bool shouldTrigger = false;
   float pulse = pulseMaxThisFrame;
   pulseMaxThisFrame = 0.0f;
-  lastPulse = pulse;
 
   float now = ofGetElapsedTimef();
   float pulseThreshold = pulseThresholdParameter;
@@ -113,6 +112,7 @@ void AgencyControllerMod::update() {
   if (pulseDetected) {
     pulseDetectedThisFrame = true;
     lastPulseDetectedTimeSec = now;
+    lastPulseDetectedValue = pulse;
     lastPulseBudget = budget;
     lastPulseBudgetEnough = budget >= eventCost;
 

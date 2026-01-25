@@ -70,7 +70,9 @@ Multiple instances may exist in the same config.
 - `Characteristic` (float)
   - may receive multiple connections; the mod uses per-frame `max()` to combine
 - `Pulse` (float)
-  - may receive multiple pulse inputs; pulse is considered “active” when `value > PulseThreshold` (default 0.5)
+  - may receive multiple pulse inputs; pulse is considered “active” when `value > PulseThreshold` (default 0.8)
+  - tuning note: with `Audio.Onset1` as pulse and `Audio.RmsScalar` as characteristic, a good baseline is `PulseThreshold=0.8`, `ChargeGain=2.0`
+  - UI note: per-frame pulse values are often 0 most frames; the GUI shows the last detected pulse value with a short hold window for tuning
 
 #### Sources (outputs)
 - `AutoAgency` (float 0..1)
@@ -79,11 +81,11 @@ Multiple instances may exist in the same config.
 #### Parameters (initial defaults, tune later)
 - `CharacteristicSmoothSec`
 - `StimulusSmoothSec`
-- `ChargeGain`
+- `ChargeGain` (baseline: 2.0 for RmsScalar-driven characteristic)
 - `DecayPerSec`
 - `AutoAgencyScale`
 - `AutoAgencyGamma`
-- `PulseThreshold` (default 0.5)
+- `PulseThreshold` (default 0.8)
 - `EventCost`
 - `CooldownSec`
 
