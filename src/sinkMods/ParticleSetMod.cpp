@@ -22,7 +22,8 @@ ParticleSetMod::ParticleSetMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "PointVelocity", SINK_POINT_VELOCITY },
     { spinParameter.getName(), SINK_SPIN },
     { colorParameter.getName(), SINK_COLOR },
-    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR }
+    { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR },
+    { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 
   registerControllerForSource(spinParameter, spinController);
@@ -157,6 +158,14 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
     case SINK_SPIN:
       spinController.updateAuto(value, getAgency());
       break;
+
+    case Mod::SINK_CHANGE_LAYER:
+      if (value > 0.5f) {
+        ofLogNotice("ParticleSetMod") << "ParticleSetMod::ChangeLayer: changing layer";
+        changeDrawingLayer();
+      }
+      break;
+
     default:
       ofLogError("ParticleSetMod") << "Float receive for unknown sinkId " << sinkId;
   }

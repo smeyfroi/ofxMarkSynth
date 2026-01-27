@@ -7,6 +7,7 @@ while iterating on performance configs:
 
 - Connections referencing mods that don't exist in `mods`
 - `layers` references to drawing layers that don't exist in `drawingLayers`
+- Orphan mods (defined but neither connected nor drawing)
 
 It does *not* currently validate port names (sources/sinks) against mod types,
 which would require a runtime mod registry.
@@ -47,19 +48,6 @@ def has_any_layers(mod_cfg: object) -> bool:
     return False
 
 
-def is_source_like_mod(mod_cfg: object) -> bool:
-    """True for source-only mods that often exist without wiring.
-
-    Examples: AudioDataSource, VideoFlowSource, RandomVecSource.
-    """
-    if not isinstance(mod_cfg, dict):
-        return False
-    t = mod_cfg.get("type")
-    if not isinstance(t, str):
-        return False
-    return "Source" in t
-
-
 def parse_connection_endpoint(endpoint: str) -> str:
     """Return mod name for `Mod.Port` or empty for `.Port`."""
     endpoint = endpoint.strip()
@@ -74,9 +62,7 @@ def parse_connection_endpoint(endpoint: str) -> str:
     return endpoint.split(".", 1)[0].strip()
 
 
-def validate_file(
-    fp: Path, *, ignore_orphan_mods: bool, include_orphan_sources: bool
-) -> list[Issue]:
+def validate_file(fp: Path, *, ignore_orphan_mods: bool) -> list[Issue]:
     issues: list[Issue] = []
     try:
         data = json.loads(fp.read_text())
@@ -153,9 +139,7 @@ def validate_file(
             [
                 name
                 for name, cfg in mods.items()
-                if name not in referenced_mods
-                and not has_any_layers(cfg)
-                and (include_orphan_sources or not is_source_like_mod(cfg))
+                if name not in referenced_mods and not has_any_layers(cfg)
             ]
         )
         if orphan_mods:
@@ -220,22 +204,11 @@ def main() -> None:
         action="store_true",
         help="Skip checking for mods that are neither connected nor drawing",
     )
-    ap.add_argument(
-        "--include-orphan-sources",
-        action="store_true",
-        help="Also flag source-like mods (e.g. AudioDataSource) as orphans",
-    )
     args = ap.parse_args()
 
     all_issues: list[Issue] = []
     for fp in sorted(args.configs_dir.glob("*.json")):
-        all_issues.extend(
-            validate_file(
-                fp,
-                ignore_orphan_mods=args.ignore_orphan_mods,
-                include_orphan_sources=args.include_orphan_sources,
-            )
-        )
+        all_issues.extend(validate_file(fp, ignore_orphan_mods=args.ignore_orphan_mods))
 
     if not all_issues:
         print(
