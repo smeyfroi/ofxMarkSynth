@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
+
 #include "SoftCircleShader.h"
 #include "core/ColorRegister.hpp"
 #include "core/Mod.hpp"
@@ -27,11 +29,13 @@ public:
   void applyIntent(const Intent& intent, float strength) override;
 
   static constexpr int SINK_POINTS = 1;
+  static constexpr int SINK_POINT_VELOCITY = 2;
   static constexpr int SINK_RADIUS = 10;
   static constexpr int SINK_COLOR = 20;
   static constexpr int SINK_COLOR_MULTIPLIER = 21;
   static constexpr int SINK_ALPHA_MULTIPLIER = 22;
   static constexpr int SINK_SOFTNESS = 30;
+  static constexpr int SINK_EDGE_MOD = 40;
   static constexpr int SINK_CHANGE_KEY_COLOUR = 90;
 
 protected:
@@ -61,8 +65,45 @@ private:
   ofParameter<int> falloffParameter { "Falloff", 0, 0, 1 }; // 0 = Glow, 1 = Dab
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 }; // 0.0 -> No agency; 1.0 -> Global synth agency
 
-  std::vector<glm::vec2> newPoints;
+  // Organic brush (velocity/curvature/edge modulation)
+  ofParameter<int> useVelocityParameter { "UseVelocity", 0, 0, 1 };
+  ofParameter<float> velocitySpeedMinParameter { "VelocitySpeedMin", 0.0f, 0.0f, 1.0f };
+  ofParameter<float> velocitySpeedMaxParameter { "VelocitySpeedMax", 0.05f, 0.0f, 1.0f };
+  ofParameter<float> velocityStretchParameter { "VelocityStretch", 0.0f, 0.0f, 4.0f };
+  ofParameter<float> velocityAngleInfluenceParameter { "VelocityAngleInfluence", 1.0f, 0.0f, 1.0f };
+  ofParameter<int> preserveAreaParameter { "PreserveArea", 1, 0, 1 };
+  ofParameter<float> maxAspectParameter { "MaxAspect", 4.0f, 1.0f, 16.0f };
+
+  ofParameter<float> curvatureAlphaBoostParameter { "CurvatureAlphaBoost", 0.0f, 0.0f, 2.0f };
+  ofParameter<float> curvatureRadiusBoostParameter { "CurvatureRadiusBoost", 0.0f, 0.0f, 2.0f };
+  ofParameter<float> curvatureSmoothingParameter { "CurvatureSmoothing", 0.9f, 0.0f, 0.999f };
+
+  // Edge modulation amount is:
+  //   EdgeAmount + EdgeAmountFromDriver * EdgeModSink
+  ofParameter<float> edgeAmountParameter { "EdgeAmount", 0.0f, 0.0f, 1.0f };
+  ofParameter<float> edgeAmountFromDriverParameter { "EdgeAmountFromDriver", 0.0f, 0.0f, 1.0f };
+  ofParameter<float> edgeSharpnessParameter { "EdgeSharpness", 1.0f, 0.1f, 4.0f };
+  ofParameter<float> edgeFreq1Parameter { "EdgeFreq1", 3.0f, 0.0f, 64.0f };
+  ofParameter<float> edgeFreq2Parameter { "EdgeFreq2", 5.0f, 0.0f, 64.0f };
+  ofParameter<float> edgeFreq3Parameter { "EdgeFreq3", 9.0f, 0.0f, 64.0f };
+  ofParameter<int> edgePhaseFromVelocityParameter { "EdgePhaseFromVelocity", 1, 0, 1 };
+
+  struct Stamp {
+    glm::vec2 pointNorm { 0.0f, 0.0f };
+    glm::vec2 velocityNorm { 0.0f, 0.0f };
+    bool hasVelocity { false };
+    float edgeDriver { 0.0f };
+    float curvature { 0.0f };
+  };
+
+  std::vector<Stamp> newStamps;
+
+  float currentEdgeDriver { 0.0f };
+  std::optional<glm::vec2> lastPointOpt;
+  std::optional<glm::vec2> lastDirectionOpt;
+  float lastCurvature { 0.0f };
+
   SoftCircleShader softCircleShader;
 };
 
-} // ofxMarkSynth
+} // namespace ofxMarkSynth

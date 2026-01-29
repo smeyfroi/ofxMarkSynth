@@ -72,6 +72,15 @@ public:
   ofxMarkSynth::ModPtr addMod(const std::string& name, ofxMarkSynth::ModConfig&& modConfig, Args&&... args);
 
   ofxMarkSynth::ModPtr getMod(const std::string& name) const { return modPtrs.at(name); }
+  const ModPtrMap& getMods() const { return modPtrs; }
+
+  enum class DebugViewMode {
+    Fbo,
+    AudioInspector
+  };
+
+  DebugViewMode getDebugViewMode() const { return debugViewMode; }
+  void setDebugViewMode(DebugViewMode mode) { debugViewMode = mode; }
 
   void addMod(ofxMarkSynth::ModPtr modPtr) {
     modPtrs.insert({ modPtr->getName(), modPtr });
@@ -261,6 +270,7 @@ private:
   // Debug view system - renders Mod::draw() calls to FBO for ImGui display
   ofFbo debugViewFbo;
   bool debugViewEnabled { false };
+  DebugViewMode debugViewMode { DebugViewMode::Fbo };
   static constexpr float DEBUG_VIEW_SIZE { 640.0f };
   
 public:

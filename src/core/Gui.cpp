@@ -8,6 +8,7 @@
 #include "Gui.hpp"
 #include "Synth.hpp"
 #include "../processMods/AgencyControllerMod.hpp"
+#include "../sourceMods/AudioDataSourceMod.hpp"
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
@@ -1912,46 +1913,303 @@ void Gui::drawHelpWindow() {
 
 void Gui::drawDebugView() {
   if (!synthPtr->isDebugViewEnabled()) return;
-  
+
   const ofFbo& fbo = synthPtr->getDebugViewFbo();
-  if (!fbo.isAllocated()) return;
-  
+
   // Set initial window size
   ImGui::SetNextWindowSize(ImVec2(520, 540), ImGuiCond_FirstUseEver);
-  
+
   bool visible = true;
   ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
   if (ImGui::Begin("Debug View", &visible, flags)) {
-    const auto& texData = fbo.getTexture().getTextureData();
-    ImTextureID texId = (ImTextureID)(uintptr_t)texData.textureID;
-    
-    // Handle texture flipping (openFrameworks FBOs are typically flipped)
-    ImVec2 uv0(0, texData.bFlipTexture ? 1 : 0);
-    ImVec2 uv1(1, texData.bFlipTexture ? 0 : 1);
-    
-    // Scale image to fit available content area while maintaining aspect ratio
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-    float fboAspect = static_cast<float>(fbo.getWidth()) / static_cast<float>(fbo.getHeight());
-    float availAspect = avail.x / avail.y;
-    
-    ImVec2 displaySize;
-    if (availAspect > fboAspect) {
-      // Window is wider than texture - fit to height
-      displaySize = ImVec2(avail.y * fboAspect, avail.y);
-    } else {
-      // Window is taller than texture - fit to width
-      displaySize = ImVec2(avail.x, avail.x / fboAspect);
+    if (ImGui::BeginTabBar("##DebugViewTabs")) {
+      const auto requestedMode = synthPtr->getDebugViewMode();
+
+      static bool hasLastMode = false;
+      static Synth::DebugViewMode lastMode = Synth::DebugViewMode::Fbo;
+      const bool selectRequestedTab = !hasLastMode || requestedMode != lastMode;
+
+      ImGuiTabItemFlags fboFlags =
+          (selectRequestedTab && requestedMode == Synth::DebugViewMode::Fbo) ? ImGuiTabItemFlags_SetSelected : 0;
+      if (ImGui::BeginTabItem("FBO", nullptr, fboFlags)) {
+        if (!fbo.isAllocated()) {
+          ImGui::TextUnformatted("Debug FBO not allocated.");
+        } else {
+          const auto& texData = fbo.getTexture().getTextureData();
+          ImTextureID texId = (ImTextureID)(uintptr_t)texData.textureID;
+
+          // Handle texture flipping (openFrameworks FBOs are typically flipped)
+          ImVec2 uv0(0, texData.bFlipTexture ? 1 : 0);
+          ImVec2 uv1(1, texData.bFlipTexture ? 0 : 1);
+
+          // Scale image to fit available content area while maintaining aspect ratio
+          ImVec2 avail = ImGui::GetContentRegionAvail();
+          float fboAspect = static_cast<float>(fbo.getWidth()) / static_cast<float>(fbo.getHeight());
+          float availAspect = avail.x / avail.y;
+
+          ImVec2 displaySize;
+          if (availAspect > fboAspect) {
+            // Window is wider than texture - fit to height
+            displaySize = ImVec2(avail.y * fboAspect, avail.y);
+          } else {
+            // Window is taller than texture - fit to width
+            displaySize = ImVec2(avail.x, avail.x / fboAspect);
+          }
+
+          ImGui::Image(texId, displaySize, uv0, uv1);
+        }
+
+        synthPtr->setDebugViewMode(Synth::DebugViewMode::Fbo);
+        ImGui::EndTabItem();
+      }
+
+      ImGuiTabItemFlags audioFlags = (selectRequestedTab && requestedMode == Synth::DebugViewMode::AudioInspector)
+          ? ImGuiTabItemFlags_SetSelected
+          : 0;
+      if (ImGui::BeginTabItem("Audio", nullptr, audioFlags)) {
+        drawAudioInspector();
+        synthPtr->setDebugViewMode(Synth::DebugViewMode::AudioInspector);
+        ImGui::EndTabItem();
+      }
+
+      ImGui::EndTabBar();
+
+      lastMode = synthPtr->getDebugViewMode();
+      hasLastMode = true;
     }
-    
-    ImGui::Image(texId, displaySize, uv0, uv1);
   }
-  
+
   // Handle window close button
   if (!visible) {
     synthPtr->setDebugViewEnabled(false);
   }
   ImGui::End();
 }
+
+
+
+void Gui::drawAudioInspector() {
+  // Phase 1: live stats only (no capture/suggestions yet).
+  // This view is intended for venue calibration (tuning ranges) and assumes wrapped normalisation.
+
+  // Find first AudioDataSourceMod (names vary per config).
+  std::shared_ptr<AudioDataSourceMod> audioModPtr;
+  for (const auto& [name, modPtr] : synthPtr->getMods()) {
+    if (!modPtr) continue;
+    auto castPtr = std::dynamic_pointer_cast<AudioDataSourceMod>(modPtr);
+    if (castPtr) {
+      audioModPtr = castPtr;
+      break;
+    }
+  }
+
+  if (!audioModPtr) {
+    ImGui::TextUnformatted("No AudioDataSourceMod found in current config.");
+    return;
+  }
+
+  const auto processorPtr = audioModPtr->getAudioDataProcessor();
+  if (!processorPtr) {
+    ImGui::TextUnformatted("AudioDataSourceMod has no Processor.");
+    return;
+  }
+
+  const std::string modName = audioModPtr->getName();
+
+  static float lastAudioTimestamp = 0.0f;
+  static std::string lastAudioModName;
+  if (modName != lastAudioModName) {
+    audioInspectorModel.reset();
+    lastAudioTimestamp = 0.0f;
+    lastAudioModName = modName;
+  }
+
+  ImGui::Text("Source: %s", modName.c_str());
+  ImGui::TextUnformatted("Normalisation: wrapped (w = frac(abs(u)))");
+
+  // Quick-tune: scalar filter selection (this drives AudioDataSourceMod normalization/output).
+  int scalarFilterIndex = 1;
+  if (auto p = audioModPtr->findParameterByNamePrefix("ScalarFilterIndex")) {
+    scalarFilterIndex = p->get().cast<int>().get();
+  }
+  scalarFilterIndex = std::clamp(scalarFilterIndex, 0, 1);
+
+  ImGui::Text("ScalarFilterIndex: %d", scalarFilterIndex);
+  ImGui::SameLine();
+  int editFilterIndex = scalarFilterIndex;
+  if (ImGui::RadioButton("fast (0)", editFilterIndex == 0)) editFilterIndex = 0;
+  ImGui::SameLine();
+  if (ImGui::RadioButton("smooth (1)", editFilterIndex == 1)) editFilterIndex = 1;
+
+  if (editFilterIndex != scalarFilterIndex) {
+    if (auto p = audioModPtr->findParameterByNamePrefix("ScalarFilterIndex")) {
+      p->get().cast<int>().set(editFilterIndex);
+      scalarFilterIndex = editFilterIndex;
+    }
+  }
+
+  ImGui::TextUnformatted("Values: showing filterIndex=0 (fast) and 1 (smooth)");
+  ImGui::Text("Normalisation (u/w): uses ScalarFilterIndex=%d", scalarFilterIndex);
+  ImGui::Separator();
+
+  float dt = 0.0f;
+  const float ts = processorPtr->getLastUpdateTimestamp();
+  if (processorPtr->isDataUpdated(lastAudioTimestamp)) {
+    if (lastAudioTimestamp > 0.0f) {
+      dt = std::max(0.0f, ts - lastAudioTimestamp);
+    }
+    lastAudioTimestamp = ts;
+  }
+
+  struct ScalarRowDef {
+    const char* label;
+    ofxAudioAnalysisClient::AnalysisScalar scalar;
+    const char* minName;
+    const char* maxName;
+    float dragSpeed;
+  };
+
+  const ScalarRowDef rows[] = {
+    {"Pitch", ofxAudioAnalysisClient::AnalysisScalar::pitch, "MinPitch", "MaxPitch", 1.0f},
+    {"RMS", ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare, "MinRms", "MaxRms", 0.0005f},
+    {"CSD", ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference, "MinComplexSpectralDifference", "MaxComplexSpectralDifference", 1.0f},
+    {"Crest", ofxAudioAnalysisClient::AnalysisScalar::spectralCrest, "MinSpectralCrest", "MaxSpectralCrest", 0.5f},
+    {"ZCR", ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate, "MinZeroCrossingRate", "MaxZeroCrossingRate", 0.5f},
+  };
+
+  if (ImGui::BeginTable("##AudioInspectorScalars", 10, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+    ImGui::TableSetupColumn("Scalar");
+    ImGui::TableSetupColumn("Raw");
+    ImGui::TableSetupColumn("Val f0");
+    ImGui::TableSetupColumn("Val f1");
+    ImGui::TableSetupColumn("Min");
+    ImGui::TableSetupColumn("Max");
+    ImGui::TableSetupColumn("u");
+    ImGui::TableSetupColumn("w");
+    ImGui::TableSetupColumn("% u<0");
+    ImGui::TableSetupColumn("% u>1");
+    ImGui::TableHeadersRow();
+
+    for (const auto& r : rows) {
+      float minV = 0.0f;
+      float maxV = 1.0f;
+
+      // Pull min/max from the AudioDataSourceMod param group (do not assume mod name).
+      if (auto p = audioModPtr->findParameterByNamePrefix(r.minName)) {
+        minV = p->get().cast<float>().get();
+      }
+      if (auto p = audioModPtr->findParameterByNamePrefix(r.maxName)) {
+        maxV = p->get().cast<float>().get();
+      }
+
+      const float raw = processorPtr->getScalarValue(r.scalar, -1);
+      const float raw0 = processorPtr->getScalarValue(r.scalar, 0);
+      const float raw1 = processorPtr->getScalarValue(r.scalar, 1);
+
+      AudioInspectorModel::ScalarStats in;
+      in.scalar = r.scalar;
+      in.label = r.label;
+      in.rawValue = processorPtr->getScalarValue(r.scalar, scalarFilterIndex);
+      in.minValue = minV;
+      in.maxValue = maxV;
+
+      const auto out = audioInspectorModel.updateScalar(in, dt);
+
+      ImGui::TableNextRow();
+
+      ImGui::TableSetColumnIndex(0);
+      ImGui::TextUnformatted(out.label.c_str());
+
+      ImGui::TableSetColumnIndex(1);
+      ImGui::Text("%.4f", raw);
+
+      ImGui::TableSetColumnIndex(2);
+      ImGui::Text("%.4f", raw0);
+
+      ImGui::TableSetColumnIndex(3);
+      ImGui::Text("%.4f", raw1);
+
+      ImGui::PushID(out.label.c_str());
+
+      ImGui::TableSetColumnIndex(4);
+      float editMinV = out.minValue;
+      if (ImGui::DragFloat("##min", &editMinV, r.dragSpeed, 0.0f, 0.0f, "%.6g")) {
+        if (auto p = audioModPtr->findParameterByNamePrefix(r.minName)) {
+          p->get().cast<float>().set(editMinV);
+          editMinV = p->get().cast<float>().get();
+        }
+      }
+
+      ImGui::TableSetColumnIndex(5);
+      float editMaxV = out.maxValue;
+      if (ImGui::DragFloat("##max", &editMaxV, r.dragSpeed, 0.0f, 0.0f, "%.6g")) {
+        if (auto p = audioModPtr->findParameterByNamePrefix(r.maxName)) {
+          p->get().cast<float>().set(editMaxV);
+          editMaxV = p->get().cast<float>().get();
+        }
+      }
+
+      // Prevent degenerate ranges (div-by-zero in unwrapped).
+      if (editMaxV <= editMinV) {
+        editMaxV = editMinV + 1e-6f;
+        if (auto p = audioModPtr->findParameterByNamePrefix(r.maxName)) {
+          p->get().cast<float>().set(editMaxV);
+        }
+      }
+
+      ImGui::PopID();
+
+      ImGui::TableSetColumnIndex(6);
+      ImGui::Text("%.3f", out.unwrapped);
+
+      ImGui::TableSetColumnIndex(7);
+      ImGui::Text("%.3f", out.wrapped);
+
+      ImGui::TableSetColumnIndex(8);
+      ImGui::Text("%.1f", out.outLowPct);
+
+      ImGui::TableSetColumnIndex(9);
+      ImGui::Text("%.1f", out.outHighPct);
+    }
+
+    ImGui::EndTable();
+  }
+
+  ImGui::Separator();
+  ImGui::TextUnformatted("Event detection");
+
+  if (ImGui::BeginTable("##AudioInspectorEvents", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+    ImGui::TableSetupColumn("Detector");
+    ImGui::TableSetupColumn("z");
+    ImGui::TableSetupColumn("threshold");
+    ImGui::TableSetupColumn("cooldown");
+    ImGui::TableSetupColumn("cooldown total");
+    ImGui::TableHeadersRow();
+
+    const AudioInspectorModel::DetectorStats detectors[] = {
+      {"Onset", processorPtr->getOnsetZScore(), processorPtr->getOnsetThreshold(), processorPtr->getOnsetCooldownRemaining(), processorPtr->getOnsetCooldownTotal()},
+      {"Timbre", processorPtr->getTimbreZScore(), processorPtr->getTimbreThreshold(), processorPtr->getTimbreCooldownRemaining(), processorPtr->getTimbreCooldownTotal()},
+      {"Pitch", processorPtr->getPitchZScore(), processorPtr->getPitchThreshold(), processorPtr->getPitchCooldownRemaining(), processorPtr->getPitchCooldownTotal()},
+    };
+
+    for (const auto& d : detectors) {
+      ImGui::TableNextRow();
+      ImGui::TableSetColumnIndex(0);
+      ImGui::TextUnformatted(d.label.c_str());
+      ImGui::TableSetColumnIndex(1);
+      ImGui::Text("%.3f", d.zScore);
+      ImGui::TableSetColumnIndex(2);
+      ImGui::Text("%.3f", d.threshold);
+      ImGui::TableSetColumnIndex(3);
+      ImGui::Text("%.2f", d.cooldownRemaining);
+      ImGui::TableSetColumnIndex(4);
+      ImGui::Text("%.2f", d.cooldownTotal);
+    }
+
+    ImGui::EndTable();
+  }
+}
+
 
 
 

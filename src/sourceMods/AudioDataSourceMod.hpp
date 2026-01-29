@@ -29,6 +29,8 @@ public:
   void draw() override;
   bool keyPressed(int key) override;
 
+  std::shared_ptr<ofxAudioData::Processor> getAudioDataProcessor() const { return audioDataProcessorPtr; }
+
   UiState captureUiState() const override {
     UiState state;
     setUiStateBool(state, "tuningVisible", tuningVisible);
@@ -71,17 +73,22 @@ private:
   std::shared_ptr<ofxAudioData::Plots> audioDataPlotsPtr;
   float lastUpdated = 0.0;
 
+  // Scalar filter selection (0 = faster/less smooth, 1 = smoother)
+  ofParameter<int> scalarFilterIndexParameter { "ScalarFilterIndex", 1, 0, ofxAudioData::Processor::filterCount - 1 };
+
   // https://en.wikipedia.org/wiki/Template:Vocal_and_instrumental_pitch_ranges
-  ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 100.0 };
-  ofParameter<float> maxPitchParameter { "MaxPitch", 800.0, 0.0, 3000.0 }; // C8 is ~4400.0 Hz
-  ofParameter<float> minRmsParameter { "MinRms", 0.0, 0.0, 0.05 };
-  ofParameter<float> maxRmsParameter { "MaxRms", 0.02, 0.005, 0.2 };
-  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 20.0, 0.0, 2000.0 };
-  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 70.0, 0.0, 2000.0 };
-  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 20.0, 0.0, 500.0 };
-  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 100.0, 0.0, 500.0 };
-  ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 5.0, 0.0, 15.0 };
-  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 15.0, 2.0, 80.0 };
+  // Baseline defaults (frozen): tuned against prerecorded WAV baseline.
+  // Ranges remain intentionally wide so we can re-tune later if needed.
+  ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 2000.0 };
+  ofParameter<float> maxPitchParameter { "MaxPitch", 400.0, 0.0, 6000.0 }; // C8 is ~4400.0 Hz
+  ofParameter<float> minRmsParameter { "MinRms", 0.0, 0.0, 1.0 };
+  ofParameter<float> maxRmsParameter { "MaxRms", 0.10, 0.0, 1.0 };
+  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 5.0, 0.0, 10000.0 };
+  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 150.0, 0.0, 10000.0 };
+  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 20.0, 0.0, 5000.0 };
+  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 200.0, 0.0, 5000.0 };
+  ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 5.0, 0.0, 500.0 };
+  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 40.0, 0.0, 500.0 };
 
   float getNormalisedAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();

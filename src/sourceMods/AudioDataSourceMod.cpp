@@ -48,6 +48,8 @@ void AudioDataSourceMod::initialise() {
 
 
 void AudioDataSourceMod::initParameters() {
+  parameters.add(scalarFilterIndexParameter);
+
   parameters.add(minPitchParameter);
   parameters.add(maxPitchParameter);
   parameters.add(minRmsParameter);
@@ -58,15 +60,18 @@ void AudioDataSourceMod::initParameters() {
   parameters.add(maxSpectralCrestParameter);
   parameters.add(minZeroCrossingRateParameter);
   parameters.add(maxZeroCrossingRateParameter);
-  parameters.add(audioDataProcessorPtr->getParameterGroup()); // keep this sub-group just for tuning
+
+  // Keep this sub-group just for tuning (thresholds/cooldowns).
+  parameters.add(audioDataProcessorPtr->getParameterGroup());
 }
 
 float AudioDataSourceMod::getNormalisedAnalysisScalar(float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar) {
-//  if (minParameter == 0.0 && maxParameter == 0.0) {
-//    return audioDataProcessorPtr->getNormalisedScalarValue(scalar);
-//  } else {
-    return audioDataProcessorPtr->getNormalisedScalarValue(scalar, minParameter, maxParameter, true);
-//  }
+  return audioDataProcessorPtr->getNormalisedScalarValue(
+      scalar,
+      minParameter,
+      maxParameter,
+      scalarFilterIndexParameter.get(),
+      true);
 }
 
 void AudioDataSourceMod::emitPitchRmsPoints() {
@@ -208,7 +213,7 @@ void AudioDataSourceMod::update() {
 bool AudioDataSourceMod::keyPressed(int key) {
   if (audioAnalysisClientPtr->keyPressed(key)) return true;
   if (audioDataPlotsPtr->keyPressed(key)) return true;
-  if (key == 'T') {
+  if (key == 't') {
     tuningVisible = !tuningVisible;
     return true;
   }

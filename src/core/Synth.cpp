@@ -656,7 +656,8 @@ void Synth::update() {
 
 void Synth::updateDebugViewFbo() {
   if (!debugViewEnabled) return;
-  
+  if (debugViewMode != DebugViewMode::Fbo) return;
+
   // Allocate FBO if needed
   if (!debugViewFbo.isAllocated()) {
     ofFboSettings settings;
@@ -667,20 +668,22 @@ void Synth::updateDebugViewFbo() {
     settings.useStencil = false;
     debugViewFbo.allocate(settings);
   }
-  
+
   debugViewFbo.begin();
-  ofClear(20, 20, 20, 200);  // Semi-transparent dark background for context
-  
+  ofClear(20, 20, 20, 255);
+
   // Draw Mod debug overlays in [0,1] normalized coordinates
   ofPushMatrix();
   ofPushStyle();
   ofScale(DEBUG_VIEW_SIZE, DEBUG_VIEW_SIZE);
   for (const auto& [name, modPtr] : modPtrs) {
-    modPtr->draw();
+    if (modPtr) {
+      modPtr->draw();
+    }
   }
   ofPopStyle();
   ofPopMatrix();
-  
+
   debugViewFbo.end();
 }
 
@@ -832,6 +835,14 @@ bool Synth::keyPressed(int key) {
 
   if (key == 'D') {
     toggleDebugView();
+    return true;
+  }
+
+  if (key == 'T') {
+    // Uppercase T: toggle Audio Inspector mode inside Debug View.
+    // This is synth-level so it works across configs and independent of mod names.
+    debugViewEnabled = true;
+    debugViewMode = (debugViewMode == DebugViewMode::AudioInspector) ? DebugViewMode::Fbo : DebugViewMode::AudioInspector;
     return true;
   }
 

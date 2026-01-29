@@ -12,6 +12,7 @@
 #include "ofColor.h"
 #include "nodeEditor/NodeEditorModel.hpp"
 #include "config/ModSnapshotManager.hpp"
+#include "controller/AudioInspectorModel.hpp"
 #include <memory>
 #include <unordered_set>
 #include <vector>
@@ -27,8 +28,9 @@ class Intent;
 class AgencyControllerMod;
 
 
+
 class Gui {
-  
+
 public:
   void setup(std::shared_ptr<Synth> synthPtr_, std::shared_ptr<ofAppBaseWindow> windowPtr);
   void exit();
@@ -45,7 +47,7 @@ private:
   void drawSynthControls();
   void drawAgencyControls();
   void drawHelpWindow();
-  
+
   void drawIntentControls();
   void drawIntentSlotSliders();
   void drawDisabledSlider(const ImVec2& size, int slotIndex);
@@ -70,43 +72,44 @@ private:
   void drawPerformanceNavigator();
   void drawNavigationButton(const char* id, int direction, bool canNavigate, float buttonSize);
   void drawDebugView();
+  void drawAudioInspector();
   std::vector<ModPtr> getSelectedMods();
 
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;
   bool dockBuilt { false };
-  
+
   NodeEditorModel nodeEditorModel;
-  bool nodeEditorDirty { true };      // rebuild on next frame
-  bool animateLayout { true };        // animate layout on load
-  bool layoutComputed { false };      // track if layout has been computed
-  bool layoutAutoLoadAttempted { false }; // track if we've tried auto-load
-  
+  bool nodeEditorDirty { true };           // rebuild on next frame
+  bool animateLayout { true };             // animate layout on load
+  bool layoutComputed { false };           // track if layout has been computed
+  bool layoutAutoLoadAttempted { false };  // track if we've tried auto-load
+
   // Auto-save layout with debounce
-  bool layoutNeedsSave { false };           // layout has changed and needs saving
-  float layoutChangeTime { 0.0f };          // time when layout change was detected
-  
+  bool layoutNeedsSave { false };    // layout has changed and needs saving
+  float layoutChangeTime { 0.0f };   // time when layout change was detected
+
   // Auto-save mods config with debounce
-  bool autoSaveModsEnabled { false };       // toggle for auto-saving mods config (OFF by default)
-  bool modsConfigNeedsSave { false };       // mods config has changed and needs saving
-  float modsConfigChangeTime { 0.0f };      // time when mods config change was detected
-  
+  bool autoSaveModsEnabled { false };    // toggle for auto-saving mods config (OFF by default)
+  bool modsConfigNeedsSave { false };    // mods config has changed and needs saving
+  float modsConfigChangeTime { 0.0f };   // time when mods config change was detected
+
   static constexpr float AUTO_SAVE_DELAY { 1.0f };  // seconds to wait before auto-saving
 
-  // Snapshot system for saving/recalling Mod parameters
+  AudioInspectorModel audioInspectorModel;
+
   ModSnapshotManager snapshotManager;
   bool snapshotsLoaded { false };
   char snapshotNameBuffer[64] = "";
   std::unordered_set<std::string> highlightedMods;  // Mods to highlight after load
   float highlightStartTime { 0.0f };
   static constexpr float HIGHLIGHT_DURATION { 1.5f };  // seconds
-  
+
   // Help window
   bool showHelpWindow { false };
   ImFont* monoFont { nullptr };
-  
 };
 
 
 
-} // ofxMarkSynth
+} // namespace ofxMarkSynth

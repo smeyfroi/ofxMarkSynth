@@ -32,7 +32,8 @@ Ctrl+Z          Undo last snapshot load
 MOD VISIBILITY
 A               PathMod
 X               PixelSnapshotMod
-T               Audio tuning display
+t               Audio tuning overlay
+T               Audio inspector (Debug View tab)
 C               SOM Palette
 i               Introspector
 V               Video (motion source)

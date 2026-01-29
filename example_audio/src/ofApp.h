@@ -18,9 +18,11 @@ const std::filesystem::path PERFORMANCE_ARTEFACT_ROOT_PATH { ROOT_PERFORMANCE_PA
 // Audio configuration (Synth-owned audio source)
 const std::filesystem::path SOURCE_AUDIO_PATH { ROOT_SOURCE_MATERIAL_PATH/"belfast/20250208-violin-separate-scale-vibrato-harmonics.wav" };
 const std::string AUDIO_OUT_DEVICE_NAME = "Apple Inc.: MacBook Pro Speakers";
-constexpr int AUDIO_BUFFER_SIZE = 256;
+// NOTE: bufferSize strongly affects pitch detection range (YIN).
+// 2048 @ 44.1kHz supports low trombone fundamentals (~43Hz+).
+constexpr int AUDIO_BUFFER_SIZE = 2048;
 constexpr int AUDIO_CHANNELS = 1;
-constexpr int AUDIO_SAMPLE_RATE = 48000;
+constexpr int AUDIO_SAMPLE_RATE = 44100;
 
 constexpr float FRAME_RATE = 30.0f;
 constexpr bool START_PAUSED = false;
