@@ -1145,7 +1145,12 @@ void Gui::drawNode(const ModPtr& modPtr, bool highlight) {
   ImNodes::BeginNode(modId);
 
   ImNodes::BeginNodeTitleBar();
-  ImGui::TextUnformatted(modPtr->getName().c_str());
+  std::string title = modPtr->getName();
+  const std::string& presetName = modPtr->getPresetName();
+  if (!presetName.empty() && presetName != "_default") {
+    title += " [" + presetName + "]";
+  }
+  ImGui::TextUnformatted(title.c_str());
   
   if (auto agencyControllerPtr = std::dynamic_pointer_cast<AgencyControllerMod>(modPtr)) {
     drawAgencyControllerNodeTitleBar(agencyControllerPtr.get());

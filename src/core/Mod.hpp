@@ -165,6 +165,10 @@ public:
   void setName(const std::string& name_) { name = name_; }
   const std::string& getName() const;
 
+  // Explicit preset name from the synth config (empty means none / _default).
+  void setPresetName(const std::string& presetName_);
+  const std::string& getPresetName() const;
+
   virtual float getAgency() const;
   virtual void applyIntent(const Intent& intent, float intentStrength) {};
 
@@ -195,6 +199,7 @@ public:
 
 protected:
   std::string name;
+  std::string presetName;
 
   std::weak_ptr<Synth> synthPtr; // parent Synth (may be expired)
 

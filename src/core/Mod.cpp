@@ -53,6 +53,14 @@ const std::string& Mod::getName() const {
   return name;
 }
 
+void Mod::setPresetName(const std::string& presetName_) {
+  presetName = presetName_;
+}
+
+const std::string& Mod::getPresetName() const {
+  return presetName;
+}
+
 std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(ofParameterGroup& group, const std::string& namePrefix) {
   for (const auto& paramPtr : group) {
     if (paramPtr->getName().rfind(namePrefix, 0) == 0) {

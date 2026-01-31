@@ -212,6 +212,9 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
         return false;
       }
 
+      // For UI/debugging (e.g. node editor): store the explicit preset name from config.
+      modPtr->setPresetName(presetName);
+
       // Performance-scoped defaults (applied before capturing Mod defaults):
       // - venue-presets.json
       // - mod-params/presets.json

@@ -16,6 +16,14 @@ It is intended as a practical guide for refactoring existing performance folders
 - Make it easy to answer: “where is this value defined?”
 - Keep config saving clean: defaults should not be written back into configs.
 
+## Node Editor cues
+
+The node editor tries to make the defaults/presets hierarchy visible while patching.
+
+- **Node titles**: `ModName [PresetName]` is shown when a Mod has an explicit `"preset"` (excluding `_default`).
+- **Dimmed parameter labels**: value matches the Mod’s captured defaults (after applying `venue-presets.json` + `mod-params/presets.json`).
+- **Normal parameter labels**: value differs from defaults (typically from per-config `mods.<ModName>.config`, snapshots, or live control).
+
 ## The hierarchy (“levels”)
 
 MarkSynth uses two performance-scoped preset files plus per-config overrides.
@@ -135,6 +143,63 @@ Keep these for truly unique parameters:
 - parameters that are intentionally different for that config’s role
 - one-off experiments
 
+## Worked example (before/after)
+
+Goal: move repeated values into `mod-params/presets.json` and keep only the “unique bits” in the per-config file.
+
+### Before
+
+`performanceConfigRootPath/synth/06-minimal-video-ink.json` (example Mod excerpts):
+
+```json
+{
+  "mods": {
+    "FadeMarks": {
+      "type": "Fade",
+      "config": { "Alpha": "0.0012" }
+    },
+    "FadeMarksAlphaMap": {
+      "type": "MultiplyAdd",
+      "config": { "Multiplier": "0.0024", "Adder": "0.0012" }
+    }
+  }
+}
+```
+
+### After
+
+1) Put the repeated block(s) in `performanceConfigRootPath/mod-params/presets.json`:
+
+```json
+{
+  "Fade": {
+    "Alpha_0p0012": { "Alpha": "0.0012" }
+  },
+  "MultiplyAdd": {
+    "Mul_0p0024_Add_0p0012": { "Multiplier": "0.0024", "Adder": "0.0012" }
+  }
+}
+```
+
+2) Update the synth config to reference presets and remove duplicated `config`:
+
+```json
+{
+  "mods": {
+    "FadeMarks": {
+      "type": "Fade",
+      "preset": "Alpha_0p0012"
+    },
+    "FadeMarksAlphaMap": {
+      "type": "MultiplyAdd",
+      "preset": "Mul_0p0024_Add_0p0012"
+    }
+  }
+}
+```
+
+Result: the per-config file becomes more about composition/wiring, and less about re-stating shared tuning.
+
 ## Practical refactoring workflow
 
 1) **Remove no-op constants first**
@@ -151,14 +216,33 @@ Keep these for truly unique parameters:
    - Apply by adding `preset` and deleting those keys from `config`.
 
 4) **Extract near repeats cautiously**
-   - Use log-space comparison for small floating values (e.g. `MultiplyAdd` multipliers/adders).
-   - Consider whether you want to “bake” the slight difference into one shared preset value.
+   - Use numeric normalization so formatting differences don’t block matches (e.g. `"1"` vs `"1.0"`).
+   - For small floating values, compare in log space (e.g. `MultiplyAdd` multipliers/adders) so `0.0001` and `0.05` are never treated as “close”.
+   - Decide whether to:
+     - keep differences as per-config overrides (safer), or
+     - bake a representative value into a shared preset (more consolidation, slight behavior change).
 
 5) **Move always-constant keys into `_default`**
    - If a key is present in many per-config blocks and never varies, it likely belongs in presets.
 
 6) **Keep per-config files small**
    - After refactoring, each Mod’s `config` block should be short and “surprising” only when necessary.
+
+## Identifying repeated parameter sets
+
+Two useful notions:
+
+- **Exact repeats**: same `type`, same `config` keyset, same values.
+  - Treat numeric strings and numbers equivalently (`"1"` == `"1.0"`).
+- **Near repeats**: same `type` + keyset, values “close enough”.
+  - Prefer log-space bucketing for tiny scalars (typical for mapping coefficients).
+
+Practical heuristics:
+
+- Normalization for exact matching: parse floats where possible and compare with a tiny absolute epsilon.
+- Near matching for small scalars:
+  - compare `log10(abs(value))` within a bucket width (e.g. ±5–10% multiplicative), and keep sign separately
+  - treat 0 as a special case (exact match only)
 
 ## Naming conventions
 
