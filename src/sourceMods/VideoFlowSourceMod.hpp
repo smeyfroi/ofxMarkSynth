@@ -35,6 +35,20 @@ public:
   bool keyPressed(int key) override;
   void applyIntent(const Intent& intent, float strength) override;
 
+  struct MotionSampleStats {
+    int samplesAttempted { 0 };
+    int samplesAccepted { 0 };
+    float acceptRate { 0.0f };
+    float acceptedSpeedMean { 0.0f };
+    float acceptedSpeedMax { 0.0f };
+    bool cpuSamplingEnabled { false };
+  };
+
+  MotionSampleStats getMotionSampleStats() const { return motionSampleStats; }
+  bool isMotionReady() const { return motionFromVideo.isReady(); }
+  const ofFbo& getVideoFbo() const { return motionFromVideo.getVideoFbo(); }
+  const ofFbo& getMotionFbo() const { return motionFromVideo.getMotionFbo(); }
+
   UiState captureUiState() const override {
     UiState state;
     setUiStateBool(state, "videoVisible", motionFromVideo.isVideoVisible());
@@ -60,10 +74,17 @@ protected:
 private:
   MotionFromVideo motionFromVideo;
 
-  ofParameter<float> pointSamplesPerUpdateParameter { "PointSamplesPerUpdate", 100.0f, 0.0f, 500.0f };
+  // Default tuned from performance configs: 140 is a good general baseline.
+  ofParameter<float> pointSamplesPerUpdateParameter { "PointSamplesPerUpdate", 140.0f, 0.0f, 500.0f };
   ParamController<float> pointSamplesPerUpdateController { pointSamplesPerUpdateParameter };
 
+  // Retry budget for intermittent acceptance. Keeps sampling uniformly random across the frame,
+  // but increases the chance of hitting moving regions.
+  ofParameter<float> pointSampleAttemptMultiplierParameter { "PointSampleAttemptMultiplier", 1.0f, 1.0f, 20.0f };
+
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0f, 0.0f, 1.0f };
+
+  MotionSampleStats motionSampleStats;
 
   bool saveRecording;
   std::string recordingDir;

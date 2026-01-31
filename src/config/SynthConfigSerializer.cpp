@@ -12,6 +12,7 @@
 #include "core/Intent.hpp"
 #include "TimeStringUtil.h"
 #include "sourceMods/AudioDataSourceMod.hpp"
+#include "config/ModPresetLibrary.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
 #include <fstream>
@@ -179,6 +180,13 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
 
       std::string type = modJson["type"];
 
+      std::string presetName;
+      if (modJson.contains("preset") && modJson["preset"].is_string()) {
+        presetName = modJson["preset"].get<std::string>();
+      }
+
+      const std::string presetKey = presetName.empty() ? "_default" : presetName;
+
       // Parse config map
       ModConfig config;
       if (modJson.contains("config") && modJson["config"].is_object()) {
@@ -203,7 +211,19 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
         ofLogError("SynthConfigSerializer") << "Failed to create Mod '" << name << "' of type '" << type << "'";
         return false;
       }
-      
+
+      // Performance-scoped defaults (applied before capturing Mod defaults):
+      // - venue-presets.json
+      // - mod-params/presets.json
+      ModConfig presetDefaults;
+      for (const auto& [k, v] : ModPresetLibrary::loadFromFile(ModPresetLibrary::getVenuePresetsFilePath(), type, presetKey)) {
+        presetDefaults[k] = v;
+      }
+      for (const auto& [k, v] : ModPresetLibrary::loadFromFile(ModPresetLibrary::getModPresetsFilePath(), type, presetKey)) {
+        presetDefaults[k] = v;
+      }
+      modPtr->setPresetConfig(std::move(presetDefaults));
+
       ofLogNotice("SynthConfigSerializer") << "Created Mod: " << name << " (" << type << ")";
       
       if (modJson.contains("layers") && modJson["layers"].is_object()) {

@@ -6,6 +6,7 @@
 //
 
 #include "config/ModSnapshotManager.hpp"
+#include "config/ParamMapUtil.hpp"
 #include "core/Synth.hpp"
 #include "ofLog.h"
 #include "ofUtils.h"
@@ -19,48 +20,16 @@ namespace ofxMarkSynth {
 
 
 
-constexpr const char* SNAPSHOT_FOLDER_NAME = "mod-snapshot";
+constexpr const char* SNAPSHOT_FOLDER_NAME = "mod-params/snapshots";
 
-
-
-std::string ModSnapshotManager::getSnapshotFilePath(const std::string& synthName) {
-    return Synth::saveConfigFilePath(std::string(SNAPSHOT_FOLDER_NAME) + "/" + synthName + "/snapshots.json");
+std::string ModSnapshotManager::getSnapshotFilePath(const std::string& configId) {
+    if (configId.empty()) {
+        return {};
+    }
+    return Synth::saveConfigFilePath(std::string(SNAPSHOT_FOLDER_NAME) + "/" + configId + ".json");
 }
 
 using ParamMap = ModSnapshotManager::ParamMap;
-
-// Helper to serialize all parameters in a group recursively
-static void serializeParameterGroup(const ofParameterGroup& group, ParamMap& out, const std::string& prefix = "") {
-    for (const auto& param : group) {
-        std::string fullName = prefix.empty() ? param->getName() : prefix + "." + param->getName();
-        
-        if (param->type() == typeid(ofParameterGroup).name()) {
-            // Recurse into subgroups
-            serializeParameterGroup(param->castGroup(), out, fullName);
-        } else {
-            // Serialize the parameter value
-            out[fullName] = param->toString();
-        }
-    }
-}
-
-// Helper to deserialize parameters from map to group
-static void deserializeParameterGroup(ofParameterGroup& group, const ParamMap& values, const std::string& prefix = "") {
-    for (auto& param : group) {
-        std::string fullName = prefix.empty() ? param->getName() : prefix + "." + param->getName();
-        
-        if (param->type() == typeid(ofParameterGroup).name()) {
-            // Recurse into subgroups
-            deserializeParameterGroup(param->castGroup(), values, fullName);
-        } else {
-            // Look for this parameter in the values map
-            auto it = values.find(fullName);
-            if (it != values.end()) {
-                param->fromString(it->second);
-            }
-        }
-    }
-}
 
 ModSnapshotManager::Snapshot ModSnapshotManager::capture(const std::string& name, 
                                                           const std::vector<ModPtr>& selectedMods) {
@@ -72,7 +41,7 @@ ModSnapshotManager::Snapshot ModSnapshotManager::capture(const std::string& name
         if (!modPtr) continue;
         
         ParamMap params;
-        serializeParameterGroup(modPtr->getParameterGroup(), params);
+        ParamMapUtil::serializeParameterGroup(modPtr->getParameterGroup(), params);
         
         if (!params.empty()) {
             snapshot.modParams[modPtr->getName()] = std::move(params);
@@ -108,11 +77,11 @@ std::unordered_set<std::string> ModSnapshotManager::apply(std::shared_ptr<Synth>
             
             // Save current state for undo
             ParamMap currentParams;
-            serializeParameterGroup(modPtr->getParameterGroup(), currentParams);
+            ParamMapUtil::serializeParameterGroup(modPtr->getParameterGroup(), currentParams);
             undoState.modParams[modName] = std::move(currentParams);
             
             // Apply new values
-            deserializeParameterGroup(modPtr->getParameterGroup(), params);
+            ParamMapUtil::deserializeParameterGroup(modPtr->getParameterGroup(), params);
             affectedMods.insert(modName);
             
             ofLogVerbose("ModSnapshotManager") << "Applied " << params.size() 
@@ -154,7 +123,7 @@ std::unordered_set<std::string> ModSnapshotManager::undo(std::shared_ptr<Synth> 
                 continue;
             }
             
-            deserializeParameterGroup(modPtr->getParameterGroup(), params);
+            ParamMapUtil::deserializeParameterGroup(modPtr->getParameterGroup(), params);
             affectedMods.insert(modName);
         } catch (const std::exception& e) {
             ofLogError("ModSnapshotManager") << "Error during undo for mod '" << modName << "': " << e.what();
@@ -262,11 +231,7 @@ void ModSnapshotManager::fromJson(const nlohmann::json& j) {
     for (auto& slot : slots) {
         slot.reset();
     }
-    
-    if (j.contains("version") && j["version"] != "1.0") {
-        ofLogWarning("ModSnapshotManager") << "Version mismatch, may have compatibility issues";
-    }
-    
+
     if (j.contains("snapshots") && j["snapshots"].is_object()) {
         for (auto& [slotStr, snapshotJson] : j["snapshots"].items()) {
             try {
@@ -281,14 +246,14 @@ void ModSnapshotManager::fromJson(const nlohmann::json& j) {
     }
 }
 
-bool ModSnapshotManager::saveToFile(const std::string& synthName) {
+bool ModSnapshotManager::saveToFile(const std::string& configId) {
     try {
-        std::string filepath = getSnapshotFilePath(synthName);
+        std::string filepath = getSnapshotFilePath(configId);
         std::filesystem::path dir = std::filesystem::path(filepath).parent_path();
         std::filesystem::create_directories(dir);
         
+
         nlohmann::json j = toJson();
-        j["synth_name"] = synthName;
         
         std::ofstream file(filepath);
         if (!file.is_open()) {
@@ -307,13 +272,15 @@ bool ModSnapshotManager::saveToFile(const std::string& synthName) {
     }
 }
 
-bool ModSnapshotManager::loadFromFile(const std::string& synthName) {
-    std::string filepath = getSnapshotFilePath(synthName);
-    
+bool ModSnapshotManager::loadFromFile(const std::string& configId) {
+    std::string filepath = getSnapshotFilePath(configId);
+
     for (auto& slot : slots) {
         slot.reset();
     }
-    
+
+    undoSnapshot.reset();
+
     if (!std::filesystem::exists(filepath)) {
         ofLogNotice("ModSnapshotManager") << "No snapshot file found: " << filepath;
         return false;

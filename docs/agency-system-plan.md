@@ -1,5 +1,7 @@
 # Agency System (with Intent) — Context + Step-by-Step Plan
 
+Note: deferred/backlog items live in `docs/future-work.md`.
+
 This document captures the agreed design for the **Agency system** and a detailed implementation plan.
 
 Agency works *in tandem* with Intent:

@@ -64,6 +64,8 @@ void VectorMagnitudeMod::update() {
   float mean = 0.0f;
   float max = 0.0f;
 
+  lastSampleCount = sampleCount;
+
   if (sampleCount > 0) {
     mean = sumMagnitude / static_cast<float>(sampleCount);
     max = maxMagnitude;
@@ -72,6 +74,9 @@ void VectorMagnitudeMod::update() {
     meanState *= decayWhenNoInputParameter;
     maxState *= decayWhenNoInputParameter;
   }
+
+  lastRawMean = mean;
+  lastRawMax = max;
 
   sumMagnitude = 0.0f;
   maxMagnitude = 0.0f;
@@ -82,6 +87,9 @@ void VectorMagnitudeMod::update() {
 
   meanN = smooth(meanN, meanState, meanSmoothingParameter);
   maxN = smooth(maxN, maxState, maxSmoothingParameter);
+
+  lastMeanOut = meanN;
+  lastMaxOut = maxN;
 
   emit(SOURCE_MEAN_SCALAR, meanN);
   emit(SOURCE_MAX_SCALAR, maxN);

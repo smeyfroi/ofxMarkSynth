@@ -8,7 +8,9 @@
 #include "Gui.hpp"
 #include "Synth.hpp"
 #include "../processMods/AgencyControllerMod.hpp"
+#include "../processMods/VectorMagnitudeMod.hpp"
 #include "../sourceMods/AudioDataSourceMod.hpp"
+#include "../sourceMods/VideoFlowSourceMod.hpp"
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"
@@ -17,6 +19,8 @@
 #include "gui/HelpContent.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cfloat>
+#include <filesystem>
 
 
 
@@ -109,6 +113,17 @@ void Gui::onConfigLoaded() {
   layoutNeedsSave = false;
   modsConfigNeedsSave = false;
   snapshotsLoaded = false;
+  videoSamplingPlotState.acceptedCount.clear();
+  videoSamplingPlotState.attemptedCount.clear();
+  videoSamplingPlotState.acceptedAny.clear();
+  videoSamplingPlotState.acceptedSpeedMax.clear();
+  videoSamplingPlotState.acceptRate.clear();
+  videoSamplingPlotState.heldValid = false;
+  videoSamplingPlotState.heldTimestamp = -1.0f;
+  videoSamplingPlotState.heldAcceptedSpeedMean = 0.0f;
+  videoSamplingPlotState.heldAcceptedSpeedMax = 0.0f;
+  videoSamplingPlotState.heldAcceptRate = 0.0f;
+  motionMagnitudePlotStates.clear();
   highlightedMods.clear();
 }
 
@@ -1221,7 +1236,6 @@ void Gui::drawNodeEditor() {
     nodeEditorDirty = false;
     layoutComputed = false;
     layoutAutoLoadAttempted = false; // Reset auto-load on rebuild
-    snapshotsLoaded = false; // Reload snapshots on rebuild
   }
  
   ImGui::Begin("NodeEditor");
@@ -1250,11 +1264,7 @@ void Gui::drawNodeEditor() {
     }
   }
   
-  // Auto-load snapshots on first draw
-  if (!snapshotsLoaded) {
-    snapshotManager.loadFromFile(synthPtr->getName());
-    snapshotsLoaded = true;
-  }
+  // Snapshots are loaded lazily per-config (see drawSnapshotControls()).
   
   // Clear highlights after timeout
   if (!highlightedMods.empty()) {
@@ -1733,9 +1743,13 @@ void Gui::drawNavigationButton(const char* id, int direction, bool canNavigate, 
 bool Gui::loadSnapshotSlot(int slotIndex) {
   if (!synthPtr) return false;
 
-  if (!snapshotsLoaded) {
-    snapshotManager.loadFromFile(synthPtr->getName());
+  const std::string configId = synthPtr->getCurrentConfigId();
+  if (configId.empty()) return false;
+
+  if (!snapshotsLoaded || snapshotsConfigId != configId) {
+    snapshotManager.loadFromFile(configId);
     snapshotsLoaded = true;
+    snapshotsConfigId = configId;
   }
 
   if (slotIndex < 0 || slotIndex >= ModSnapshotManager::NUM_SLOTS) return false;
@@ -1758,66 +1772,105 @@ void Gui::drawSnapshotControls() {
   bool hasSelection = !selectedMods.empty();
   bool hasName = strlen(snapshotNameBuffer) > 0;
   
+  const std::string configId = synthPtr->getCurrentConfigId();
+  if (configId.empty()) {
+    ImGui::TextUnformatted("(No config loaded: snapshots disabled)");
+    return;
+  }
+
+  // Snapshot files are loaded on-demand (not automatically on config load).
+  if (snapshotsConfigId != configId) {
+    snapshotManager = {};
+    snapshotsLoaded = false;
+    snapshotsConfigId = configId;
+  }
+
   // Snapshot slot buttons (inline with Random Layout)
   for (int i = 0; i < ModSnapshotManager::NUM_SLOTS; ++i) {
     if (i > 0) ImGui::SameLine();
-    
-    bool occupied = snapshotManager.isSlotOccupied(i);
-    std::string label = std::to_string(i + 1);
-    
+
+    const bool occupied = snapshotsLoaded ? snapshotManager.isSlotOccupied(i) : false;
+    const std::string label = std::to_string(i + 1);
+
     // Determine button action
-    bool shiftHeld = ImGui::GetIO().KeyShift;
-    int duplicateSlot = hasName ? snapshotManager.findNameInOtherSlot(snapshotNameBuffer, i) : -1;
-    bool nameConflict = duplicateSlot >= 0;
-    bool canSave = hasName && hasSelection && !nameConflict;
-    bool canLoad = occupied && !hasName && !shiftHeld;
-    bool canClear = occupied && shiftHeld;  // Shift+click to clear
-    
+    const bool shiftHeld = ImGui::GetIO().KeyShift;
+
+    int duplicateSlot = -1;
+    bool nameConflict = false;
+    if (snapshotsLoaded && hasName) {
+      duplicateSlot = snapshotManager.findNameInOtherSlot(snapshotNameBuffer, i);
+      nameConflict = duplicateSlot >= 0;
+    }
+
+    const bool canSave = hasName && hasSelection && !nameConflict;
+    const bool canLoad = snapshotsLoaded && occupied && !hasName && !shiftHeld;
+    const bool canClear = snapshotsLoaded && occupied && shiftHeld;  // Shift+click to clear
+
     // Color based on state
     if (occupied) {
       ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.5f, 0.3f, 1.0f));
       ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.6f, 0.4f, 1.0f));
       ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.7f, 0.5f, 1.0f));
     }
-    
-    // Disable button if no valid action
-    bool disabled = !canSave && !canLoad && !canClear;
+
+    // When snapshots aren't loaded yet, allow a click to trigger load.
+    const bool disabled = snapshotsLoaded && !canSave && !canLoad && !canClear;
     if (disabled) ImGui::BeginDisabled();
-    
+
     ImGui::PushID(i);
     if (ImGui::Button(label.c_str(), ImVec2(28, 0))) {
-      if (canSave) {
-        // Save snapshot
+      // Load on first interaction (not on draw).
+      if (!snapshotsLoaded) {
+        snapshotManager.loadFromFile(configId);
+        snapshotsLoaded = true;
+      }
+
+      const bool occupiedNow = snapshotManager.isSlotOccupied(i);
+
+      int duplicateSlotNow = -1;
+      bool nameConflictNow = false;
+      if (hasName) {
+        duplicateSlotNow = snapshotManager.findNameInOtherSlot(snapshotNameBuffer, i);
+        nameConflictNow = duplicateSlotNow >= 0;
+      }
+
+      const bool canSaveNow = hasName && hasSelection && !nameConflictNow;
+      const bool canLoadNow = occupiedNow && !hasName && !shiftHeld;
+      const bool canClearNow = occupiedNow && shiftHeld;
+
+      if (canSaveNow) {
         auto snapshot = snapshotManager.capture(snapshotNameBuffer, selectedMods);
         snapshotManager.saveToSlot(i, snapshot);
-        snapshotManager.saveToFile(synthPtr->getName());
-        snapshotNameBuffer[0] = '\0';  // Clear name
-        ofLogNotice("Gui") << "Saved snapshot to slot " << (i + 1);
-      } else if (canLoad) {
-        // Load snapshot
+        snapshotManager.saveToFile(configId);
+        snapshotNameBuffer[0] = '\0';
+        ofLogNotice("Gui") << "Saved snapshot to slot " << (i + 1) << " for config " << configId;
+      } else if (canLoadNow) {
         auto snapshot = snapshotManager.getSlot(i);
         if (snapshot) {
           auto affected = snapshotManager.apply(synthPtr, *snapshot);
           highlightedMods = affected;
           highlightStartTime = ofGetElapsedTimef();
           autoSaveModsEnabled = false;  // Disable auto-save when loading snapshots
-          ofLogNotice("Gui") << "Loaded snapshot from slot " << (i + 1);
+          ofLogNotice("Gui") << "Loaded snapshot from slot " << (i + 1) << " for config " << configId;
         }
-      } else if (canClear) {
-        // Clear slot (Shift+click)
+      } else if (canClearNow) {
         snapshotManager.clearSlot(i);
-        snapshotManager.saveToFile(synthPtr->getName());
-        ofLogNotice("Gui") << "Cleared snapshot slot " << (i + 1);
+        snapshotManager.saveToFile(configId);
+        ofLogNotice("Gui") << "Cleared snapshot slot " << (i + 1) << " for config " << configId;
+      } else if (nameConflictNow) {
+        ofLogWarning("Gui") << "Snapshot name '" << snapshotNameBuffer << "' already in slot " << (duplicateSlotNow + 1);
       }
     }
     ImGui::PopID();
-    
+
     if (disabled) ImGui::EndDisabled();
     if (occupied) ImGui::PopStyleColor(3);
-    
+
     // Tooltip (allow on disabled items too)
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-      if (nameConflict) {
+      if (!snapshotsLoaded) {
+        ImGui::SetTooltip("[Click to load snapshots for '%s']", configId.c_str());
+      } else if (nameConflict) {
         ImGui::SetTooltip("Name '%s' already in slot %d", snapshotNameBuffer, duplicateSlot + 1);
       } else if (occupied) {
         auto snapshot = snapshotManager.getSlot(i);
@@ -1969,6 +2022,15 @@ void Gui::drawDebugView() {
       if (ImGui::BeginTabItem("Audio", nullptr, audioFlags)) {
         drawAudioInspector();
         synthPtr->setDebugViewMode(Synth::DebugViewMode::AudioInspector);
+        ImGui::EndTabItem();
+      }
+
+      ImGuiTabItemFlags videoFlags = (selectRequestedTab && requestedMode == Synth::DebugViewMode::VideoInspector)
+          ? ImGuiTabItemFlags_SetSelected
+          : 0;
+      if (ImGui::BeginTabItem("Video", nullptr, videoFlags)) {
+        drawVideoInspector();
+        synthPtr->setDebugViewMode(Synth::DebugViewMode::VideoInspector);
         ImGui::EndTabItem();
       }
 
@@ -2210,7 +2272,324 @@ void Gui::drawAudioInspector() {
   }
 }
 
+void Gui::drawVideoInspector() {
+  // Find first VideoFlowSourceMod (single camera assumption).
+  std::shared_ptr<VideoFlowSourceMod> videoModPtr;
+  for (const auto& [name, modPtr] : synthPtr->getMods()) {
+    if (!modPtr) continue;
+    auto castPtr = std::dynamic_pointer_cast<VideoFlowSourceMod>(modPtr);
+    if (castPtr) {
+      videoModPtr = castPtr;
+      break;
+    }
+  }
 
+  if (!videoModPtr) {
+    ImGui::TextUnformatted("No VideoFlowSourceMod found in current config.");
+    return;
+  }
 
+  ImGui::Text("Source: %s", videoModPtr->getName().c_str());
+
+  // Core tuning params (gesture-focused)
+  {
+    float pointSamples = 0.0f;
+    if (auto p = videoModPtr->findParameterByNamePrefix("PointSamplesPerUpdate")) {
+      pointSamples = p->get().cast<float>().get();
+    }
+
+    float attemptMultiplier = 1.0f;
+    if (auto p = videoModPtr->findParameterByNamePrefix("PointSampleAttemptMultiplier")) {
+      attemptMultiplier = p->get().cast<float>().get();
+    }
+
+    float minSpeed = 0.0f;
+    if (auto p = videoModPtr->findParameterByNamePrefix("MinSpeedMagnitude")) {
+      minSpeed = p->get().cast<float>().get();
+    }
+
+    if (ImGui::CollapsingHeader("Motion sampling", ImGuiTreeNodeFlags_DefaultOpen)) {
+      if (ImGui::DragFloat("PointSamplesPerUpdate", &pointSamples, 1.0f, 0.0f, 500.0f, "%.0f")) {
+        if (auto p = videoModPtr->findParameterByNamePrefix("PointSamplesPerUpdate")) {
+          p->get().cast<float>().set(pointSamples);
+        }
+      }
+
+      if (ImGui::DragFloat("PointSampleAttemptMultiplier", &attemptMultiplier, 0.1f, 1.0f, 20.0f, "%.2f")) {
+        if (auto p = videoModPtr->findParameterByNamePrefix("PointSampleAttemptMultiplier")) {
+          p->get().cast<float>().set(attemptMultiplier);
+        }
+      }
+
+    // This is venue/camera dependent; use log scale for wide range.
+    if (ImGui::SliderFloat("MinSpeedMagnitude", &minSpeed, 1.0e-6f, 1.0f, "%.6g", ImGuiSliderFlags_Logarithmic)) {
+      if (auto p = videoModPtr->findParameterByNamePrefix("MinSpeedMagnitude")) {
+        p->get().cast<float>().set(minSpeed);
+      }
+    }
+
+    const auto stats = videoModPtr->getMotionSampleStats();
+    ImGui::Text("CPU sampling: %s", stats.cpuSamplingEnabled ? "enabled" : "disabled");
+    ImGui::Text("Accepted (frame): %d / %d (%.2f)", stats.samplesAccepted, stats.samplesAttempted, stats.acceptRate);
+
+    // Stable status/hint lines (avoid per-frame flicker).
+    const bool motionReady = videoModPtr->isMotionReady();
+    const bool pointSamplingRequested = pointSamples > 0.0f;
+    const bool samplingActive = motionReady && stats.cpuSamplingEnabled && pointSamplingRequested;
+
+    const float now = ofGetElapsedTimef();
+    static constexpr float NO_ACCEPT_DEBOUNCE_SECONDS = 0.4f;
+
+    const char* status = "OK";
+    const char* hint = "";
+    if (!motionReady) {
+      status = "Not ready";
+      hint = "Waiting for startup frames.";
+    } else if (!pointSamplingRequested) {
+      status = "Sampling off";
+      hint = "Increase PointSamplesPerUpdate to sample motion.";
+    } else if (!stats.cpuSamplingEnabled) {
+      status = "CPU sampling disabled";
+      hint = "Connect Camera.PointVelocity or Camera.Point in the config.";
+    } else if (stats.samplesAttempted > 0 && stats.samplesAccepted == 0) {
+      const bool recentlyAccepted = videoSamplingPlotState.heldValid && (now - videoSamplingPlotState.heldTimestamp) <= NO_ACCEPT_DEBOUNCE_SECONDS;
+      if (!recentlyAccepted) {
+        status = "No samples accepted";
+        hint = "Lower MinSpeedMagnitude (or increase optical flow force/power).";
+      }
+    }
+
+    ImGui::Text("Status: %s", status);
+    if (hint[0] != '\0') {
+      ImGui::TextDisabled("Hint: %s", hint);
+    } else {
+      ImGui::TextDisabled("Hint: (none)");
+    }
+
+    // Stable readout: hold the last frame where any samples were accepted.
+    if (samplingActive && stats.samplesAccepted > 0) {
+      videoSamplingPlotState.heldAcceptedSpeedMean = stats.acceptedSpeedMean;
+      videoSamplingPlotState.heldAcceptedSpeedMax = stats.acceptedSpeedMax;
+      videoSamplingPlotState.heldAcceptRate = stats.acceptRate;
+      videoSamplingPlotState.heldTimestamp = now;
+      videoSamplingPlotState.heldValid = true;
+    }
+
+    if (videoSamplingPlotState.heldValid) {
+      const float age = now - videoSamplingPlotState.heldTimestamp;
+      ImGui::Text("Last accepted: mean %.6g, max %.6g (%.2fs ago)",
+                 videoSamplingPlotState.heldAcceptedSpeedMean,
+                 videoSamplingPlotState.heldAcceptedSpeedMax,
+                 age);
+    } else {
+      ImGui::TextUnformatted("Last accepted: (none yet)");
+    }
+
+    // Update 2s stats while sampling is active.
+    if (samplingActive) {
+      videoSamplingPlotState.acceptedCount.push(static_cast<float>(stats.samplesAccepted));
+      videoSamplingPlotState.attemptedCount.push(static_cast<float>(stats.samplesAttempted));
+      videoSamplingPlotState.acceptedAny.push((stats.samplesAccepted > 0) ? 1.0f : 0.0f);
+
+      const float speedMaxToPlot = (stats.samplesAccepted > 0)
+                                     ? stats.acceptedSpeedMax
+                                     : (videoSamplingPlotState.heldValid ? videoSamplingPlotState.heldAcceptedSpeedMax : 0.0f);
+      videoSamplingPlotState.acceptedSpeedMax.push(speedMaxToPlot);
+      videoSamplingPlotState.acceptRate.push(stats.acceptRate);
+
+      const float avgAccepted = videoSamplingPlotState.acceptedCount.getMean();
+      const float avgAttempted = videoSamplingPlotState.attemptedCount.getMean();
+      const float avgRate = (avgAttempted > 0.0f) ? (avgAccepted / avgAttempted) : 0.0f;
+      ImGui::Text("Accepted (2s avg): %.1f / %.1f (%.2f)", avgAccepted, avgAttempted, avgRate);
+    }
+
+    auto plotRing = [](const char* label, Gui::RingBuffer* rb, float scaleMax) {
+      if (rb->count <= 1) return;
+      ImGui::PlotLines(label,
+                       [](void* data, int idx) -> float { return static_cast<Gui::RingBuffer*>(data)->get(idx); },
+                       rb,
+                       rb->count,
+                       0,
+                       nullptr,
+                       0.0f,
+                       scaleMax,
+                       ImVec2(260, 40));
+    };
+
+    plotRing("AcceptedSpeedMax (2s)", &videoSamplingPlotState.acceptedSpeedMax, FLT_MAX);
+    plotRing("AcceptedAny (2s)", &videoSamplingPlotState.acceptedAny, 1.0f);
+
+    const float acceptRateScaleMax = std::max(0.01f, videoSamplingPlotState.acceptRate.getMax());
+    plotRing("AcceptRate (2s, auto)", &videoSamplingPlotState.acceptRate, acceptRateScaleMax);
+    }
+  }
+
+  // Optical flow shader controls (secondary, but useful when camera/lighting changes)
+  if (ImGui::CollapsingHeader("Optical flow")) {
+
+    struct Key {
+      const char* label;
+      const char* key;
+      float speed;
+      float min;
+      float max;
+      const char* fmt;
+    };
+
+    const Key keys[] = {
+      {"offset", "offset", 0.05f, 1.0f, 10.0f, "%.3f"},
+      {"threshold", "threshold", 0.005f, 0.0f, 1.0f, "%.3f"},
+      {"force", "force", 0.05f, 0.1f, 10.0f, "%.3f"},
+      {"power", "power", 0.05f, 0.1f, 10.0f, "%.3f"},
+    };
+
+    for (const auto& k : keys) {
+      float v = 0.0f;
+      if (auto p = videoModPtr->findParameterByNamePrefix(k.key)) {
+        v = p->get().cast<float>().get();
+        if (ImGui::DragFloat(k.label, &v, k.speed, k.min, k.max, k.fmt)) {
+          p->get().cast<float>().set(v);
+        }
+      }
+    }
+  }
+
+  // Motion magnitude inspector (primary tuning mechanism)
+  if (ImGui::CollapsingHeader("Motion magnitude (derived scalars)", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+    for (const auto& [name, modPtr] : synthPtr->getMods()) {
+      auto magPtr = std::dynamic_pointer_cast<VectorMagnitudeMod>(modPtr);
+      if (!magPtr) continue;
+      if (name.find("MotionMagnitude") == std::string::npos) continue;
+
+      ImGui::PushID(name.c_str());
+      if (!ImGui::CollapsingHeader(name.c_str())) {
+        ImGui::PopID();
+        continue;
+      }
+
+      const float motionWidth = std::max(1.0f, videoModPtr->getMotionFbo().getWidth());
+      const float rawMax = magPtr->getLastRawMax();
+      const int sampleCount = magPtr->getLastSampleCount();
+      const float outMax = magPtr->getLastMaxOut();
+
+      const float flowSpeedMax = rawMax * motionWidth;
+
+      auto& plotState = motionMagnitudePlotStates[name];
+      const float now = ofGetElapsedTimef();
+
+      const bool hasSamplesThisFrame = sampleCount > 0;
+
+      // Stable readout: hold last non-zero sample frame.
+      if (hasSamplesThisFrame) {
+        plotState.heldFlowSpeedMax = flowSpeedMax;
+        plotState.heldOutMax = outMax;
+        plotState.heldSampleCount = sampleCount;
+        plotState.heldTimestamp = now;
+        plotState.heldValid = true;
+      }
+
+      const float flowSpeedToPlot = hasSamplesThisFrame
+                                     ? flowSpeedMax
+                                     : (plotState.heldValid ? plotState.heldFlowSpeedMax : 0.0f);
+      const float outMaxToPlot = hasSamplesThisFrame
+                                   ? outMax
+                                   : (plotState.heldValid ? plotState.heldOutMax : 0.0f);
+
+      plotState.flowSpeedMax.push(flowSpeedToPlot);
+      plotState.outMax.push(outMaxToPlot);
+
+      const float peakFlowSpeedMax2s = plotState.flowSpeedMax.getMax();
+      const float peakRawMax2s = peakFlowSpeedMax2s / motionWidth;
+      const float peakOutMax2s = plotState.outMax.getMax();
+
+      if (plotState.heldValid) {
+        const float age = now - plotState.heldTimestamp;
+        const float heldRawMax = plotState.heldFlowSpeedMax / motionWidth;
+        ImGui::Text("last: raw %.3e (flow %.3f), out %.3f, n=%d (%.2fs ago)",
+                   heldRawMax,
+                   plotState.heldFlowSpeedMax,
+                   plotState.heldOutMax,
+                   plotState.heldSampleCount,
+                   age);
+      } else {
+        ImGui::TextUnformatted("last: (none yet)");
+      }
+
+      ImGui::Text("peak 2s: raw %.3e (flow %.3f), out %.3f", peakRawMax2s, peakFlowSpeedMax2s, peakOutMax2s);
+
+      if (plotState.flowSpeedMax.count > 1) {
+        ImGui::PlotLines("FlowSpeedMax (2s)",
+                         [](void* data, int idx) -> float { return static_cast<RingBuffer*>(data)->get(idx); },
+                         &plotState.flowSpeedMax,
+                         plotState.flowSpeedMax.count,
+                         0,
+                         nullptr,
+                         0.0f,
+                         FLT_MAX,
+                         ImVec2(260, 40));
+      }
+
+      if (plotState.outMax.count > 1) {
+        ImGui::PlotLines("OutMax (2s)",
+                         [](void* data, int idx) -> float { return static_cast<RingBuffer*>(data)->get(idx); },
+                         &plotState.outMax,
+                         plotState.outMax.count,
+                         0,
+                         nullptr,
+                         0.0f,
+                         1.0f,
+                         ImVec2(260, 40));
+      }
+
+      struct MagKey {
+        const char* label;
+        const char* key;
+        float speed;
+      };
+
+      const MagKey magKeys[] = {
+        {"Min", "Min", 0.0001f},
+        {"Max", "Max", 0.0001f},
+        {"MeanSmoothing", "MeanSmoothing", 0.01f},
+        {"MaxSmoothing", "MaxSmoothing", 0.01f},
+        {"DecayWhenNoInput", "DecayWhenNoInput", 0.01f},
+      };
+
+      for (const auto& k : magKeys) {
+        float v = 0.0f;
+        if (auto p = magPtr->findParameterByNamePrefix(k.key)) {
+          v = p->get().cast<float>().get();
+          if (ImGui::DragFloat(k.label, &v, k.speed, 0.0f, 0.0f, "%.6g")) {
+            p->get().cast<float>().set(v);
+          }
+        }
+      }
+
+      ImGui::PopID();
+    }
+  }
+
+  // Flow/video textures (secondary; used for driving fields and sanity-checking)
+  if (ImGui::CollapsingHeader("Textures")) {
+    if (!videoModPtr->isMotionReady()) {
+      ImGui::TextUnformatted("MotionFromVideo not ready.");
+    } else {
+      auto drawFbo = [](const ofFbo& fbo, const ImVec2& size) {
+        const auto& texData = fbo.getTexture().getTextureData();
+        ImTextureID texId = (ImTextureID)(uintptr_t)texData.textureID;
+        ImVec2 uv0(0, texData.bFlipTexture ? 1 : 0);
+        ImVec2 uv1(1, texData.bFlipTexture ? 0 : 1);
+        ImGui::Image(texId, size, uv0, uv1);
+      };
+
+      ImVec2 avail = ImGui::GetContentRegionAvail();
+      const float w = std::min(avail.x, 420.0f);
+      const float h = w * 9.0f / 16.0f;
+      drawFbo(videoModPtr->getVideoFbo(), ImVec2(w, h));
+      drawFbo(videoModPtr->getMotionFbo(), ImVec2(w, h));
+    }
+  }
+}
 
 } // namespace ofxMarkSynth

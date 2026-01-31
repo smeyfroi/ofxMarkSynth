@@ -51,7 +51,7 @@ Event detection (`Onset1`, `TimbreChange`, `PitchChange`) uses a mix of raw + sm
 - Avoid proliferating windows: the tuning UI lives inside the existing ImGui **Debug View**.
 - Keep DearImGui dependencies **out of** `ofxAudioAnalysisClient` and `ofxAudioData`.
 - Keep wrapped normalisation (avoid hotspots at extremes).
-- Initially keep the tool simple; add “30s capture” calibration later.
+- Keep Phase 1 focused on live stats (see `docs/future-work.md` for capture-based tuning).
 
 ---
 
@@ -98,7 +98,7 @@ For event detectors (Onset/Timbre/PitchChange), show:
 - threshold value
 - cooldown remaining
 
-(Events/minute and capture-based tuning are deferred to Phase 2.)
+(Events/minute and capture-based tuning are tracked in `docs/future-work.md`.)
 
 ---
 
@@ -124,18 +124,12 @@ This keeps `ofxAudioAnalysisClient` and `ofxAudioData` free of any DearImGui dep
 
 ---
 
-## Phase 2 (Future): 30s Capture + Suggestions
+## Future work
 
-Add a “Capture” button (e.g. 30 seconds) that computes percentiles per scalar (`p05/p50/p95`) to propose effective tuning.
-
-Potential outputs:
-
-- suggested effective min/max per scalar (real units)
-- suggested multiplier deltas relative to the currently-loaded config
+See `docs/future-work.md` (Audio Tuning Inspector).
 
 ---
 
-## Related Work (Next after Inspector)
+## Amended plan: unify venue defaults + presets (audio + video)
 
-- Add Synth-level “venue tuning” parameters (persistent across config switches) that apply as multipliers/offsets on top of per-config tuning ranges.
-- Rebind MIDI encoders (Launch Control XL 3) to these Synth-level levers for fast venue calibration.
+See `docs/venue-and-mod-presets-plan.md`.

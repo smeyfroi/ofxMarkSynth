@@ -11,6 +11,9 @@
 #include "core/IntentMapper.hpp"
 #include "util/TimeStringUtil.h"
 
+#include <algorithm>
+#include <cmath>
+
 
 
 namespace ofxMarkSynth {
@@ -78,15 +81,53 @@ void VideoFlowSourceMod::initRecorder() {
 }
 #endif
 
+namespace {
+
+std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(ofParameterGroup& group,
+                                                                                   const std::string& namePrefix) {
+  for (const auto& paramPtr : group) {
+    if (paramPtr->getName().rfind(namePrefix, 0) == 0) {
+      return std::ref(*paramPtr);
+    }
+    if (paramPtr->type() == typeid(ofParameterGroup).name()) {
+      if (auto found = findParameterByNamePrefix(paramPtr->castGroup(), namePrefix)) {
+        return found;
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+void trySetParameterFromString(ofParameterGroup& group, const std::string& namePrefix, const std::string& v) {
+  if (auto found = findParameterByNamePrefix(group, namePrefix)) {
+    found->get().fromString(v);
+  }
+}
+
+} // namespace
+
 void VideoFlowSourceMod::initParameters() {
   parameters.add(pointSamplesPerUpdateParameter);
+  parameters.add(pointSampleAttemptMultiplierParameter);
   parameters.add(agencyFactorParameter);
-  addFlattenedParameterGroup(parameters, motionFromVideo.getParameterGroup());
+
+  // Default baseline (still overridden by presets/config/overrides when present).
+  auto& motionParams = motionFromVideo.getParameterGroup();
+  trySetParameterFromString(motionParams, "MinSpeedMagnitude", "0.40");
+
+  addFlattenedParameterGroup(parameters, motionParams);
 }
 
 void VideoFlowSourceMod::update() {
   syncControllerAgencies();
   pointSamplesPerUpdateController.update();
+
+  const bool hasPointSinks = connections.contains(SOURCE_POINT_VELOCITY) || connections.contains(SOURCE_POINT);
+  const int pointSamplesPerUpdate = static_cast<int>(pointSamplesPerUpdateController.value);
+  const float attemptMultiplier = std::max(1.0f, pointSampleAttemptMultiplierParameter.get());
+  const int sampleAttemptsPerUpdate = std::min(1000, static_cast<int>(std::round(pointSamplesPerUpdate * attemptMultiplier)));
+  motionFromVideo.setCpuSamplingEnabled(hasPointSinks && sampleAttemptsPerUpdate > 0);
+
   motionFromVideo.update();
 
   if (motionFromVideo.isReady()) {
@@ -94,14 +135,34 @@ void VideoFlowSourceMod::update() {
   }
 
   // TODO: make this a separate process Mod that can sample a texture
-  if (motionFromVideo.isReady()) {
-    int pointSamplesPerUpdate = static_cast<int>(pointSamplesPerUpdateController.value);
-    for (int i = 0; i < pointSamplesPerUpdate; i++) {
+  motionSampleStats = {};
+  motionSampleStats.cpuSamplingEnabled = motionFromVideo.isCpuSamplingEnabled();
+
+  if (motionFromVideo.isReady() && motionFromVideo.isCpuSamplingEnabled()) {
+    motionSampleStats.samplesAttempted = sampleAttemptsPerUpdate;
+
+    int acceptedCount = 0;
+    float speedSum = 0.0f;
+    float speedMax = 0.0f;
+
+    for (int i = 0; i < sampleAttemptsPerUpdate; i++) {
       if (auto vec = motionFromVideo.trySampleMotion()) {
-        emit(SOURCE_POINT_VELOCITY, vec.value());
-        emit(SOURCE_POINT, glm::vec2 { vec.value() });
+        const auto v = vec.value();
+        emit(SOURCE_POINT_VELOCITY, v);
+        emit(SOURCE_POINT, glm::vec2 { v });
+
+        // Convert back to flow-texture speed units (so it matches MinSpeedMagnitude).
+        const float speed = std::sqrt(v.z * v.z + v.w * v.w) * motionFromVideo.getSize().x;
+        speedSum += speed;
+        speedMax = std::max(speedMax, speed);
+        acceptedCount++;
       }
     }
+
+    motionSampleStats.samplesAccepted = acceptedCount;
+    motionSampleStats.acceptRate = (sampleAttemptsPerUpdate > 0) ? (static_cast<float>(acceptedCount) / sampleAttemptsPerUpdate) : 0.0f;
+    motionSampleStats.acceptedSpeedMean = (acceptedCount > 0) ? (speedSum / static_cast<float>(acceptedCount)) : 0.0f;
+    motionSampleStats.acceptedSpeedMax = speedMax;
   }
 }
 
@@ -115,8 +176,6 @@ void VideoFlowSourceMod::applyIntent(const Intent& intent, float strength) {
 }
 
 void VideoFlowSourceMod::draw() {
-  motionFromVideo.draw();
-  
 #ifdef TARGET_MAC
   if (saveRecording) {
     if (!recorder.isRecording()) initRecorder();

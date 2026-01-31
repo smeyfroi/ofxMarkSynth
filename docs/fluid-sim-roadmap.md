@@ -1,5 +1,7 @@
 # Fluid Simulation Roadmap (ofxRenderer + ofxMarkSynth)
 
+Note: deferred/backlog items live in `docs/future-work.md`.
+
 This document started as a staged plan for improving the fluid simulation used by `ofxMarkSynth`’s `FluidMod` (which wraps `ofxRenderer`’s `FluidSimulation`).
 
 It now also serves as a running record of what has been implemented, plus a short list of explicitly deferred items ("for later").

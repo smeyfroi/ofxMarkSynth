@@ -22,6 +22,13 @@ public:
 
   void update() override;
 
+  // Debug/inspection helpers (no side effects)
+  float getLastRawMean() const { return lastRawMean; }
+  float getLastRawMax() const { return lastRawMax; }
+  int getLastSampleCount() const { return lastSampleCount; }
+  float getLastMeanOut() const { return lastMeanOut; }
+  float getLastMaxOut() const { return lastMaxOut; }
+
   void receive(int sinkId, const glm::vec2& v) override;
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const glm::vec4& v) override;
@@ -57,6 +64,12 @@ private:
 
   float meanState { 0.0f };
   float maxState { 0.0f };
+
+  float lastRawMean { 0.0f };
+  float lastRawMax { 0.0f };
+  int lastSampleCount { 0 };
+  float lastMeanOut { 0.0f };
+  float lastMaxOut { 0.0f };
 
   ofParameter<float> minParameter { "Min", 0.0f, 0.0f, 1.0f };
   ofParameter<float> maxParameter { "Max", 0.02f, 0.00001f, 1.0f };

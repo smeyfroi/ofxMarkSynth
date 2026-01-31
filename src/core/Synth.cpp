@@ -14,6 +14,8 @@
 #include "core/Gui.hpp"
 #include "config/SynthConfigSerializer.hpp"
 #include "config/Parameter.hpp"
+#include "sourceMods/AudioDataSourceMod.hpp"
+#include "sourceMods/VideoFlowSourceMod.hpp"
 #include "util/TimeStringUtil.h"
 #include "ofxImGui.h"
 #include "ofxAudioAnalysisClient.h"
@@ -74,7 +76,7 @@ constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawing";
 constexpr std::string AUTO_SNAPSHOTS_FOLDER_NAME = "drawing-auto";
 constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recording";
 // Also: camera-recording, mic-recording
-// Also: ModSnapshotManager uses "mod-snapshots" and NodeEditorLayoutManager uses "node-layouts"
+// Also: ModSnapshotManager uses "mod-params/snapshots" and NodeEditorLayoutManager uses "node-layouts"
 
 
 static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnalysisClient(const ResourceManager& resources) {
@@ -733,6 +735,18 @@ bool Synth::isRecording() const {
 #endif
 }
 
+std::string Synth::getCurrentConfigId() const {
+  if (currentConfigPath.empty()) {
+    return {};
+  }
+
+  const std::filesystem::path p = currentConfigPath;
+  if (!p.has_stem()) {
+    return {};
+  }
+  return p.stem().string();
+}
+
 void Synth::toggleRecording() {
 #ifdef TARGET_MAC
   if (!videoRecorderPtr) return;
@@ -964,15 +978,15 @@ void Synth::applyIntentToAllMods() {
 
 bool Synth::loadFromConfig(const std::string& filepath) {
   ofLogNotice("Synth") << "Loading config from: " << filepath;
-  
+
   static bool factoryInitialized = false;
   if (!factoryInitialized) {
     ModFactory::initializeBuiltinTypes();
     factoryInitialized = true;
   }
-  
+
   bool success = SynthConfigSerializer::load(std::static_pointer_cast<Synth>(shared_from_this()), filepath, resources);
-  
+
   if (success) {
     currentConfigPath = filepath;
     ofLogNotice("Synth") << "Successfully loaded config from: " << filepath;
@@ -981,12 +995,16 @@ bool Synth::loadFromConfig(const std::string& filepath) {
     if (configRootPathSet) {
       memoryBankController->loadGlobalMemories(configRootPath);
     }
+
   } else {
     ofLogError("Synth") << "Failed to load config from: " << filepath;
   }
-  
+
   return success;
 }
+
+
+
 
 bool Synth::saveModsToCurrentConfig() {
   if (currentConfigPath.empty()) {
@@ -1068,7 +1086,7 @@ void Synth::updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& m
 
   nlohmann::ordered_json& configJson = modJson["config"];
 
-  // 1) Update any keys that already exist in the file
+  // 1) Update any keys that already exist in the file.
   for (auto cfgIt = configJson.begin(); cfgIt != configJson.end(); ++cfgIt) {
     const std::string key = cfgIt.key();
     if (!key.empty() && key[0] == '_') continue;
@@ -1079,7 +1097,7 @@ void Synth::updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& m
     }
   }
 
-  // 2) Add missing keys only when non-default
+  // 2) Add missing keys only when non-default.
   for (const auto& [key, value] : currentValues) {
     if (!key.empty() && key[0] == '_') continue;
     if (configJson.contains(key)) continue;

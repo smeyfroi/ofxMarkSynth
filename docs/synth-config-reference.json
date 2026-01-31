@@ -157,12 +157,14 @@
       "_comment_sourceVideoStartPosition": "sourceVideoStartPosition: Optional start timestamp in MM:SS format (e.g. '1:30' for 1 minute 30 seconds)",
       "_params_from": "ofxMotionFromVideo",
       "config": {
-        "PointSamplesPerUpdate": "100",
+        "PointSamplesPerUpdate": "140",
+        "MinSpeedMagnitude": "0.40",
         "AgencyFactor": "1",
-        "xFlowSampleThresholdNeg": "-0.05",
-        "xFlowSampleThresholdPos": "0.05",
-        "yFlowSampleThresholdNeg": "-0.05",
-        "yFlowSampleThresholdPos": "0.05"
+        "offset": "3.0",
+        "threshold": "0.03",
+        "force": "4.0",
+        "power": "1.0",
+        "_comment": "MinSpeedMagnitude gates motion sampling; optical flow params are secondary tuning knobs"
       }
     },
 
@@ -273,13 +275,15 @@
 
     "ExampleVectorMagnitude": {
       "type": "VectorMagnitude",
+      "preset": "MotionMagnitudeAgency",
       "config": {
         "Components": "zw",
         "Min": "0",
         "Max": "0.02",
         "MeanSmoothing": "0.9",
         "MaxSmoothing": "0.85",
-        "DecayWhenNoInput": "0.95"
+        "DecayWhenNoInput": "0.95",
+        "_comment_preset": "Use mod-level 'preset' to pull shared defaults from performanceConfigRootPath/mod-params/presets.json:[type][_default] then [type][presetName] (see docs/venue-and-mod-presets-plan.md)"
       }
     },
 

@@ -151,6 +151,10 @@ public:
   virtual bool keyPressed(int key) { return false; };
   ofParameterGroup& getParameterGroup();
 
+  // Applies a preset parameter map before capturing defaults.
+  // This allows factoring repeated parameter blocks out of synth configs.
+  void setPresetConfig(ModConfig presetConfig_);
+
   // Flatten current parameters (including nested groups) to strings.
   ParamValueMap getCurrentParameterValues();
   // Flattened parameter defaults captured right after initParameters().
@@ -195,6 +199,7 @@ protected:
   std::weak_ptr<Synth> synthPtr; // parent Synth (may be expired)
 
   ModConfig config;
+  ModConfig presetConfig;
   ofParameterGroup parameters;
   virtual void initParameters() = 0;
 

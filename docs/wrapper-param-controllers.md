@@ -1,5 +1,7 @@
 # Wrapper Mod ParamControllers (External Implementations)
 
+Note: deferred/backlog items live in `docs/future-work.md`.
+
 This document describes the agreed pattern and a complete implementation plan for Mods that **wrap external implementations** (e.g. `FluidMod` wrapping `ofxRenderer::FluidSimulation`).
 
 ## Problem statement

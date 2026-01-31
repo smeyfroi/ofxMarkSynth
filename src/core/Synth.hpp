@@ -76,7 +76,8 @@ public:
 
   enum class DebugViewMode {
     Fbo,
-    AudioInspector
+    AudioInspector,
+    VideoInspector,
   };
 
   DebugViewMode getDebugViewMode() const { return debugViewMode; }
@@ -119,6 +120,7 @@ public:
   void unload();
   void switchToConfig(const std::string& filepath, bool useCrossfade = true);
   void loadFirstPerformanceConfig();
+
   void setIntentPresets(const std::vector<IntentPtr>& presets);
   void setIntentStrength(float value);
   void setIntentActivation(size_t index, float value);
@@ -163,6 +165,7 @@ public:
   void toggleRecording();
   bool isRecording() const;
   const std::string& getCurrentConfigPath() const { return currentConfigPath; }
+  std::string getCurrentConfigId() const;
   void saveImage();
   void requestSaveAllMemories();
   int getActiveSaveCount() const;

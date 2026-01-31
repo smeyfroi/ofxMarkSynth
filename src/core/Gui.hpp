@@ -13,7 +13,10 @@
 #include "nodeEditor/NodeEditorModel.hpp"
 #include "config/ModSnapshotManager.hpp"
 #include "controller/AudioInspectorModel.hpp"
+#include <algorithm>
+#include <array>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -73,7 +76,77 @@ private:
   void drawNavigationButton(const char* id, int direction, bool canNavigate, float buttonSize);
   void drawDebugView();
   void drawAudioInspector();
+  void drawVideoInspector();
   std::vector<ModPtr> getSelectedMods();
+
+  struct RingBuffer {
+    static constexpr int MAX_SAMPLES = 120; // ~2s @ 60fps
+
+    std::array<float, MAX_SAMPLES> values {};
+    int head { 0 };
+    int count { 0 };
+
+    void clear() {
+      head = 0;
+      count = 0;
+    }
+
+    void push(float v) {
+      values[head] = v;
+      head = (head + 1) % MAX_SAMPLES;
+      count = std::min(count + 1, MAX_SAMPLES);
+    }
+
+    float get(int i) const {
+      if (count <= 0) return 0.0f;
+      i = std::max(0, std::min(i, count - 1));
+      const int start = (head - count + MAX_SAMPLES) % MAX_SAMPLES;
+      const int idx = (start + i) % MAX_SAMPLES;
+      return values[idx];
+    }
+
+    float getMax() const {
+      float m = 0.0f;
+      for (int i = 0; i < count; ++i) {
+        m = std::max(m, get(i));
+      }
+      return m;
+    }
+
+    float getMean() const {
+      if (count <= 0) return 0.0f;
+      float sum = 0.0f;
+      for (int i = 0; i < count; ++i) {
+        sum += get(i);
+      }
+      return sum / static_cast<float>(count);
+    }
+  };
+
+  struct MotionMagnitudePlotState {
+    RingBuffer flowSpeedMax;
+    RingBuffer outMax;
+
+    float heldFlowSpeedMax { 0.0f };
+    float heldOutMax { 0.0f };
+    int heldSampleCount { 0 };
+    float heldTimestamp { -1.0f };
+    bool heldValid { false };
+  };
+
+  struct VideoSamplingPlotState {
+    RingBuffer acceptedCount;
+    RingBuffer attemptedCount;
+    RingBuffer acceptedAny;
+    RingBuffer acceptedSpeedMax;
+    RingBuffer acceptRate;
+
+    float heldAcceptedSpeedMean { 0.0f };
+    float heldAcceptedSpeedMax { 0.0f };
+    float heldAcceptRate { 0.0f };
+    float heldTimestamp { -1.0f };
+    bool heldValid { false };
+  };
 
   std::shared_ptr<Synth> synthPtr;
   ofxImGui::Gui imgui;
@@ -100,10 +173,14 @@ private:
 
   ModSnapshotManager snapshotManager;
   bool snapshotsLoaded { false };
+  std::string snapshotsConfigId;
   char snapshotNameBuffer[64] = "";
   std::unordered_set<std::string> highlightedMods;  // Mods to highlight after load
   float highlightStartTime { 0.0f };
   static constexpr float HIGHLIGHT_DURATION { 1.5f };  // seconds
+
+  VideoSamplingPlotState videoSamplingPlotState;
+  std::unordered_map<std::string, MotionMagnitudePlotState> motionMagnitudePlotStates;
 
   // Help window
   bool showHelpWindow { false };

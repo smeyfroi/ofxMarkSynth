@@ -28,7 +28,7 @@ class Synth;
 class ModSnapshotManager {
 public:
     static constexpr int NUM_SLOTS = 8;
-    
+
     // Parameter values stored as strings (using ofParameter's toString/fromString)
     using ParamMap = std::unordered_map<std::string, std::string>;
     
@@ -60,14 +60,14 @@ public:
     // Returns slot index if name exists in a different slot, -1 otherwise
     int findNameInOtherSlot(const std::string& name, int excludeSlot) const;
     
-    bool saveToFile(const std::string& synthName);
-    bool loadFromFile(const std::string& synthName);
-    static std::string getSnapshotFilePath(const std::string& synthName);
+    bool saveToFile(const std::string& configId);
+    bool loadFromFile(const std::string& configId);
+    static std::string getSnapshotFilePath(const std::string& configId);
     
 private:
     std::array<std::optional<Snapshot>, NUM_SLOTS> slots;
     std::optional<Snapshot> undoSnapshot;  // Single level of undo
-    
+
     nlohmann::json toJson() const;
     void fromJson(const nlohmann::json& j);
     static nlohmann::json snapshotToJson(const Snapshot& snapshot);

@@ -99,10 +99,24 @@ static ParamValueMap serializeParameterGroup(const ofParameterGroup& group) {
   return out;
 }
 
+void Mod::setPresetConfig(ModConfig presetConfig_) {
+  presetConfig = std::move(presetConfig_);
+}
+
 ofParameterGroup& Mod::getParameterGroup() {
   if (parameters.getName().empty()) {
     parameters.setName(name);
     initParameters();
+
+    // Apply preset defaults before capturing defaults.
+    for (const auto& [k, v] : presetConfig) {
+      if (!k.empty() && k[0] == '_') {
+        continue;
+      }
+      if (!trySetParameterFromString(parameters, k, v)) {
+        ofLogError("Mod") << "Bad preset parameter: " << k << " not one of: " << parameters.toString();
+      }
+    }
 
     if (!defaultParameterValuesCaptured) {
       defaultParameterValues = serializeParameterGroup(parameters);
