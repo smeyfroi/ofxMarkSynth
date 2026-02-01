@@ -21,6 +21,14 @@ Full config contents are described in `docs/synth-config-reference.json`.
 
 In addition to the main synth config schema (mods, layers, etc), there are a few top-level metadata keys used by the Performance UI.
 
+## Node Editor cues
+
+When patching in the node editor:
+
+- **Node titles**: `ModName [PresetName]` is shown when a Mod has an explicit `"preset"` (excluding `_default`).
+- **Dimmed parameter labels**: value matches captured defaults (after applying `venue-presets.json` + `mod-params/presets.json`).
+- **Normal parameter labels**: value differs from defaults (typically from per-config overrides, snapshots, or live control).
+
 ### `description`
 
 Optional string shown in the Performance grid tooltip.

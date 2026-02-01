@@ -52,7 +52,7 @@ private:
   // Multiplier for SwirlVelocity.
   // Effective swirl = clamp(SwirlVelocity * SwirlStrength, 0..1).
   // Note: max range intentionally capped to avoid obvious whirlpools.
-  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 0.15f, 0.0f, 0.2f };
+  ofParameter<float> swirlStrengthParameter { "SwirlStrength", 0.05f, 0.0f, 0.2f };
   ParamController<float> swirlStrengthController { swirlStrengthParameter };
 
   // Additional normalized swirl term that can be set from config and/or driven by the SwirlVelocity sink.
