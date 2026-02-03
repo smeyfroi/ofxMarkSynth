@@ -60,7 +60,7 @@ private:
   ColorRegister keyColourRegister;
   bool keyColourRegisterInitialized { false };
 
-std::unique_ptr<ParamController<float>> timeStepControllerPtr;
+  std::unique_ptr<ParamController<float>> timeStepControllerPtr;
   std::unique_ptr<ParamController<float>> velocityDampingControllerPtr;
   std::unique_ptr<ParamController<float>> attractionStrengthControllerPtr;
   std::unique_ptr<ParamController<float>> attractionRadiusControllerPtr;
