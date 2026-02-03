@@ -30,6 +30,7 @@
 #include "processMods/AgencyControllerMod.hpp"
 #include "processMods/ClusterMod.hpp"
 #include "processMods/MultiplyAddMod.hpp"
+#include "processMods/FadeAlphaMapMod.hpp"
 #include "processMods/PathMod.hpp"
 #include "processMods/PixelSnapshotMod.hpp"
 #include "processMods/SomPaletteMod.hpp"

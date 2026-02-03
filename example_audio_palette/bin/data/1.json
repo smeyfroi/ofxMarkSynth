@@ -53,7 +53,7 @@
     "Fade": {
       "type": "Fade",
       "config": {
-        "Alpha": "0.0001"
+        "HalfLifeSec": "231"
       },
       "layers": {
         "default": ["foreground"]

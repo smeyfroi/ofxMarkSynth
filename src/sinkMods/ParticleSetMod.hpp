@@ -37,6 +37,7 @@ public:
   static constexpr int SINK_POINT_VELOCITY = 2;
   static constexpr int SINK_SPIN = 10;
   static constexpr int SINK_COLOR = 20;
+  static constexpr int SINK_ALPHA_MULTIPLIER = 30;
 
 protected:
   void initParameters() override;
@@ -48,6 +49,10 @@ private:
   ParamController<float> spinController { spinParameter };
   ofParameter<ofFloatColor> colorParameter { "Colour", ofFloatColor(1.0, 1.0, 1.0, 1.0), ofFloatColor(0.0, 0.0, 0.0, 0.0), ofFloatColor(1.0, 1.0, 1.0, 1.0) };
   ParamController<ofFloatColor> colorController { colorParameter };
+
+  // Extra alpha scaling for new particles. Useful when layer persistence changes.
+  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 1.0f, 0.0f, 4.0f };
+  ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
 
     // Key colour register: pipe-separated vec4 list.
   // Example: "0,0,0,0.3 | 0.5,0.5,0.5,0.3 | 1,1,1,0.3"

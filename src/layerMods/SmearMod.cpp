@@ -8,6 +8,10 @@
 #include "SmearMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
+
+#include "ofAppRunner.h"
+
+#include <algorithm>
 #include <cmath>
 
 
@@ -24,7 +28,8 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   sinkNameIdMap = {
     { translateByParameter.getName(), SINK_VEC2 },
     { mixNewParameter.getName(), SINK_FLOAT },
-    { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
+    { halfLifeSecParameter.getName(), SINK_HALF_LIFE_SEC },
+    { "AlphaMultiplier", SINK_ALPHA_MULTIPLIER_LEGACY },
     { field1MultiplierParameter.getName(), SINK_FIELD1_MULTIPLIER },
     { field2MultiplierParameter.getName(), SINK_FIELD2_MULTIPLIER },
     { "Field1Texture", SINK_FIELD_1_TEX },
@@ -33,7 +38,7 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   };
 
   registerControllerForSource(mixNewParameter, mixNewController);
-  registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
+  registerControllerForSource(halfLifeSecParameter, halfLifeSecController);
   registerControllerForSource(field1MultiplierParameter, field1MultiplierController);
   registerControllerForSource(field2MultiplierParameter, field2MultiplierController);
   registerControllerForSource(gridSizeParameter, gridSizeController);
@@ -42,11 +47,25 @@ SmearMod::SmearMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
   registerControllerForSource(gridLevelsParameter, gridLevelsController);
   registerControllerForSource(ghostBlendParameter, ghostBlendController);
   registerControllerForSource(foldPeriodParameter, foldPeriodController);
+
+  // Legacy compatibility: interpret config.AlphaMultiplier as per-frame multiplier at 30fps.
+  if (!this->config.contains(halfLifeSecParameter.getName()) && this->config.contains("AlphaMultiplier")) {
+    try {
+      float mult = std::stof(this->config.at("AlphaMultiplier"));
+      mult = std::clamp(mult, 1e-6f, 1.0f - 1e-6f);
+      float halfLifeSec = (std::log(0.5f) / std::log(mult)) / 30.0f;
+      if (std::isfinite(halfLifeSec)) {
+        this->config[halfLifeSecParameter.getName()] = std::to_string(halfLifeSec);
+      }
+    } catch (...) {
+    }
+    this->config.erase("AlphaMultiplier");
+  }
 }
 
 void SmearMod::initParameters() {
   parameters.add(mixNewParameter);
-  parameters.add(alphaMultiplierParameter);
+  parameters.add(halfLifeSecParameter);
   parameters.add(translateByParameter);
   parameters.add(field1PreScaleExpParameter);
   parameters.add(field1MultiplierParameter);
@@ -72,7 +91,7 @@ float SmearMod::getAgency() const {
 void SmearMod::update() {
   syncControllerAgencies();
   mixNewController.update();
-  alphaMultiplierController.update();
+  halfLifeSecController.update();
   field1MultiplierController.update();
   field2MultiplierController.update();
   gridSizeController.update();
@@ -88,7 +107,11 @@ void SmearMod::update() {
 
   glm::vec2 translation { translateByParameter->x, translateByParameter->y };
   float mixNew = mixNewController.value;
-  float alphaMultiplier = alphaMultiplierController.value;
+
+  float dt = std::clamp(static_cast<float>(ofGetLastFrameTime()), 0.0f, 0.1f);
+  float halfLifeSec = std::max(1e-6f, halfLifeSecController.value);
+  float alphaMultiplier = std::pow(0.5f, dt / halfLifeSec);
+  alphaMultiplier = std::clamp(alphaMultiplier, 0.0f, 1.0f);
   SmearShader::GridParameters gridParameters = {
     .gridSize = gridSizeController.value,
     .strategy = strategyParameter.get(),
@@ -142,9 +165,16 @@ void SmearMod::receive(int sinkId, const float& value) {
     case SINK_FLOAT:
       mixNewController.updateAuto(value, getAgency());
       break;
-    case SINK_ALPHA_MULTIPLIER:
-      alphaMultiplierController.updateAuto(value, getAgency());
+    case SINK_HALF_LIFE_SEC:
+      halfLifeSecController.updateAuto(value, getAgency());
       break;
+    case SINK_ALPHA_MULTIPLIER_LEGACY: {
+      float mult = std::clamp(value, 1e-6f, 1.0f - 1e-6f);
+      float halfLifeSec = (std::log(0.5f) / std::log(mult)) / 30.0f;
+      halfLifeSec = std::clamp(halfLifeSec, halfLifeSecParameter.getMin(), halfLifeSecParameter.getMax());
+      halfLifeSecController.updateAuto(halfLifeSec, getAgency());
+      break;
+    }
     case SINK_FIELD1_MULTIPLIER:
       field1MultiplierController.updateAuto(value, getAgency());
       break;
@@ -193,7 +223,7 @@ void SmearMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
   im.E().exp(mixNewController, strength);
-  im.D().exp(alphaMultiplierController, strength);
+  im.D().inv().exp(halfLifeSecController, strength);
   im.E().exp(field1MultiplierController, strength, 2.0f);
   im.C().exp(field2MultiplierController, strength, 3.0f);
   im.C().exp(jumpAmountController, strength, 2.0f);

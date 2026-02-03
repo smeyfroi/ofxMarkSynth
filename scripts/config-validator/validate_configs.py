@@ -1083,7 +1083,7 @@ def validate_policy_improvisation1(
                 f"ParticleSet '{mod_name}' missing config keys: {', '.join(missing)} (must override ofxParticleSet defaults)"
             )
 
-    # Fade alpha mapping rule: never wire raw Audio.RmsScalar directly into Fade.Alpha.
+    # Fade mapping rule: never wire raw Audio.RmsScalar directly into Fade.HalfLifeSec.
     fade_mod_names = {name for name, t in mod_types.items() if t == "Fade"}
     for c in conns:
         if not isinstance(c, str):
@@ -1096,10 +1096,10 @@ def validate_policy_improvisation1(
             src_mod == "Audio"
             and src_name == "RmsScalar"
             and dst_mod in fade_mod_names
-            and dst_name == "Alpha"
+            and dst_name == "HalfLifeSec"
         ):
             errors.append(
-                f"Direct 'Audio.RmsScalar -> {dst_mod}.Alpha' is forbidden; map via MultiplyAdd to a safe fade range"
+                f"Direct 'Audio.RmsScalar -> {dst_mod}.HalfLifeSec' is forbidden; map via FadeAlphaMap to a safe half-life range"
             )
 
     # Description tag policy: include [audPts: ...] tag for quick reference.

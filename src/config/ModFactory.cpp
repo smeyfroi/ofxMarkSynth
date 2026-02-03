@@ -141,6 +141,10 @@ void ModFactory::registerProcessMods() {
   registerType("MultiplyAdd", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<MultiplyAddMod>(s, n, std::move(c));
   });
+
+  registerType("FadeAlphaMap", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
+    return std::make_shared<FadeAlphaMapMod>(s, n, std::move(c));
+  });
   
   registerType("VectorMagnitude", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
     return std::make_shared<VectorMagnitudeMod>(s, n, std::move(c));

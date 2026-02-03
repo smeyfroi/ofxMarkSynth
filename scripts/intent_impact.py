@@ -534,9 +534,10 @@ def target_norm_for_proxy(mod_type: str, proxy: ProxyParam, intent: Intent) -> f
             return exp_norm(intent.G, 2.0)
 
     if mod_type == "Fade":
-        if name == "Alpha":
-            # Fade alpha behaves like persistence control; tie to density+granularity.
-            return exp_norm(clamp01(intent.D * 0.8 + intent.G * 0.2), 2.0)
+        if name == "HalfLifeSec":
+            # Fade half-life behaves like persistence control; tie to density+granularity.
+            # Higher density/granularity => faster fade => smaller half-life.
+            return inv_exp_norm(clamp01(intent.D * 0.8 + intent.G * 0.2), 2.0)
 
     return 0.0
 

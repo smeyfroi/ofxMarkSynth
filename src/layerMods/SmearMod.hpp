@@ -31,8 +31,9 @@ public:
 
   static constexpr int SINK_VEC2 = 10;
   static constexpr int SINK_FLOAT = 11; // MixNew
-  static constexpr int SINK_ALPHA_MULTIPLIER = 12;
+  static constexpr int SINK_HALF_LIFE_SEC = 12;
   static constexpr int SINK_FIELD1_MULTIPLIER = 13;
+  static constexpr int SINK_ALPHA_MULTIPLIER_LEGACY = 15;
   static constexpr int SINK_FIELD2_MULTIPLIER = 14;
   static constexpr int SINK_FIELD_1_TEX = 20;
   static constexpr int SINK_FIELD_2_TEX = 21;
@@ -43,8 +44,9 @@ protected:
 private:
   ofParameter<float> mixNewParameter { "MixNew", 0.9, 0.3, 1.0 };
   ParamController<float> mixNewController { mixNewParameter };
-  ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.998, 0.95, 0.999 };
-  ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
+  // Time-based trail persistence: per-frame alpha multiplier is derived from HalfLifeSec and dt.
+  ofParameter<float> halfLifeSecParameter { "HalfLifeSec", 11.5f, 0.05f, 300.0f };
+  ParamController<float> halfLifeSecController { halfLifeSecParameter };
 //  ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.001 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
   ofParameter<glm::vec2> translateByParameter { "Translation", glm::vec2 { 0.0, 0.0 }, glm::vec2 { -0.01, -0.01 }, glm::vec2 { 0.01, 0.01 } };
   ofParameter<float> field1PreScaleExpParameter { "Field1PreScaleExp", -2.0, -5.0, 2.0 }; // Log10 exponent: 10^exp gives preScale (range 0.001 to 100)

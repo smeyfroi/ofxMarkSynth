@@ -130,8 +130,8 @@ Put values here when they are dependent on the physical venue or hardware and sh
 
 Put values here when the same parameter set appears across multiple configs:
 
-- repeated `Fade` alpha values
-- repeated `MultiplyAdd` maps
+- repeated `Fade` half-life values
+- repeated `FadeAlphaMap` maps
 - repeated `Cluster` counts
 - repeated “style blocks” for `SoftCircle` / `SandLine` / etc.
 
@@ -156,10 +156,10 @@ Goal: move repeated values into `mod-params/presets.json` and keep only the “u
   "mods": {
     "FadeMarks": {
       "type": "Fade",
-      "config": { "Alpha": "0.0012" }
+      "config": { "HalfLifeSec": "19.2" }
     },
     "FadeMarksAlphaMap": {
-      "type": "MultiplyAdd",
+      "type": "FadeAlphaMap",
       "config": { "Multiplier": "0.0024", "Adder": "0.0012" }
     }
   }
@@ -173,9 +173,9 @@ Goal: move repeated values into `mod-params/presets.json` and keep only the “u
 ```json
 {
   "Fade": {
-    "Alpha_0p0012": { "Alpha": "0.0012" }
+    "HalfLife_19p2": { "HalfLifeSec": "19.2" }
   },
-  "MultiplyAdd": {
+  "FadeAlphaMap": {
     "Mul_0p0024_Add_0p0012": { "Multiplier": "0.0024", "Adder": "0.0012" }
   }
 }
@@ -188,10 +188,10 @@ Goal: move repeated values into `mod-params/presets.json` and keep only the “u
   "mods": {
     "FadeMarks": {
       "type": "Fade",
-      "preset": "Alpha_0p0012"
+      "preset": "HalfLife_19p2"
     },
     "FadeMarksAlphaMap": {
-      "type": "MultiplyAdd",
+      "type": "FadeAlphaMap",
       "preset": "Mul_0p0024_Add_0p0012"
     }
   }

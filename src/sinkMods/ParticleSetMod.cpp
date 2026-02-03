@@ -22,12 +22,14 @@ ParticleSetMod::ParticleSetMod(std::shared_ptr<Synth> synthPtr, const std::strin
     { "PointVelocity", SINK_POINT_VELOCITY },
     { spinParameter.getName(), SINK_SPIN },
     { colorParameter.getName(), SINK_COLOR },
+    { alphaMultiplierParameter.getName(), SINK_ALPHA_MULTIPLIER },
     { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR },
     { "ChangeLayer", Mod::SINK_CHANGE_LAYER }
   };
 
   registerControllerForSource(spinParameter, spinController);
   registerControllerForSource(colorParameter, colorController);
+  registerControllerForSource(alphaMultiplierParameter, alphaMultiplierController);
 }
 
 float ParticleSetMod::getAgency() const {
@@ -37,6 +39,7 @@ float ParticleSetMod::getAgency() const {
 void ParticleSetMod::initParameters() {
   parameters.add(spinParameter);
   parameters.add(colorParameter);
+  parameters.add(alphaMultiplierParameter);
   parameters.add(keyColoursParameter);
   addFlattenedParameterGroup(parameters, particleSet.getParameterGroup());
   parameters.add(agencyFactorParameter);
@@ -72,6 +75,7 @@ void ParticleSetMod::update() {
   syncControllerAgencies();
   spinController.update();
   colorController.update();
+  alphaMultiplierController.update();
   timeStepControllerPtr->update();
   velocityDampingControllerPtr->update();
   attractionStrengthControllerPtr->update();
@@ -131,15 +135,23 @@ void ParticleSetMod::update() {
   std::for_each(newPoints.begin(), newPoints.end(), [this](const auto& vec) {
     glm::vec2 p { vec.x, vec.y };
     glm::vec2 v { vec.z, vec.w };
-    particleSet.add(p, v, colorController.value, spinController.value);
+    auto c = colorController.value;
+    c.a *= std::clamp(alphaMultiplierController.value, 0.0f, 4.0f);
+    particleSet.add(p, v, c, spinController.value);
   });
   newPoints.clear();
 
   fboPtr->getSource().begin();
   ofPushStyle();
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+
+  // Premultiplied alpha blending.
+  glEnable(GL_BLEND);
+  glBlendEquation(GL_FUNC_ADD);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
 //  ofScale(fboPtr->getWidth(), fboPtr->getHeight());
   particleSet.draw(glm::vec2(fboPtr->getWidth(), fboPtr->getHeight()));
+
   ofPopStyle();
   fboPtr->getSource().end();
 }
@@ -159,6 +171,10 @@ void ParticleSetMod::receive(int sinkId, const float& value) {
       spinController.updateAuto(value, getAgency());
       break;
 
+    case SINK_ALPHA_MULTIPLIER:
+      alphaMultiplierController.updateAuto(value, getAgency());
+      break;
+ 
     case Mod::SINK_CHANGE_LAYER:
       if (value > 0.5f) {
         ofLogNotice("ParticleSetMod") << "ParticleSetMod::ChangeLayer: changing layer";
