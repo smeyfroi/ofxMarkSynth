@@ -5,9 +5,10 @@
 //
 
 #include "CollageMod.hpp"
-#include "ofxFatLine.h"
+
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
+#include "rendering/Stroke2D.hpp"
 
 namespace ofxMarkSynth {
 
@@ -48,9 +49,6 @@ float CollageMod::getAgency() const {
 }
 
 void CollageMod::drawOutline(std::shared_ptr<PingPongFbo> fboPtr, float outlineAlphaFactor) {
-  // Punch hole through existing outlines and draw fatline border
-  // TODO: punch hole on fatline as well to avoid the middle seam when the outlines fade.
-  // Or add the fatline into the stencil to draw the snapshot only within the fatline interior
   fboPtr->getSource().begin();
   ofPushStyle();
   ofScale(fboPtr->getWidth(), fboPtr->getHeight());
@@ -61,23 +59,28 @@ void CollageMod::drawOutline(std::shared_ptr<PingPongFbo> fboPtr, float outlineA
   path.setColor(ofFloatColor { 0.0, 0.0, 0.0, 0.0 });
   path.draw();
 
-  // Draw fatline outline using parameterized width and color
-  const float width = outlineWidthController.value / fboPtr->getWidth();
-  const auto& vertices = path.getOutline()[0].getVertices();
-  int count = vertices.size();
+  // Draw outline stroke using parameterized width and color.
+  // We draw it outside the path boundary so it does not "refill" the punched interior.
+  const float strokeWidth = outlineWidthController.value / fboPtr->getWidth();
+
   ofFloatColor outlineColor = outlineColorController.value;
   outlineColor.a *= outlineAlphaFactor; // modulate alpha by outline alpha factor for fade effect
-  std::vector<ofFloatColor> colors(count, outlineColor);
-  std::vector<double> widths(count, width);
-  ofxFatLine fatline;
-  fatline.setFeather(width / 8.0); // NOTE: getting this wrong can cause weird artifacts
-  // fatline.setJointType(OFX_FATLINE_JOINT_ROUND); // causes weird artefacts?
-  // fatline.setCapType(OFX_FATLINE_CAP_SQUARE); // causes weird artefacts?
-  fatline.add(vertices, colors, widths);
-  fatline.add(vertices.front(), colors.front(), widths.front()); // close the loop
+
+  Stroke2D stroke;
+  Stroke2D::Params strokeParams;
+  strokeParams.strokeWidth = strokeWidth;
+  strokeParams.feather = strokeWidth / 8.0f; // alpha-blended region
+  strokeParams.alignment = Stroke2D::Alignment::Outside;
+  strokeParams.featherPositive = true;
+  strokeParams.featherNegative = false;
+
+  stroke.setParams(strokeParams);
+  stroke.setColor(outlineColor);
 
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  fatline.draw();
+  if (stroke.build(path.getOutline()[0])) {
+    stroke.draw();
+  }
   ofPopStyle();
   fboPtr->getSource().end();
 }

@@ -21,7 +21,6 @@ git clone https://github.com/smeyfroi/ofxAudioAnalysisClient.git
 git clone https://github.com/smeyfroi/ofxAudioData.git
 git clone https://github.com/genekogan/ofxConvexHull.git
 git clone https://github.com/smeyfroi/ofxDividedArea.git
-git clone https://github.com/roymacdonald/ofxFatLines.git
 git clone https://github.com/smeyfroi/ofxIntrospector.git
 git clone https://github.com/smeyfroi/ofxMotionFromVideo.git
 git clone https://github.com/smeyfroi/ofxParticleSet.git
