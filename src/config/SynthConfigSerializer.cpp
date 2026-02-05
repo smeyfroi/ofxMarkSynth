@@ -448,6 +448,21 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
     synth->getPerformanceNavigator().setConfigDurationSec(0);
   }
 
+  // Parse performer cues (optional).
+  // Missing keys are treated as false, so configs can show audio-only or video-only cues.
+  bool performerCueAudio = false;
+  bool performerCueVideo = false;
+  if (j.contains("performerCues") && j["performerCues"].is_object()) {
+    const auto& cues = j["performerCues"];
+    if (cues.contains("audio") && cues["audio"].is_boolean()) {
+      performerCueAudio = cues["audio"].get<bool>();
+    }
+    if (cues.contains("video") && cues["video"].is_boolean()) {
+      performerCueVideo = cues["video"].get<bool>();
+    }
+  }
+  synth->setPerformerCues(performerCueAudio, performerCueVideo);
+
   // Parse synth-level configuration (agency, backgroundColor, backgroundMultiplier)
   parseSynthConfig(j, synth);
 

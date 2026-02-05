@@ -770,6 +770,7 @@ void Gui::drawDisplayControls() {
   addParameter(synthPtr, dc.getBrightness());
   addParameter(synthPtr, dc.getHueShift());
   addParameter(synthPtr, dc.getSideExposure());
+  addParameter(synthPtr, dc.getCueAlpha());
 }
 
 constexpr float thumbW = 128.0f;
@@ -973,10 +974,9 @@ void Gui::drawStatus() {
     int countdownSec = nav.getCountdownSeconds();
     const char* sign = nav.isCountdownNegative() ? "-" : "";
     
-    // Flash red when countdown is expired (toggle every 0.5 seconds)
-    if (nav.isCountdownExpired()) {
-      bool flash = static_cast<int>(ofGetElapsedTimef() * 2) % 2 == 0;
-      if (flash) {
+    // Flash red when countdown is expired
+    if (nav.isConfigTimeExpired()) {
+      if (nav.isConfigTimeExpired(ofGetElapsedTimef())) {
         ImGui::TextColored(RED_COLOR, "%02d:%02d | S %02d:%02d | C %02d:%02d / %s%02d:%02d", 
                            clockMin, clockSec, synthMin, synthSec, configMin, configSec, sign, countdownMin, countdownSec);
       } else {
@@ -994,6 +994,25 @@ void Gui::drawStatus() {
   // FPS counter on same line with spacing
   ImGui::SameLine(0.0f, 20.0f);  // 20 pixels spacing
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
+
+  // Manual timing cue: extend / start countdown by +10s
+  ImGui::SameLine(0.0f, 20.0f);
+  bool hasConfigLoaded = !synthPtr->currentConfigPath.empty();
+  if (!hasConfigLoaded) ImGui::BeginDisabled();
+  if (ImGui::Button("Cue +10s") && hasConfigLoaded) {
+    constexpr int CUE_SEC = 10;
+    auto& nav = synthPtr->performanceNavigator;
+
+    // If no duration, or duration has expired, cue a config change 10s from now.
+    // Otherwise extend the current expiry by 10s.
+    if (!nav.hasConfigDuration() || nav.isConfigTimeExpired()) {
+      int elapsedSec = static_cast<int>(std::ceil(synthPtr->getConfigRunningTime()));
+      nav.setConfigDurationSec(elapsedSec + CUE_SEC);
+    } else {
+      nav.setConfigDurationSec(nav.getConfigDurationSec() + CUE_SEC);
+    }
+  }
+  if (!hasConfigLoaded) ImGui::EndDisabled();
   
   // Status indicator: hibernation state takes priority over pause state
   auto hibernationState = synthPtr->getHibernationState();

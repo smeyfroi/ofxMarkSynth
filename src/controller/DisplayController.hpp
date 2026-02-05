@@ -33,6 +33,7 @@ public:
     ofParameter<float>& getBrightness() { return brightness; }
     ofParameter<float>& getHueShift() { return hueShift; }
     ofParameter<float>& getSideExposure() { return sideExposure; }
+    ofParameter<float>& getCueAlpha() { return cueAlpha; }
 
     const ofParameter<int>& getToneMapType() const { return toneMapType; }
     const ofParameter<float>& getExposure() const { return exposure; }
@@ -43,6 +44,7 @@ public:
     const ofParameter<float>& getBrightness() const { return brightness; }
     const ofParameter<float>& getHueShift() const { return hueShift; }
     const ofParameter<float>& getSideExposure() const { return sideExposure; }
+    const ofParameter<float>& getCueAlpha() const { return cueAlpha; }
 
     /// Settings struct for passing to shader
     struct Settings {
@@ -74,6 +76,7 @@ private:
     ofParameter<float> brightness { "Brightness", 0.0, -0.1, 0.1 };
     ofParameter<float> hueShift { "Hue Shift", 0.0, -1.0, 1.0 };
     ofParameter<float> sideExposure { "Side Exp", 0.6, 0.0, 4.0 };
+    ofParameter<float> cueAlpha { "Cue Alpha", 0.15f, 0.0f, 1.0f };
 };
 
 } // namespace ofxMarkSynth

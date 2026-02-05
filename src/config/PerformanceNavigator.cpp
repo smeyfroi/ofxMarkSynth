@@ -552,9 +552,15 @@ void PerformanceNavigator::setConfigDurationSec(int durationSec) {
   configDurationSec = durationSec;
 }
 
-int PerformanceNavigator::getCountdownSec() const {
-  if (configDurationSec <= 0 || !synth) return 0;
+std::optional<int> PerformanceNavigator::getTimeRemainingSec() const {
+  if (configDurationSec <= 0 || !synth) return std::nullopt;
   return configDurationSec - static_cast<int>(synth->getConfigRunningTime());
+}
+
+int PerformanceNavigator::getCountdownSec() const {
+  // Back-compat: returns 0 when no duration is configured.
+  auto remaining = getTimeRemainingSec();
+  return remaining ? *remaining : 0;
 }
 
 int PerformanceNavigator::getCountdownMinutes() const {
@@ -571,6 +577,32 @@ bool PerformanceNavigator::isCountdownNegative() const {
 
 bool PerformanceNavigator::isCountdownExpired() const {
   return configDurationSec > 0 && getCountdownSec() <= 0;
+}
+
+bool PerformanceNavigator::isConfigTimeExpired() const {
+  auto remaining = getTimeRemainingSec();
+  return remaining && *remaining <= 0;
+}
+
+bool PerformanceNavigator::isConfigTimeExpired(float nowSec) const {
+  if (!isConfigTimeExpired()) return false;
+  return static_cast<int>(nowSec * 2.0f) % 2 == 0;
+}
+
+bool PerformanceNavigator::isConfigChangeImminent(int withinSec) const {
+  if (withinSec <= 0) return false;
+  auto remaining = getTimeRemainingSec();
+  return remaining && *remaining > 0 && *remaining <= withinSec;
+}
+
+float PerformanceNavigator::getImminentConfigChangeProgress(int withinSec) const {
+  if (withinSec <= 0) return 0.0f;
+  auto remaining = getTimeRemainingSec();
+  if (!remaining) return 0.0f;
+
+  // Progress ramps from 0->1 during the final `withinSec` seconds.
+  float t = 1.0f - (static_cast<float>(*remaining) / static_cast<float>(withinSec));
+  return ofClamp(t, 0.0f, 1.0f);
 }
 
 

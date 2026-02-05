@@ -107,15 +107,26 @@ public:
   static constexpr uint64_t HOLD_THRESHOLD_MS = 400;
   static constexpr uint64_t COOLDOWN_MS = 500;  // Cooldown after successful action
   
-  // Config duration and countdown (optional, 0 means no duration specified)
+  // Config duration and timing cues (optional, 0 means no duration specified)
   void setConfigDurationSec(int durationSec);
   int getConfigDurationSec() const { return configDurationSec; }
   bool hasConfigDuration() const { return configDurationSec > 0; }
+
+  // Signed time remaining (negative when over time). Nullopt when no duration.
+  std::optional<int> getTimeRemainingSec() const;
+
+  // Back-compat countdown helpers (prefer getTimeRemainingSec())
   int getCountdownSec() const;  // Remaining seconds (negative if over time)
   int getCountdownMinutes() const;  // Absolute value of minutes remaining
   int getCountdownSeconds() const;  // Absolute value of seconds remaining (0-59)
   bool isCountdownNegative() const;  // True if over time
   bool isCountdownExpired() const;   // True if countdown <= 0
+
+  // New cue helpers
+  bool isConfigTimeExpired() const;              // Expired (countdown <= 0)
+  bool isConfigTimeExpired(float nowSec) const;  // Expired and flash-on at nowSec
+  bool isConfigChangeImminent(int withinSec) const;
+  float getImminentConfigChangeProgress(int withinSec) const;
   
 private:
   Synth* synth;

@@ -19,6 +19,7 @@ void DisplayController::buildParameterGroup() {
     parameters.add(brightness);
     parameters.add(hueShift);
     parameters.add(sideExposure);
+    parameters.add(cueAlpha);
 }
 
 DisplayController::Settings DisplayController::getSettings() const {

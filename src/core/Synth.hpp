@@ -35,6 +35,7 @@
 #include "controller/IntentController.hpp"
 #include "controller/LayerController.hpp"
 #include "controller/DisplayController.hpp"
+#include "controller/CueGlyphController.hpp"
 #include "rendering/CompositeRenderer.hpp"
 
 namespace ofxAudioAnalysisClient {
@@ -155,6 +156,13 @@ public:
   PerformanceNavigator& getPerformanceNavigator() { return performanceNavigator; }
   const PerformanceNavigator& getPerformanceNavigator() const { return performanceNavigator; }
 
+  struct PerformerCues {
+    bool audioEnabled { false };
+    bool videoEnabled { false };
+  };
+  void setPerformerCues(bool audioEnabled, bool videoEnabled) { performerCues = { audioEnabled, videoEnabled }; }
+  PerformerCues getPerformerCues() const { return performerCues; }
+
   void receive(int sinkId, const glm::vec4& v) override;
   void receive(int sinkId, const float& v) override;
   void update() override;
@@ -246,6 +254,7 @@ private:
 
   Gui gui;
   PerformanceNavigator performanceNavigator { this };
+  PerformerCues performerCues;
 
   ModPtrMap modPtrs;
 
@@ -262,6 +271,7 @@ private:
   // >>> Display and composite rendering (delegated to helper classes)
   std::unique_ptr<DisplayController> displayController;
   std::unique_ptr<CompositeRenderer> compositeRenderer;
+  std::unique_ptr<CueGlyphController> cueGlyphController;
   // <<<
   
   std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;

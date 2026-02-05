@@ -172,6 +172,7 @@ void Synth::initControllers(const std::string& name, bool startHibernated) {
   configTransitionManager = std::make_unique<ConfigTransitionManager>();
   intentController = std::make_unique<IntentController>();
   layerController = std::make_unique<LayerController>();
+  cueGlyphController = std::make_unique<CueGlyphController>();
 }
 
 void Synth::initRendering(glm::vec2 compositeSize) {
@@ -350,6 +351,9 @@ void Synth::unload() {
 
   // 5) Clear current config path
   currentConfigPath.clear();
+
+  // 6) Clear performer cues
+  performerCues = {};
 
   // Note: Keep displayController, compositeRenderer, and other helper classes
   // Rebuild of parameter groups happens when reloading config (configureGui/init* called then)
@@ -696,6 +700,25 @@ void Synth::draw() {
                           displayController->getSettings(),
                           displayController->getSidePanelSettings(),
                           configTransitionManager.get());
+
+  // Performer cues: draw in window space (not in composite, not in recordings/snapshots)
+  if (cueGlyphController) {
+    CueGlyphController::DrawParams cueParams;
+    cueParams.audioEnabled = performerCues.audioEnabled;
+    cueParams.videoEnabled = performerCues.videoEnabled;
+    cueParams.alpha = displayController ? displayController->getCueAlpha().get() : 0.0f;
+
+    constexpr int WARN_SEC = 10;
+    auto& nav = performanceNavigator;
+    if (nav.isConfigTimeExpired(ofGetElapsedTimef())) {
+      cueParams.flashExpired = true;
+    } else {
+      cueParams.imminentConfigChangeProgress = nav.getImminentConfigChangeProgress(WARN_SEC);
+    }
+
+    cueGlyphController->draw(cueParams, ofGetWindowWidth(), ofGetWindowHeight());
+  }
+
   updateDebugViewFbo();  // Render Mod debug draws to FBO for ImGui display
   TSGL_STOP("Synth::draw");
 
