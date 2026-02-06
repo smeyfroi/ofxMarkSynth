@@ -6,13 +6,17 @@
 
 #pragma once
 
+#include <array>
+#include <cstdint>
 #include <deque>
 #include <random>
 #include <vector>
 
 #include "ofxGui.h"
+
 #include "core/Mod.hpp"
 #include "ofxContinuousSomPalette.hpp"
+#include "util/Oklab.h"
 
 namespace ofxMarkSynth {
 
@@ -41,8 +45,11 @@ public:
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const float& v) override;
   void applyIntent(const Intent& intent, float strength) override;
+
   const ofTexture* getActivePaletteTexturePtr() const;
   const ofTexture* getNextPaletteTexturePtr() const;
+  const ofTexture* getChipsTexturePtr() const;
+  const ofTexture* getNoveltyTexturePtr() const;
 
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SINK_SWITCH_PALETTE = 100;
@@ -61,12 +68,33 @@ protected:
   void initParameters() override;
 
 private:
+  static constexpr int NOVELTY_CACHE_SIZE = 4;
+
+  struct CachedNovelty {
+    Oklab lab;
+    ofFloatColor rgb;
+    int64_t lastSeenFrame { 0 };
+  };
+
+  struct PendingNovelty {
+    Oklab lab;
+    ofFloatColor rgb;
+    int framesSeen { 0 };
+    int64_t lastSeenFrame { 0 };
+  };
+
   // Number of SOM training iterations per palette.
   // At 30fps and `TrainingStepsPerFrame` steps, time-to-converge ~= Iterations / (fps*steps).
   ofParameter<float> iterationsParameter { "Iterations", 4500.0f, 300.0f, 20000.0f };
 
   // Sliding timbre window length.
   ofParameter<float> windowSecsParameter { "WindowSecs", 15.0f, 2.0f, 60.0f };
+
+  // Persistent chip memory duration as multiplier of WindowSecs.
+  ofParameter<float> chipMemoryMultiplierParameter { "ChipMemoryMultiplier", 1.5f, 1.0f, 6.0f };
+
+  // Fade-in from first received sample (avoid harsh startup flashes).
+  ofParameter<float> startupFadeSecsParameter { "StartupFadeSecs", 2.0f, 0.0f, 10.0f };
 
   // Training multiplier: number of samples drawn from the sliding window per frame.
   ofParameter<int> trainingStepsPerFrameParameter { "TrainingStepsPerFrame", 10, 1, 40 };
@@ -82,16 +110,51 @@ private:
   int windowFrames { 450 };
   std::deque<glm::vec3> featureHistory;
 
+  // Persistent chip set (Oklab) used for outputs.
+  bool hasPersistentChips { false };
+  std::array<Oklab, SomPalette::size> persistentChipsLab;
+  std::array<ofFloatColor, SomPalette::size> persistentChipsRgb;
+  std::array<int, SomPalette::size> persistentIndicesByLightness;
+
+  // Novelty cache (rare colors that persist briefly).
+  std::vector<CachedNovelty> noveltyCache;
+  std::vector<PendingNovelty> pendingNovelty;
+
+  int64_t paletteFrameCount { 0 };
+  int64_t firstSampleFrameCount { -1 };
+  float startupFadeFactor { 0.0f };
+
   std::vector<glm::vec3> newVecs;
 
   ofTexture fieldTexture; // RG float texture converted from RGB float pixels of the SOM
   void ensureFieldTexture(int w, int h);
 
+  ofFloatPixels chipsPixels;
+  ofTexture chipsTexture;
+  void updateChipsTexture();
+
+  ofFloatPixels noveltyPixels;
+  ofTexture noveltyTexture;
+  void updateNoveltyTexture();
+
   std::ranlux24_base randomGen { 0 }; // fast generator with fixed seed
   std::uniform_int_distribution<> randomDistrib { 0, SomPalette::size - 1 };
+  std::uniform_int_distribution<> randomHalfDistrib { 0, (SomPalette::size / 2) - 1 };
+  std::uniform_real_distribution<float> random01Distrib { 0.0f, 1.0f };
+
+  void updatePersistentChips(float dt);
+  void updateNoveltyCache(const std::array<Oklab, SomPalette::size>& candidatesLab,
+                          const std::array<ofFloatColor, SomPalette::size>& candidatesRgb,
+                          const std::array<float, SomPalette::size>& noveltyScores,
+                          float dt);
+
+  int getPersistentDarkestIndex() const;
+  int getPersistentLightestIndex() const;
+
   glm::vec4 createVec4(int i);
-  glm::vec4 createRandomLightVec4(int i);
-  glm::vec4 createRandomDarkVec4(int i);
+  glm::vec4 createRandomVec4();
+  glm::vec4 createRandomLightVec4();
+  glm::vec4 createRandomDarkVec4();
 };
 
 } // ofxMarkSynth

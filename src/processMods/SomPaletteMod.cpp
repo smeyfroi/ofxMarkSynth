@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace ofxMarkSynth {
 
@@ -22,6 +23,7 @@ int secsToFrames(float secs) {
   return std::max(1, static_cast<int>(std::round(secs * ASSUMED_FPS)));
 }
 
+// Texture values have a range approximately -0.7 to 0.7
 ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
   const int w = in.getWidth();
   const int h = in.getHeight();
@@ -58,11 +60,65 @@ ofFloatPixels rgbToRG_Opponent(const ofFloatPixels& in) {
   return out;
 }
 
+constexpr float OKLAB_L_WEIGHT = 2.0f;
+
+float oklabCost(const Oklab& a, const Oklab& b) {
+  float dL = (a.L - b.L) * OKLAB_L_WEIGHT;
+  float da = a.a - b.a;
+  float db = a.b - b.b;
+  return dL * dL + da * da + db * db;
+}
+
+std::array<int, SomPalette::size> solveAssignment(const std::array<std::array<float, SomPalette::size>, SomPalette::size>& cost) {
+  constexpr int N = static_cast<int>(SomPalette::size);
+  constexpr int FULL = 1 << N;
+
+  std::array<float, FULL> dp;
+  dp.fill(std::numeric_limits<float>::infinity());
+  dp[0] = 0.0f;
+
+  std::array<int, FULL> parentChoice;
+  std::array<int, FULL> parentMask;
+  parentChoice.fill(-1);
+  parentMask.fill(-1);
+
+  for (int mask = 0; mask < FULL; ++mask) {
+    int i = __builtin_popcount(static_cast<unsigned int>(mask));
+    if (i >= N) continue;
+    float base = dp[static_cast<size_t>(mask)];
+    if (!std::isfinite(base)) continue;
+
+    for (int j = 0; j < N; ++j) {
+      if (mask & (1 << j)) continue;
+      int nextMask = mask | (1 << j);
+      float nextCost = base + cost[static_cast<size_t>(i)][static_cast<size_t>(j)];
+      if (nextCost < dp[static_cast<size_t>(nextMask)]) {
+        dp[static_cast<size_t>(nextMask)] = nextCost;
+        parentChoice[static_cast<size_t>(nextMask)] = j;
+        parentMask[static_cast<size_t>(nextMask)] = mask;
+      }
+    }
+  }
+
+  std::array<int, SomPalette::size> assignment;
+  int mask = FULL - 1;
+  for (int i = N - 1; i >= 0; --i) {
+    int j = parentChoice[static_cast<size_t>(mask)];
+    assignment[static_cast<size_t>(i)] = j;
+    mask = parentMask[static_cast<size_t>(mask)];
+  }
+
+  return assignment;
+}
+
 } // namespace
 
 SomPaletteMod::SomPaletteMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config)
 : Mod { synthPtr, name, std::move(config) }
 {
+  noveltyCache.reserve(NOVELTY_CACHE_SIZE);
+  pendingNovelty.reserve(NOVELTY_CACHE_SIZE);
+
   somPalette.setNumIterations(static_cast<int>(iterationsParameter.get()));
 
   windowFrames = secsToFrames(windowSecsParameter.get());
@@ -83,6 +139,10 @@ SomPaletteMod::SomPaletteMod(std::shared_ptr<Synth> synthPtr, const std::string&
     { "Lightest", SOURCE_LIGHTEST },
     { "FieldTexture", SOURCE_FIELD }
   };
+
+  for (int i = 0; i < static_cast<int>(SomPalette::size); ++i) {
+    persistentIndicesByLightness[static_cast<size_t>(i)] = i;
+  }
 }
 
 void SomPaletteMod::doneModLoad() {
@@ -106,6 +166,22 @@ void SomPaletteMod::doneModLoad() {
     }
     return nullptr;
   });
+
+  synth->addLiveTexturePtrFn(baseName + ": Chips",
+                             [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+    if (auto locked = weakSelf.lock()) {
+      return locked->getChipsTexturePtr();
+    }
+    return nullptr;
+  });
+
+  synth->addLiveTexturePtrFn(baseName + ": Novelty",
+                             [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+    if (auto locked = weakSelf.lock()) {
+      return locked->getNoveltyTexturePtr();
+    }
+    return nullptr;
+  });
 }
 
 SomPaletteMod::~SomPaletteMod() {
@@ -121,6 +197,14 @@ const ofTexture* SomPaletteMod::getActivePaletteTexturePtr() const {
 
 const ofTexture* SomPaletteMod::getNextPaletteTexturePtr() const {
   return somPalette.getNextTexturePtr();
+}
+
+const ofTexture* SomPaletteMod::getChipsTexturePtr() const {
+  return chipsTexture.isAllocated() ? &chipsTexture : nullptr;
+}
+
+const ofTexture* SomPaletteMod::getNoveltyTexturePtr() const {
+  return noveltyTexture.isAllocated() ? &noveltyTexture : nullptr;
 }
 
 void SomPaletteMod::onIterationsParameterChanged(float& value) {
@@ -142,6 +226,8 @@ void SomPaletteMod::onColorizerParameterChanged(float& value) {
 void SomPaletteMod::initParameters() {
   parameters.add(iterationsParameter);
   parameters.add(windowSecsParameter);
+  parameters.add(chipMemoryMultiplierParameter);
+  parameters.add(startupFadeSecsParameter);
   parameters.add(trainingStepsPerFrameParameter);
   parameters.add(agencyFactorParameter);
   parameters.add(colorizerGrayGainParameter);
@@ -173,7 +259,260 @@ void SomPaletteMod::ensureFieldTexture(int w, int h) {
   fieldTexture.allocate(texData);
 }
 
+void SomPaletteMod::updateChipsTexture() {
+  constexpr int w = static_cast<int>(SomPalette::size);
+  constexpr int h = 1;
+
+  if (!chipsPixels.isAllocated()) {
+    chipsPixels.allocate(w, h, OF_IMAGE_COLOR);
+  }
+
+  for (int x = 0; x < w; ++x) {
+    ofFloatColor c;
+    if (hasPersistentChips) {
+      const int index = persistentIndicesByLightness[static_cast<size_t>(x)];
+      c = persistentChipsRgb[static_cast<size_t>(index)];
+    } else {
+      c = ofFloatColor(somPalette.getColor(x));
+    }
+
+    c.r *= startupFadeFactor;
+    c.g *= startupFadeFactor;
+    c.b *= startupFadeFactor;
+
+    chipsPixels.setColor(x, 0, c);
+  }
+
+  if (!chipsTexture.isAllocated()) {
+    chipsTexture.allocate(chipsPixels, false);
+    chipsTexture.setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+    chipsTexture.setTextureWrap(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+  }
+
+  chipsTexture.loadData(chipsPixels);
+}
+
+void SomPaletteMod::updateNoveltyTexture() {
+  constexpr int w = NOVELTY_CACHE_SIZE;
+  constexpr int h = 1;
+
+  if (!noveltyPixels.isAllocated()) {
+    noveltyPixels.allocate(w, h, OF_IMAGE_COLOR);
+  }
+
+  for (int x = 0; x < w; ++x) {
+    ofFloatColor c(0.0f, 0.0f, 0.0f);
+    if (x < static_cast<int>(noveltyCache.size())) {
+      c = noveltyCache[static_cast<size_t>(x)].rgb;
+    }
+
+    c.r *= startupFadeFactor;
+    c.g *= startupFadeFactor;
+    c.b *= startupFadeFactor;
+
+    noveltyPixels.setColor(x, 0, c);
+  }
+
+  if (!noveltyTexture.isAllocated()) {
+    noveltyTexture.allocate(noveltyPixels, false);
+    noveltyTexture.setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+    noveltyTexture.setTextureWrap(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+  }
+
+  noveltyTexture.loadData(noveltyPixels);
+}
+
+void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>& candidatesLab,
+                                      const std::array<ofFloatColor, SomPalette::size>& candidatesRgb,
+                                      const std::array<float, SomPalette::size>& noveltyScores,
+                                      float dt) {
+  const int requiredFrames = std::max(2, static_cast<int>(std::round(0.5f * ASSUMED_FPS)));
+  const float noveltyThreshold = 0.010f;
+  const float pendingMergeThreshold = 0.004f;
+  const float cacheMatchThreshold = 0.003f;
+
+  const float memorySecs = std::max(0.001f, windowSecsParameter.get() * chipMemoryMultiplierParameter.get());
+  const int64_t ttlFrames = std::max<int64_t>(1, static_cast<int64_t>(std::round(memorySecs * ASSUMED_FPS)));
+  const int64_t pendingTimeoutFrames = std::max<int64_t>(requiredFrames, static_cast<int64_t>(std::round(0.75f * ASSUMED_FPS)));
+
+  // Mark cache items as seen if candidates return near them.
+  for (size_t j = 0; j < SomPalette::size; ++j) {
+    const Oklab& cand = candidatesLab[j];
+    for (auto& cached : noveltyCache) {
+      float d = oklabCost(cached.lab, cand);
+      if (d < cacheMatchThreshold) {
+        cached.lastSeenFrame = paletteFrameCount;
+        // Gently pull cached color toward what we're seeing again.
+        const float a = 1.0f - std::exp(-dt / std::max(0.1f, memorySecs * 0.25f));
+        cached.lab.L += a * (cand.L - cached.lab.L);
+        cached.lab.a += a * (cand.a - cached.lab.a);
+        cached.lab.b += a * (cand.b - cached.lab.b);
+        cached.rgb = oklabToRgb(cached.lab);
+      }
+    }
+  }
+
+  // Purge expired cache entries.
+  noveltyCache.erase(std::remove_if(noveltyCache.begin(), noveltyCache.end(), [&](const CachedNovelty& c) {
+    return (paletteFrameCount - c.lastSeenFrame) > ttlFrames;
+  }), noveltyCache.end());
+
+  // Update pending candidates based on novelty score.
+  for (size_t j = 0; j < SomPalette::size; ++j) {
+    if (noveltyScores[j] < noveltyThreshold) continue;
+
+    const Oklab candLab = candidatesLab[j];
+    const ofFloatColor candRgb = candidatesRgb[j];
+
+    int bestIndex = -1;
+    float bestDist = std::numeric_limits<float>::infinity();
+
+    for (int i = 0; i < static_cast<int>(pendingNovelty.size()); ++i) {
+      float d = oklabCost(pendingNovelty[static_cast<size_t>(i)].lab, candLab);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIndex = i;
+      }
+    }
+
+    if (bestIndex >= 0 && bestDist < pendingMergeThreshold) {
+      auto& p = pendingNovelty[static_cast<size_t>(bestIndex)];
+      p.lab = candLab;
+      p.rgb = candRgb;
+      p.framesSeen++;
+      p.lastSeenFrame = paletteFrameCount;
+    } else if (static_cast<int>(pendingNovelty.size()) < NOVELTY_CACHE_SIZE) {
+      pendingNovelty.push_back(PendingNovelty { candLab, candRgb, 1, paletteFrameCount });
+    }
+  }
+
+  // Purge stale pending.
+  pendingNovelty.erase(std::remove_if(pendingNovelty.begin(), pendingNovelty.end(), [&](const PendingNovelty& p) {
+    return (paletteFrameCount - p.lastSeenFrame) > pendingTimeoutFrames;
+  }), pendingNovelty.end());
+
+  // Promote pending that stick around.
+  for (auto it = pendingNovelty.begin(); it != pendingNovelty.end();) {
+    if (it->framesSeen < requiredFrames) {
+      ++it;
+      continue;
+    }
+
+    // Avoid duplicates: if it matches an existing cache entry, refresh that entry instead.
+    int bestCacheIndex = -1;
+    float bestCacheDist = std::numeric_limits<float>::infinity();
+    for (int i = 0; i < static_cast<int>(noveltyCache.size()); ++i) {
+      float d = oklabCost(noveltyCache[static_cast<size_t>(i)].lab, it->lab);
+      if (d < bestCacheDist) {
+        bestCacheDist = d;
+        bestCacheIndex = i;
+      }
+    }
+
+    if (bestCacheIndex >= 0 && bestCacheDist < cacheMatchThreshold) {
+      auto& c = noveltyCache[static_cast<size_t>(bestCacheIndex)];
+      c.lab = it->lab;
+      c.rgb = it->rgb;
+      c.lastSeenFrame = paletteFrameCount;
+      it = pendingNovelty.erase(it);
+      continue;
+    }
+
+    if (static_cast<int>(noveltyCache.size()) < NOVELTY_CACHE_SIZE) {
+      noveltyCache.push_back(CachedNovelty { it->lab, it->rgb, paletteFrameCount });
+    } else {
+      // Replace the oldest.
+      int oldestIndex = 0;
+      int64_t oldestSeen = noveltyCache[0].lastSeenFrame;
+      for (int i = 1; i < static_cast<int>(noveltyCache.size()); ++i) {
+        if (noveltyCache[static_cast<size_t>(i)].lastSeenFrame < oldestSeen) {
+          oldestSeen = noveltyCache[static_cast<size_t>(i)].lastSeenFrame;
+          oldestIndex = i;
+        }
+      }
+      noveltyCache[static_cast<size_t>(oldestIndex)] = CachedNovelty { it->lab, it->rgb, paletteFrameCount };
+    }
+
+    it = pendingNovelty.erase(it);
+  }
+}
+
+void SomPaletteMod::updatePersistentChips(float dt) {
+  constexpr size_t N = SomPalette::size;
+
+  std::array<ofFloatColor, N> candidatesRgb;
+  std::array<Oklab, N> candidatesLab;
+
+  for (size_t i = 0; i < N; ++i) {
+    ofFloatColor c = ofFloatColor(somPalette.getColor(static_cast<int>(i)));
+    candidatesRgb[i] = c;
+    candidatesLab[i] = rgbToOklab(c);
+  }
+
+  std::array<float, N> noveltyScores;
+  noveltyScores.fill(0.0f);
+
+  if (!hasPersistentChips) {
+    persistentChipsLab = candidatesLab;
+    persistentChipsRgb = candidatesRgb;
+    hasPersistentChips = true;
+  } else {
+    std::array<std::array<float, N>, N> cost;
+    for (size_t i = 0; i < N; ++i) {
+      for (size_t j = 0; j < N; ++j) {
+        cost[i][j] = oklabCost(persistentChipsLab[i], candidatesLab[j]);
+      }
+    }
+
+    // Novelty score: distance from the current persistent set.
+    for (size_t j = 0; j < N; ++j) {
+      float best = std::numeric_limits<float>::infinity();
+      for (size_t i = 0; i < N; ++i) {
+        best = std::min(best, cost[i][j]);
+      }
+      noveltyScores[j] = best;
+    }
+
+    const auto assignment = solveAssignment(cost);
+
+    const float memorySecs = std::max(0.001f, windowSecsParameter.get() * chipMemoryMultiplierParameter.get());
+    const float alpha = 1.0f - std::exp(-dt / memorySecs);
+
+    for (size_t i = 0; i < N; ++i) {
+      const size_t j = static_cast<size_t>(assignment[i]);
+      const Oklab target = candidatesLab[j];
+
+      persistentChipsLab[i].L += alpha * (target.L - persistentChipsLab[i].L);
+      persistentChipsLab[i].a += alpha * (target.a - persistentChipsLab[i].a);
+      persistentChipsLab[i].b += alpha * (target.b - persistentChipsLab[i].b);
+
+      persistentChipsRgb[i] = oklabToRgb(persistentChipsLab[i]);
+    }
+  }
+
+  for (size_t i = 0; i < N; ++i) {
+    persistentIndicesByLightness[i] = static_cast<int>(i);
+  }
+  std::sort(persistentIndicesByLightness.begin(), persistentIndicesByLightness.end(), [this](int a, int b) {
+    return persistentChipsLab[static_cast<size_t>(a)].L < persistentChipsLab[static_cast<size_t>(b)].L;
+  });
+
+  updateNoveltyCache(candidatesLab, candidatesRgb, noveltyScores, dt);
+}
+
+int SomPaletteMod::getPersistentDarkestIndex() const {
+  if (!hasPersistentChips) return 0;
+  return persistentIndicesByLightness.front();
+}
+
+int SomPaletteMod::getPersistentLightestIndex() const {
+  if (!hasPersistentChips) return static_cast<int>(SomPalette::size - 1);
+  return persistentIndicesByLightness.back();
+}
+
 void SomPaletteMod::update() {
+  ++paletteFrameCount;
+
   syncControllerAgencies();
 
   // Expect one incoming feature per frame, but be robust to bursts.
@@ -182,6 +521,10 @@ void SomPaletteMod::update() {
   if (hasNewFeature) {
     newestFeature = newVecs.back();
     newVecs.clear();
+
+    if (firstSampleFrameCount < 0) {
+      firstSampleFrameCount = paletteFrameCount;
+    }
 
     featureHistory.push_back(newestFeature);
     while (static_cast<int>(featureHistory.size()) > windowFrames) {
@@ -203,15 +546,34 @@ void SomPaletteMod::update() {
 
   somPalette.update();
 
-  emit(SOURCE_RANDOM, createVec4(randomDistrib(randomGen)));
-  emit(SOURCE_RANDOM_LIGHT, createRandomLightVec4(randomDistrib(randomGen)));
-  emit(SOURCE_RANDOM_DARK, createRandomDarkVec4(randomDistrib(randomGen)));
-  emit(SOURCE_DARKEST, createVec4(0));
-  emit(SOURCE_LIGHTEST, createVec4(SomPalette::size - 1));
+  const float dt = 1.0f / ASSUMED_FPS;
 
-  // convert RGB -> RG (float2), upload into FBO texture, emit FBO
+  // Fade in from the first received sample.
+  if (firstSampleFrameCount < 0 || startupFadeSecsParameter.get() <= 0.0f) {
+    startupFadeFactor = (firstSampleFrameCount < 0) ? 0.0f : 1.0f;
+  } else {
+    const float fadeFrames = std::max(1.0f, startupFadeSecsParameter.get() * ASSUMED_FPS);
+    startupFadeFactor = ofClamp(static_cast<float>(paletteFrameCount - firstSampleFrameCount) / fadeFrames, 0.0f, 1.0f);
+  }
+
+  // Update long-memory chip set (Oklab) from the current palette chips.
   const ofFloatPixels& pixelsRef = somPalette.getPixelsRef();
+  if (pixelsRef.getWidth() > 0 && pixelsRef.getHeight() > 0) {
+    updatePersistentChips(dt);
+  }
+
+  emit(SOURCE_RANDOM, createRandomVec4());
+  emit(SOURCE_RANDOM_LIGHT, createRandomLightVec4());
+  emit(SOURCE_RANDOM_DARK, createRandomDarkVec4());
+  emit(SOURCE_DARKEST, createVec4(getPersistentDarkestIndex()));
+  emit(SOURCE_LIGHTEST, createVec4(getPersistentLightestIndex()));
+
+  updateChipsTexture();
+  updateNoveltyTexture();
+
   if (pixelsRef.getWidth() == 0 || pixelsRef.getHeight() == 0) return;
+
+  // convert RGB -> RG (float2), upload into float RG texture, emit texture
   ofFloatPixels converted = rgbToRG_Opponent(pixelsRef);
   ensureFieldTexture(converted.getWidth(), converted.getHeight());
   fieldTexture.loadData(converted);
@@ -219,16 +581,101 @@ void SomPaletteMod::update() {
 }
 
 glm::vec4 SomPaletteMod::createVec4(int i) {
-  ofFloatColor c = somPalette.getColor(i);
-  return { c.r, c.g, c.b, 1.0f };
+  const int clamped = ofClamp(i, 0, static_cast<int>(SomPalette::size - 1));
+  ofFloatColor c;
+
+  if (hasPersistentChips) {
+    c = persistentChipsRgb[static_cast<size_t>(clamped)];
+  } else {
+    c = ofFloatColor(somPalette.getColor(clamped));
+  }
+
+  const float f = startupFadeFactor;
+  return { c.r * f, c.g * f, c.b * f, f };
 }
 
-glm::vec4 SomPaletteMod::createRandomLightVec4(int i) {
-  return createVec4((SomPalette::size - 1) - i / 2);
+glm::vec4 SomPaletteMod::createRandomVec4() {
+  // Only "catch" novelty colors; don't bias the system to chase them.
+  // Once cached, we can occasionally emit them.
+  const float noveltyEmitChance = 0.35f;
+
+  if (!noveltyCache.empty() && random01Distrib(randomGen) < noveltyEmitChance) {
+    std::uniform_int_distribution<> dist(0, static_cast<int>(noveltyCache.size() - 1));
+    const auto& c = noveltyCache[static_cast<size_t>(dist(randomGen))].rgb;
+    const float f = startupFadeFactor;
+    return { c.r * f, c.g * f, c.b * f, f };
+  }
+
+  return createVec4(randomDistrib(randomGen));
 }
 
-glm::vec4 SomPaletteMod::createRandomDarkVec4(int i) {
-  return createVec4(i / 2);
+glm::vec4 SomPaletteMod::createRandomLightVec4() {
+  if (!hasPersistentChips) {
+    return createVec4((SomPalette::size - 1) - randomDistrib(randomGen) / 2);
+  }
+
+  // Occasionally emit a cached novelty color that falls in the light half.
+  const float noveltyEmitChance = 0.25f;
+  if (!noveltyCache.empty() && random01Distrib(randomGen) < noveltyEmitChance) {
+    const int lo = persistentIndicesByLightness[SomPalette::size / 2 - 1];
+    const int hi = persistentIndicesByLightness[SomPalette::size / 2];
+    const float midL = 0.5f
+      * (persistentChipsLab[static_cast<size_t>(lo)].L + persistentChipsLab[static_cast<size_t>(hi)].L);
+
+    int eligible[NOVELTY_CACHE_SIZE];
+    int count = 0;
+    for (int i = 0; i < static_cast<int>(noveltyCache.size()) && i < NOVELTY_CACHE_SIZE; ++i) {
+      if (noveltyCache[static_cast<size_t>(i)].lab.L >= midL) {
+        eligible[count++] = i;
+      }
+    }
+
+    if (count > 0) {
+      std::uniform_int_distribution<> dist(0, count - 1);
+      const auto& c = noveltyCache[static_cast<size_t>(eligible[dist(randomGen)])].rgb;
+      const float f = startupFadeFactor;
+      return { c.r * f, c.g * f, c.b * f, f };
+    }
+  }
+
+  const int offset = static_cast<int>(SomPalette::size / 2);
+  const int slot = offset + randomHalfDistrib(randomGen);
+  const int index = persistentIndicesByLightness[static_cast<size_t>(slot)];
+  return createVec4(index);
+}
+
+glm::vec4 SomPaletteMod::createRandomDarkVec4() {
+  if (!hasPersistentChips) {
+    return createVec4(randomDistrib(randomGen) / 2);
+  }
+
+  // Occasionally emit a cached novelty color that falls in the dark half.
+  const float noveltyEmitChance = 0.25f;
+  if (!noveltyCache.empty() && random01Distrib(randomGen) < noveltyEmitChance) {
+    const int lo = persistentIndicesByLightness[SomPalette::size / 2 - 1];
+    const int hi = persistentIndicesByLightness[SomPalette::size / 2];
+    const float midL = 0.5f
+      * (persistentChipsLab[static_cast<size_t>(lo)].L + persistentChipsLab[static_cast<size_t>(hi)].L);
+
+    int eligible[NOVELTY_CACHE_SIZE];
+    int count = 0;
+    for (int i = 0; i < static_cast<int>(noveltyCache.size()) && i < NOVELTY_CACHE_SIZE; ++i) {
+      if (noveltyCache[static_cast<size_t>(i)].lab.L < midL) {
+        eligible[count++] = i;
+      }
+    }
+
+    if (count > 0) {
+      std::uniform_int_distribution<> dist(0, count - 1);
+      const auto& c = noveltyCache[static_cast<size_t>(eligible[dist(randomGen)])].rgb;
+      const float f = startupFadeFactor;
+      return { c.r * f, c.g * f, c.b * f, f };
+    }
+  }
+
+  const int slot = randomHalfDistrib(randomGen);
+  const int index = persistentIndicesByLightness[static_cast<size_t>(slot)];
+  return createVec4(index);
 }
 
 void SomPaletteMod::draw() {
