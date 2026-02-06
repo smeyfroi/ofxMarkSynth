@@ -11,7 +11,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 #include <limits>
+#include <sstream>
 
 namespace ofxMarkSynth {
 
@@ -69,7 +71,8 @@ float oklabCost(const Oklab& a, const Oklab& b) {
   return dL * dL + da * da + db * db;
 }
 
-std::array<int, SomPalette::size> solveAssignment(const std::array<std::array<float, SomPalette::size>, SomPalette::size>& cost) {
+std::array<int, SomPalette::size> solveAssignment(
+  const std::array<std::array<float, SomPalette::size>, SomPalette::size>& cost) {
   constexpr int N = static_cast<int>(SomPalette::size);
   constexpr int FULL = 1 << N;
 
@@ -109,6 +112,54 @@ std::array<int, SomPalette::size> solveAssignment(const std::array<std::array<fl
   }
 
   return assignment;
+}
+
+std::string serializeOklabList(const Oklab* labs, size_t count) {
+  std::ostringstream ss;
+  ss << std::setprecision(9);
+  for (size_t i = 0; i < count; ++i) {
+    if (i > 0) ss << ';';
+    ss << labs[i].L << ',' << labs[i].a << ',' << labs[i].b;
+  }
+  return ss.str();
+}
+
+bool parseOklabTriple(const std::string& token, Oklab& out) {
+  std::stringstream ss(token);
+  std::string part;
+  float v[3];
+  int i = 0;
+
+  try {
+    while (i < 3 && std::getline(ss, part, ',')) {
+      v[i++] = std::stof(part);
+    }
+  } catch (...) {
+    return false;
+  }
+
+  if (i != 3) return false;
+  out = { v[0], v[1], v[2] };
+  return true;
+}
+
+bool parseOklabList(const std::string& s, std::vector<Oklab>& out, size_t maxCount) {
+  out.clear();
+
+  std::stringstream ss(s);
+  std::string token;
+  while (std::getline(ss, token, ';')) {
+    if (token.empty()) continue;
+    if (out.size() >= maxCount) break;
+
+    Oklab lab;
+    if (!parseOklabTriple(token, lab)) {
+      return false;
+    }
+    out.push_back(lab);
+  }
+
+  return !out.empty();
 }
 
 } // namespace
@@ -189,6 +240,85 @@ SomPaletteMod::~SomPaletteMod() {
   windowSecsParameter.removeListener(this, &SomPaletteMod::onWindowSecsParameterChanged);
   colorizerGrayGainParameter.removeListener(this, &SomPaletteMod::onColorizerParameterChanged);
   colorizerChromaGainParameter.removeListener(this, &SomPaletteMod::onColorizerParameterChanged);
+}
+
+Mod::UiState SomPaletteMod::captureUiState() const {
+  Mod::UiState state;
+  setUiStateBool(state, "visible", somPalette.isVisible());
+  return state;
+}
+
+void SomPaletteMod::restoreUiState(const Mod::UiState& state) {
+  const bool defaultVisible = somPalette.isVisible();
+  somPalette.setVisible(getUiStateBool(state, "visible", defaultVisible));
+}
+
+Mod::RuntimeState SomPaletteMod::captureRuntimeState() const {
+  Mod::RuntimeState state;
+
+  if (hasPersistentChips) {
+    state["persistentChipsLab"] = serializeOklabList(persistentChipsLab.data(), persistentChipsLab.size());
+  }
+
+  if (!noveltyCache.empty()) {
+    std::array<Oklab, NOVELTY_CACHE_SIZE> labs;
+    const size_t n = std::min<size_t>(noveltyCache.size(), NOVELTY_CACHE_SIZE);
+    for (size_t i = 0; i < n; ++i) {
+      labs[i] = noveltyCache[i].lab;
+    }
+    state["noveltyCacheLab"] = serializeOklabList(labs.data(), n);
+  }
+
+  return state;
+}
+
+void SomPaletteMod::restoreRuntimeState(const Mod::RuntimeState& state) {
+  bool restoredAny = false;
+
+  auto chipsIt = state.find("persistentChipsLab");
+  if (chipsIt != state.end() && !chipsIt->second.empty()) {
+    std::vector<Oklab> parsed;
+    if (parseOklabList(chipsIt->second, parsed, SomPalette::size) && parsed.size() == SomPalette::size) {
+      for (size_t i = 0; i < SomPalette::size; ++i) {
+        persistentChipsLab[i] = parsed[i];
+        persistentChipsRgb[i] = oklabToRgb(parsed[i]);
+      }
+      hasPersistentChips = true;
+      restoredAny = true;
+
+      for (size_t i = 0; i < SomPalette::size; ++i) {
+        persistentIndicesByLightness[i] = static_cast<int>(i);
+      }
+      std::sort(persistentIndicesByLightness.begin(), persistentIndicesByLightness.end(), [this](int a, int b) {
+        return persistentChipsLab[static_cast<size_t>(a)].L < persistentChipsLab[static_cast<size_t>(b)].L;
+      });
+    }
+  }
+
+  noveltyCache.clear();
+  pendingNovelty.clear();
+
+  auto noveltyIt = state.find("noveltyCacheLab");
+  if (noveltyIt != state.end() && !noveltyIt->second.empty()) {
+    std::vector<Oklab> parsed;
+    if (parseOklabList(noveltyIt->second, parsed, NOVELTY_CACHE_SIZE)) {
+      for (const auto& lab : parsed) {
+        noveltyCache.push_back(CachedNovelty { lab, oklabToRgb(lab), paletteFrameCount });
+      }
+      restoredAny = true;
+    }
+  }
+
+  // If we're restoring chips from a previous config, skip startup fade.
+  if (restoredAny) {
+    const float fadeFrames = std::max(1.0f, startupFadeSecsParameter.get() * ASSUMED_FPS);
+    paletteFrameCount = static_cast<int64_t>(std::round(fadeFrames));
+    firstSampleFrameCount = 0;
+    startupFadeFactor = 1.0f;
+
+    updateChipsTexture();
+    updateNoveltyTexture();
+  }
 }
 
 const ofTexture* SomPaletteMod::getActivePaletteTexturePtr() const {

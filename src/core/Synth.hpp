@@ -264,6 +264,12 @@ private:
   void captureModUiStateCache();
   void restoreModUiStateCache();
 
+  // Cache of per-Mod ephemeral runtime state, preserved across config reloads.
+  // Keyed by Mod name (global across configs).
+  std::unordered_map<std::string, Mod::RuntimeState> modRuntimeStateCache;
+  void captureModRuntimeStateCache();
+  void restoreModRuntimeStateCache();
+
   // >>> Layer system (delegated to helper class)
   std::unique_ptr<LayerController> layerController;
   // <<<

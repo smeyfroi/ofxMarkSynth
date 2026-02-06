@@ -120,11 +120,17 @@ class Mod : public std::enable_shared_from_this<Mod> {
 public:
   using ParamValueMap = std::unordered_map<std::string, std::string>;
   using UiState = std::unordered_map<std::string, std::string>;
+  using RuntimeState = std::unordered_map<std::string, std::string>;
 
   // Optional UI/debug state for preserving non-parameter toggles across config reloads.
   // This is keyed by Mod name in Synth and intentionally does not persist to disk.
   virtual UiState captureUiState() const { return {}; }
   virtual void restoreUiState(const UiState& state) { (void)state; }
+
+  // Optional ephemeral runtime state for preserving Mod continuity across config reloads.
+  // This is keyed by Mod name in Synth and intentionally does not persist to disk.
+  virtual RuntimeState captureRuntimeState() const { return {}; }
+  virtual void restoreRuntimeState(const RuntimeState& state) { (void)state; }
 
   static void setUiStateBool(UiState& state, const std::string& key, bool value) {
     state[key] = value ? "1" : "0";

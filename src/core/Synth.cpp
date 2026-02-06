@@ -377,6 +377,24 @@ void Synth::restoreModUiStateCache() {
   }
 }
 
+void Synth::captureModRuntimeStateCache() {
+  for (const auto& [modName, modPtr] : modPtrs) {
+    if (!modPtr) continue;
+    modRuntimeStateCache[modName] = modPtr->captureRuntimeState();
+  }
+}
+
+void Synth::restoreModRuntimeStateCache() {
+  for (const auto& [modName, modPtr] : modPtrs) {
+    if (!modPtr) continue;
+
+    auto it = modRuntimeStateCache.find(modName);
+    if (it == modRuntimeStateCache.end()) continue;
+
+    modPtr->restoreRuntimeState(it->second);
+  }
+}
+
 DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
   return layerController->addLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
 }
@@ -1148,6 +1166,9 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   // Preserve per-Mod debug/UI state by mod name.
   captureModUiStateCache();
 
+  // Preserve per-Mod runtime state by mod name.
+  captureModRuntimeStateCache();
+
   // Unload and reload
   unload();
   
@@ -1167,6 +1188,9 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
     return;
   }
   
+  // Restore per-Mod runtime state after reload.
+  restoreModRuntimeStateCache();
+
   // Restore per-Mod UI state after reload.
   restoreModUiStateCache();
 

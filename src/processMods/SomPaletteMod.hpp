@@ -1,4 +1,3 @@
-//  SomPaletteMod.hpp
 //  example_audio_palette
 //
 //  Created by Steve Meyfroidt on 06/05/2025.
@@ -31,16 +30,11 @@ public:
   void draw() override;
   bool keyPressed(int key) override;
 
-  UiState captureUiState() const override {
-    UiState state;
-    setUiStateBool(state, "visible", somPalette.isVisible());
-    return state;
-  }
+  UiState captureUiState() const override;
+  void restoreUiState(const UiState& state) override;
 
-  void restoreUiState(const UiState& state) override {
-    bool defaultVisible = somPalette.isVisible();
-    somPalette.setVisible(getUiStateBool(state, "visible", defaultVisible));
-  }
+  RuntimeState captureRuntimeState() const override;
+  void restoreRuntimeState(const RuntimeState& state) override;
 
   void receive(int sinkId, const glm::vec3& v) override;
   void receive(int sinkId, const float& v) override;
