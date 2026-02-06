@@ -37,7 +37,9 @@ void AudioDataSourceMod::initialise() {
     { "PolarSpectral2dPoint", SOURCE_POLAR_SPECTRAL_2D_POINTS },
     { "PitchScalar", SOURCE_PITCH_SCALAR },
     { "RmsScalar", SOURCE_RMS_SCALAR },
-    { "ComplexSpectralDifferenceScalar", SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR },
+
+    { "SpectralCentroidScalar", SOURCE_SPECTRAL_CENTROID_SCALAR },
+
     { "SpectralCrestScalar", SOURCE_SPECTRAL_CREST_SCALAR },
     { "ZeroCrossingRateScalar", SOURCE_ZERO_CROSSING_RATE_SCALAR },
     { "Onset1", SOURCE_ONSET1 },
@@ -54,8 +56,10 @@ void AudioDataSourceMod::initParameters() {
   parameters.add(maxPitchParameter);
   parameters.add(minRmsParameter);
   parameters.add(maxRmsParameter);
-  parameters.add(minComplexSpectralDifferenceParameter);
-  parameters.add(maxComplexSpectralDifferenceParameter);
+
+  parameters.add(minSpectralCentroidParameter);
+  parameters.add(maxSpectralCentroidParameter);
+
   parameters.add(minSpectralCrestParameter);
   parameters.add(maxSpectralCrestParameter);
   parameters.add(minZeroCrossingRateParameter);
@@ -104,43 +108,36 @@ void AudioDataSourceMod::emitPolarPitchRmsPoints() {
 }
 
 void AudioDataSourceMod::emitSpectral2DPoints() {
-//  float csd = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
-//                              maxComplexSpectralDifferenceParameter,
-//                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
-  float sc = getNormalisedAnalysisScalar(minSpectralCrestParameter,
-                              maxSpectralCrestParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
-  float zcr = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
-                              maxZeroCrossingRateParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
-//  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { csd, sc });
-  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { sc, zcr });
+  float centroid = getNormalisedAnalysisScalar(minSpectralCentroidParameter,
+                                               maxSpectralCentroidParameter,
+                                               ofxAudioAnalysisClient::AnalysisScalar::spectralCentroid);
+  float crest = getNormalisedAnalysisScalar(minSpectralCrestParameter,
+                                            maxSpectralCrestParameter,
+                                            ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+  emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { centroid, crest });
 }
 
 void AudioDataSourceMod::emitPolarSpectral2DPoints() {
-//  float csd = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
-//                              maxComplexSpectralDifferenceParameter,
-//                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
-  float sc = getNormalisedAnalysisScalar(minSpectralCrestParameter,
-                              maxSpectralCrestParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
-  float zcr = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
-                              maxZeroCrossingRateParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
-//  emit(SOURCE_POLAR_SPECTRAL_2D_POINTS, glm::vec2 { csd, sc });
-  emit(SOURCE_POLAR_SPECTRAL_2D_POINTS, normalisedAngleLengthToPolar(sc, zcr));
+  float centroid = getNormalisedAnalysisScalar(minSpectralCentroidParameter,
+                                               maxSpectralCentroidParameter,
+                                               ofxAudioAnalysisClient::AnalysisScalar::spectralCentroid);
+  float crest = getNormalisedAnalysisScalar(minSpectralCrestParameter,
+                                            maxSpectralCrestParameter,
+                                            ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+  emit(SOURCE_POLAR_SPECTRAL_2D_POINTS, normalisedAngleLengthToPolar(centroid, crest));
 }
 
+
 void AudioDataSourceMod::emitSpectral3DPoints() {
-  float x = getNormalisedAnalysisScalar(minComplexSpectralDifferenceParameter,
-                              maxComplexSpectralDifferenceParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+  float x = getNormalisedAnalysisScalar(minSpectralCentroidParameter,
+                                        maxSpectralCentroidParameter,
+                                        ofxAudioAnalysisClient::AnalysisScalar::spectralCentroid);
   float y = getNormalisedAnalysisScalar(minSpectralCrestParameter,
-                              maxSpectralCrestParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+                                        maxSpectralCrestParameter,
+                                        ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
   float z = getNormalisedAnalysisScalar(minZeroCrossingRateParameter,
-                              maxZeroCrossingRateParameter,
-                              ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
+                                        maxZeroCrossingRateParameter,
+                                        ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate);
   emit(SOURCE_SPECTRAL_3D_POINTS, glm::vec3 { x, y, z });
 }
 
@@ -184,10 +181,11 @@ void AudioDataSourceMod::update() {
         emitScalar(SOURCE_RMS_SCALAR, minRmsParameter, maxRmsParameter,
                    ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
         break;
-      case SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR:
-        emitScalar(SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR, minComplexSpectralDifferenceParameter,
-                   maxComplexSpectralDifferenceParameter,
-                   ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference);
+      case SOURCE_SPECTRAL_CENTROID_SCALAR:
+        emitScalar(SOURCE_SPECTRAL_CENTROID_SCALAR,
+                   minSpectralCentroidParameter,
+                   maxSpectralCentroidParameter,
+                   ofxAudioAnalysisClient::AnalysisScalar::spectralCentroid);
         break;
       case SOURCE_SPECTRAL_CREST_SCALAR:
         emitScalar(SOURCE_SPECTRAL_CREST_SCALAR, minSpectralCrestParameter, maxSpectralCrestParameter,

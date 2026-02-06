@@ -22,4 +22,5 @@ ofxSelfOrganizingMap
 ofxSomPalette
 ofxTimeMeasurements
 ofxTinyEXR
+ofxFontStash2
 ofxMarkSynth

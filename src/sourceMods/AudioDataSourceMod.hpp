@@ -55,7 +55,7 @@ public:
   static constexpr int SOURCE_POLAR_SPECTRAL_2D_POINTS = 7;
   static constexpr int SOURCE_PITCH_SCALAR = 10;
   static constexpr int SOURCE_RMS_SCALAR = 11;
-  static constexpr int SOURCE_COMPLEX_SPECTRAL_DIFFERENCE_SCALAR = 12;
+  static constexpr int SOURCE_SPECTRAL_CENTROID_SCALAR = 12;
   static constexpr int SOURCE_SPECTRAL_CREST_SCALAR = 13;
   static constexpr int SOURCE_ZERO_CROSSING_RATE_SCALAR = 14;
   static constexpr int SOURCE_ONSET1 = 20;
@@ -68,6 +68,7 @@ protected:
 private:
   void initialise();
 
+
   std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClientPtr;
   std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
   std::shared_ptr<ofxAudioData::Plots> audioDataPlotsPtr;
@@ -79,16 +80,19 @@ private:
   // https://en.wikipedia.org/wiki/Template:Vocal_and_instrumental_pitch_ranges
   // Baseline defaults (frozen): tuned against prerecorded WAV baseline.
   // Ranges remain intentionally wide so we can re-tune later if needed.
-  ofParameter<float> minPitchParameter { "MinPitch", 50.0, 0.0, 2000.0 };
-  ofParameter<float> maxPitchParameter { "MaxPitch", 400.0, 0.0, 6000.0 }; // C8 is ~4400.0 Hz
-  ofParameter<float> minRmsParameter { "MinRms", 0.0, 0.0, 1.0 };
-  ofParameter<float> maxRmsParameter { "MaxRms", 0.10, 0.0, 1.0 };
-  ofParameter<float> minComplexSpectralDifferenceParameter { "MinComplexSpectralDifference", 5.0, 0.0, 10000.0 };
-  ofParameter<float> maxComplexSpectralDifferenceParameter { "MaxComplexSpectralDifference", 150.0, 0.0, 10000.0 };
-  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 20.0, 0.0, 5000.0 };
-  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 200.0, 0.0, 5000.0 };
-  ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 5.0, 0.0, 500.0 };
-  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 40.0, 0.0, 500.0 };
+  ofParameter<float> minPitchParameter { "MinPitch", 60.0, 0.0, 2000.0 };
+  ofParameter<float> maxPitchParameter { "MaxPitch", 440.0, 0.0, 6000.0 }; // C8 is ~4400.0 Hz
+  ofParameter<float> minRmsParameter { "MinRms", 0.01, 0.0, 1.0 };
+  ofParameter<float> maxRmsParameter { "MaxRms", 0.14, 0.0, 1.0 };
+
+  // Spectral centroid (Gist returns this as a bin index, not Hz).
+  ofParameter<float> minSpectralCentroidParameter { "MinSpectralCentroid", 25.0, 0.0, 100.0 };
+  ofParameter<float> maxSpectralCentroidParameter { "MaxSpectralCentroid", 35.0, 0.0, 100.0 };
+
+  ofParameter<float> minSpectralCrestParameter { "MinSpectralCrest", 90.0, 0.0, 5000.0 };
+  ofParameter<float> maxSpectralCrestParameter { "MaxSpectralCrest", 170.0, 0.0, 5000.0 };
+  ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 12.0, 0.0, 500.0 };
+  ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 32.0, 0.0, 500.0 };
 
   float getNormalisedAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();

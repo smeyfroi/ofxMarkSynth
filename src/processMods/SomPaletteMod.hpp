@@ -1,4 +1,3 @@
-//
 //  SomPaletteMod.hpp
 //  example_audio_palette
 //
@@ -7,19 +6,18 @@
 
 #pragma once
 
+#include <deque>
 #include <random>
 #include <vector>
+
 #include "ofxGui.h"
 #include "core/Mod.hpp"
 #include "ofxContinuousSomPalette.hpp"
-//#include "core/ParamController.h"
-
 
 namespace ofxMarkSynth {
 
-
 class SomPaletteMod : public Mod {
-  
+
 public:
   SomPaletteMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config);
   ~SomPaletteMod();
@@ -45,8 +43,7 @@ public:
   void applyIntent(const Intent& intent, float strength) override;
   const ofTexture* getActivePaletteTexturePtr() const;
   const ofTexture* getNextPaletteTexturePtr() const;
-  
-  
+
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SINK_SWITCH_PALETTE = 100;
   static constexpr int SOURCE_RANDOM = 2; // RGBA float color as vec4
@@ -55,32 +52,46 @@ public:
   static constexpr int SOURCE_DARKEST = 10; // RGBA float color as vec4
   static constexpr int SOURCE_LIGHTEST = 11; // RGBA float color as vec4
   static constexpr int SOURCE_FIELD = 1; // SOM as float field in RG pixels converted from RGB
-  
+
   void onIterationsParameterChanged(float& value);
-  
+  void onColorizerParameterChanged(float& value);
+  void onWindowSecsParameterChanged(float& value);
+
 protected:
   void initParameters() override;
-  
+
 private:
-  //  ofParameter<float> learningRateParameter { "LearningRate", 0.01, 0.0, 1.0 };
-  //  IntentParamController<float> learningRateController { learningRateParameter };
-  ofParameter<float> iterationsParameter { "Iterations", 2000.0, 100.0, 10000.0 };
-  //  IntentParamController<float> iterationsController { iterationsParameter };
-  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0, 0.0, 1.0 };
-  
-  ContinuousSomPalette somPalette { 16, 16, 0.02 };
-  
+  // Number of SOM training iterations per palette.
+  // At 30fps and `TrainingStepsPerFrame` steps, time-to-converge ~= Iterations / (fps*steps).
+  ofParameter<float> iterationsParameter { "Iterations", 4500.0f, 300.0f, 20000.0f };
+
+  // Sliding timbre window length.
+  ofParameter<float> windowSecsParameter { "WindowSecs", 15.0f, 2.0f, 60.0f };
+
+  // Training multiplier: number of samples drawn from the sliding window per frame.
+  ofParameter<int> trainingStepsPerFrameParameter { "TrainingStepsPerFrame", 10, 1, 40 };
+
+  ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0f, 0.0f, 1.0f };
+
+  ofParameter<float> colorizerGrayGainParameter { "ColorizerGrayGain", 0.8f, 0.0f, 2.0f };
+  ofParameter<float> colorizerChromaGainParameter { "ColorizerChromaGain", 2.2f, 0.0f, 4.0f };
+
+  ContinuousSomPalette somPalette { 8, 8, 0.012f };
+
+  // Feature history (last `WindowSecs` at ~30fps).
+  int windowFrames { 450 };
+  std::deque<glm::vec3> featureHistory;
+
   std::vector<glm::vec3> newVecs;
-  
+
   ofTexture fieldTexture; // RG float texture converted from RGB float pixels of the SOM
   void ensureFieldTexture(int w, int h);
-  
+
   std::ranlux24_base randomGen { 0 }; // fast generator with fixed seed
   std::uniform_int_distribution<> randomDistrib { 0, SomPalette::size - 1 };
   glm::vec4 createVec4(int i);
   glm::vec4 createRandomLightVec4(int i);
   glm::vec4 createRandomDarkVec4(int i);
 };
-
 
 } // ofxMarkSynth

@@ -2158,7 +2158,7 @@ void Gui::drawAudioInspector() {
   const ScalarRowDef rows[] = {
     {"Pitch", ofxAudioAnalysisClient::AnalysisScalar::pitch, "MinPitch", "MaxPitch", 1.0f},
     {"RMS", ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare, "MinRms", "MaxRms", 0.0005f},
-    {"CSD", ofxAudioAnalysisClient::AnalysisScalar::complexSpectralDifference, "MinComplexSpectralDifference", "MaxComplexSpectralDifference", 1.0f},
+    {"Centroid", ofxAudioAnalysisClient::AnalysisScalar::spectralCentroid, "MinSpectralCentroid", "MaxSpectralCentroid", 1.0f},
     {"Crest", ofxAudioAnalysisClient::AnalysisScalar::spectralCrest, "MinSpectralCrest", "MaxSpectralCrest", 0.5f},
     {"ZCR", ofxAudioAnalysisClient::AnalysisScalar::zeroCrossingRate, "MinZeroCrossingRate", "MaxZeroCrossingRate", 0.5f},
   };
@@ -2294,6 +2294,49 @@ void Gui::drawAudioInspector() {
 
     ImGui::EndTable();
   }
+
+  ImGui::Separator();
+  ImGui::TextUnformatted("Tune detectors");
+
+  auto dragFloatParam = [&](const char* key, float& value, float speed, float min, float max, const char* fmt, ImGuiSliderFlags flags = 0) {
+    if (ImGui::DragFloat(key, &value, speed, min, max, fmt, flags)) {
+      if (auto p = audioModPtr->findParameterByNamePrefix(key)) {
+        p->get().cast<float>().set(value);
+        value = p->get().cast<float>().get();
+      }
+    }
+  };
+
+  float onsetThreshold = processorPtr->getOnsetThreshold();
+  float onsetCooldown = processorPtr->getOnsetCooldownTotal();
+  float onsetSpectralScale = 0.05f;
+  if (auto p = audioModPtr->findParameterByNamePrefix("OnsetSpectralScale")) {
+    onsetSpectralScale = p->get().cast<float>().get();
+  }
+  float onsetEnergyScale = 0.01f;
+  if (auto p = audioModPtr->findParameterByNamePrefix("OnsetEnergyScale")) {
+    onsetEnergyScale = p->get().cast<float>().get();
+  }
+
+  float timbreThreshold = processorPtr->getTimbreThreshold();
+  float timbreCooldown = processorPtr->getTimbreCooldownTotal();
+
+  float pitchThreshold = processorPtr->getPitchThreshold();
+  float pitchCooldown = processorPtr->getPitchCooldownTotal();
+
+  // Thresholds are usually in a compact range; scales benefit from log control.
+  dragFloatParam("OnsetThreshold", onsetThreshold, 0.05f, 0.5f, 20.0f, "%.3f");
+  dragFloatParam("OnsetSpectralScale", onsetSpectralScale, 0.001f, 1.0e-5f, 10.0f, "%.6g", ImGuiSliderFlags_Logarithmic);
+  dragFloatParam("OnsetEnergyScale", onsetEnergyScale, 0.001f, 1.0e-5f, 10.0f, "%.6g", ImGuiSliderFlags_Logarithmic);
+  dragFloatParam("OnsetCooldownSecs", onsetCooldown, 0.1f, 0.0f, 30.0f, "%.2f");
+
+  ImGui::Separator();
+  dragFloatParam("TimbreThreshold", timbreThreshold, 0.05f, 0.5f, 5.0f, "%.3f");
+  dragFloatParam("TimbreCooldownSecs", timbreCooldown, 0.1f, 0.0f, 30.0f, "%.2f");
+
+  ImGui::Separator();
+  dragFloatParam("PitchThreshold", pitchThreshold, 0.05f, 0.5f, 5.0f, "%.3f");
+  dragFloatParam("PitchCooldownSecs", pitchCooldown, 0.1f, 0.0f, 30.0f, "%.2f");
 }
 
 void Gui::drawVideoInspector() {
