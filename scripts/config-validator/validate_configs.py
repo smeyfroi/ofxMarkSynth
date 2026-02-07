@@ -994,6 +994,44 @@ def validate_policy_improvisation1(
                     "BackgroundColour connection present but no SomPalette mod exists (Improvisation1 requires SomPalette)"
                 )
 
+    # Config version policy (Improvisation1): configs should be version 1.1.
+    version = config.get("version")
+    if version != "1.1":
+        warnings.append(f"Config version is {version!r}; expected '1.1'")
+
+    # Initial intent policy (Improvisation1): start with no intent active.
+    synth_cfg = config.get("synth", {})
+    if not isinstance(synth_cfg, dict):
+        synth_cfg = {}
+    init_intent = synth_cfg.get("initialIntent", {})
+    if not isinstance(init_intent, dict):
+        init_intent = {}
+
+    init_strength = _safe_float(init_intent.get("strength"))
+    if init_strength is None:
+        warnings.append(
+            "synth.initialIntent.strength missing/non-numeric; expected 0.0"
+        )
+    elif init_strength != 0.0:
+        errors.append(
+            f"synth.initialIntent.strength={init_strength} must be 0.0 (start with no intent active)"
+        )
+
+    init_acts = init_intent.get("activations")
+    if not isinstance(init_acts, list) or not init_acts:
+        warnings.append(
+            "synth.initialIntent.activations missing/invalid; expected all zeros"
+        )
+    else:
+        non_zero = [
+            i for i, v in enumerate(init_acts) if _safe_float(v) not in (None, 0.0)
+        ]
+        if non_zero:
+            errors.append(
+                "synth.initialIntent.activations must be all zeros; non-zero indices: "
+                + ",".join(str(i) for i in non_zero)
+            )
+
     # Visibility floors (Improvisation1 policy): row-specific minima for substrate layers.
     # Only enforce if the layer is drawn and defines alpha.
     layer_alpha_mins_by_row: Dict[int, Dict[str, float]] = {

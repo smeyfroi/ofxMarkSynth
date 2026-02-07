@@ -435,8 +435,10 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
   // Validate version
   if (j.contains("version") && j["version"].is_string()) {
     std::string version = j["version"];
-    if (version != "1.0") {
-      ofLogWarning("SynthConfigSerializer") << "Config version " << version << " may not be compatible (expected 1.0)";
+    // Backward-compatible: accept 1.0 and 1.1 (Improvisation1 configs are now 1.1).
+    if (version != "1.1" && version != "1.0") {
+      ofLogWarning("SynthConfigSerializer") << "Config version " << version
+          << " may not be compatible (expected 1.1 or 1.0)";
     }
   }
 
