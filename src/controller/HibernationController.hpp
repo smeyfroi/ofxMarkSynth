@@ -26,12 +26,13 @@ public:
     class CompleteEvent : public ofEventArgs {
     public:
         float fadeDuration;
-        std::string synthName;
+        std::string configId;
     };
     ofEvent<CompleteEvent> completeEvent;
 
-    HibernationController(const std::string& synthName, bool startHibernated);
+    HibernationController(bool startHibernated);
 
+    void setConfigId(const std::string& configId_);
     /// Begin fade to black (or reverse fade-in). Returns true if state changed.
     bool hibernate();
 
@@ -61,8 +62,8 @@ public:
     const ofParameter<float>& getFadeInDurationParameter() const;
 
 private:
-    std::string synthName;
-    State state;
+     std::string configId;
+     State state;
     float alpha;
     float fadeStartTime;
     float fadeStartAlpha;  // Alpha when fade started (for reversing mid-fade)

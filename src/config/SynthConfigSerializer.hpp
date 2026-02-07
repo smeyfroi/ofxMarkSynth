@@ -41,7 +41,7 @@ private:
   using OrderedJson = nlohmann::ordered_json;
   
   // Parse JSON and populate Synth
-  static bool fromJson(const OrderedJson& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& synthName);
+  static bool fromJson(const OrderedJson& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& configId);
   
   // Helper functions for parsing specific sections
   static NamedLayers parseDrawingLayers(const OrderedJson& j, std::shared_ptr<Synth> synth);

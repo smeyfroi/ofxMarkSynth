@@ -236,7 +236,7 @@ protected:
 
 private:
   // Constructor helpers
-  void initControllers(const std::string& name, bool startHibernated);
+  void initControllers(bool startHibernated);
   void initRendering(glm::vec2 compositeSize);
   void initResourcePaths();
   void initPerformanceNavigator();

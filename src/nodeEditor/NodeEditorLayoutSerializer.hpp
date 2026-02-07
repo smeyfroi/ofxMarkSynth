@@ -24,21 +24,19 @@ class NodeEditorLayoutSerializer {
 public:
     // Save layout to file
     static bool save(const NodeEditorModel& model,
-                   const std::string& synthName,
                    const std::string& configPath);
     
     // Load layout from file
     static bool load(NodeEditorModel& model,
-                   const std::string& synthName,
                    const std::string& configPath);
     
     // Check if layout file exists
-    static bool exists(const std::string& synthName,
-                     const std::string& configPath);
+    static bool exists(const std::string& configPath);
+
     
     // Get file path for synth
-    static std::string getLayoutFilePath(const std::string& synthName,
-                                      const std::string& configPath);
+    static std::string getLayoutFilePath(const std::string& configPath);
+
     
 private:
     // Serialize to JSON

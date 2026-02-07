@@ -1272,7 +1272,7 @@ void Gui::drawNodeEditor() {
         layoutComputed = true;
         animateLayout = false; // Don't animate if we loaded positions
         layoutNeedsSave = false;  // Reset dirty flag after load
-        ofLogNotice("Gui") << "Auto-loaded node layout for: " << synthPtr->name;
+        ofLogNotice("Gui") << "Auto-loaded node layout for config: " << synthPtr->getCurrentConfigId();
       }
     } else {
       // No stored layout: generate a deterministic layout immediately and persist it.
@@ -1283,7 +1283,7 @@ void Gui::drawNodeEditor() {
       layoutNeedsSave = false;
 
       if (nodeEditorModel.saveLayout()) {
-        ofLogNotice("Gui") << "Auto-generated and saved node layout for: " << synthPtr->name;
+        ofLogNotice("Gui") << "Auto-generated and saved node layout for config: " << synthPtr->getCurrentConfigId();
       }
     }
   }
@@ -1419,7 +1419,7 @@ void Gui::drawNodeEditor() {
     float elapsed = ofGetElapsedTimef() - layoutChangeTime;
     if (elapsed >= AUTO_SAVE_DELAY) {
       if (nodeEditorModel.saveLayout()) {
-        ofLogNotice("Gui") << "Auto-saved node layout for: " << synthPtr->name;
+        ofLogNotice("Gui") << "Auto-saved node layout for config: " << synthPtr->getCurrentConfigId();
       }
       layoutNeedsSave = false;
     }

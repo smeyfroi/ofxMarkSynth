@@ -29,7 +29,7 @@ void ofApp::setup() {
   synthPtr->loadFromConfig(ofToDataPath("2.json"));
   synthPtr->configureGui(nullptr); // nullptr == no imgui window
 
-  ofAddListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);
+  ofAddListener(synthPtr->getHibernationCompleteEvent(), this, &ofApp::onSynthHibernationComplete);
 
   // No imgui; we manage an ofxGui here instead
   parameters.add(synthPtr->getParameterGroup());
@@ -102,7 +102,7 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 }
 
 //--------------------------------------------------------------
-void ofApp::onSynthHibernationComplete(ofxMarkSynth::Synth::HibernationCompleteEvent& e){
-  ofLogNotice("ofApp") << "Hibernation complete! Duration: " << e.fadeDuration 
-                       << "s, Synth: " << e.synthName;
+void ofApp::onSynthHibernationComplete(ofxMarkSynth::HibernationController::CompleteEvent& e){
+  ofLogNotice("ofApp") << "Hibernation complete! Duration: " << e.fadeDuration
+                       << "s, Config: " << e.configId;
 }

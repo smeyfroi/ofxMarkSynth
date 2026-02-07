@@ -117,7 +117,8 @@ void NodeEditorModel::syncPositionsFromImNodes() {
 
 bool NodeEditorModel::saveLayout() {
   if (!layoutEnginePtr) return false;
-  bool success = NodeEditorLayoutSerializer::save(*this, synthPtr->name, synthPtr->getCurrentConfigPath());
+  if (!synthPtr || synthPtr->getCurrentConfigPath().empty()) return false;
+  bool success = NodeEditorLayoutSerializer::save(*this, synthPtr->getCurrentConfigPath());
   if (success) {
     snapshotPositions();  // Update snapshot after successful save
   }
@@ -126,7 +127,8 @@ bool NodeEditorModel::saveLayout() {
 
 bool NodeEditorModel::loadLayout() {
   if (!layoutEnginePtr) return false;
-  bool success = NodeEditorLayoutSerializer::load(*this, synthPtr->name, synthPtr->getCurrentConfigPath());
+  if (!synthPtr || synthPtr->getCurrentConfigPath().empty()) return false;
+  bool success = NodeEditorLayoutSerializer::load(*this, synthPtr->getCurrentConfigPath());
   if (success) {
     snapshotPositions();  // Update snapshot after successful load
   }
@@ -135,7 +137,8 @@ bool NodeEditorModel::loadLayout() {
 
 bool NodeEditorModel::hasStoredLayout() const {
   if (!layoutEnginePtr) return false;
-  return NodeEditorLayoutSerializer::exists(synthPtr->name, synthPtr->getCurrentConfigPath());
+  if (!synthPtr || synthPtr->getCurrentConfigPath().empty()) return false;
+  return NodeEditorLayoutSerializer::exists(synthPtr->getCurrentConfigPath());
 }
 
 bool NodeEditorModel::hasPositionsChanged() const {

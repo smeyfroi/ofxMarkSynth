@@ -159,7 +159,7 @@ paused { startHibernated },  // Start paused if hibernated
 resources { std::move(resources_) },
 audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
-  initControllers(name_, startHibernated);
+  initControllers(startHibernated);
   initRendering(compositeSize_);
   initResourcePaths();
   initPerformanceNavigator();
@@ -169,8 +169,8 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   registerControllerForSource(backgroundColorParameter, backgroundColorController);
 }
 
-void Synth::initControllers(const std::string& name, bool startHibernated) {
-  hibernationController = std::make_unique<HibernationController>(name, startHibernated);
+void Synth::initControllers(bool startHibernated) {
+  hibernationController = std::make_unique<HibernationController>(startHibernated);
   timeTracker = std::make_unique<TimeTracker>();
   configTransitionManager = std::make_unique<ConfigTransitionManager>();
   intentController = std::make_unique<IntentController>();
@@ -354,6 +354,9 @@ void Synth::unload() {
 
   // 5) Clear current config path
   currentConfigPath.clear();
+  if (hibernationController) {
+    hibernationController->setConfigId({});
+  }
 
   // 6) Clear performer cues
   performerCues = {};
@@ -655,20 +658,24 @@ void Synth::update() {
   // - No overlap: only when saver is fully idle
   if (AUTO_SNAPSHOTS_ENABLED &&
       !paused &&
+      !currentConfigPath.empty() &&
       hibernationController && !hibernationController->isHibernating() &&
       imageSaver &&
       !pendingImageSave) {
 
-    imageSaver->requestAutoSaveIfDue(
-        compositeRenderer->getCompositeFbo(),
-        getClockTimeSinceFirstRun(),
-        AUTO_SNAPSHOTS_INTERVAL_SEC,
-        AUTO_SNAPSHOTS_JITTER_SEC,
-        [this]() {
-          std::string timestamp = ofGetTimestampString();
-          return Synth::saveArtefactFilePath(
-              AUTO_SNAPSHOTS_FOLDER_NAME + "/" + name + "/drawing-" + timestamp + ".exr");
-        });
+    const std::string configId = getCurrentConfigId();
+    if (!configId.empty()) {
+      imageSaver->requestAutoSaveIfDue(
+          compositeRenderer->getCompositeFbo(),
+          getClockTimeSinceFirstRun(),
+          AUTO_SNAPSHOTS_INTERVAL_SEC,
+          AUTO_SNAPSHOTS_JITTER_SEC,
+          [configId]() {
+            std::string timestamp = ofGetTimestampString();
+            return Synth::saveArtefactFilePath(
+                AUTO_SNAPSHOTS_FOLDER_NAME + "/" + configId + "/drawing-" + timestamp + ".exr");
+          });
+    }
   }
 
   // Update memory bank controller (process pending saves, auto-capture, save-all requests)
@@ -802,14 +809,21 @@ void Synth::toggleRecording() {
       audioAnalysisClientPtr->stopSegmentRecording();
     }
   } else {
+    const std::string configId = getCurrentConfigId();
+    if (configId.empty()) {
+      ofLogError("Synth") << "toggleRecording: no config loaded";
+      return;
+    }
+
     std::string timestamp = ofGetTimestampString();
     std::string videoPath = Synth::saveArtefactFilePath(
-        VIDEOS_FOLDER_NAME + "/" + name + "/drawing-" + timestamp + ".mp4");
+        VIDEOS_FOLDER_NAME + "/" + configId + "/drawing-" + timestamp + ".mp4");
     
     // Start audio segment recording with matching timestamp
     if (audioAnalysisClientPtr) {
-      std::string audioPath = Synth::saveArtefactFilePath(
-          VIDEOS_FOLDER_NAME + "/" + name + "/audio-" + timestamp + ".wav");
+       std::string audioPath = Synth::saveArtefactFilePath(
+           VIDEOS_FOLDER_NAME + "/" + configId + "/audio-" + timestamp + ".wav");
+
       audioAnalysisClientPtr->startSegmentRecording(audioPath);
     }
     
@@ -821,9 +835,15 @@ void Synth::toggleRecording() {
 void Synth::saveImage() {
   // Defer save to next update() - PBO bind happens right after composite is rendered
   // This avoids GPU stalls from binding PBO at arbitrary points in the frame
+  const std::string configId = getCurrentConfigId();
+  if (configId.empty()) {
+    ofLogError("Synth") << "saveImage: no config loaded";
+    return;
+  }
+
   std::string timestamp = ofGetTimestampString();
   pendingImageSavePath = Synth::saveArtefactFilePath(
-      SNAPSHOTS_FOLDER_NAME + "/" + name + "/drawing-" + timestamp + ".exr");
+      SNAPSHOTS_FOLDER_NAME + "/" + configId + "/drawing-" + timestamp + ".exr");
   pendingImageSave = true;
 }
 
@@ -1033,6 +1053,9 @@ bool Synth::loadFromConfig(const std::string& filepath) {
 
   if (success) {
     currentConfigPath = filepath;
+    if (hibernationController) {
+      hibernationController->setConfigId(getCurrentConfigId());
+    }
     ofLogNotice("Synth") << "Successfully loaded config from: " << filepath;
 
     // Load global memories once (on first config load)

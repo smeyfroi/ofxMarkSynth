@@ -24,42 +24,47 @@ namespace ofxMarkSynth {
 
 constexpr const char* LAYOUT_FOLDER_NAME = "node-layout";
 
-static std::string getConfigBasenameKey(const std::string& configPath, const std::string& synthName) {
-  if (!configPath.empty()) {
-    std::filesystem::path p(configPath);
-    auto stem = p.stem().string();
-    if (!stem.empty()) return stem;
-  }
-  return synthName;
+static std::string getConfigIdKey(const std::string& configPath) {
+  if (configPath.empty()) return {};
+
+  std::filesystem::path p(configPath);
+  if (!p.has_stem()) return {};
+
+  return p.stem().string();
 }
 
-static std::string getPreferredLayoutFilePath(const std::string& synthName, const std::string& configPath) {
-  const std::string key = getConfigBasenameKey(configPath, synthName);
+static std::string getPreferredLayoutFilePath(const std::string& configPath) {
+  const std::string key = getConfigIdKey(configPath);
+  if (key.empty()) return {};
+
   return Synth::saveConfigFilePath(std::string(LAYOUT_FOLDER_NAME) + "/" + key + "/layout.json");
 }
 
 
 
 
-std::string NodeEditorLayoutSerializer::getLayoutFilePath(const std::string& synthName,
-                                                    const std::string& configPath) {
-  return getPreferredLayoutFilePath(synthName, configPath);
+std::string NodeEditorLayoutSerializer::getLayoutFilePath(const std::string& configPath) {
+  return getPreferredLayoutFilePath(configPath);
 }
 
-bool NodeEditorLayoutSerializer::exists(const std::string& synthName,
-                                    const std::string& configPath) {
-  std::string preferred = getPreferredLayoutFilePath(synthName, configPath);
+bool NodeEditorLayoutSerializer::exists(const std::string& configPath) {
+  std::string preferred = getPreferredLayoutFilePath(configPath);
+  if (preferred.empty()) return false;
+
   return std::filesystem::exists(preferred);
 }
+
 
 nlohmann::json NodeEditorLayoutSerializer::toJson(const NodeEditorModel& model) {
   nlohmann::json j;
   
   // Metadata
-  j["version"] = "1.0";
-  j["synth_name"] = model.synthPtr->name;
+  j["version"] = "1.1";
   if (model.synthPtr) {
-    j["config_basename"] = getConfigBasenameKey(model.synthPtr->getCurrentConfigPath(), model.synthPtr->name);
+    const std::string configId = getConfigIdKey(model.synthPtr->getCurrentConfigPath());
+    if (!configId.empty()) {
+      j["config_id"] = configId;
+    }
   }
   j["timestamp"] = ofGetTimestampString();
   
@@ -83,15 +88,18 @@ nlohmann::json NodeEditorLayoutSerializer::toJson(const NodeEditorModel& model) 
 }
 
 bool NodeEditorLayoutSerializer::save(const NodeEditorModel& model,
-                                       const std::string& synthName,
-                                       const std::string& configPath) {
+                                        const std::string& configPath) {
   if (!model.synthPtr) {
     ofLogError("NodeEditorLayoutSerializer") << "No synth in model";
     return false;
   }
   
   try {
-    std::string filepath = getPreferredLayoutFilePath(synthName, configPath);
+    std::string filepath = getPreferredLayoutFilePath(configPath);
+    if (filepath.empty()) {
+      ofLogError("NodeEditorLayoutSerializer") << "No config loaded; cannot save layout";
+      return false;
+    }
 
     std::filesystem::path dir = std::filesystem::path(filepath).parent_path();
     std::filesystem::create_directories(dir);
@@ -115,8 +123,11 @@ bool NodeEditorLayoutSerializer::save(const NodeEditorModel& model,
 
 void NodeEditorLayoutSerializer::fromJson(const nlohmann::json& j,
                                           NodeEditorModel& model) {
-  if (j.contains("version") && j["version"] != "1.0") {
-    ofLogWarning("NodeEditorLayoutSerializer") << "Version mismatch";
+  if (j.contains("version") && j["version"].is_string()) {
+    const std::string version = j["version"].get<std::string>();
+    if (version != "1.0" && version != "1.1") {
+      ofLogWarning("NodeEditorLayoutSerializer") << "Version mismatch";
+    }
   }
   
   // Load node positions
@@ -126,7 +137,7 @@ void NodeEditorLayoutSerializer::fromJson(const nlohmann::json& j,
   }
   
   std::unordered_map<std::string, glm::vec2> savedPositions;
-  
+
   for (const auto& nodeJson : j["nodes"]) {
     std::string modName = nodeJson["name"];
     glm::vec2 pos;
@@ -134,13 +145,14 @@ void NodeEditorLayoutSerializer::fromJson(const nlohmann::json& j,
     pos.y = nodeJson["position"]["y"];
     savedPositions[modName] = pos;
   }
-  
+
   // Apply saved positions to nodes in model
   for (auto& node : model.nodes) {
     std::string name = node.getName();
     int id = node.getId();
 
     auto it = savedPositions.find(name);
+
     if (it != savedPositions.end()) {
       node.position = it->second;
       // Also set in imnodes
@@ -150,14 +162,17 @@ void NodeEditorLayoutSerializer::fromJson(const nlohmann::json& j,
 }
 
 bool NodeEditorLayoutSerializer::load(NodeEditorModel& model,
-                                       const std::string& synthName,
-                                       const std::string& configPath) {
+                                        const std::string& configPath) {
   if (!model.synthPtr) {
     ofLogError("NodeEditorLayoutSerializer") << "No synth in model";
     return false;
   }
   
-  std::string filepath = getPreferredLayoutFilePath(synthName, configPath);
+  std::string filepath = getPreferredLayoutFilePath(configPath);
+  if (filepath.empty()) {
+    ofLogError("NodeEditorLayoutSerializer") << "No config loaded; cannot load layout";
+    return false;
+  }
 
   if (!std::filesystem::exists(filepath)) {
     ofLogNotice("NodeEditorLayoutSerializer") << "No layout file: " << filepath;
@@ -174,12 +189,6 @@ bool NodeEditorLayoutSerializer::load(NodeEditorModel& model,
     nlohmann::json j;
     file >> j;
     file.close();
-    
-    if (j.contains("synth_name") && j["synth_name"] != model.synthPtr->name) {
-      ofLogWarning("NodeEditorLayoutSerializer")
-      << "Synth name mismatch: expected " << model.synthPtr->name
-      << ", got " << j["synth_name"];
-    }
     
     fromJson(j, model);
     ofLogNotice("NodeEditorLayoutSerializer") << "Loaded layout from: " << filepath;

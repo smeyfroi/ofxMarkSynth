@@ -426,7 +426,7 @@ bool SynthConfigSerializer::parseIntents(const OrderedJson& j, std::shared_ptr<S
   }
 }
 
-bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& synthName) {
+bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth> synth, const ResourceManager& resources, const std::string& configId) {
   if (!synth) {
     ofLogError("SynthConfigSerializer") << "Null Synth pointer";
     return false;
@@ -440,9 +440,7 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
     }
   }
 
-  // Set synth name from filename
-  synth->setName(synthName);
-  ofLogNotice("SynthConfigSerializer") << "Loading config: " << synthName;
+  ofLogNotice("SynthConfigSerializer") << "Loading config: " << configId;
   
   if (j.contains("description") && j["description"].is_string()) {
     ofLogNotice("SynthConfigSerializer") << "  " << j["description"].get<std::string>();
@@ -523,8 +521,8 @@ bool SynthConfigSerializer::load(std::shared_ptr<Synth> synth, const std::filesy
     return false;
   }
   
-  // Extract synth name from filename (without extension)
-  std::string synthName = filepath.stem().string();
+  // Extract config id from filename stem
+  std::string configId = filepath.stem().string();
   
   try {
     std::ifstream file(filepath);
@@ -538,7 +536,7 @@ bool SynthConfigSerializer::load(std::shared_ptr<Synth> synth, const std::filesy
     file.close();
     
     ofLogNotice("SynthConfigSerializer") << "Parsing config from: " << filepath;
-    return fromJson(j, synth, resources, synthName);
+    return fromJson(j, synth, resources, configId);
     
   } catch (const std::exception& e) {
     ofLogError("SynthConfigSerializer") << "Exception loading config: " << e.what();

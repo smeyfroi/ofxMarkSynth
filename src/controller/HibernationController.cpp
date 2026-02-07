@@ -8,13 +8,16 @@
 
 namespace ofxMarkSynth {
 
-HibernationController::HibernationController(const std::string& synthName_, bool startHibernated)
-    : synthName(synthName_)
-    , state(startHibernated ? State::HIBERNATED : State::ACTIVE)
+HibernationController::HibernationController(bool startHibernated)
+    : state(startHibernated ? State::HIBERNATED : State::ACTIVE)
     , alpha(startHibernated ? 0.0f : 1.0f)
     , fadeStartTime(0.0f)
     , fadeStartAlpha(startHibernated ? 0.0f : 1.0f)
 {
+}
+
+void HibernationController::setConfigId(const std::string& configId_) {
+    configId = configId_;
 }
 
 bool HibernationController::hibernate() {
@@ -82,7 +85,7 @@ void HibernationController::update() {
             
             CompleteEvent event;
             event.fadeDuration = elapsed;
-            event.synthName = synthName;
+            event.configId = configId;
             ofNotifyEvent(completeEvent, event, this);
         } else {
             float t = elapsed / proportionalDuration;
