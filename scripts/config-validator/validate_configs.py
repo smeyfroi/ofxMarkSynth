@@ -545,6 +545,31 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
                 f"Layer '{layer_name}' has both Fade and Smear. Use only one layer processor per layer (prefer Smear's MixNew/AlphaMultiplier for persistence)."
             )
 
+    # Seeded drawn layers must have some dissipation mechanism.
+    # Without this, marks accumulate forever and patches become unusable.
+    # Acceptable dissipation mechanisms are:
+    # - clearOnUpdate=true (per-frame clear)
+    # - Fade/Smear layer processors
+    # - Fluid (via Value Dissipation) when the layer is the Fluid values target
+    dissipation_layers: Set[str] = set(clearing_layers)
+    dissipation_layers |= set(layer_to_processors.keys())
+    dissipation_layers |= set(fluid_values_layers)
+
+    for layer_name, layer_spec in layers.items():
+        if not isinstance(layer_spec, dict):
+            continue
+        if not layer_spec.get("isDrawn", True):
+            continue
+        if layer_name in clearing_layers:
+            continue
+        if not layer_is_seeded(layer_name):
+            continue
+        if layer_name not in dissipation_layers:
+            errors.append(
+                f"Layer '{layer_name}' isDrawn=true and receives marks but has no dissipation mechanism. "
+                "Add Fade/Smear/Fluid or set clearOnUpdate=true."
+            )
+
     # Fluid boundary mode must match layer wrap.
     # The sim validates this strictly (e.g. SolidWalls/Open => clamp, Wrap => repeat).
     expected_wrap_by_boundary_mode: Dict[int, str] = {
