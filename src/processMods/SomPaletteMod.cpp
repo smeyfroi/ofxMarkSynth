@@ -72,6 +72,12 @@ float oklabCost(const Oklab& a, const Oklab& b) {
   return dL * dL + da * da + db * db;
 }
 
+float oklabChromaCost(const Oklab& a, const Oklab& b) {
+  float da = a.a - b.a;
+  float db = a.b - b.b;
+  return da * da + db * db;
+}
+
 std::array<int, SomPalette::size> solveAssignment(
   const std::array<std::array<float, SomPalette::size>, SomPalette::size>& cost) {
   constexpr int N = static_cast<int>(SomPalette::size);
@@ -305,7 +311,7 @@ void SomPaletteMod::restoreRuntimeState(const Mod::RuntimeState& state) {
     std::vector<Oklab> parsed;
     if (parseOklabList(noveltyIt->second, parsed, NOVELTY_CACHE_SIZE)) {
       for (const auto& lab : parsed) {
-        noveltyCache.push_back(CachedNovelty { lab, oklabToRgb(lab), paletteFrameCount });
+        noveltyCache.push_back(CachedNovelty { lab, oklabToRgb(lab), 0.0f, paletteFrameCount });
       }
       restoredAny = true;
     }
@@ -464,27 +470,31 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
                                       const std::array<float, SomPalette::size>& noveltyScores,
                                       float dt) {
   const int requiredFrames = std::max(2, static_cast<int>(std::round(0.5f * ASSUMED_FPS)));
+  (void)dt;
+
+  // We keep novelty mostly about hue/chroma (Oklab a/b), not lightness.
+  // `noveltyThreshold` is still computed from oklabCost() (includes lightness), but we additionally
+  // require a minimum chroma distance from the main palette.
   const float noveltyThreshold = 0.010f;
-  const float pendingMergeThreshold = 0.004f;
-  const float cacheMatchThreshold = 0.003f;
+  const float noveltyChromaThreshold = 0.0025f;
+
+  const float pendingMergeChromaThreshold = 0.0015f;
+  const float cacheMatchChromaThreshold = 0.0012f;
+  const float cacheMinSeparationChromaThreshold = 0.0035f;
+  const float replaceMargin = 0.0005f;
 
   const float memorySecs = std::max(0.001f, windowSecsParameter.get() * chipMemoryMultiplierParameter.get());
   const int64_t ttlFrames = std::max<int64_t>(1, static_cast<int64_t>(std::round(memorySecs * ASSUMED_FPS)));
   const int64_t pendingTimeoutFrames = std::max<int64_t>(requiredFrames, static_cast<int64_t>(std::round(0.75f * ASSUMED_FPS)));
 
   // Mark cache items as seen if candidates return near them.
+  // Note: Matching uses chroma distance only; we don't want cached novelty to "walk" toward the main palette.
   for (size_t j = 0; j < SomPalette::size; ++j) {
     const Oklab& cand = candidatesLab[j];
     for (auto& cached : noveltyCache) {
-      float d = oklabCost(cached.lab, cand);
-      if (d < cacheMatchThreshold) {
+      float d = oklabChromaCost(cached.lab, cand);
+      if (d < cacheMatchChromaThreshold) {
         cached.lastSeenFrame = paletteFrameCount;
-        // Gently pull cached color toward what we're seeing again.
-        const float a = 1.0f - std::exp(-dt / std::max(0.1f, memorySecs * 0.25f));
-        cached.lab.L += a * (cand.L - cached.lab.L);
-        cached.lab.a += a * (cand.a - cached.lab.a);
-        cached.lab.b += a * (cand.b - cached.lab.b);
-        cached.rgb = oklabToRgb(cached.lab);
       }
     }
   }
@@ -494,6 +504,15 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
     return (paletteFrameCount - c.lastSeenFrame) > ttlFrames;
   }), noveltyCache.end());
 
+  // Update cached novelty scores (distance in chroma from the main palette).
+  for (auto& cached : noveltyCache) {
+    float best = std::numeric_limits<float>::infinity();
+    for (size_t i = 0; i < SomPalette::size; ++i) {
+      best = std::min(best, oklabChromaCost(cached.lab, persistentChipsLab[i]));
+    }
+    cached.chromaNoveltyScore = best;
+  }
+
   // Update pending candidates based on novelty score.
   for (size_t j = 0; j < SomPalette::size; ++j) {
     if (noveltyScores[j] < noveltyThreshold) continue;
@@ -501,25 +520,50 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
     const Oklab candLab = candidatesLab[j];
     const ofFloatColor candRgb = candidatesRgb[j];
 
+    float chromaScore = std::numeric_limits<float>::infinity();
+    for (size_t i = 0; i < SomPalette::size; ++i) {
+      chromaScore = std::min(chromaScore, oklabChromaCost(persistentChipsLab[i], candLab));
+    }
+    if (chromaScore < noveltyChromaThreshold) continue;
+
     int bestIndex = -1;
     float bestDist = std::numeric_limits<float>::infinity();
 
     for (int i = 0; i < static_cast<int>(pendingNovelty.size()); ++i) {
-      float d = oklabCost(pendingNovelty[static_cast<size_t>(i)].lab, candLab);
+      float d = oklabChromaCost(pendingNovelty[static_cast<size_t>(i)].lab, candLab);
       if (d < bestDist) {
         bestDist = d;
         bestIndex = i;
       }
     }
 
-    if (bestIndex >= 0 && bestDist < pendingMergeThreshold) {
+    if (bestIndex >= 0 && bestDist < pendingMergeChromaThreshold) {
       auto& p = pendingNovelty[static_cast<size_t>(bestIndex)];
       p.lab = candLab;
       p.rgb = candRgb;
+      p.chromaNoveltyScore = std::max(p.chromaNoveltyScore, chromaScore);
       p.framesSeen++;
       p.lastSeenFrame = paletteFrameCount;
     } else if (static_cast<int>(pendingNovelty.size()) < NOVELTY_CACHE_SIZE) {
-      pendingNovelty.push_back(PendingNovelty { candLab, candRgb, 1, paletteFrameCount });
+      bool tooClose = false;
+      for (const auto& cached : noveltyCache) {
+        if (oklabChromaCost(cached.lab, candLab) < cacheMinSeparationChromaThreshold) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (!tooClose) {
+        for (const auto& pending : pendingNovelty) {
+          if (oklabChromaCost(pending.lab, candLab) < cacheMinSeparationChromaThreshold) {
+            tooClose = true;
+            break;
+          }
+        }
+      }
+
+      if (!tooClose) {
+        pendingNovelty.push_back(PendingNovelty { candLab, candRgb, chromaScore, 1, paletteFrameCount });
+      }
     }
   }
 
@@ -539,35 +583,55 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
     int bestCacheIndex = -1;
     float bestCacheDist = std::numeric_limits<float>::infinity();
     for (int i = 0; i < static_cast<int>(noveltyCache.size()); ++i) {
-      float d = oklabCost(noveltyCache[static_cast<size_t>(i)].lab, it->lab);
+      float d = oklabChromaCost(noveltyCache[static_cast<size_t>(i)].lab, it->lab);
       if (d < bestCacheDist) {
         bestCacheDist = d;
         bestCacheIndex = i;
       }
     }
 
-    if (bestCacheIndex >= 0 && bestCacheDist < cacheMatchThreshold) {
+    if (bestCacheIndex >= 0 && bestCacheDist < cacheMatchChromaThreshold) {
       auto& c = noveltyCache[static_cast<size_t>(bestCacheIndex)];
       c.lab = it->lab;
       c.rgb = it->rgb;
+      c.chromaNoveltyScore = std::max(c.chromaNoveltyScore, it->chromaNoveltyScore);
       c.lastSeenFrame = paletteFrameCount;
       it = pendingNovelty.erase(it);
       continue;
     }
 
+    bool tooClose = false;
+    for (const auto& c : noveltyCache) {
+      if (oklabChromaCost(c.lab, it->lab) < cacheMinSeparationChromaThreshold) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (tooClose) {
+      it = pendingNovelty.erase(it);
+      continue;
+    }
+
     if (static_cast<int>(noveltyCache.size()) < NOVELTY_CACHE_SIZE) {
-      noveltyCache.push_back(CachedNovelty { it->lab, it->rgb, paletteFrameCount });
+      noveltyCache.push_back(CachedNovelty { it->lab, it->rgb, it->chromaNoveltyScore, paletteFrameCount });
     } else {
-      // Replace the oldest.
-      int oldestIndex = 0;
-      int64_t oldestSeen = noveltyCache[0].lastSeenFrame;
+      // Replace the least-novel cached entry, but only if we're meaningfully more novel.
+      int worstIndex = 0;
+      float worstScore = noveltyCache[0].chromaNoveltyScore;
+      int64_t worstSeen = noveltyCache[0].lastSeenFrame;
+
       for (int i = 1; i < static_cast<int>(noveltyCache.size()); ++i) {
-        if (noveltyCache[static_cast<size_t>(i)].lastSeenFrame < oldestSeen) {
-          oldestSeen = noveltyCache[static_cast<size_t>(i)].lastSeenFrame;
-          oldestIndex = i;
+        const auto& c = noveltyCache[static_cast<size_t>(i)];
+        if (c.chromaNoveltyScore < worstScore || (c.chromaNoveltyScore == worstScore && c.lastSeenFrame < worstSeen)) {
+          worstIndex = i;
+          worstScore = c.chromaNoveltyScore;
+          worstSeen = c.lastSeenFrame;
         }
       }
-      noveltyCache[static_cast<size_t>(oldestIndex)] = CachedNovelty { it->lab, it->rgb, paletteFrameCount };
+
+      if (it->chromaNoveltyScore > worstScore + replaceMargin) {
+        noveltyCache[static_cast<size_t>(worstIndex)] = CachedNovelty { it->lab, it->rgb, it->chromaNoveltyScore, paletteFrameCount };
+      }
     }
 
     it = pendingNovelty.erase(it);

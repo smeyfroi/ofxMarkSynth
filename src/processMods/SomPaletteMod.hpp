@@ -68,12 +68,14 @@ private:
   struct CachedNovelty {
     Oklab lab;
     ofFloatColor rgb;
+    float chromaNoveltyScore { 0.0f }; // larger = more different from the main palette in hue/chroma
     int64_t lastSeenFrame { 0 };
   };
 
   struct PendingNovelty {
     Oklab lab;
     ofFloatColor rgb;
+    float chromaNoveltyScore { 0.0f };
     int framesSeen { 0 };
     int64_t lastSeenFrame { 0 };
   };
