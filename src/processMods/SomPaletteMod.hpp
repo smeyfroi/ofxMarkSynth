@@ -50,6 +50,7 @@ public:
   static constexpr int SOURCE_RANDOM = 2; // RGBA float color as vec4
   static constexpr int SOURCE_RANDOM_DARK = 3; // RGBA float color as vec4
   static constexpr int SOURCE_RANDOM_LIGHT = 4; // RGBA float color as vec4
+  static constexpr int SOURCE_RANDOM_NOVELTY = 5; // RGBA float color as vec4
   static constexpr int SOURCE_DARKEST = 10; // RGBA float color as vec4
   static constexpr int SOURCE_LIGHTEST = 11; // RGBA float color as vec4
   static constexpr int SOURCE_FIELD = 1; // SOM as float field in RG pixels converted from RGB
@@ -79,24 +80,27 @@ private:
 
   // Number of SOM training iterations per palette.
   // At 30fps and `TrainingStepsPerFrame` steps, time-to-converge ~= Iterations / (fps*steps).
-  ofParameter<float> iterationsParameter { "Iterations", 4500.0f, 300.0f, 20000.0f };
+  ofParameter<float> iterationsParameter { "Iterations", 4000.0f, 300.0f, 20000.0f };
 
   // Sliding timbre window length.
-  ofParameter<float> windowSecsParameter { "WindowSecs", 15.0f, 2.0f, 60.0f };
+  ofParameter<float> windowSecsParameter { "WindowSecs", 10.0f, 2.0f, 60.0f };
 
   // Persistent chip memory duration as multiplier of WindowSecs.
-  ofParameter<float> chipMemoryMultiplierParameter { "ChipMemoryMultiplier", 1.5f, 1.0f, 6.0f };
+  ofParameter<float> chipMemoryMultiplierParameter { "ChipMemoryMultiplier", 1.3f, 1.0f, 6.0f };
 
   // Fade-in from first received sample (avoid harsh startup flashes).
   ofParameter<float> startupFadeSecsParameter { "StartupFadeSecs", 2.0f, 0.0f, 10.0f };
 
   // Training multiplier: number of samples drawn from the sliding window per frame.
-  ofParameter<int> trainingStepsPerFrameParameter { "TrainingStepsPerFrame", 10, 1, 40 };
+  ofParameter<int> trainingStepsPerFrameParameter { "TrainingStepsPerFrame", 8, 1, 40 };
 
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0f, 0.0f, 1.0f };
 
+  // Chance that SOURCE_RANDOM emits a novelty cached color (if available).
+  ofParameter<float> noveltyEmitChanceParameter { "NoveltyEmitChance", 0.35f, 0.0f, 1.0f };
+ 
   ofParameter<float> colorizerGrayGainParameter { "ColorizerGrayGain", 0.8f, 0.0f, 2.0f };
-  ofParameter<float> colorizerChromaGainParameter { "ColorizerChromaGain", 2.2f, 0.0f, 4.0f };
+  ofParameter<float> colorizerChromaGainParameter { "ColorizerChromaGain", 2.5f, 0.0f, 4.0f };
 
   ContinuousSomPalette somPalette { 8, 8, 0.012f };
 
@@ -147,6 +151,7 @@ private:
 
   glm::vec4 createVec4(int i);
   glm::vec4 createRandomVec4();
+  glm::vec4 createRandomNoveltyVec4();
   glm::vec4 createRandomLightVec4();
   glm::vec4 createRandomDarkVec4();
 };

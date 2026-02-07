@@ -184,6 +184,7 @@ SomPaletteMod::SomPaletteMod(std::shared_ptr<Synth> synthPtr, const std::string&
   };
   sourceNameIdMap = {
     { "Random", SOURCE_RANDOM },
+    { "RandomNovelty", SOURCE_RANDOM_NOVELTY },
     { "RandomLight", SOURCE_RANDOM_LIGHT },
     { "RandomDark", SOURCE_RANDOM_DARK },
     { "Darkest", SOURCE_DARKEST },
@@ -360,6 +361,7 @@ void SomPaletteMod::initParameters() {
   parameters.add(startupFadeSecsParameter);
   parameters.add(trainingStepsPerFrameParameter);
   parameters.add(agencyFactorParameter);
+  parameters.add(noveltyEmitChanceParameter);
   parameters.add(colorizerGrayGainParameter);
   parameters.add(colorizerChromaGainParameter);
 
@@ -693,6 +695,7 @@ void SomPaletteMod::update() {
   }
 
   emit(SOURCE_RANDOM, createRandomVec4());
+  emit(SOURCE_RANDOM_NOVELTY, createRandomNoveltyVec4());
   emit(SOURCE_RANDOM_LIGHT, createRandomLightVec4());
   emit(SOURCE_RANDOM_DARK, createRandomDarkVec4());
   emit(SOURCE_DARKEST, createVec4(getPersistentDarkestIndex()));
@@ -727,7 +730,7 @@ glm::vec4 SomPaletteMod::createVec4(int i) {
 glm::vec4 SomPaletteMod::createRandomVec4() {
   // Only "catch" novelty colors; don't bias the system to chase them.
   // Once cached, we can occasionally emit them.
-  const float noveltyEmitChance = 0.35f;
+  const float noveltyEmitChance = ofClamp(noveltyEmitChanceParameter.get(), 0.0f, 1.0f);
 
   if (!noveltyCache.empty() && random01Distrib(randomGen) < noveltyEmitChance) {
     std::uniform_int_distribution<> dist(0, static_cast<int>(noveltyCache.size() - 1));
@@ -739,13 +742,25 @@ glm::vec4 SomPaletteMod::createRandomVec4() {
   return createVec4(randomDistrib(randomGen));
 }
 
+glm::vec4 SomPaletteMod::createRandomNoveltyVec4() {
+  if (noveltyCache.empty()) {
+    // Fallback behavior requested: behave like SOURCE_RANDOM when the novelty cache is empty.
+    return createRandomVec4();
+  }
+
+  std::uniform_int_distribution<> dist(0, static_cast<int>(noveltyCache.size() - 1));
+  const auto& c = noveltyCache[static_cast<size_t>(dist(randomGen))].rgb;
+  const float f = startupFadeFactor;
+  return { c.r * f, c.g * f, c.b * f, f };
+}
+
 glm::vec4 SomPaletteMod::createRandomLightVec4() {
   if (!hasPersistentChips) {
     return createVec4((SomPalette::size - 1) - randomDistrib(randomGen) / 2);
   }
 
   // Occasionally emit a cached novelty color that falls in the light half.
-  const float noveltyEmitChance = 0.25f;
+  const float noveltyEmitChance = ofClamp(noveltyEmitChanceParameter.get(), 0.0f, 1.0f);
   if (!noveltyCache.empty() && random01Distrib(randomGen) < noveltyEmitChance) {
     const int lo = persistentIndicesByLightness[SomPalette::size / 2 - 1];
     const int hi = persistentIndicesByLightness[SomPalette::size / 2];
@@ -780,7 +795,7 @@ glm::vec4 SomPaletteMod::createRandomDarkVec4() {
   }
 
   // Occasionally emit a cached novelty color that falls in the dark half.
-  const float noveltyEmitChance = 0.25f;
+  const float noveltyEmitChance = ofClamp(noveltyEmitChanceParameter.get(), 0.0f, 1.0f);
   if (!noveltyCache.empty() && random01Distrib(randomGen) < noveltyEmitChance) {
     const int lo = persistentIndicesByLightness[SomPalette::size / 2 - 1];
     const int hi = persistentIndicesByLightness[SomPalette::size / 2];
