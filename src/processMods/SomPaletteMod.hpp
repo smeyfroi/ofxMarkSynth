@@ -98,7 +98,14 @@ private:
 
   // Chance that SOURCE_RANDOM emits a novelty cached color (if available).
   ofParameter<float> noveltyEmitChanceParameter { "NoveltyEmitChance", 0.35f, 0.0f, 1.0f };
- 
+
+  // Anti-collapse fallback: inject controlled variation into training samples when the input feature history has
+  // very low variance (e.g. a sustained solo tone).
+  ofParameter<float> antiCollapseJitterParameter { "AntiCollapseJitter", 0.06f, 0.0f, 0.2f };
+  ofParameter<float> antiCollapseVarianceSecsParameter { "AntiCollapseVarianceSecs", 2.0f, 0.5f, 20.0f };
+  ofParameter<float> antiCollapseVarianceThresholdParameter { "AntiCollapseVarianceThreshold", 0.0005f, 0.0f, 0.01f };
+  ofParameter<float> antiCollapseDriftSpeedParameter { "AntiCollapseDriftSpeed", 0.12f, 0.0f, 1.0f };
+
   ofParameter<float> colorizerGrayGainParameter { "ColorizerGrayGain", 0.8f, 0.0f, 2.0f };
   ofParameter<float> colorizerChromaGainParameter { "ColorizerChromaGain", 2.5f, 0.0f, 4.0f };
 
@@ -149,6 +156,15 @@ private:
   int getPersistentDarkestIndex() const;
   int getPersistentLightestIndex() const;
 
+  glm::vec3 computeRecentFeatureVarianceVec(int frames) const;
+  float computeRecentFeatureVariance(int frames) const;
+  float computeAntiCollapseFactor(const glm::vec3& varianceVec) const;
+  glm::vec3 applyAntiCollapseJitter(const glm::vec3& v,
+                                   float factor,
+                                   const glm::vec3& varianceVec,
+                                   float timeSecs,
+                                   int step) const;
+ 
   glm::vec4 createVec4(int i);
   glm::vec4 createRandomVec4();
   glm::vec4 createRandomNoveltyVec4();

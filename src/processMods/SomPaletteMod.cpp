@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <iterator>
 #include <limits>
 #include <sstream>
 
@@ -362,6 +363,10 @@ void SomPaletteMod::initParameters() {
   parameters.add(trainingStepsPerFrameParameter);
   parameters.add(agencyFactorParameter);
   parameters.add(noveltyEmitChanceParameter);
+  parameters.add(antiCollapseJitterParameter);
+  parameters.add(antiCollapseVarianceSecsParameter);
+  parameters.add(antiCollapseVarianceThresholdParameter);
+  parameters.add(antiCollapseDriftSpeedParameter);
   parameters.add(colorizerGrayGainParameter);
   parameters.add(colorizerChromaGainParameter);
 
@@ -642,6 +647,80 @@ int SomPaletteMod::getPersistentLightestIndex() const {
   return persistentIndicesByLightness.back();
 }
 
+glm::vec3 SomPaletteMod::computeRecentFeatureVarianceVec(int frames) const {
+  const int n = std::min(frames, static_cast<int>(featureHistory.size()));
+  if (n < 2) return glm::vec3 { 0.0f };
+
+  auto it = featureHistory.end();
+  std::advance(it, -n);
+
+  glm::vec3 mean { 0.0f };
+  for (auto p = it; p != featureHistory.end(); ++p) {
+    mean += *p;
+  }
+  mean /= static_cast<float>(n);
+
+  glm::vec3 var { 0.0f };
+  for (auto p = it; p != featureHistory.end(); ++p) {
+    const glm::vec3 d = *p - mean;
+    var += d * d;
+  }
+  var /= static_cast<float>(n - 1);
+  return var;
+}
+
+float SomPaletteMod::computeRecentFeatureVariance(int frames) const {
+  const glm::vec3 var = computeRecentFeatureVarianceVec(frames);
+  return (var.x + var.y + var.z) / 3.0f;
+}
+
+float SomPaletteMod::computeAntiCollapseFactor(const glm::vec3& varianceVec) const {
+  const float jitter = antiCollapseJitterParameter.get();
+  if (jitter <= 0.0f) return 0.0f;
+
+  const float threshold = std::max(1.0e-8f, antiCollapseVarianceThresholdParameter.get());
+  const float variance = (varianceVec.x + varianceVec.y + varianceVec.z) / 3.0f;
+
+  const float shortfall = ofClamp((threshold - variance) / threshold, 0.0f, 1.0f);
+
+  // Be more assertive near the threshold (sqrt curve).
+  return std::sqrt(shortfall);
+}
+
+glm::vec3 SomPaletteMod::applyAntiCollapseJitter(const glm::vec3& v,
+                                                float factor,
+                                                const glm::vec3& varianceVec,
+                                                float timeSecs,
+                                                int step) const {
+  if (factor <= 0.0f) return v;
+
+  // Scale per-component jitter by how much that feature's variance falls short of the target.
+  // This keeps the injected variation local to the *audio feature space* rather than picking unrelated colors.
+  const float threshold = std::max(1.0e-8f, antiCollapseVarianceThresholdParameter.get());
+  const glm::vec3 stdTarget { std::sqrt(threshold) };
+  const glm::vec3 stdNow { std::sqrt(std::max(0.0f, varianceVec.x)),
+                           std::sqrt(std::max(0.0f, varianceVec.y)),
+                           std::sqrt(std::max(0.0f, varianceVec.z)) };
+  const glm::vec3 stdDeficit = glm::max(glm::vec3 { 0.0f }, stdTarget - stdNow);
+  const glm::vec3 deficitFrac = stdDeficit / glm::max(glm::vec3 { 1.0e-8f }, stdTarget);
+
+  const float baseAmp = antiCollapseJitterParameter.get() * factor;
+  const glm::vec3 amp = baseAmp * deficitFrac;
+
+  const float speed = antiCollapseDriftSpeedParameter.get();
+
+  // Smooth noise, with phase partially keyed from the current feature so sustained tones
+  // remain coherent and changes in timbre/register shift the jitter field.
+  const float phase = timeSecs * speed + 17.0f * v.x + 29.0f * v.y + 43.0f * v.z + static_cast<float>(step) * 0.173f;
+  const glm::vec3 n {
+    ofSignedNoise(phase, 11.1f),
+    ofSignedNoise(phase, 22.2f),
+    ofSignedNoise(phase, 33.3f),
+  };
+
+  return glm::clamp(v + amp * n, glm::vec3 { 0.0f }, glm::vec3 { 1.0f });
+}
+
 void SomPaletteMod::update() {
   ++paletteFrameCount;
 
@@ -669,8 +748,15 @@ void SomPaletteMod::update() {
   if (!featureHistory.empty()) {
     std::uniform_int_distribution<size_t> dist(0, featureHistory.size() - 1);
 
+    const float secs = std::max(0.01f, antiCollapseVarianceSecsParameter.get());
+    const int frames = secsToFrames(secs);
+    const glm::vec3 varianceVec = computeRecentFeatureVarianceVec(frames);
+    const float antiCollapseFactor = computeAntiCollapseFactor(varianceVec);
+    const float timeSecs = static_cast<float>(paletteFrameCount) / ASSUMED_FPS;
+
     for (int i = 0; i < steps; ++i) {
-      const glm::vec3 v = (hasNewFeature && i == 0) ? newestFeature : featureHistory[dist(randomGen)];
+      glm::vec3 v = (hasNewFeature && i == 0) ? newestFeature : featureHistory[dist(randomGen)];
+      v = applyAntiCollapseJitter(v, antiCollapseFactor, varianceVec, timeSecs, i);
       std::array<double, 3> data { v.x, v.y, v.z };
       somPalette.addInstanceData(data);
     }
