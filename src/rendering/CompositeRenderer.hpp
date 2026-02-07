@@ -30,7 +30,7 @@ public:
         LayerController& layers;
         float hibernationAlpha;         // 1.0 = fully visible, 0.0 = hibernated
         ofFloatColor backgroundColor;
-        float backgroundMultiplier;
+        float backgroundBrightness;
     };
 
     /// Update composite: Phase 1 - clear background and draw base layers

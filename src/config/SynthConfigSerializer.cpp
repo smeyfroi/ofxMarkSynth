@@ -319,11 +319,20 @@ bool SynthConfigSerializer::parseSynthConfig(const OrderedJson& j, std::shared_p
     ofLogNotice("SynthConfigSerializer") << "  Synth backgroundColor: " << bgColorStr;
   }
   
-  // Background multiplier
-  if (s.contains("backgroundMultiplier") && s["backgroundMultiplier"].is_number()) {
+  // Background brightness (was "backgroundMultiplier" in older configs)
+  if (s.contains("backgroundBrightness") && s["backgroundBrightness"].is_number()) {
+    float brightness = s["backgroundBrightness"].get<float>();
+    synth->backgroundBrightnessParameter.set(brightness);
+    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundBrightness: " << brightness;
+  } else if (s.contains("backgroundMultiplier") && s["backgroundMultiplier"].is_number()) {
+    // Legacy mapping: old multiplier acted on RGB directly.
+    // New behavior: treat this as a target brightness for the tinted background.
+    // Empirical conversion: 0.1 -> 0.035.
+    constexpr float MULTIPLIER_TO_BRIGHTNESS = 0.35f;
     float mult = s["backgroundMultiplier"].get<float>();
-    synth->backgroundMultiplierParameter.set(mult);
-    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundMultiplier: " << mult;
+    float brightness = std::clamp(mult * MULTIPLIER_TO_BRIGHTNESS, 0.0f, 1.0f);
+    synth->backgroundBrightnessParameter.set(brightness);
+    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundBrightness (from legacy multiplier): " << brightness;
   }
   
   // Manual bias decay
@@ -463,7 +472,7 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
   }
   synth->setPerformerCues(performerCueAudio, performerCueVideo);
 
-  // Parse synth-level configuration (agency, backgroundColor, backgroundMultiplier)
+  // Parse synth-level configuration (agency, backgroundColor, backgroundBrightness)
   parseSynthConfig(j, synth);
 
   // Parse each section in order

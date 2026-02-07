@@ -9,6 +9,8 @@
 #include "ofGraphics.h"
 #include "ofAppRunner.h"
 
+#include <algorithm>
+
 namespace ofxMarkSynth {
 
 namespace {
@@ -21,6 +23,27 @@ glm::vec2 randomCentralRectOrigin(glm::vec2 rectSize, glm::vec2 bounds) {
 
 float easeInCubic(float x) {
     return x * x * x;
+}
+
+ofFloatColor makeBackgroundTintWithBrightness(const ofFloatColor& tint, float brightness) {
+    // Note: We only fall back to neutral when the tint is essentially greyscale.
+    // For very dark but saturated tints, keep the hue all the way down to black.
+    constexpr float MIN_TINT_SATURATION = 1.0e-4f;
+
+    const float targetBrightness = std::clamp(brightness, 0.0f, 1.0f);
+
+    float hue = 0.0f;
+    float saturation = 0.0f;
+    float tintBrightness = 0.0f;
+    tint.getHsb(hue, saturation, tintBrightness);
+
+    if (saturation < MIN_TINT_SATURATION) {
+        return ofFloatColor { targetBrightness, targetBrightness, targetBrightness, 1.0f };
+    }
+
+    ofFloatColor out;
+    out.setHsb(hue, saturation, targetBrightness, 1.0f);
+    return out;
 }
 
 } // anonymous namespace
@@ -102,10 +125,7 @@ void CompositeRenderer::updateCompositeBase(const CompositeParams& params) {
     // Phase 1: Clear background and draw base layers
     compositeFbo.begin();
     {
-        ofFloatColor bgColor = params.backgroundColor;
-        bgColor *= params.backgroundMultiplier;
-        bgColor.a = 1.0f;
-        ofClear(bgColor);
+        ofClear(makeBackgroundTintWithBrightness(params.backgroundColor, params.backgroundBrightness));
         
         for (const auto& info : baseLayers) {
             ofEnableBlendMode(info.layer->blendMode);

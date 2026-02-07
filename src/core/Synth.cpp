@@ -164,6 +164,9 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   initResourcePaths();
   initPerformanceNavigator();
   initSinkSourceMappings();
+
+  // Enable node editor tooltips / contribution weights for background colour.
+  registerControllerForSource(backgroundColorParameter, backgroundColorController);
 }
 
 void Synth::initControllers(const std::string& name, bool startHibernated) {
@@ -615,7 +618,7 @@ void Synth::update() {
     .layers = *layerController,
     .hibernationAlpha = hibernationController->getAlpha(),
     .backgroundColor = backgroundColorController.value,
-    .backgroundMultiplier = backgroundMultiplierParameter
+    .backgroundBrightness = backgroundBrightnessParameter
   };
   compositeRenderer->updateCompositeBase(compositeParams);
   
@@ -975,7 +978,7 @@ void Synth::initParameters() {
   parameters.add(manualBiasDecaySecParameter);
   parameters.add(baseManualBiasParameter);
   parameters.add(backgroundColorParameter);
-  parameters.add(backgroundMultiplierParameter);
+  parameters.add(backgroundBrightnessParameter);
   parameters.add(hibernationController->getFadeOutDurationParameter());
   parameters.add(hibernationController->getFadeInDurationParameter());
   parameters.add(configTransitionManager->getDelaySecParameter());
@@ -1178,7 +1181,7 @@ void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {
   // Reset Synth-level parameters to defaults before loading new config,
   // so parameters not specified in the new config don't retain old values
   backgroundColorParameter.set(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
-  backgroundMultiplierParameter.set(0.1f);
+  backgroundBrightnessParameter.set(0.035f);
   
   bool loadOk = loadFromConfig(filepath);
   if (!loadOk) {

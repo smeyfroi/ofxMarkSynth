@@ -328,7 +328,7 @@ private:
   // Background color (part of Intent system, stays in Synth)
   ofParameter<ofFloatColor> backgroundColorParameter { "BackgroundColour", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
-  ofParameter<float> backgroundMultiplierParameter { "BackgroundMultiplier", 0.1, 0.0, 1.0 };
+  ofParameter<float> backgroundBrightnessParameter { "BackgroundBrightness", 0.035f, 0.0f, 1.0f };
 
   ofxLabel recorderStatus;
   ofxLabel saveStatus;
