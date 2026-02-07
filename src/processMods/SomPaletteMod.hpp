@@ -43,7 +43,6 @@ public:
   const ofTexture* getActivePaletteTexturePtr() const;
   const ofTexture* getNextPaletteTexturePtr() const;
   const ofTexture* getChipsTexturePtr() const;
-  const ofTexture* getNoveltyTexturePtr() const;
 
   static constexpr int SINK_VEC3 = 1;
   static constexpr int SINK_SWITCH_PALETTE = 100;
@@ -139,10 +138,6 @@ private:
   ofFloatPixels chipsPixels;
   ofTexture chipsTexture;
   void updateChipsTexture();
-
-  ofFloatPixels noveltyPixels;
-  ofTexture noveltyTexture;
-  void updateNoveltyTexture();
 
   std::ranlux24_base randomGen { 0 }; // fast generator with fixed seed
   std::uniform_int_distribution<> randomDistrib { 0, SomPalette::size - 1 };

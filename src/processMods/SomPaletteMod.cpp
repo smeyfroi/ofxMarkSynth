@@ -234,13 +234,6 @@ void SomPaletteMod::doneModLoad() {
     return nullptr;
   });
 
-  synth->addLiveTexturePtrFn(baseName + ": Novelty",
-                             [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
-    if (auto locked = weakSelf.lock()) {
-      return locked->getNoveltyTexturePtr();
-    }
-    return nullptr;
-  });
 }
 
 SomPaletteMod::~SomPaletteMod() {
@@ -325,7 +318,6 @@ void SomPaletteMod::restoreRuntimeState(const Mod::RuntimeState& state) {
     startupFadeFactor = 1.0f;
 
     updateChipsTexture();
-    updateNoveltyTexture();
   }
 }
 
@@ -341,9 +333,6 @@ const ofTexture* SomPaletteMod::getChipsTexturePtr() const {
   return chipsTexture.isAllocated() ? &chipsTexture : nullptr;
 }
 
-const ofTexture* SomPaletteMod::getNoveltyTexturePtr() const {
-  return noveltyTexture.isAllocated() ? &noveltyTexture : nullptr;
-}
 
 void SomPaletteMod::onIterationsParameterChanged(float& value) {
   somPalette.setNumIterations(static_cast<int>(iterationsParameter.get()));
@@ -404,12 +393,13 @@ void SomPaletteMod::ensureFieldTexture(int w, int h) {
 
 void SomPaletteMod::updateChipsTexture() {
   constexpr int w = static_cast<int>(SomPalette::size);
-  constexpr int h = 1;
+  constexpr int h = 2;
 
-  if (!chipsPixels.isAllocated()) {
+  if (!chipsPixels.isAllocated() || chipsPixels.getWidth() != w || chipsPixels.getHeight() != h) {
     chipsPixels.allocate(w, h, OF_IMAGE_COLOR);
   }
 
+  // Row 0 (top): main palette chips (persistent lightness ordering if available).
   for (int x = 0; x < w; ++x) {
     ofFloatColor c;
     if (hasPersistentChips) {
@@ -426,7 +416,27 @@ void SomPaletteMod::updateChipsTexture() {
     chipsPixels.setColor(x, 0, c);
   }
 
-  if (!chipsTexture.isAllocated()) {
+  // Row 1 (bottom): novelty cache chips, repeated across the full width.
+  for (int x = 0; x < w; ++x) {
+    const int slot = (x * NOVELTY_CACHE_SIZE) / w;
+
+    ofFloatColor c(0.0f, 0.0f, 0.0f);
+    if (slot >= 0 && slot < static_cast<int>(noveltyCache.size())) {
+      c = noveltyCache[static_cast<size_t>(slot)].rgb;
+    }
+
+    c.r *= startupFadeFactor;
+    c.g *= startupFadeFactor;
+    c.b *= startupFadeFactor;
+
+    chipsPixels.setColor(x, 1, c);
+  }
+
+  const bool needsAlloc = !chipsTexture.isAllocated()
+    || static_cast<int>(chipsTexture.getWidth()) != w
+    || static_cast<int>(chipsTexture.getHeight()) != h;
+
+  if (needsAlloc) {
     chipsTexture.allocate(chipsPixels, false);
     chipsTexture.setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
     chipsTexture.setTextureWrap(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -435,35 +445,6 @@ void SomPaletteMod::updateChipsTexture() {
   chipsTexture.loadData(chipsPixels);
 }
 
-void SomPaletteMod::updateNoveltyTexture() {
-  constexpr int w = NOVELTY_CACHE_SIZE;
-  constexpr int h = 1;
-
-  if (!noveltyPixels.isAllocated()) {
-    noveltyPixels.allocate(w, h, OF_IMAGE_COLOR);
-  }
-
-  for (int x = 0; x < w; ++x) {
-    ofFloatColor c(0.0f, 0.0f, 0.0f);
-    if (x < static_cast<int>(noveltyCache.size())) {
-      c = noveltyCache[static_cast<size_t>(x)].rgb;
-    }
-
-    c.r *= startupFadeFactor;
-    c.g *= startupFadeFactor;
-    c.b *= startupFadeFactor;
-
-    noveltyPixels.setColor(x, 0, c);
-  }
-
-  if (!noveltyTexture.isAllocated()) {
-    noveltyTexture.allocate(noveltyPixels, false);
-    noveltyTexture.setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
-    noveltyTexture.setTextureWrap(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-  }
-
-  noveltyTexture.loadData(noveltyPixels);
-}
 
 void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>& candidatesLab,
                                       const std::array<ofFloatColor, SomPalette::size>& candidatesRgb,
@@ -852,7 +833,6 @@ void SomPaletteMod::update() {
   emit(SOURCE_LIGHTEST, createVec4(getPersistentLightestIndex()));
 
   updateChipsTexture();
-  updateNoveltyTexture();
 
   if (pixelsRef.getWidth() == 0 || pixelsRef.getHeight() == 0) return;
 
