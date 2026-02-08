@@ -13,6 +13,10 @@ Mods communicate through:
 
 Data flows from **Source Mods** → **Process Mods** → **Sink Mods**, with **Layer Mods** applying effects to entire drawing surfaces.
 
+See also:
+- `docs/performer-guide.md`: how to play MarkSynth live (MIDI-centric)
+- `docs/recipes.md`: wiring patterns + tuning “cookbook”
+
 ---
 
 ## Source Mods
@@ -289,22 +293,51 @@ Applies linear transformation (multiply + add) to float values.
 **Sinks**:
 - `Multiplier` (float): Multiplication factor
 - `Adder` (float): Addition offset
-- `Float` (float): Value to transform
+- `float` (float): Value to transform
 
 **Sources**:
-- `Float` (float): Transformed value
+- `float` (float): Transformed value
 
 **Key Parameters**:
 - `Multiplier`: Scale factor (-2.0 to 2.0)
 - `Adder`: Offset value (-1.0 to 1.0)
 - `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency) (0.0-1.0)
 
-**Intent Integration**: Full Intent system support with configurable agency.
+**Intent Integration**: None currently (no `applyIntent()` mapping).
 
 **Use Cases**:
 - Remap scalar ranges
 - Invert values (negative multiplier)
 - Add offsets to center or shift data
+
+---
+
+### FadeAlphaMapMod
+
+Maps an arbitrary float input to a time-based half-life in seconds.
+
+This is a compatibility-friendly way to drive `FadeMod.HalfLifeSec` (or `SmearMod.HalfLifeSec`) from a scalar like `Audio.RmsScalar`.
+
+**Sinks**:
+- `Multiplier` (float): Linear mapping coefficient
+- `Adder` (float): Linear mapping offset
+- `float` (float): Input value to map
+
+**Sources**:
+- `float` (float): Output half-life in seconds
+
+**Key Parameters**:
+- `Multiplier`, `Adder`: First compute a legacy alpha-per-frame signal: `alphaPerFrame = Multiplier*float + Adder`
+- `ReferenceFps`: FPS used to interpret `alphaPerFrame` (default 30)
+- `MinHalfLifeSec`, `MaxHalfLifeSec`: Clamp output range
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
+
+**Intent Integration**: None currently (no `applyIntent()` mapping).
+
+**Use Cases**:
+- Audio dynamics → layer persistence:
+  - `Audio.RmsScalar → FadeAlphaMap.float → FadeMod.HalfLifeSec`
+- Same mapping for `SmearMod.HalfLifeSec`
 
 ---
 
@@ -427,31 +460,54 @@ Captures rectangular regions from the drawing surface.
 
 ### SomPaletteMod
 
-Self-organizing map that learns color palettes from 3D color input.
+Self-organizing map that learns palettes from incoming `Sample` colors and emits multiple palette-derived outputs.
 
-**Purpose**: Generate coherent color schemes from audio or other data.
+**Purpose**: Generate coherent (but evolving) color schemes from audio/video features or other signals.
 
 **Sinks**:
-- `Sample` (vec3): RGB color input for training
-- `SwitchPalette` (float): Change active palette
+- `Sample` (vec3): RGB training sample (0–1). Typical sources: `Audio.Spectral3dPoint`, `Camera/Video` color samples, or any vec3 stream.
+- `SwitchPalette` (float): When > 0.5 and a “next” palette is ready, switch to it (edge-trigger style control).
 
 **Sources**:
-- `Random` (vec4): Random color from palette
-- `RandomDark` (vec4): Random dark color
-- `RandomLight` (vec4): Random light color
-- `Darkest` (vec4): Darkest palette color
-- `Lightest` (vec4): Lightest palette color
-- `FieldTexture` (texture): 2D palette texture (16×16)
+- `Random` (vec4): Random RGBA from the learned palette.
+- `RandomNovelty` (vec4): Random RGBA that prefers a short-lived “novelty cache” when available (falls back to `Random`).
+- `RandomDark` (vec4): Random RGBA biased toward darker chips.
+- `RandomLight` (vec4): Random RGBA biased toward lighter chips.
+- `Darkest` (vec4): The darkest chip.
+- `Lightest` (vec4): The lightest chip.
+- `FieldTexture` (texture): Small RG texture derived from the palette (currently `GL_RG16F`, 8×8 or 16×16 depending on implementation). Often useful as a weak vector field for `Smear`/`Fluid`/`ParticleField`.
 
 **Key Parameters**:
-- `Iterations`: Training iterations (100-10000)
+- Convergence + responsiveness:
+  - `Iterations`: Training iterations per palette (higher = more stable, slower to adapt).
+  - `TrainingStepsPerFrame`: How hard we train each frame (higher = faster adaptation, more “nervous”).
+- Window + memory:
+  - `WindowSecs`: Sliding feature window length in seconds (higher = smoother, lower = twitchier).
+  - `ChipMemoryMultiplier`: Persistence multiplier on top of `WindowSecs` (higher = longer-lived palette identity).
+- Startup behavior:
+  - `StartupFadeSecs`: Fade-in from first received sample (avoids harsh flashes on load).
+- Novelty:
+  - `NoveltyEmitChance`: Chance that `RandomNovelty` emits a cached novelty color.
+- Anti-collapse (for drones / low-variance inputs):
+  - `AntiCollapseJitter`: Amount of injected variation when the input feature history has very low variance.
+  - `AntiCollapseVarianceSecs`: Lookback window for variance measurement.
+  - `AntiCollapseVarianceThreshold`: Variance threshold below which anti-collapse activates.
+  - `AntiCollapseDriftSpeed`: Speed of the injected drift.
+- Colorizer:
+  - `ColorizerGrayGain`, `ColorizerChromaGain`: Balance gray/chroma emphasis in palette generation.
+- `AgencyFactor`: Currently unused (reserved for future intent/controller blending).
 
-**Intent Integration**: Responds to Chaos/Structure for palette evolution.
+**Coordination rules**:
+- If the palette changes too fast: increase `WindowSecs`, decrease `TrainingStepsPerFrame`, and/or increase `ChipMemoryMultiplier`.
+- If the palette feels “stuck”: decrease `WindowSecs`, increase `TrainingStepsPerFrame`, and consider increasing `NoveltyEmitChance`.
+- If sustained tones collapse the palette: increase `AntiCollapseJitter` slightly and ensure `AntiCollapseVarianceSecs` is not too short.
+
+**Intent Integration**: None currently (`SomPaletteMod::applyIntent()` is a no-op).
 
 **Use Cases**:
-- Learn color palettes from album art
-- Generate audio-reactive color schemes
-- Create harmonious color variations
+- Drive colors for `SoftCircle`, `SandLine`, `ParticleSet`, `ParticleField`, `Collage`.
+- Provide a stable-yet-reactive “house palette” for an entire patch.
+- Provide a weak vector field via `FieldTexture` for subtle motion coupling.
 
 ---
 
@@ -465,38 +521,67 @@ Sink Mods create visual marks on drawing layers. They can be categorized by thei
 
 #### SoftCircleMod
 
-Draws soft, alpha-blended circles with Gaussian falloff.
+Draws soft circles with optional velocity-shaped “brush stroke” behavior.
 
-**Visual Characteristics**: Soft, glowing, ethereal • Organic edges • Overlapping creates luminosity
+**Visual Characteristics**: Soft, glowing, ethereal • Organic edges • Can become stroke-like with velocity • Overlap creates luminosity
 
 **Sinks**:
-- `Point` (vec2): Circle center positions
-- `Radius` (float): Circle size
-- `Colour` (vec4): Circle color
-- `ColourMultiplier` (float): Color intensity multiplier
-- `AlphaMultiplier` (float): Opacity multiplier
-- `Softness` (float): Edge falloff amount
+- `Point` (vec2): Circle center positions (normalized 0–1).
+- `PointVelocity` (vec4): `{x, y, dx, dy}` stamp with velocity (normalized). Useful when you already have motion vectors and want stable direction.
+- `Radius` (float): Base circle size (normalized).
+- `Colour` (vec4): Base RGBA color.
+- `ColourMultiplier` (float): RGB intensity multiplier.
+- `AlphaMultiplier` (float): Alpha multiplier.
+- `Softness` (float): Edge falloff amount.
+- `EdgeMod` (float): Live edge driver (0–1) used by the edge modulation system.
+- `ChangeKeyColour` (float): When > 0.5, cycles through `KeyColours`.
 
-**Key Parameters**:
-- `Radius`: Circle size (0.0-0.25 normalized)
-- `Colour`: Base color (RGBA)
-- `ColourMultiplier`: RGB intensity (0.0-1.0)
-- `AlphaMultiplier`: Transparency (0.0-1.0)
-- `Softness`: Edge blur (0.0-1.0)
-- `Falloff`: Falloff mode (0=Glow, 1=Dab)
-- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
+**Key Parameters (core look)**:
+- `Radius`: Base size (normalized; converted to pixels using FBO width).
+- `Softness`: Blur / edge rolloff.
+- `Falloff`: 0=Glow (halo-ish), 1=Dab (premultiplied, less halo).
+- `Colour`, `ColourMultiplier`, `AlphaMultiplier`.
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency).
 
-**Falloff Modes**:
-- `0` (Glow): Exponential falloff creating sharp-centered, glowing marks. Good for dark backgrounds where marks add light.
-- `1` (Dab): Quadratic falloff for broader, softer marks with premultiplied alpha compositing. Marks accumulate naturally without halo artifacts when overlapping. Works well on any background color.
+**Velocity / stroke shaping**:
+- `UseVelocity` (0/1): Enable velocity-based ellipse stretching.
+- `VelocitySpeedMin`, `VelocitySpeedMax`: Defines the speed range that maps to 0–1 stretch.
+- `VelocityStretch`: How much the stamp elongates at max speed.
+- `VelocityAngleInfluence`: 0 = ignore direction, 1 = align major axis to direction.
+- `PreserveArea` (0/1): If on, stretching keeps area roughly constant (longer but thinner).
+- `MaxAspect`: Clamp maximum elongation.
 
-**Intent Integration**: Full Intent support with agency control.
+Notes:
+- If you use `Point` only, velocity is inferred from successive points.
+- If you provide `PointVelocity`, the `{dx,dy}` is used directly.
+
+**Curvature-driven modulation**:
+Curvature is estimated from changes in direction (based on recent point history).
+- `CurvatureAlphaBoost`: Boost alpha on high-curvature motion.
+- `CurvatureRadiusBoost`: Boost radius on high-curvature motion.
+- `CurvatureSmoothing`: Higher = smoother/laggier curvature.
+
+**Edge modulation**:
+Edge “waviness” amount is:
+- `edgeAmount = clamp(EdgeAmount + EdgeAmountFromDriver * EdgeMod, 0..1)`
+
+Parameters:
+- `EdgeAmount`: Base edge modulation.
+- `EdgeAmountFromDriver`: How strongly `EdgeMod` drives the edge.
+- `EdgeSharpness`, `EdgeFreq1/2/3`.
+- `EdgePhaseFromVelocity`: If on, edge pattern rotates with motion direction.
+
+**Coordination rules**:
+- If `UseVelocity=1` but you don’t see stretching: increase `VelocityStretch`, and tune `VelocitySpeedMin/Max` to the actual speed scale of your point source.
+- If stamps “explode” into long streaks: reduce `VelocityStretch` and/or lower `MaxAspect`.
+- If edge modulation does nothing: ensure `EdgeAmountFromDriver > 0` and drive `EdgeMod` (e.g. from `Audio.SpectralCrestScalar`).
+
+**Intent Integration**: Full Intent support with agency.
 
 **Use Cases**:
-- Create soft atmospheric effects
-- Draw glowing audio-reactive particles
-- Build up luminous compositions through layering
-- Use Falloff=1 (Dab) for subtle marks on white backgrounds
+- Soft particles / mist / glows.
+- Motion-reactive brush strokes (feed `PointVelocity` from video flow or particle velocities).
+- Audio-driven shimmering edges (drive `EdgeMod` from spectral features).
 
 ---
 
@@ -509,55 +594,80 @@ Physics-based particle system with attraction, connections, and trails.
 **Layer guidance**: When using connection lines (default strategy), treat this as hard-edged geometry and prefer a `7200×7200` drawing layer to avoid aliasing. You can tune line distance via `connectionRadius`; beyond the connection radius it renders points.
 
 **Sinks**:
-- `Point` (vec2): Particle spawn position
-- `PointVelocity` (vec2): Particle with initial velocity (vec4: x,y,dx,dy)
-- `Spin` (float): Rotation speed
-- `Colour` (vec4): Particle color
+- `Point` (vec2): Particle spawn position. A small random velocity is added automatically.
+- `PointVelocity` (vec4): `{x, y, dx, dy}` spawn with explicit initial velocity.
+- `Spin` (float): Rotation speed.
+- `Colour` (vec4): Particle color.
+- `AlphaMultiplier` (float): Extra alpha scaling for **new** particles (useful when persistence changes).
+- `ChangeKeyColour` (float): When > 0.5, cycles through `KeyColours`.
 
-**Key Parameters**:
-- `Spin`: Particle rotation (-0.05 to 0.05)
-- `Colour`: Particle color
-- `timeStep`: Physics simulation speed
-- `velocityDamping`: Movement friction
-- `attractionStrength`: Inter-particle attraction
-- `attractionRadius`: Range of attraction
-- `connectionRadius`: Distance for drawing connections
-- `maxSpeed`: Velocity cap
-- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency)
+**Key Parameters** (from wrapped engine + wrapper params):
+- `Spin`, `Colour`, `AlphaMultiplier`.
+- Physics:
+  - `timeStep`: Simulation speed.
+  - `velocityDamping`: Friction.
+  - `attractionStrength`, `attractionRadius`: Inter-particle coupling.
+  - `forceScale`: Global force multiplier.
+  - `connectionRadius`: Distance threshold for drawing connection lines.
+  - `colourMultiplier`: Multiplies particle RGB.
+  - `maxSpeed`: Velocity cap.
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency).
 
-**Intent Integration**: Full Intent with agency control.
+**Coordination rules**:
+- If particles jitter/“explode”: increase `velocityDamping`, decrease `forceScale`/`attractionStrength`, and/or decrease `timeStep`.
+- If connections look too busy: lower `connectionRadius` or reduce particle count upstream.
+- If you fade the layer faster but want particles to stay visible: increase `AlphaMultiplier` (it only affects new particles, not the layer fade).
+
+**Intent Integration**: Full Intent with agency.
 
 **Use Cases**:
-- Create flowing, organic particle clouds
-- Visualize audio motion with physics
-- Build interconnected network visualizations
+- Flowing particle clouds.
+- Audio/video-driven motion when fed via `PointVelocity`.
+- Network visualizations (connections).
 
 ---
 
 #### ParticleFieldMod
 
-Particle system driven by two texture-based vector fields (like fluid velocities).
+Particle system driven by two texture-based vector fields (often fluid velocity textures).
 
 **Visual Characteristics**: Field-guided motion • Smooth, flowing trajectories • Complex patterns
 
 **Sinks**:
-- `Field1Texture` (texture): Primary vector field (RG channels)
-- `Field2Texture` (texture): Secondary vector field
-- `PointColour` (vec4): Update particle colors
-- `minWeight` (float): Field 1 influence minimum
-- `maxWeight` (float): Field 1 influence maximum
+- `Field1Texture` (texture): Primary vector field (RG channels).
+- `Field2Texture` (texture): Secondary vector field.
+- `PointColour` (vec4): Target color for particles; applied gradually (more aggressively as agency increases).
+- `minWeight` (float): Minimum blend weight for Field1 influence.
+- `maxWeight` (float): Maximum blend weight for Field1 influence.
+- `ChangeKeyColour` (float): When > 0.5, cycles through `KeyColours`.
 
-**Key Parameters**:
-- Field weights control blend between two fields
-- Motion safety: per-frame displacement is clamped in the shader (~6px at 3600px) to prevent runaway
-- Parameter ranges are intentionally capped (`forceMultiplier`, `maxVelocity`, `jitterStrength`) so full Intent stays usable
+**Key Parameters** (from wrapped engine + wrapper params):
+- Particle population + motion:
+  - `ln2ParticleCount`: Log2 particle count control (small changes have large effect).
+  - `velocityDamping`: Friction.
+  - `forceMultiplier`: Field force scaling (fine control).
+  - `maxVelocity`: Speed cap.
+  - `particleSize`: Render size.
+  - `jitterStrength`, `jitterSmoothing`: Adds organic noise and smooths it.
+  - `speedThreshold`: Below this speed, motion is damped/treated as stationary (stabilizer).
+- Field coupling:
+  - `field1Multiplier`, `field2Multiplier`: Base field strengths.
+  - `Field1PreScaleExp`, `Field2PreScaleExp`: Log10 normalization for incoming fields.
+    - effective multiplier = `fieldMultiplier * 10^PreScaleExp`
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency).
 
-**Intent Integration**: Responds to Intent system.
+**Coordination rules**:
+- If particles barely move: increase `field1Multiplier` first; if still weak, increase `Field1PreScaleExp` by +1.
+- If particles “teleport” or streak too hard: decrease `field*Multiplier` and/or decrease `Field*PreScaleExp`.
+- If motion is chaotic: increase `velocityDamping`, lower `forceMultiplier`, and consider increasing `speedThreshold`.
+- If recoloring is too slow/fast: adjust Synth Agency or feed `PointColour` more/less frequently.
+
+**Intent Integration**: Full Intent with agency (includes particle count, motion, and color).
 
 **Use Cases**:
-- Create fluid-driven particle motion
-- Combine video flow with fluid simulation
-- Generate complex field-guided patterns
+- Fluid-driven particle motion: `Fluid.velocitiesTexture → ParticleField.Field1Texture`.
+- Two-field blends: use palette `FieldTexture` or video flow as the secondary field.
+- Large-scale motion texture without explicit point spawning.
 
 ---
 
@@ -593,97 +703,136 @@ Draws lines as distributed point grains with Gaussian distribution.
 
 #### DividedAreaMod
 
-Divides the drawing space with lines using various geometric strategies.
+Divides the drawing space with constrained (minor) and unconstrained (major) divider lines.
 
-**Visual Characteristics**: Geometric • Sharp edges • Architectural • Grid-like divisions • Refraction effects
+Conceptually it is two related systems:
+- **Minor/constrained lines**: added incrementally from points or paths and then drawn into the *default* layer.
+- **Major/unconstrained lines**: maintained as a small set of “big” dividers that update smoothly from a batch of anchor points, drawn into the `major-lines` layer.
+
+**Visual Characteristics**: Geometric • Sharp edges • Architectural divisions • Optional refraction / chromatic styles for major lines
 
 **Sinks**:
-- `MajorAnchor` (vec2): Major division line anchor points
-- `MinorAnchor` (vec2): Minor division line anchors
-- `MinorPath` (ofPath): Path for line generation
-- `MinorLineColour` (vec4): Minor line color
-- `MajorLineColour` (vec4): Major line color
-- `ChangeAngle`, `ChangeStrategy`, `ChangeLayer`: Control commands
+- Minor line inputs:
+  - `MinorAnchor` (vec2): Adds an anchor point for constrained line generation.
+  - `MinorPath` (ofPath): Converts the path outline into point pairs and adds constrained lines immediately.
+- Major line inputs:
+  - `MajorAnchor` (vec2): Adds an anchor point for unconstrained major line updates (expects a batch, e.g. cluster centers).
+- Color inputs:
+  - `MinorLineColour` (vec4): Minor line color.
+  - `MajorLineColour` (vec4): Major line color.
+  - `ChangeMajorKeyColour` (float): When > 0.5, cycles `MajorKeyColours`.
+  - `ChangeMinorKeyColour` (float): When > 0.5, cycles `MinorKeyColours`.
+- Control:
+  - `ChangeAngle` (float): Updates `Angle` when value > ~0.4 (historical threshold).
+  - `ChangeStrategy` (float): When > 0.5, cycles `Strategy` (cooldown ~5s).
+  - `ChangeLayer` (float): Standard sink (switch drawing layer assignment).
 
-**Notes**:
-- Uses the Synth composite as its refraction background.
-- For refractive/unconstrained lines, assign a drawing layer with `isOverlay: true` and map it to the `major-lines` layer key.
+**Layers**:
+- Default layer: constrained/minor lines (`MinorAnchor` / `MinorPath`).
+- `major-lines` layer: unconstrained/major lines.
+  - If the `major-lines` target layer is an **overlay** (`isOverlay: true`), major lines draw with access to the composite background (required for refraction-style line modes).
+  - If the `major-lines` target layer is **not** an overlay, major lines are drawn without background (only Solid/Glow-style major line modes).
 
-**Key Parameters**:
-- `Strategy`: 0=point pairs, 1=point angles, 2=radiating
-- `Angle`: Line angle for strategy 1 (0.0-0.5, in π radians)
-- `PathWidth`: Minor line width
-- `MajorLineWidth`: Major line width (pixels)
-- `MinorLineColour`, `MajorLineColour`: Line colors
-- `MaxUnconstrainedLines`: Maximum divisions
-- `unconstrainedSmoothness`: Motion smoothness for major lines (0.0-1.0):
-  - 0.0: Responsive/instant - lines track input points directly
-  - 0.5: Balanced - smooth but still responsive
-  - 1.0: Dreamy/floaty - heavy damping, slow graceful motion
-  - Uses spring-damper physics with hysteresis for natural motion
-  - Automatically increases damping when input points are close together to prevent angular jitter
-- `minRefPointDistance`: Distance threshold below which extra damping is applied (default 0.08)
-- `majorLineStyle`: Drawing style for major (unconstrained) lines (0-6):
-  - 0: **Solid** - Simple flat-colored line
-  - 1: **Inner Glow** - Light edges, darker core
-  - 2: **Bloomed Additive** - Neon tube effect with core and halo (additive blending)
-  - 3: **Glow** - Additive gaussian falloff
-  - 4: **Refractive** - Glass-like distortion (requires background FBO)
-  - 5: **Blur/Refraction** - Screen-space blur with mild refraction (requires background FBO)
-  - 6: **Chromatic Aberration** - RGB channel split at edges (requires background FBO)
+**Key Parameters** (wrapper-level):
+- Minor line generation:
+  - `Strategy`:
+    - `0`: point pairs (consume `MinorAnchor` in pairs)
+    - `1`: point angles (draw segment from each `MinorAnchor` at `Angle`)
+    - `2`: radiating (requires ~7 points; last is centre)
+  - `Angle` (0.0–0.5, in π radians): used by Strategy 1.
+  - `PathWidth` (0–0.005): width used when converting `MinorPath` outlines.
+- Major line rendering:
+  - `MajorLineWidth` (pixels): stroke width for major lines.
+  - `MaxUnconstrainedLines`: cap on the number of major dividers.
+- Colors:
+  - `MinorLineColour`, `MajorLineColour`
+  - `MinorKeyColours`, `MajorKeyColours` (pipe-separated RGBA list)
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency).
 
-**Intent Integration**: Responds to Chaos, Granularity, Energy, Density, and Structure dimensions. Structure controls line smoothness (high structure = smooth/stable, low structure = responsive). Minor line colour/alpha is intent-aware; major line colour is not (keep majors stable; drive `MajorLineColour` via connections if desired).
+**Key Parameters** (from wrapped `DividedArea` engine)
+- `unconstrainedSmoothness` (0–1): damping/smoothness for major line motion.
+- `minRefPointDistance`, `majorLineStyle`, and other engine controls appear flattened into the Mod’s parameter group.
+
+**Coordination rules**:
+- Major anchors are assumed to arrive as a coherent batch (e.g. `Cluster.ClusterCentre` outputs). If your source emits sporadically, major lines will feel unstable.
+- If your `major-lines` layer is not overlay, refraction/chromatic line styles cannot work (no background texture available).
+- If constrained lines “pile up” too fast: reduce upstream point density or add a slow `Fade` on the default layer.
+
+**Wiring patterns**:
+- Audio → geometric architecture:
+  - `Audio.PolarPitchRmsPoint → Cluster.Vec2 → DividedArea.MajorAnchor`
+- Paths → constrained divisions:
+  - `Path.Path → DividedArea.MinorPath`
+
+**Intent Integration**: Responds to Chaos, Granularity, Energy, Density, and Structure. Structure strongly affects major line smoothness (high structure = calmer motion).
 
 **Use Cases**:
-- Create geometric compositions responding to audio
-- Build architectural space divisions
-- Generate grid-based visualizations
+- Create architectural divisions driven by audio or motion clusters.
+- Combine stable “big structure” (major lines) with busy detail (minor lines).
 
 ---
 
 #### CollageMod
 
-Composites texture snapshots within path boundaries.
+Composites a snapshot texture within a path boundary (with optional outline layer).
 
-**Visual Characteristics**: Hard-edged shapes • Collage aesthetic • Textural fills • Outlined forms
+Collage is **event-driven**: it draws only when it has both a valid `Path` and (for snapshot strategies) an allocated `SnapshotTexture`.
+After drawing it clears its stored path/texture and waits for the next pair.
+
+**Visual Characteristics**: Hard-edged shapes • Collage aesthetic • Textural fills • Optional outlines
 
 **Sinks**:
-- `Path` (ofPath): Shape boundary
-- `SnapshotTexture` (texture): Image to collage
-- `Colour` (vec4): Tint color
-
-**Key Parameters**:
-- `Colour`: Tint color for textures
-- `Saturation`: Color saturation boost (0.0-4.0)
-- `OutlineAlphaFactor`: Outline opacity multiplier (0.0-1.0)
-- `OutlineWidth`: Outline stroke width in pixels (1.0-50.0, default 12.0)
-- `OutlineColour`: Outline stroke color (RGBA)
-- `Strategy`: 0=tint, 1=add tinted pixels, 2=add pixels
-- `BlendMode`: 0=ALPHA, 1=SCREEN, 2=ADD, 3=MULTIPLY, 4=SUBTRACT
-- `Opacity`: Multiplies tint alpha before drawing (0.0-1.0)
-- `MinDrawInterval`: Minimum seconds between draws (rate limiting)
-
-**Recommended Usage**:
-- For solid coloured shapes: use `Strategy: 0` (tint fill), drive `Colour` from a palette, and prefer `BlendMode: 0` (ALPHA). Using `BlendMode: 1` (SCREEN) with tint-fill often reads as pale/white shapes.
-- If `Synth.agency` is low/moderate, palette-driven tint can be “washed out” by the manual default colour (often grey). Compensate by increasing `Saturation` (e.g. 2.0–3.0) and/or setting a less-neutral default `Colour`.
-- To reduce blowout with SCREEN blending: set `Opacity` to ~0.3-0.5
-- To switch to non-additive blending: set `BlendMode` to 0 (ALPHA)
-- To throttle rapid path reception: set `MinDrawInterval` to ~0.1 (max 10 draws/sec)
+- `Path` (ofPath): Shape boundary. Typically from `PathMod.Path`.
+- `SnapshotTexture` (texture): Image to collage. Typically from `PixelSnapshotMod.SnapshotTexture`.
+- `Colour` (vec4): Tint color (used when strategy is tinted).
+- `ChangeKeyColour` (float): When > 0.5, cycles through `KeyColours`.
 
 **Layers**:
-- Default layer: Filled shapes (requires `useStencil: true` in the drawing layer when using snapshot strategies)
-- `outlines` layer: Shape outlines (can be mapped onto an existing high-res geometry layer to avoid adding another large layer)
+- Default layer: filled shape / snapshot.
+  - For `Strategy` 1 or 2 (snapshot-based), the default layer **must have a stencil buffer** (`useStencil: true` on the drawing layer). If not, Collage logs an error and does nothing.
+- `outlines` layer (optional): outline strokes.
+  - Outlines are drawn by “punching” the path interior to transparent and then drawing an outside-aligned stroke.
+  - This layer is usually persistent (`clearOnUpdate=false`) and faded slowly.
 
-**Layer interactions**:
-- Collage outlines are event-driven (they only draw when a new `Path` arrives), so they need a persistent outlines layer (`clearOnUpdate=false`) and often a slow `Fade` to remain visible.
-- When sharing the outlines layer with continuously redrawn geometry (e.g. DividedArea), a `Fade` will decay the event-driven outlines while the geometry stays present via redraw.
+**Key Parameters**:
+- Composition:
+  - `Strategy`:
+    - `0`: tint fill (no snapshot required)
+    - `1`: draw snapshot tinted (stenciled)
+    - `2`: draw snapshot untinted (stenciled)
+  - `BlendMode`: 0=ALPHA, 1=SCREEN, 2=ADD, 3=MULTIPLY, 4=SUBTRACT.
+  - `Opacity`: multiplies tint alpha before drawing (useful to tame SCREEN/ADD blowout).
+  - `MinDrawInterval`: rate limiting (seconds). If a burst of paths arrives, this throttles draws.
+- Tinting:
+  - `Colour`: base tint.
+  - `Saturation`: multiplies the tint’s saturation (0–4).
+- Outlines:
+  - `OutlineAlphaFactor`: 0 disables outlines.
+  - `OutlineWidth` (pixels)
+  - `OutlineColour`
+- `KeyColours`: pipe-separated RGBA list for palette stepping.
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency).
 
-**Intent Integration**: E/S/D control tint colour and saturation. S and C control outline visibility (high structure + low chaos = visible outlines). E and G control outline width (energy = bold, granularity = refined). S controls outline brightness for contrast with fills.
+**Coordination rules**:
+- Snapshot strategies (1/2) require: `useStencil: true` on the target drawing layer.
+- If nothing draws: confirm the `Path` is non-trivial (has enough commands) and a fresh snapshot has arrived.
+- If tint-fill looks washed out under SCREEN: reduce `Opacity` and/or switch `BlendMode` to ALPHA.
+- If you want outlines to linger: keep the outlines layer persistent and add a slow `Fade` on that layer.
+
+**Wiring patterns**:
+- Classic collage:
+  - `Path.Path → Collage.Path`
+  - `PixelSnapshot.SnapshotTexture → Collage.SnapshotTexture`
+  - `SomPalette.Random → Collage.Colour`
+- Outline persistence:
+  - `FadeAlphaMap.float → FadeOutlines.HalfLifeSec` (or a fixed `Fade` preset)
+
+**Intent Integration**: Drives tint color, saturation, outline alpha/width/color for contrast and structure.
 
 **Use Cases**:
-- Create cut-paper collage effects
-- Composite video snapshots into shapes
-- Build layered textural compositions
+- Cut-paper collage effects.
+- Sampling and re-projecting a “memory” texture bank into new shapes.
+- Texture fills for geometric architecture.
 
 ---
 
@@ -733,27 +882,32 @@ Adds energy to a `FluidMod` velocity layer via radial, directional, and swirl im
 **Visual Characteristics**: Fluid distortion • Ripples • Directional flow injection • Vortex seeds
 
 **Sinks**:
-- `Point` (vec2): Impulse centers (normalized 0–1)
-- `PointVelocity` (vec4): `{x, y, dx, dy}` (normalized) per-impulse directional injection
-- `Velocity` (vec2): Global `{dx, dy}` (normalized) used when only `Point` is provided
-- `SwirlVelocity` (float): Normalized 0–0.1 additional swirl term (overrides config value)
-- `Impulse Radius` (float): Impulse size
-- `Impulse Strength` (float): Normalized strength
+- `Point` (vec2): Impulse centers (normalized 0–1).
+- `PointVelocity` (vec4): `{x, y, dx, dy}` (normalized) per-impulse directional injection.
+- `Velocity` (vec2): Global `{dx, dy}` used when only `Point` is provided.
+- `SwirlVelocity` (float): Additional swirl term (overrides config value).
+- `Impulse Radius` (float): Impulse size.
+- `Impulse Strength` (float): Impulse intensity.
 
 **Key Parameters**:
-- `Impulse Radius` (0.0–0.10): Radius as a fraction of the target buffer’s min dimension
-- `Impulse Strength` (0.0–0.7): Interpreted as a **fraction of radius displacement per step** (resolution-independent feel)
-- `dt` (0.0–0.002): dt passed to the impulse shader (should match the fluid solver’s dt semantics)
-- `VelocityScale` (0.0–50.0): Scales normalized `Velocity` / `PointVelocity` into pixel displacement per step
-- `SwirlStrength` (0.0–0.2): Multiplier for `SwirlVelocity` (capped to avoid obvious whirlpools)
-- `SwirlVelocity` (0.0–0.1): Base swirl term (config/manual); effective swirl = `clamp(SwirlVelocity * SwirlStrength, 0..1)` (capped to avoid obvious whirlpools)
+- `Impulse Radius` (0.0–0.10): Radius as a fraction of the target buffer’s min dimension.
+- `Impulse Strength` (0.0–0.7): Interpreted as a **fraction of radius displacement per step** (resolution-independent feel).
+- `VelocityScale` (0.0–50.0): Scales normalized `Velocity` / `PointVelocity` into pixel displacement per step.
+- `dt` (0.0–0.002): dt passed to the impulse shader (should usually match the fluid solver’s dt semantics).
+- `SwirlVelocity` (0.0–0.1): Base swirl term.
+- `SwirlStrength` (0.0–0.2): Multiplier for swirl (capped to avoid obvious whirlpools).
+
+**Coordination rules**:
+- If the impulse does nothing: increase `Impulse Strength` first; if directional impulses are weak, increase `VelocityScale`.
+- If the fluid “blows out” instantly: lower `Impulse Strength`, and/or lower `Fluid.dt`/increase `Fluid.VelocityDissipation`.
+- If it looks too laminar: add a little swirl (small `SwirlVelocity` + `SwirlStrength`).
 
 **Intent Integration**: Responds to Intent (radius + strength). Other parameters are manual-only.
 
 **Use Cases**:
-- Inject flow from video motion (e.g. `VideoFlowSourceMod.PointVelocity → FluidRadialImpulseMod.PointVelocity`)
-- Create audio-driven ripples that don’t “die” at cold start (add swirl)
-- Add energy/turbulence into a fluid motion field used downstream (Smear/Particles)
+- Inject flow from video motion: `VideoFlowSource.PointVelocity → FluidRadialImpulse.PointVelocity`.
+- Audio-driven ripples: drive `Point` from audio clusters; drive `Impulse Strength` from a scalar.
+- Seed turbulence into a motion field used downstream (`Smear`, `ParticleField`).
 
 ---
 
@@ -799,9 +953,17 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 - `velocitiesTexture` (texture): Velocity field texture
 
 **Sinks** (temperature injection):
-- `TempImpulsePoint` (vec2): Normalized 0–1 injection centers (queued and applied each frame)
-- `TempImpulseRadius` (float): Overrides `TempImpulseRadius` parameter via controller
-- `TempImpulseDelta` (float): Overrides `TempImpulseDelta` parameter via controller
+- `TempImpulsePoint` (vec2): Normalized 0–1 injection centers (queued and applied each frame).
+- `TempImpulseRadius` (float): Overrides `TempImpulseRadius` parameter via controller.
+- `TempImpulseDelta` (float): Overrides `TempImpulseDelta` parameter via controller.
+
+**Sinks** (velocity field injection):
+- `VelocityFieldTexture` (texture): External velocity field (sampled in normalized coords and added into the solver’s velocity buffer).
+- `VelocityFieldPreScaleExp` (float): Log10 normalization exponent (effective preScale = `10^exp`).
+- `VelocityFieldMultiplier` (float): Fine multiplier. Set to 0 to disable.
+
+Velocity field scaling rule:
+- effectiveScale = `(10^VelocityFieldPreScaleExp) * VelocityFieldMultiplier`
 
 **Layers**:
 - Default layer: Visual simulation output
@@ -809,14 +971,22 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 - `obstacles` layer (optional): Obstacle mask sampled by the fluid solver
 
 **Key Parameters**:
-- `Boundary Mode`: 0=SolidWalls, 1=Wrap, 2=Open (must match GL wrap)
-- `dt`: Time step (simulation speed)
-- `Vorticity`: Vortex formation strength
-- `Value Dissipation`: Dye persistence (normalized 0–1)
-- `Velocity Dissipation`: Motion persistence (normalized 0–1)
-- `Value Spread`: Dye diffusion (normalized 0–1)
-- `Velocity Spread`: Velocity diffusion/viscosity (normalized 0–1)
-- `Value Max`: Clamp after advection (0 = disabled)
+- `Boundary Mode`: 0=SolidWalls, 1=Wrap, 2=Open (must match GL wrap).
+- `dt`: Time step (simulation speed).
+- `Vorticity`: Vortex formation strength.
+- `Value Dissipation`: Dye persistence (normalized 0–1).
+- `Velocity Dissipation`: Motion persistence (normalized 0–1).
+- `Value Spread`: Dye diffusion (normalized 0–1).
+- `Velocity Spread`: Velocity diffusion/viscosity (normalized 0–1).
+- `Value Max`: Clamp after advection (0 = disabled).
+- Velocity field injection:
+  - `VelocityFieldPreScaleExp` + `VelocityFieldMultiplier`: External flow strength (effectiveScale = `10^exp * mult`).
+  - Use `VelocityFieldMultiplier = 0` to disable without disconnecting.
+
+Tuning hints:
+- If motion decays too quickly: increase `Velocity Dissipation` and/or increase `dt` slightly.
+- If motion is too smeary/viscous: decrease `Velocity Spread`.
+- If the whole sim explodes: reduce `dt` and/or increase dissipation.
 
 **Temperature (v2 scalar field)**:
 - `TempEnabled`: Enables temperature advection/diffusion
@@ -850,64 +1020,59 @@ Layer Mods apply effects to entire drawing surfaces rather than making individua
 
 ### FadeMod
 
-Gradually fades layer content over time using alpha blending.
+Fades a drawing layer over time using a time-based half-life model.
+
+Internally it derives a per-frame multiplier from `HalfLifeSec` and the current frame `dt` so the fade rate stays stable across frame rates.
 
 **Visual Characteristics**: Gradual fade • Trails • Temporal blending
 
 **Sinks**:
-- `Alpha` (float): Override fade rate
+- `HalfLifeSec` (float): Preferred input. Time (seconds) for the layer to reach 50% intensity.
+- `Alpha` (float, legacy): Interpreted as **alpha-per-frame at 30fps** and converted to an equivalent `HalfLifeSec`.
 
 **Key Parameters**:
-- `Alpha`: Per-frame alpha multiplier (0.0-0.1)
+- `HalfLifeSec` (0.05–300): Larger = more persistent trails.
+- `AgencyFactor`: Auto takeover scaling (multiplies Synth Agency).
 
-**Intent Integration**: Responds to Intent.
+**Intent Integration**: Responds to Intent (mapped onto `HalfLifeSec`, with agency).
 
 **Use Cases**:
-- Create trailing effects
-- Gradually clear the canvas
-- Build temporal layers
+- Create trailing effects on accumulating layers (`clearOnUpdate=false`)
+- Slowly clear the canvas without hard resets
+- Make event-driven marks linger (e.g. Collage outlines)
 
 ---
 
 ### SmearMod
 
-Applies displacement-based smearing using vector fields with various spatial strategies.
+Applies displacement-based smearing using vector fields with optional spatial "teleport" strategies.
+
+Smear is a feedback effect: it samples the previous frame, displaces it, and blends it with the current frame.
 
 **Visual Characteristics**: Smeared/distorted • Echo effects • Displacement patterns • Glitchy artifacts (depending on strategy)
 
 **Sinks**:
-- `Translation` (vec2): Direct translation offset
-- `MixNew` (float): Blend with previous frame (0.3–1.0)
-- `AlphaMultiplier` (float): Fade rate multiplier (0.95–0.999)
-- `Field1Multiplier` (float): Primary field strength (pre-scale is applied separately)
-- `Field2Multiplier` (float): Secondary field strength
-- `Field1Texture` (texture): Primary displacement field (RG channels)
-- `Field2Texture` (texture): Secondary displacement field
-- `ChangeLayer` (float): Control command (change/disable/reset drawing layer depending on value)
+- `Translation` (vec2): Direct translation offset (normalized).
+- `MixNew` (float): Blend weight for *new* pixels (0.3–1.0). Lower = more feedback.
+- `HalfLifeSec` (float): Time-based trail persistence (preferred).
+- `AlphaMultiplier` (float, legacy): Interpreted as per-frame multiplier at 30fps and converted to `HalfLifeSec`.
+- `Field1Multiplier` (float): Primary field strength (pre-scale is applied separately).
+- `Field2Multiplier` (float): Secondary field strength.
+- `Field1Texture` (texture): Primary displacement field (RG channels).
+- `Field2Texture` (texture): Secondary displacement field.
+- `ChangeLayer` (float): Control command (change/disable/reset drawing layer depending on value).
 
 **Key Parameters**:
-- `MixNew`: Blend with previous frame (0.3-1.0)
-- `AlphaMultiplier`: Fade rate (0.994-0.999)
-- `Translation`: Direct translation offset
-- `Field1PreScaleExp`: Log10 exponent to normalize primary field magnitude (-3.0 to 2.0, i.e. 0.001x to 100x). Not controlled by Intent.
-- `Field1Multiplier`, `Field1Bias`: Primary field control (0.0-0.1)
-- `Field2PreScaleExp`: Log10 exponent to normalize secondary field magnitude (-3.0 to 2.0). Not controlled by Intent.
-- `Field2Multiplier`, `Field2Bias`: Secondary field control
-- `Strategy`: Spatial manipulation mode (0-9):
-  - 0: Off
-  - 1: Cell-quantized
-  - 2: Per-cell random offset
-  - 3: Boundary teleport
-  - 4: Per-cell rotation/reflection
-  - 5: Multi-res grid snap
-  - 6: Voronoi partition teleport
-  - 7: Border kill-band
-  - 8: Dual-sample ghosting on border cross
-  - 9: Piecewise mirroring/folding
-- `GridSize`: Grid dimensions for strategies (2-128)
-- Strategy-specific parameters (jump amount, border width, ghost blend, fold period)
+- `MixNew`: Lower = stronger feedback, higher = cleaner.
+- `HalfLifeSec`: Lower = faster decay, higher = longer trails.
+- `Translation`: Constant drift.
+- `Field1PreScaleExp`, `Field2PreScaleExp`: Log10 exponent; effective field scale is `10^exp`.
+- `Field1Multiplier`, `Field1Bias`: Primary field control.
+- `Field2Multiplier`, `Field2Bias`: Secondary field control.
+- `Strategy` (0–9): Spatial manipulation mode (teleports/folds).
+- `GridSize` and strategy-specific parameters (`JumpAmount2`, `BorderWidth7`, `GridLevels5`, `GhostBlend8`, `FoldPeriod9`).
 
-**Intent Integration**: Responds to Intent.
+**Intent Integration**: Responds to Intent (mix, half-life, and some strategy parameters via controllers).
 
 **Use Cases**:
 - Create fluid-like smearing from velocity fields
