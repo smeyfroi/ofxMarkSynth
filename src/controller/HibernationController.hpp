@@ -67,8 +67,8 @@ private:
     float alpha;
     float fadeStartTime;
     float fadeStartAlpha;  // Alpha when fade started (for reversing mid-fade)
-    ofParameter<float> fadeOutDurationParameter { "Hibernate Fade Out", 2.0f, 0.5f, 10.0f };
-    ofParameter<float> fadeInDurationParameter { "Hibernate Fade In", 1.0f, 0.1f, 5.0f };
+    ofParameter<float> fadeOutDurationParameter { "hibernateFadeOutSec", 2.0f, 0.5f, 10.0f };
+    ofParameter<float> fadeInDurationParameter { "hibernateFadeInSec", 1.0f, 0.1f, 5.0f };
 };
 
 } // namespace ofxMarkSynth

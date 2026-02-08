@@ -1429,8 +1429,8 @@ void Gui::drawNodeEditor() {
   if (autoSaveModsEnabled && modsConfigNeedsSave) {
     float elapsed = ofGetElapsedTimef() - modsConfigChangeTime;
     if (elapsed >= AUTO_SAVE_DELAY) {
-      if (synthPtr->saveModsToCurrentConfig()) {
-        ofLogNotice("Gui") << "Auto-saved mods config to: " << synthPtr->currentConfigPath;
+      if (synthPtr->saveToCurrentConfig()) {
+          ofLogNotice("Gui") << "Auto-saved config to: " << synthPtr->currentConfigPath;
       }
       modsConfigNeedsSave = false;
     }

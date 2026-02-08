@@ -1,16 +1,17 @@
 {
   "version": "1.0",
   "description": "Points example number 1",
-  
   "synth": {
-    "agency": 1.0,
+    "agency": "1",
     "backgroundColor": "0.0, 0.0, 0.0, 1",
-    "backgroundMultiplier": 0.1
+    "backgroundBrightness": "0.1"
   },
-
   "drawingLayers": {
     "foreground": {
-      "size": [768, 768],
+      "size": [
+        768,
+        768
+      ],
       "internalFormat": "GL_RGBA32F",
       "wrap": "GL_CLAMP_TO_EDGE",
       "clearOnUpdate": false,
@@ -20,7 +21,10 @@
       "isDrawn": true
     },
     "fluid_velocity": {
-      "size": [768, 768],
+      "size": [
+        768,
+        768
+      ],
       "internalFormat": "GL_RG32F",
       "wrap": "GL_REPEAT",
       "clearOnUpdate": false,
@@ -30,7 +34,6 @@
       "isDrawn": false
     }
   },
-
   "mods": {
     "Random Radius": {
       "type": "RandomFloatSource",
@@ -60,7 +63,9 @@
         "Softness": "0.0"
       },
       "layers": {
-        "default": ["foreground"]
+        "default": [
+          "foreground"
+        ]
       }
     },
     "Random Impulse Point": {
@@ -76,7 +81,9 @@
         "Impulse Strength": "0.3"
       },
       "layers": {
-        "default": ["fluid_velocity"]
+        "default": [
+          "fluid_velocity"
+        ]
       }
     },
     "Fluid": {
@@ -85,12 +92,15 @@
         "dt": "0.01"
       },
       "layers": {
-        "default": ["foreground"],
-        "velocities": ["fluid_velocity"]
+        "default": [
+          "foreground"
+        ],
+        "velocities": [
+          "fluid_velocity"
+        ]
       }
     }
   },
-  
   "connections": [
     "Random Radius.Float -> Circle.Radius",
     "Random Point.Vec2 -> Circle.Point",

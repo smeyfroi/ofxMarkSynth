@@ -76,9 +76,9 @@ These addons expose parameters via `getParameterGroup()` that are flattened into
   "description": "Reference of all Mod types with default parameter values",
   
   "synth": {
-    "agency": 0,
+    "agency": "0",
     "backgroundColor": "0, 0, 0, 1",
-    "backgroundMultiplier": 0.1
+    "backgroundBrightness": "0.035"
   },
   
   "mods": {
@@ -101,7 +101,7 @@ The `synth` section configures Synth-level parameters:
 |-----------|------|---------|-------------|
 | `agency` | float | 0 | Synth agency level (0.0 = fully manual, 1.0 = fully autonomous) |
 | `backgroundColor` | ofFloatColor | "0, 0, 0, 1" | Background color (r, g, b, a) |
-| `backgroundMultiplier` | float | 0.1 | Background color intensity multiplier |
+| `backgroundBrightness` | float | 0.035 | Background tint brightness |
 
 ### Parameter Value Formats
 

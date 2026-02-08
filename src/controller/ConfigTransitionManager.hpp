@@ -61,8 +61,8 @@ private:
     float snapshotWeight { 1.0f };
     float liveWeight { 0.0f };
     float alpha { 0.0f };
-    ofParameter<float> delaySecParameter { "Crossfade Delay Sec", 0.5f, 0.0f, 9999.0f };
-    ofParameter<float> durationParameter { "Crossfade Duration", 2.5f, 0.5f, 10.0f };
+    ofParameter<float> delaySecParameter { "crossfadeDelaySec", 0.5f, 0.0f, 9999.0f };
+    ofParameter<float> durationParameter { "crossfadeDuration", 2.5f, 0.5f, 10.0f };
 };
 
 } // namespace ofxMarkSynth

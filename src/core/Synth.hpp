@@ -117,7 +117,7 @@ public:
   std::optional<std::reference_wrapper<ofAbstractParameter>> findParameterByNamePrefix(const std::string& name) override;
 
   bool loadFromConfig(const std::string& filepath);
-  bool saveModsToCurrentConfig();
+  bool saveToCurrentConfig();
   void unload();
   void switchToConfig(const std::string& filepath, bool useCrossfade = true);
   void loadFirstPerformanceConfig();
@@ -312,7 +312,7 @@ private:
   void applyIntentToAllMods();
   // <<<
 
-  ofParameter<float> agencyParameter { "Synth Agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
+  ofParameter<float> agencyParameter { "agency", 0.0, 0.0, 1.0 }; // 0.0 -> fully manual; 1.0 -> fully autonomous
   float autoAgencyAggregatePrev { 0.0f };      // Used for current frame getAgency() (intentionally 1-frame delayed)
   float autoAgencyAggregateThisFrame { 0.0f }; // Max of .AgencyAuto inputs received this frame
 
@@ -322,13 +322,13 @@ private:
   int lastAgencyRegisterShiftIdCount { 0 };
   std::array<int, MAX_AGENCY_REGISTER_SHIFT_IDS> lastAgencyRegisterShiftIds {};
 
-  ofParameter<float> manualBiasDecaySecParameter { "Manual Decay Time", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
-  ofParameter<float> baseManualBiasParameter { "Manual Bias Min", 0.1, 0.0, 0.5 }; // Minimum manual control influence
+  ofParameter<float> manualBiasDecaySecParameter { "manualBiasDecaySec", 0.8, 0.1, 5.0 }; // Time for manual control to decay back
+  ofParameter<float> baseManualBiasParameter { "baseManualBias", 0.1, 0.0, 0.5 }; // Minimum manual control influence
   
   // Background color (part of Intent system, stays in Synth)
-  ofParameter<ofFloatColor> backgroundColorParameter { "BackgroundColour", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
+  ofParameter<ofFloatColor> backgroundColorParameter { "backgroundColor", ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 0.0, 0.0, 0.0, 1.0 }, ofFloatColor { 1.0, 1.0, 1.0, 1.0 } };
   ParamController<ofFloatColor> backgroundColorController { backgroundColorParameter };
-  ofParameter<float> backgroundBrightnessParameter { "BackgroundBrightness", 0.035f, 0.0f, 1.0f };
+  ofParameter<float> backgroundBrightnessParameter { "backgroundBrightness", 0.035f, 0.0f, 1.0f };
 
   ofxLabel recorderStatus;
   ofxLabel saveStatus;

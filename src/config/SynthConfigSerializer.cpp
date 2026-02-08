@@ -283,86 +283,55 @@ bool SynthConfigSerializer::parseConnections(const OrderedJson& j, std::shared_p
   }
 }
 
-static ofFloatColor parseFloatColor(const std::string& str) {
-  std::vector<float> values;
-  std::stringstream ss(str);
-  std::string token;
-  while (std::getline(ss, token, ',')) {
-    values.push_back(std::stof(ofTrim(token)));
+static bool jsonValueToParamString(const nlohmann::json& value, std::string& out) {
+  if (value.is_string()) {
+    out = value.get<std::string>();
+    return true;
   }
-  if (values.size() >= 4) {
-    return ofFloatColor(values[0], values[1], values[2], values[3]);
-  } else if (values.size() >= 3) {
-    return ofFloatColor(values[0], values[1], values[2], 1.0f);
+
+  if (value.is_number()) {
+    out = std::to_string(value.get<double>());
+    return true;
   }
-  return ofFloatColor(0, 0, 0, 1);
+
+  if (value.is_boolean()) {
+    out = value.get<bool>() ? "1" : "0";
+    return true;
+  }
+
+  return false;
 }
 
 bool SynthConfigSerializer::parseSynthConfig(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("synth") || !j["synth"].is_object()) {
     return true;
   }
-  
+
   const auto& s = j["synth"];
-  
-  // Agency
-  if (s.contains("agency") && s["agency"].is_number()) {
-    float agency = s["agency"].get<float>();
-    synth->setAgency(agency);
-    ofLogNotice("SynthConfigSerializer") << "  Synth agency: " << agency;
-  }
-  
-  // Background color
-  std::string bgColorStr = getJsonString(s, "backgroundColor");
-  if (!bgColorStr.empty()) {
-    synth->backgroundColorParameter.set(parseFloatColor(bgColorStr));
-    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundColor: " << bgColorStr;
-  }
-  
-  // Background brightness (was "backgroundMultiplier" in older configs)
-  if (s.contains("backgroundBrightness") && s["backgroundBrightness"].is_number()) {
-    float brightness = s["backgroundBrightness"].get<float>();
-    synth->backgroundBrightnessParameter.set(brightness);
-    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundBrightness: " << brightness;
-  } else if (s.contains("backgroundMultiplier") && s["backgroundMultiplier"].is_number()) {
-    // Legacy mapping: old multiplier acted on RGB directly.
-    // New behavior: treat this as a target brightness for the tinted background.
-    // Empirical conversion: 0.1 -> 0.035.
-    constexpr float MULTIPLIER_TO_BRIGHTNESS = 0.35f;
-    float mult = s["backgroundMultiplier"].get<float>();
-    float brightness = std::clamp(mult * MULTIPLIER_TO_BRIGHTNESS, 0.0f, 1.0f);
-    synth->backgroundBrightnessParameter.set(brightness);
-    ofLogNotice("SynthConfigSerializer") << "  Synth backgroundBrightness (from legacy multiplier): " << brightness;
-  }
-  
-  // Manual bias decay
-  if (s.contains("manualBiasDecaySec") && s["manualBiasDecaySec"].is_number()) {
-    float decay = s["manualBiasDecaySec"].get<float>();
-    synth->manualBiasDecaySecParameter.set(decay);
-    ofLogNotice("SynthConfigSerializer") << "  Manual bias decay time: " << decay;
-  }
-  
-  // Base manual bias
-  if (s.contains("baseManualBias") && s["baseManualBias"].is_number()) {
-    float bias = s["baseManualBias"].get<float>();
-    synth->baseManualBiasParameter.set(bias);
-    ofLogNotice("SynthConfigSerializer") << "  Base manual bias: " << bias;
-  }
-  
-  // Crossfade delay
-  if (s.contains("crossfadeDelaySec") && s["crossfadeDelaySec"].is_number()) {
-    float delaySec = s["crossfadeDelaySec"].get<float>();
-    synth->configTransitionManager->getDelaySecParameter().set(delaySec);
-    ofLogNotice("SynthConfigSerializer") << "  Crossfade delay sec: " << delaySec;
+
+  for (auto it = s.begin(); it != s.end(); ++it) {
+    const std::string key = it.key();
+    if (!key.empty() && key[0] == '_') continue;
+
+    // Non-parameter config blocks are handled elsewhere.
+    if (key == "initialIntent") continue;
+
+    std::string valueStr;
+    if (!jsonValueToParamString(it.value(), valueStr)) {
+      ofLogWarning("SynthConfigSerializer") << "Synth key '" << key << "' has unsupported value type";
+      continue;
+    }
+
+    auto paramOpt = synth->findParameterByNamePrefix(key);
+    if (!paramOpt.has_value()) {
+      ofLogError("SynthConfigSerializer") << "Unknown Synth parameter: " << key;
+      continue;
+    }
+
+    paramOpt->get().fromString(valueStr);
+    ofLogNotice("SynthConfigSerializer") << "  Synth " << key << ": " << valueStr;
   }
 
-  // Crossfade duration
-  if (s.contains("crossfadeDuration") && s["crossfadeDuration"].is_number()) {
-    float duration = s["crossfadeDuration"].get<float>();
-    synth->configTransitionManager->getDurationParameter().set(duration);
-    ofLogNotice("SynthConfigSerializer") << "  Crossfade duration: " << duration;
-  }
-  
   return true;
 }
 
@@ -485,9 +454,28 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
   if (j.contains("synth") && j["synth"].contains("initialIntent")) {
     const auto& intentConfig = j["synth"]["initialIntent"];
     
-    if (intentConfig.contains("strength") && intentConfig["strength"].is_number()) {
-      synth->setIntentStrength(intentConfig["strength"]);
-      ofLogNotice("SynthConfigSerializer") << "Set intent strength: " << intentConfig["strength"].get<float>();
+    if (intentConfig.contains("strength")) {
+      const auto& strengthVal = intentConfig["strength"];
+      float strength = 0.0f;
+      bool parsed = false;
+      if (strengthVal.is_number()) {
+        strength = strengthVal.get<float>();
+        parsed = true;
+      } else if (strengthVal.is_string()) {
+        try {
+          strength = std::stof(strengthVal.get<std::string>());
+          parsed = true;
+        } catch (const std::exception&) {
+          parsed = false;
+        }
+      }
+
+      if (parsed) {
+        synth->setIntentStrength(strength);
+        ofLogNotice("SynthConfigSerializer") << "Set intent strength: " << strength;
+      } else {
+        ofLogWarning("SynthConfigSerializer") << "initialIntent.strength has unsupported type";
+      }
     }
     
     if (intentConfig.contains("activations") && intentConfig["activations"].is_array()) {
@@ -500,9 +488,26 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
               << "] ignored: only " << intentCount << " intents defined";
           break;
         }
-        if (activations[i].is_number()) {
-          synth->setIntentActivation(i, activations[i]);
-          ofLogNotice("SynthConfigSerializer") << "Set intent[" << i << "] activation: " << activations[i].get<float>();
+        {
+          const auto& activationVal = activations[i];
+          float activation = 0.0f;
+          bool parsed = false;
+          if (activationVal.is_number()) {
+            activation = activationVal.get<float>();
+            parsed = true;
+          } else if (activationVal.is_string()) {
+            try {
+              activation = std::stof(activationVal.get<std::string>());
+              parsed = true;
+            } catch (const std::exception&) {
+              parsed = false;
+            }
+          }
+
+          if (parsed) {
+            synth->setIntentActivation(i, activation);
+            ofLogNotice("SynthConfigSerializer") << "Set intent[" << i << "] activation: " << activation;
+          }
         }
       }
     }

@@ -1,16 +1,17 @@
 {
   "version": "1.0",
   "description": "Smear example",
-  
   "synth": {
-    "agency": 1.0,
+    "agency": "1",
     "backgroundColor": "0.0, 0.0, 0.0, 1",
-    "backgroundMultiplier": 0.1
+    "backgroundBrightness": "0.1"
   },
-
   "drawingLayers": {
     "foreground": {
-      "size": [2400, 2400],
+      "size": [
+        2400,
+        2400
+      ],
       "internalFormat": "GL_RGBA32F",
       "wrap": "GL_CLAMP_TO_EDGE",
       "clearOnUpdate": false,
@@ -20,7 +21,6 @@
       "isDrawn": true
     }
   },
-
   "mods": {
     "Audio": {
       "type": "AudioDataSource",
@@ -32,7 +32,6 @@
       },
       "_comment": "Microphone capturing full ensemble"
     },
-
     "ColorPalette": {
       "type": "SomPalette",
       "_comment": "Learns colors from audio spectral features",
@@ -40,7 +39,6 @@
         "Iterations": "3000"
       }
     },
-
     "Smear": {
       "type": "Smear",
       "config": {
@@ -61,10 +59,11 @@
         "AgencyFactor": "1"
       },
       "layers": {
-        "default": ["foreground"]
+        "default": [
+          "foreground"
+        ]
       }
     },
-
     "Random Radius": {
       "type": "RandomFloatSource",
       "config": {
@@ -93,15 +92,15 @@
         "Softness": "0.0"
       },
       "layers": {
-        "default": ["foreground"]
+        "default": [
+          "foreground"
+        ]
       }
     }
   },
-  
   "connections": [
     "Audio.Spectral3dPoint -> ColorPalette.Sample",
     "ColorPalette.FieldTexture -> Smear.Field1Texture",
-
     "Random Radius.Float -> Circle.Radius",
     "Random Point.Vec2 -> Circle.Point",
     "Random Color.Vec4 -> Circle.Colour"

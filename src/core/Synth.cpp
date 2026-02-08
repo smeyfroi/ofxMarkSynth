@@ -1070,89 +1070,9 @@ bool Synth::loadFromConfig(const std::string& filepath) {
   return success;
 }
 
-
-
-
-bool Synth::saveModsToCurrentConfig() {
-  if (currentConfigPath.empty()) {
-    ofLogError("Synth") << "saveModsToCurrentConfig: no config loaded";
-    return false;
-  }
-
-  const std::filesystem::path filepath = currentConfigPath;
-  if (!std::filesystem::exists(filepath)) {
-    ofLogError("Synth") << "saveModsToCurrentConfig: file does not exist: " << filepath;
-    return false;
-  }
-
-  try {
-    nlohmann::ordered_json j;
-    {
-      std::ifstream inFile(filepath);
-      if (!inFile.is_open()) {
-        ofLogError("Synth") << "saveModsToCurrentConfig: failed to open for read: " << filepath;
-        return false;
-      }
-      inFile >> j;
-    }
-
-    if (!j.contains("mods") || !j["mods"].is_object()) {
-      ofLogError("Synth") << "saveModsToCurrentConfig: missing 'mods' object";
-      return false;
-    }
-
-    for (auto& [modName, modJson] : j["mods"].items()) {
-      if (!modName.empty() && modName[0] == '_') continue;
-      if (!modJson.is_object()) continue;
-
-      auto it = modPtrs.find(modName);
-      if (it == modPtrs.end() || !it->second) continue;
-
-      updateModConfigJson(modJson, it->second);
-    }
-
-    const std::filesystem::path tmpPath = filepath.string() + ".tmp";
-    {
-      std::ofstream outFile(tmpPath);
-      if (!outFile.is_open()) {
-        ofLogError("Synth") << "saveModsToCurrentConfig: failed to open for write: " << tmpPath;
-        return false;
-      }
-      outFile << j.dump(2);
-    }
-
-    // Replace original file.
-    std::error_code ec;
-    std::filesystem::rename(tmpPath, filepath, ec);
-    if (ec) {
-      std::error_code removeEc;
-      std::filesystem::remove(filepath, removeEc);
-      ec.clear();
-      std::filesystem::rename(tmpPath, filepath, ec);
-    }
-    if (ec) {
-      ofLogError("Synth") << "saveModsToCurrentConfig: failed to replace file: " << ec.message();
-      return false;
-    }
-
-    ofLogNotice("Synth") << "Saved mod params to config: " << filepath;
-    return true;
-  } catch (const std::exception& e) {
-    ofLogError("Synth") << "saveModsToCurrentConfig: exception: " << e.what();
-    return false;
-  }
-}
-
-void Synth::updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& modPtr) {
-  const auto currentValues = modPtr->getCurrentParameterValues();
-  const auto& defaultValues = modPtr->getDefaultParameterValues();
-
-  if (!modJson.contains("config") || !modJson["config"].is_object()) {
-    modJson["config"] = nlohmann::ordered_json::object();
-  }
-
-  nlohmann::ordered_json& configJson = modJson["config"];
-
+static void updateConfigObjectJson(nlohmann::ordered_json& configJson,
+                                  const Mod::ParamValueMap& currentValues,
+                                  const Mod::ParamValueMap& defaultValues) {
   // 1) Update any keys that already exist in the file.
   for (auto cfgIt = configJson.begin(); cfgIt != configJson.end(); ++cfgIt) {
     const std::string key = cfgIt.key();
@@ -1174,6 +1094,94 @@ void Synth::updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& m
       configJson[key] = value;
     }
   }
+}
+
+bool Synth::saveToCurrentConfig() {
+  if (currentConfigPath.empty()) {
+    ofLogError("Synth") << "saveToCurrentConfig: no config loaded";
+    return false;
+  }
+
+  const std::filesystem::path filepath = currentConfigPath;
+  if (!std::filesystem::exists(filepath)) {
+    ofLogError("Synth") << "saveToCurrentConfig: file does not exist: " << filepath;
+    return false;
+  }
+
+  try {
+    nlohmann::ordered_json j;
+    {
+      std::ifstream inFile(filepath);
+      if (!inFile.is_open()) {
+        ofLogError("Synth") << "saveToCurrentConfig: failed to open for read: " << filepath;
+        return false;
+      }
+      inFile >> j;
+    }
+
+    if (!j.contains("synth") || !j["synth"].is_object()) {
+      j["synth"] = nlohmann::ordered_json::object();
+    }
+
+    // Save Synth-level parameters (same strategy as Mods: overwrite existing keys, add non-default missing keys).
+    updateConfigObjectJson(j["synth"], getCurrentParameterValues(), getDefaultParameterValues());
+
+    if (!j.contains("mods") || !j["mods"].is_object()) {
+      ofLogError("Synth") << "saveToCurrentConfig: missing 'mods' object";
+      return false;
+    }
+
+    for (auto& [modName, modJson] : j["mods"].items()) {
+      if (!modName.empty() && modName[0] == '_') continue;
+      if (!modJson.is_object()) continue;
+
+      auto it = modPtrs.find(modName);
+      if (it == modPtrs.end() || !it->second) continue;
+
+      updateModConfigJson(modJson, it->second);
+    }
+
+    const std::filesystem::path tmpPath = filepath.string() + ".tmp";
+    {
+      std::ofstream outFile(tmpPath);
+      if (!outFile.is_open()) {
+        ofLogError("Synth") << "saveToCurrentConfig: failed to open for write: " << tmpPath;
+        return false;
+      }
+      outFile << j.dump(2);
+    }
+
+    // Replace original file.
+    std::error_code ec;
+    std::filesystem::rename(tmpPath, filepath, ec);
+    if (ec) {
+      std::error_code removeEc;
+      std::filesystem::remove(filepath, removeEc);
+      ec.clear();
+      std::filesystem::rename(tmpPath, filepath, ec);
+    }
+    if (ec) {
+      ofLogError("Synth") << "saveToCurrentConfig: failed to replace file: " << ec.message();
+      return false;
+    }
+
+    ofLogNotice("Synth") << "Saved config to: " << filepath;
+    return true;
+  } catch (const std::exception& e) {
+    ofLogError("Synth") << "saveToCurrentConfig: exception: " << e.what();
+    return false;
+  }
+}
+
+void Synth::updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& modPtr) {
+  const auto currentValues = modPtr->getCurrentParameterValues();
+  const auto& defaultValues = modPtr->getDefaultParameterValues();
+
+  if (!modJson.contains("config") || !modJson["config"].is_object()) {
+    modJson["config"] = nlohmann::ordered_json::object();
+  }
+
+  updateConfigObjectJson(modJson["config"], currentValues, defaultValues);
 }
 
 void Synth::switchToConfig(const std::string& filepath, bool useCrossfade) {

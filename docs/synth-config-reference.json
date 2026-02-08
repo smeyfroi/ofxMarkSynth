@@ -1,17 +1,15 @@
 {
   "version": "1.0",
   "description": "Reference of all Mod types with default parameter values. Copy/paste entries to create new Synth configurations.",
-
   "synth": {
-    "agency": 0,
-    "manualBiasDecaySec": 0.8,
-    "baseManualBias": 0.1,
+    "agency": "0",
+    "manualBiasDecaySec": "0.8",
+    "baseManualBias": "0.1",
     "backgroundColor": "0, 0, 0, 1",
-    "backgroundMultiplier": 0.1,
-    "crossfadeDelaySec": 0.5,
-    "crossfadeDuration": 2.0,
+    "crossfadeDelaySec": "0.5",
+    "crossfadeDuration": "2",
     "initialIntent": {
-      "strength": 0.0,
+      "strength": "0",
       "activations": []
     },
     "_comment_agency": "agency: 0.0 = fully manual control, 1.0 = fully autonomous",
@@ -21,13 +19,16 @@
     "_comment_crossfadeDuration": "crossfadeDuration: Duration (0.5-10.0s) of crossfade transition when switching configs",
     "_comment_initialIntent": "initialIntent: Initial intent configuration applied on load",
     "_comment_initialIntent_strength": "initialIntent.strength: Global intent multiplier (0.0-1.0), scales all intent effects. Default 0.0",
-    "_comment_initialIntent_activations": "initialIntent.activations: Array of initial activation values (0.0-1.0) for each intent by index. Unspecified intents default to 0.0. Extra values are ignored with a warning."
+    "_comment_initialIntent_activations": "initialIntent.activations: Array of initial activation values (0.0-1.0) for each intent by index. Unspecified intents default to 0.0. Extra values are ignored with a warning.",
+    "backgroundBrightness": "0.035"
   },
-
   "drawingLayers": {
     "_comment": "Drawing layers are FBOs that mods can draw to. They are composited in order.",
     "ExampleLayer": {
-      "size": [1080, 1080],
+      "size": [
+        1080,
+        1080
+      ],
       "internalFormat": "GL_RGBA32F",
       "wrap": "GL_CLAMP_TO_EDGE",
       "clearOnUpdate": false,
@@ -53,11 +54,8 @@
       "_comment_description": "description: Optional human-readable description shown in GUI tooltips for this layer."
     }
   },
-
   "mods": {
-
     "_comment_source_mods": "=== SOURCE MODS ===",
-
     "ExampleAudioDataSource": {
       "type": "AudioDataSource",
       "_requires": "ResourceManager with ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', 'audioSampleRate', optional 'sourceAudioStartPosition') OR ('micDeviceName', 'recordAudio', 'audioRecordingPath')",
@@ -82,7 +80,6 @@
         "_comment_event_detection": "Event detection parameters: Threshold (0.5-5.0) controls sensitivity (lower = more events). CooldownSecs (0.0-30.0) is minimum time between events of that type."
       }
     },
-
     "ExampleStaticTextSource": {
       "type": "StaticTextSource",
       "config": {
@@ -91,7 +88,6 @@
         "Delay": "0"
       }
     },
-
     "ExampleTextSource": {
       "type": "TextSource",
       "_requires": "ResourceManager with 'textSourcesPath'",
@@ -105,7 +101,6 @@
         "_comment_Loop": "Loop: When false, stops emitting after each item emitted exactly once (works for sequential and random). When toggled true, resets immediately."
       }
     },
-
     "ExampleTimerSource": {
       "type": "TimerSource",
       "config": {
@@ -116,7 +111,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleRandomFloatSource": {
       "type": "RandomFloatSource",
       "config": {
@@ -126,7 +120,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleRandomHslColor": {
       "type": "RandomHslColor",
       "config": {
@@ -142,7 +135,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleRandomVecSource": {
       "type": "RandomVecSource",
       "config": {
@@ -150,7 +142,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleVideoFlowSource": {
       "type": "VideoFlowSource",
       "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute', optional 'sourceVideoStartPosition') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath')",
@@ -167,9 +158,7 @@
         "_comment": "MinSpeedMagnitude gates motion sampling; optical flow params are secondary tuning knobs"
       }
     },
-
     "_comment_process_mods": "=== PROCESS MODS ===",
-
     "ExampleCluster": {
       "type": "Cluster",
       "_params_from": "ofxPointClusters",
@@ -179,7 +168,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleFluid": {
       "type": "Fluid",
       "_params_from": "ofxRenderer FluidSimulation",
@@ -198,7 +186,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleFluidBuoyancyV1_DyeDriven": {
       "type": "Fluid",
       "_params_from": "ofxRenderer FluidSimulation",
@@ -208,18 +195,15 @@
         "Vorticity": "0.10",
         "Value Dissipation": "0.95",
         "Velocity Dissipation": "0.80",
-
         "Buoyancy Strength": "0.4",
         "Buoyancy Density Scale": "2.0",
         "Buoyancy Threshold": "0.0",
         "Gravity Force X": "0.0",
         "Gravity Force Y": "-1.0",
         "Use Temperature": "0",
-
         "AgencyFactor": "1"
       }
     },
-
     "ExampleFluidBuoyancyV2_TemperatureDriven": {
       "type": "Fluid",
       "_params_from": "ofxRenderer FluidSimulation + MarkSynth TempImpulse",
@@ -229,41 +213,33 @@
         "Vorticity": "0.10",
         "Value Dissipation": "0.95",
         "Velocity Dissipation": "0.80",
-
         "TempEnabled": "1",
         "Temperature Dissipation": "0.90",
         "Temperature Spread": "0.0",
         "Temperature Iterations": "0",
-
         "Buoyancy Strength": "0.6",
         "Gravity Force X": "0.0",
         "Gravity Force Y": "-1.0",
         "Use Temperature": "1",
         "Ambient Temperature": "0.0",
         "Temperature Threshold": "0.0",
-
         "TempImpulseRadius": "0.03",
         "TempImpulseDelta": "0.6",
-
         "AgencyFactor": "1"
       }
     },
-
     "ExampleFluidObstacles": {
       "type": "Fluid",
       "_params_from": "ofxRenderer FluidSimulation + MarkSynth layers.obstacles",
       "_note": "Requires a drawing layer named in Fluid.layers.obstacles. Mask is sampled as max(alpha, luma(rgb)) and must match velocity resolution + wrap.",
       "config": {
         "Boundary Mode": "0",
-
         "ObstaclesEnabled": "1",
         "Obstacle Threshold": "0.5",
         "Obstacle Invert": "0",
-
         "AgencyFactor": "1"
       }
     },
-
     "ExampleMultiplyAdd": {
       "type": "MultiplyAdd",
       "config": {
@@ -272,7 +248,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleVectorMagnitude": {
       "type": "VectorMagnitude",
       "preset": "MotionMagnitudeAgency",
@@ -286,7 +261,6 @@
         "_comment_preset": "Use mod-level 'preset' to pull shared defaults from performanceConfigRootPath/mod-params/presets.json:[type][_default] then [type][presetName] (see docs/venue-and-mod-presets-plan.md)"
       }
     },
-
     "ExamplePath": {
       "type": "Path",
       "config": {
@@ -299,7 +273,6 @@
         "_comment_ClusterRadius": "ClusterRadius: Maximum distance from the newest point for inclusion in the cluster (0.01-0.5 normalized). Points within this radius form the cluster that gets shaped by the Strategy. Intent mapping uses a capped max (~0.4) to avoid screen-sized paths."
       }
     },
-
     "ExamplePixelSnapshot": {
       "type": "PixelSnapshot",
       "config": {
@@ -308,7 +281,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleSmear": {
       "type": "Smear",
       "config": {
@@ -333,7 +305,6 @@
         "_comment_Field2PreScaleExp": "Field2PreScaleExp: Log10 exponent (-3.0 to 2.0) to normalize incoming field magnitude. 0 = 1x, -2 = 0.01x, 2 = 100x. Not controlled by Intent."
       }
     },
-
     "ExampleSomPalette": {
       "type": "SomPalette",
       "config": {
@@ -341,9 +312,7 @@
         "AgencyFactor": "1"
       }
     },
-
     "_comment_sink_mods": "=== SINK MODS ===",
-
     "ExampleCollage": {
       "type": "Collage",
       "config": {
@@ -364,7 +333,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleDividedArea": {
       "type": "DividedArea",
       "_params_from": "ofxDividedArea",
@@ -422,7 +390,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleFluidRadialImpulse": {
       "type": "FluidRadialImpulse",
       "config": {
@@ -432,11 +399,10 @@
         "VelocityScale": "1.0",
         "SwirlStrength": "0.15",
         "SwirlVelocity": "0.0",
-        "_comment_swirl": "Swirl ranges are capped to avoid obvious whirlpools; effective swirl = SwirlVelocity * SwirlStrength."
+        "_comment_swirl": "Swirl ranges are capped to avoid obvious whirlpools; effective swirl = SwirlVelocity * SwirlStrength.",
         "AgencyFactor": "1"
       }
     },
-
     "ExampleIntrospector": {
       "type": "Introspector",
       "config": {
@@ -449,7 +415,6 @@
         "HorizontalLine3Color": "0, 100, 0, 255"
       }
     },
-
     "ExampleParticleField": {
       "type": "ParticleField",
       "_params_from": "ofxParticleField",
@@ -479,7 +444,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleParticleSet": {
       "type": "ParticleSet",
       "_params_from": "ofxParticleSet",
@@ -505,7 +469,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleSandLine": {
       "type": "SandLine",
       "config": {
@@ -519,7 +482,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleSoftCircle": {
       "type": "SoftCircle",
       "config": {
@@ -534,7 +496,6 @@
         "AgencyFactor": "1"
       }
     },
-
     "ExampleText": {
       "type": "Text",
       "_requires": "ResourceManager with 'fontPath'",
@@ -551,9 +512,7 @@
         "AgencyFactor": "1"
       }
     },
-
     "_comment_layer_mods": "=== LAYER MODS ===",
-
     "ExampleFade": {
       "type": "Fade",
       "config": {
