@@ -32,8 +32,10 @@ Extracts musical features from the Synth-owned audio analysis client and emits t
 **Sources**:
 - `PitchRmsPoint` (vec2): Pitch on X, loudness (RMS) on Y
 - `PolarPitchRmsPoint` (vec2): Same data mapped to polar coordinates
+- `DriftPitchRmsPoint` (vec2): Pitch on X, RMS on Y with quiet-passages hold+drift + wrap
 - `Spectral2dPoint` (vec2): Spectral features as 2D points
 - `PolarSpectral2dPoint` (vec2): Spectral features in polar coordinates
+- `DriftSpectral2dPoint` (vec2): Spectral centroid on X, crest on Y with quiet-passages hold+drift + wrap
 - `Spectral3dPoint` (vec3): 3D spectral representation
 - `PitchScalar` (float): Normalized pitch value
 - `RmsScalar` (float): Normalized loudness

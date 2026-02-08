@@ -6,7 +6,9 @@
 //
 
 #include "AudioDataSourceMod.hpp"
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 
 
@@ -32,8 +34,10 @@ void AudioDataSourceMod::initialise() {
   sourceNameIdMap = {
     { "PitchRmsPoint", SOURCE_PITCH_RMS_POINTS },
     { "PolarPitchRmsPoint", SOURCE_POLAR_PITCH_RMS_POINTS },
+    { "DriftPitchRmsPoint", SOURCE_DRIFT_PITCH_RMS_POINTS },
     { "Spectral3dPoint", SOURCE_SPECTRAL_3D_POINTS },
     { "Spectral2dPoint", SOURCE_SPECTRAL_2D_POINTS },
+    { "DriftSpectral2dPoint", SOURCE_DRIFT_SPECTRAL_2D_POINTS },
     { "PolarSpectral2dPoint", SOURCE_POLAR_SPECTRAL_2D_POINTS },
     { "PitchScalar", SOURCE_PITCH_SCALAR },
     { "RmsScalar", SOURCE_RMS_SCALAR },
@@ -65,6 +69,14 @@ void AudioDataSourceMod::initParameters() {
   parameters.add(minZeroCrossingRateParameter);
   parameters.add(maxZeroCrossingRateParameter);
 
+  parameters.add(driftFollowMinParameter);
+  parameters.add(driftFollowMaxParameter);
+  parameters.add(driftFollowGammaParameter);
+  parameters.add(driftAccelParameter);
+  parameters.add(driftDampingParameter);
+  parameters.add(driftCenterSpringParameter);
+  parameters.add(driftMaxVelocityParameter);
+
   // Keep this sub-group just for tuning (thresholds/cooldowns).
   parameters.add(audioDataProcessorPtr->getParameterGroup());
 }
@@ -84,6 +96,66 @@ void AudioDataSourceMod::emitPitchRmsPoints() {
   float y = getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
                                         ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
   emit(SOURCE_PITCH_RMS_POINTS, glm::vec2 { x, y });
+}
+
+float AudioDataSourceMod::getRandomSignedFloat() {
+  // xorshift32
+  driftRngState ^= driftRngState << 13;
+  driftRngState ^= driftRngState >> 17;
+  driftRngState ^= driftRngState << 5;
+
+  constexpr float UINT32_MAX_F = static_cast<float>(std::numeric_limits<uint32_t>::max());
+  float unit = static_cast<float>(driftRngState) / UINT32_MAX_F;
+  return unit * 2.0f - 1.0f;
+}
+
+float AudioDataSourceMod::updateDriftY(float yRaw, float& yState, float& yVelocity) {
+  float y = std::clamp(yRaw, 0.0f, 1.0f);
+
+  float followMin = std::clamp(driftFollowMinParameter.get(), 0.0f, 1.0f);
+  float followMax = std::clamp(driftFollowMaxParameter.get(), 0.0f, 1.0f);
+
+  float t = 0.0f;
+  if (followMax > followMin + 0.0001f) {
+    t = (y - followMin) / (followMax - followMin);
+  } else {
+    t = (y >= followMin) ? 1.0f : 0.0f;
+  }
+  t = std::clamp(t, 0.0f, 1.0f);
+
+  // smoothstep
+  float follow = t * t * (3.0f - 2.0f * t);
+  follow = std::pow(follow, driftFollowGammaParameter.get());
+  follow = std::clamp(follow, 0.0f, 1.0f);
+
+  // Loud passages: track the raw y mapping.
+  yState = yState + (y - yState) * follow;
+
+  // Quiet passages: mostly hold + drift.
+  float quietFactor = 1.0f - follow;
+  yVelocity += getRandomSignedFloat() * driftAccelParameter.get() * quietFactor;
+  yVelocity -= driftCenterSpringParameter.get() * quietFactor * (yState - 0.5f);
+  yVelocity *= driftDampingParameter.get();
+
+  float maxVel = driftMaxVelocityParameter.get();
+  yVelocity = std::clamp(yVelocity, -maxVel, maxVel);
+
+  yState += yVelocity;
+
+  // Wrap to [0, 1].
+  yState = std::fmod(yState, 1.0f);
+  if (yState < 0.0f) yState += 1.0f;
+
+  return yState;
+}
+
+void AudioDataSourceMod::emitDriftPitchRmsPoints() {
+  float x = getNormalisedAnalysisScalar(minPitchParameter, maxPitchParameter,
+                                        ofxAudioAnalysisClient::AnalysisScalar::pitch);
+  float yRaw = getNormalisedAnalysisScalar(minRmsParameter, maxRmsParameter,
+                                           ofxAudioAnalysisClient::AnalysisScalar::rootMeanSquare);
+  float y = updateDriftY(yRaw, driftPitchRmsYState, driftPitchRmsYVelocity);
+  emit(SOURCE_DRIFT_PITCH_RMS_POINTS, glm::vec2 { x, y });
 }
 
 glm::vec2 normalisedAngleLengthToPolar(float angle, float length) {
@@ -115,6 +187,17 @@ void AudioDataSourceMod::emitSpectral2DPoints() {
                                             maxSpectralCrestParameter,
                                             ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
   emit(SOURCE_SPECTRAL_2D_POINTS, glm::vec2 { centroid, crest });
+}
+
+void AudioDataSourceMod::emitDriftSpectral2DPoints() {
+  float centroid = getNormalisedAnalysisScalar(minSpectralCentroidParameter,
+                                               maxSpectralCentroidParameter,
+                                               ofxAudioAnalysisClient::AnalysisScalar::spectralCentroid);
+  float crestRaw = getNormalisedAnalysisScalar(minSpectralCrestParameter,
+                                               maxSpectralCrestParameter,
+                                               ofxAudioAnalysisClient::AnalysisScalar::spectralCrest);
+  float crest = updateDriftY(crestRaw, driftSpectral2DYState, driftSpectral2DYVelocity);
+  emit(SOURCE_DRIFT_SPECTRAL_2D_POINTS, glm::vec2 { centroid, crest });
 }
 
 void AudioDataSourceMod::emitPolarSpectral2DPoints() {
@@ -164,11 +247,17 @@ void AudioDataSourceMod::update() {
       case SOURCE_POLAR_PITCH_RMS_POINTS:
         emitPolarPitchRmsPoints();
         break;
+      case SOURCE_DRIFT_PITCH_RMS_POINTS:
+        emitDriftPitchRmsPoints();
+        break;
       case SOURCE_SPECTRAL_3D_POINTS:
         emitSpectral3DPoints();
         break;
       case SOURCE_SPECTRAL_2D_POINTS:
         emitSpectral2DPoints();
+        break;
+      case SOURCE_DRIFT_SPECTRAL_2D_POINTS:
+        emitDriftSpectral2DPoints();
         break;
       case SOURCE_POLAR_SPECTRAL_2D_POINTS:
         emitPolarSpectral2DPoints();

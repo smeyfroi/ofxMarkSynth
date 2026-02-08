@@ -8,6 +8,7 @@
 
 #include "core/Mod.hpp"
 #include "ofxAudioData.h"
+#include <cstdint>
 #include <memory>
 
 namespace ofxAudioAnalysisClient {
@@ -50,9 +51,11 @@ public:
 
   static constexpr int SOURCE_PITCH_RMS_POINTS = 1;
   static constexpr int SOURCE_POLAR_PITCH_RMS_POINTS = 2;
+  static constexpr int SOURCE_DRIFT_PITCH_RMS_POINTS = 3;
   static constexpr int SOURCE_SPECTRAL_3D_POINTS = 5;
   static constexpr int SOURCE_SPECTRAL_2D_POINTS = 6;
   static constexpr int SOURCE_POLAR_SPECTRAL_2D_POINTS = 7;
+  static constexpr int SOURCE_DRIFT_SPECTRAL_2D_POINTS = 8;
   static constexpr int SOURCE_PITCH_SCALAR = 10;
   static constexpr int SOURCE_RMS_SCALAR = 11;
   static constexpr int SOURCE_SPECTRAL_CENTROID_SCALAR = 12;
@@ -67,7 +70,6 @@ protected:
 
 private:
   void initialise();
-
 
   std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClientPtr;
   std::shared_ptr<ofxAudioData::Processor> audioDataProcessorPtr;
@@ -94,15 +96,36 @@ private:
   ofParameter<float> minZeroCrossingRateParameter { "MinZeroCrossingRate", 12.0, 0.0, 500.0 };
   ofParameter<float> maxZeroCrossingRateParameter { "MaxZeroCrossingRate", 28.0, 0.0, 500.0 };
 
+  // Drift mapping: keep quiet passages off the top edge.
+  // When raw y is quiet (follow ~ 0), we mostly hold + drift; when loud (follow ~ 1), we track.
+  ofParameter<float> driftFollowMinParameter { "DriftFollowMin", 0.05, 0.0, 1.0 };
+  ofParameter<float> driftFollowMaxParameter { "DriftFollowMax", 0.25, 0.0, 1.0 };
+  ofParameter<float> driftFollowGammaParameter { "DriftFollowGamma", 1.2, 0.1, 8.0 };
+  ofParameter<float> driftAccelParameter { "DriftAccel", 0.004, 0.0, 0.05 };
+  ofParameter<float> driftDampingParameter { "DriftDamping", 0.92, 0.0, 0.999 };
+  ofParameter<float> driftCenterSpringParameter { "DriftCenterSpring", 0.02, 0.0, 0.2 };
+  ofParameter<float> driftMaxVelocityParameter { "DriftMaxVelocity", 0.02, 0.0, 0.2 };
+
   float getNormalisedAnalysisScalar(float minParam, float maxParam, ofxAudioAnalysisClient::AnalysisScalar scalar);
   void emitPitchRmsPoints();
   void emitPolarPitchRmsPoints();
+  void emitDriftPitchRmsPoints();
   void emitSpectral2DPoints();
+  void emitDriftSpectral2DPoints();
   void emitPolarSpectral2DPoints();
   void emitSpectral3DPoints();
   void emitScalar(int sourceId, float minParameter, float maxParameter, ofxAudioAnalysisClient::AnalysisScalar scalar);
 
+  float updateDriftY(float yRaw, float& yState, float& yVelocity);
+  float getRandomSignedFloat();
+
   void drawEventDetectionOverlay();
+
+  float driftPitchRmsYState { 0.5f };
+  float driftPitchRmsYVelocity { 0.0f };
+  float driftSpectral2DYState { 0.5f };
+  float driftSpectral2DYVelocity { 0.0f };
+  uint32_t driftRngState { 0x9E3779B9u };
 
   bool tuningVisible { false };
 };
