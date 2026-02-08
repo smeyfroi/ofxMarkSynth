@@ -288,6 +288,15 @@ def validate_connections(
             issues.append(f"Unknown sink mod '{dst_mod}' in: {conn}")
             continue
 
+        # Rule: `*PreScaleExp` sinks are configuration-time tuning only.
+        # They intentionally set the order-of-magnitude for field normalization and are not
+        # intended to be modulated via runtime connections.
+        if dst_name.endswith("PreScaleExp"):
+            issues.append(
+                f"Disallowed sink '{dst_mod}.{dst_name}' in: {conn} (set in Mod config/preset instead)"
+            )
+            continue
+
         # Source validation
         if src_mod == ".":
             synth_spec = specs.get("Synth")
@@ -1003,7 +1012,8 @@ def validate_policy_improvisation1(
             )
 
     # Background color wiring policy: use palette darkest as an agency lane.
-    # Enforce that BackgroundColour is connected from a SomPalette.Darkest source.
+    # Accept either '.BackgroundColour' or '.backgroundColor' (the intent_impact tool writes the latter).
+    # Enforce that the background is connected from a SomPalette.Darkest source.
     conns = config.get("connections", [])
     if not isinstance(conns, list):
         conns = []
@@ -1020,11 +1030,16 @@ def validate_policy_improvisation1(
     bg_conns = [
         c
         for c in conns
-        if isinstance(c, str) and c.strip().endswith("-> .BackgroundColour")
+        if isinstance(c, str)
+        and (
+            c.strip().endswith("-> .BackgroundColour")
+            or c.strip().endswith("-> .backgroundColor")
+            or c.strip().endswith("-> .BackgroundColor")
+        )
     ]
     if not bg_conns:
         errors.append(
-            "Missing connection to '.BackgroundColour' (expected palette-derived background)"
+            "Missing connection to background color sink (expected palette-derived background)"
         )
     else:
         # Allow exactly one background connection; multiple likely indicates accidental layering.
@@ -1039,7 +1054,12 @@ def validate_policy_improvisation1(
             if not parsed:
                 continue
             src_mod, src_name, dst_mod, dst_name = parsed
-            if dst_mod == "." and dst_name == "BackgroundColour":
+
+            if dst_mod == "." and str(dst_name).lower() in {
+                "backgroundcolour",
+                "backgroundcolor",
+                "backgroundcolor".lower(),
+            }:
                 if (
                     src_mod != "."
                     and mod_types.get(src_mod) == "SomPalette"

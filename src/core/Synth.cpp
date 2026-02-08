@@ -429,6 +429,14 @@ void Synth::addConnections(const std::string& dsl) {
     std::string sourcePortName = sourceStr.substr(sourceDot + 1);
     std::string sinkModName = sinkStr.substr(0, sinkDot);
     std::string sinkPortName = sinkStr.substr(sinkDot + 1);
+
+    // Validator rule: PreScaleExp parameters are config-time only.
+    // These sinks are intended for venue/preset tuning and should not be modulated by runtime connections.
+    if (sinkPortName.ends_with("PreScaleExp")) {
+      ofLogError("Synth") << "Synth::addConnections: Disallowed connection to config-time sink '" << sinkPortName
+                          << "' (use the Mod's config/preset instead)";
+      continue;
+    }
     
     // Look up mods
     if (!sourceModName.empty() && !modPtrs.contains(sourceModName)) {
