@@ -8,6 +8,7 @@
 #include "FluidMod.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #include "core/Intent.hpp"
 #include "core/IntentMapper.hpp"
@@ -31,10 +32,15 @@ FluidMod::FluidMod(std::shared_ptr<Synth> synthPtr, const std::string& name, Mod
     { "TempImpulsePoint", SINK_TEMP_IMPULSE_POINT },
     { tempImpulseRadiusParameter.getName(), SINK_TEMP_IMPULSE_RADIUS },
     { tempImpulseDeltaParameter.getName(), SINK_TEMP_IMPULSE_DELTA },
+    { "VelocityFieldTexture", SINK_VELOCITY_FIELD_TEXTURE },
+    { velocityFieldPreScaleExpParameter.getName(), SINK_VELOCITY_FIELD_PRESCALE_EXP },
+    { velocityFieldMultiplierParameter.getName(), SINK_VELOCITY_FIELD_MULTIPLIER },
   };
 
   registerControllerForSource(tempImpulseRadiusParameter, tempImpulseRadiusController);
   registerControllerForSource(tempImpulseDeltaParameter, tempImpulseDeltaController);
+  registerControllerForSource(velocityFieldPreScaleExpParameter, velocityFieldPreScaleExpController);
+  registerControllerForSource(velocityFieldMultiplierParameter, velocityFieldMultiplierController);
 }
 
 void FluidMod::logValidationOnce(const std::string& message) {
@@ -61,8 +67,17 @@ void FluidMod::initParameters() {
   // Temperature enable is part of FluidSimulation's parameter group (flattened).
   tempEnabledParamPtr = &group.getGroup("Temperature").get("TempEnabled").cast<bool>();
 
+  // Obstacles controls (optional; only used if an obstacles layer is attached).
+  auto& obstaclesGroup = group.getGroup("Obstacles");
+  obstaclesEnabledParamPtr = &obstaclesGroup.get("ObstaclesEnabled").cast<bool>();
+  obstacleThresholdParamPtr = &obstaclesGroup.get("Obstacle Threshold").cast<float>();
+  obstacleInvertParamPtr = &obstaclesGroup.get("Obstacle Invert").cast<bool>();
+
   parameters.add(tempImpulseRadiusParameter);
   parameters.add(tempImpulseDeltaParameter);
+
+  parameters.add(velocityFieldPreScaleExpParameter);
+  parameters.add(velocityFieldMultiplierParameter);
   
   dtControllerPtr = std::make_unique<ParamController<float>>(group.get("dt").cast<float>());
   vorticityControllerPtr = std::make_unique<ParamController<float>>(group.get("Vorticity").cast<float>());
@@ -108,6 +123,8 @@ void FluidMod::update() {
   velocityDissipationControllerPtr->update();
   tempImpulseRadiusController.update();
   tempImpulseDeltaController.update();
+  velocityFieldPreScaleExpController.update();
+  velocityFieldMultiplierController.update();
 
   auto drawingLayerPtrOpt = getCurrentNamedDrawingLayerPtr(DEFAULT_DRAWING_LAYER_PTR_NAME);
   if (!drawingLayerPtrOpt) {
@@ -123,6 +140,8 @@ void FluidMod::update() {
 
   const bool tempEnabled = (tempEnabledParamPtr != nullptr) ? tempEnabledParamPtr->get() : false;
   if (tempEnabled) tempSinksUsedWhileDisabledLogged = false;
+
+  applyVelocityFieldTexture();
 
   if (!newTempImpulsePoints.empty()) {
     if (!tempEnabled) {
@@ -171,6 +190,14 @@ void FluidMod::receive(int sinkId, const float& value) {
     case SINK_TEMP_IMPULSE_DELTA:
       tempImpulseDeltaController.updateAuto(value, getAgency());
       break;
+
+    case SINK_VELOCITY_FIELD_PRESCALE_EXP:
+      velocityFieldPreScaleExpController.updateAuto(value, getAgency());
+      break;
+    case SINK_VELOCITY_FIELD_MULTIPLIER:
+      velocityFieldMultiplierController.updateAuto(value, getAgency());
+      break;
+
     default:
       ofLogError("FluidMod") << "Float receive for unknown sinkId " << sinkId;
   }
@@ -194,6 +221,55 @@ void FluidMod::receive(int sinkId, const glm::vec2& point) {
   }
 
   newTempImpulsePoints.push_back(point);
+}
+
+void FluidMod::receive(int sinkId, const ofTexture& texture) {
+  if (sinkId != SINK_VELOCITY_FIELD_TEXTURE) {
+    ofLogError("FluidMod") << "ofTexture receive for unknown sinkId " << sinkId;
+    return;
+  }
+
+  velocityFieldTexture = texture;
+}
+
+void FluidMod::applyVelocityFieldTexture() {
+  if (!fluidSimulation.isSetup() || !fluidSimulation.isValid()) return;
+  if (!velocityFieldTexture.isAllocated()) return;
+
+  const float preScale = std::pow(10.0f, velocityFieldPreScaleExpController.value);
+  const float multiplier = velocityFieldMultiplierController.value;
+  if (multiplier <= 0.0f) return;
+  const float fieldScale = preScale * multiplier;
+  if (fieldScale == 0.0f) return;
+
+  if (!applyVelocityFieldShaderLoaded) {
+    applyVelocityFieldShader.load();
+    applyVelocityFieldShaderLoaded = true;
+  }
+
+  auto& vel = fluidSimulation.getFlowVelocitiesFbo();
+
+  bool useObstacles = false;
+  const ofTexture* obstaclesTexPtr = &vel.getSource().getTexture();
+  if (obstaclesEnabledParamPtr != nullptr && obstaclesEnabledParamPtr->get()) {
+    auto obstaclesLayerPtrOpt = getCurrentNamedDrawingLayerPtr(OBSTACLES_LAYERPTR_NAME);
+    if (obstaclesLayerPtrOpt && obstaclesLayerPtrOpt.value()->fboPtr
+        && obstaclesLayerPtrOpt.value()->fboPtr->getSource().isAllocated()) {
+      useObstacles = true;
+      obstaclesTexPtr = &obstaclesLayerPtrOpt.value()->fboPtr->getSource().getTexture();
+    }
+  }
+
+  const float obstacleThreshold = (obstacleThresholdParamPtr != nullptr) ? obstacleThresholdParamPtr->get() : 0.5f;
+  const bool obstacleInvert = (obstacleInvertParamPtr != nullptr) ? obstacleInvertParamPtr->get() : false;
+
+  applyVelocityFieldShader.render(vel,
+                                 velocityFieldTexture,
+                                 fieldScale,
+                                 *obstaclesTexPtr,
+                                 useObstacles,
+                                 obstacleThreshold,
+                                 obstacleInvert);
 }
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {

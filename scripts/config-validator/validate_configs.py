@@ -597,6 +597,28 @@ def validate_semantics(config: dict) -> tuple[List[str], List[str]]:
         values_layers = layer_map.get("default", [])
         vel_layers = layer_map.get("velocities", [])
         obstacle_layers = layer_map.get("obstacles", [])
+
+        obstacles_enabled = _safe_bool(fluid_cfg.get("ObstaclesEnabled"))
+        if obstacles_enabled is None:
+            obstacles_enabled = False
+
+        if obstacles_enabled:
+            obstacle_layer_names = (
+                [n for n in obstacle_layers if isinstance(n, str)]
+                if isinstance(obstacle_layers, list)
+                else []
+            )
+            if not obstacle_layer_names:
+                errors.append(
+                    f"Fluid '{fluid_name}' has ObstaclesEnabled=true but no obstacles layer is attached (missing layers.obstacles)."
+                )
+            else:
+                for layer_name in obstacle_layer_names:
+                    if layer_name not in layers:
+                        errors.append(
+                            f"Fluid '{fluid_name}' has ObstaclesEnabled=true but obstacles layer '{layer_name}' is not defined in drawingLayers"
+                        )
+
         if (
             not isinstance(values_layers, list)
             or not isinstance(vel_layers, list)
@@ -809,6 +831,22 @@ def _safe_float(value: object) -> Optional[float]:
             return float(value.strip())
         except Exception:
             return None
+    return None
+
+
+def _safe_bool(value: object) -> Optional[bool]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(int(value))
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in {"1", "true", "yes", "y", "on"}:
+            return True
+        if v in {"0", "false", "no", "n", "off"}:
+            return False
     return None
 
 
@@ -1035,11 +1073,11 @@ def validate_policy_improvisation1(
     init_strength = _safe_float(init_intent.get("strength"))
     if init_strength is None:
         warnings.append(
-            "synth.initialIntent.strength missing/non-numeric; expected 0.0"
+            "synth.initialIntent.strength missing/non-numeric; expected 1.0"
         )
-    elif init_strength != 0.0:
+    elif init_strength != 1.0:
         errors.append(
-            f"synth.initialIntent.strength={init_strength} must be 0.0 (start with no intent active)"
+            f"synth.initialIntent.strength={init_strength} must be 1.0 (default headroom; no intent active at boot)"
         )
 
     init_acts = init_intent.get("activations")
