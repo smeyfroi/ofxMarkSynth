@@ -76,6 +76,12 @@ def validate_file(fp: Path, *, ignore_orphan_mods: bool) -> list[Issue]:
         )
         mods = {}
 
+    def has_mod_type(mod_type: str) -> bool:
+        for cfg in mods.values():
+            if isinstance(cfg, dict) and str(cfg.get("type", "")) == mod_type:
+                return True
+        return False
+
     drawing_layers = data.get("drawingLayers")
     if not isinstance(drawing_layers, dict):
         issues.append(
@@ -90,6 +96,35 @@ def validate_file(fp: Path, *, ignore_orphan_mods: bool) -> list[Issue]:
     mod_names = set(mods.keys())
     layer_names = set(drawing_layers.keys())
 
+    # 0) performerCues must reflect whether audio/video sources exist.
+    # Policy: it is only an error to claim audio/video cues when the corresponding
+    # source mod does not exist in the config.
+    performer_cues = data.get("performerCues")
+    if isinstance(performer_cues, dict):
+        expects_audio = bool(performer_cues.get("audio", False))
+        expects_video = bool(performer_cues.get("video", False))
+
+        has_audio = has_mod_type("AudioDataSource")
+        has_video = has_mod_type("VideoFlowSource")
+
+        if expects_audio and not has_audio:
+            issues.append(
+                Issue(
+                    fp.name,
+                    "metadata",
+                    "performerCues.audio=true but no AudioDataSource mod exists",
+                )
+            )
+
+        if expects_video and not has_video:
+            issues.append(
+                Issue(
+                    fp.name,
+                    "metadata",
+                    "performerCues.video=true but no VideoFlowSource mod exists",
+                )
+            )
+
     # 1) Dangling mod references in connections
     conns = data.get("connections")
     if conns is None:
@@ -99,6 +134,7 @@ def validate_file(fp: Path, *, ignore_orphan_mods: bool) -> list[Issue]:
         conns = []
 
     referenced_mods: set[str] = set()
+    incoming_sink_connections: dict[str, int] = {}
     for c in conns:
         if not isinstance(c, str):
             issues.append(
@@ -121,6 +157,9 @@ def validate_file(fp: Path, *, ignore_orphan_mods: bool) -> list[Issue]:
             referenced_mods.add(src_mod)
         if dst_mod:
             referenced_mods.add(dst_mod)
+            incoming_sink_connections[dst_mod] = (
+                incoming_sink_connections.get(dst_mod, 0) + 1
+            )
 
     missing_mods = sorted([m for m in referenced_mods if m not in mod_names])
     if missing_mods:
@@ -132,7 +171,25 @@ def validate_file(fp: Path, *, ignore_orphan_mods: bool) -> list[Issue]:
             )
         )
 
-    # 1b) Orphan mods: defined but neither connected nor drawing.
+    # 1b) Mod-specific structural rules
+
+    # PixelSnapshot must have at least one incoming sink connection.
+    # A PixelSnapshot that is never triggered/controlled is almost always a leftover.
+    for mod_name, mod_cfg in mods.items():
+        if not isinstance(mod_cfg, dict):
+            continue
+        if str(mod_cfg.get("type", "")) != "PixelSnapshot":
+            continue
+        if incoming_sink_connections.get(mod_name, 0) == 0:
+            issues.append(
+                Issue(
+                    fp.name,
+                    "mods",
+                    f"PixelSnapshot mod '{mod_name}' has no incoming sink connections",
+                )
+            )
+
+    # 1c) Orphan mods: defined but neither connected nor drawing.
     # These are usually leftovers after refactors (e.g. removing wiring or layers).
     if not ignore_orphan_mods:
         orphan_mods = sorted(
