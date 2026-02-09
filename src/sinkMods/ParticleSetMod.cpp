@@ -5,6 +5,9 @@
 //
 
 #include "ParticleSetMod.hpp"
+
+#include <cmath>
+
 #include "core/IntentMapping.hpp"
 #include "config/Parameter.hpp"
 #include "core/IntentMapper.hpp"
@@ -135,8 +138,25 @@ void ParticleSetMod::update() {
   std::for_each(newPoints.begin(), newPoints.end(), [this](const auto& vec) {
     glm::vec2 p { vec.x, vec.y };
     glm::vec2 v { vec.z, vec.w };
+
+    // Safety: never allow out-of-range or NaN color values to reach the persistent layer.
+    // Premultiplied alpha blending assumes alpha in [0,1].
     auto c = colorController.value;
-    c.a *= std::clamp(alphaMultiplierController.value, 0.0f, 4.0f);
+    if (!std::isfinite(c.r)) c.r = 0.0f;
+    if (!std::isfinite(c.g)) c.g = 0.0f;
+    if (!std::isfinite(c.b)) c.b = 0.0f;
+    if (!std::isfinite(c.a)) c.a = 0.0f;
+    c.r = std::clamp(c.r, 0.0f, 1.0f);
+    c.g = std::clamp(c.g, 0.0f, 1.0f);
+    c.b = std::clamp(c.b, 0.0f, 1.0f);
+    c.a = std::clamp(c.a, 0.0f, 1.0f);
+
+    float alphaMul = alphaMultiplierController.value;
+    if (!std::isfinite(alphaMul)) alphaMul = 0.0f;
+    alphaMul = std::clamp(alphaMul, 0.0f, 4.0f);
+
+    c.a = std::clamp(c.a * alphaMul, 0.0f, 1.0f);
+
     particleSet.add(p, v, c, spinController.value);
   });
   newPoints.clear();
