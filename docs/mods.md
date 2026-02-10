@@ -487,7 +487,10 @@ Self-organizing map that learns palettes from incoming `Sample` colors and emits
 - Startup behavior:
   - `StartupFadeSecs`: Fade-in from first received sample (avoids harsh flashes on load).
 - Novelty:
-  - `NoveltyEmitChance`: Chance that `RandomNovelty` emits a cached novelty color.
+  - `RandomNovelty` prefers a short-lived cache of “outlier” colors sampled from the full SOM field (audio-derived), falling back to `Random` when the cache is empty.
+  - The cache is designed to stay meaningfully different from the main (persistent) palette: cached entries are only refreshed when they reappear as genuine outliers, so they don’t slowly drift back toward baseline colors.
+  - Very neutral / near-gray candidates are filtered out; dark-but-saturated colors are still eligible.
+  - `NoveltyEmitChance`: Chance that `Random`, `RandomDark`, and `RandomLight` occasionally emit a cached novelty color (when available).
 - Anti-collapse (for drones / low-variance inputs):
   - `AntiCollapseJitter`: Amount of injected variation when the input feature history has very low variance.
   - `AntiCollapseVarianceSecs`: Lookback window for variance measurement.

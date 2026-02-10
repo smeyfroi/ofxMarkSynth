@@ -446,36 +446,69 @@ void SomPaletteMod::updateChipsTexture() {
 }
 
 
-void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>& candidatesLab,
-                                      const std::array<ofFloatColor, SomPalette::size>& candidatesRgb,
-                                      const std::array<float, SomPalette::size>& noveltyScores,
-                                      float dt) {
+void SomPaletteMod::updateNoveltyCache(const std::vector<Oklab>& candidatesLab,
+                                     const std::vector<ofFloatColor>& candidatesRgb,
+                                     float dt) {
+  if (!hasPersistentChips) return;
+
+  const size_t n = std::min(candidatesLab.size(), candidatesRgb.size());
+  if (n == 0) return;
+
   const int requiredFrames = std::max(2, static_cast<int>(std::round(0.5f * ASSUMED_FPS)));
   (void)dt;
 
   // We keep novelty mostly about hue/chroma (Oklab a/b), not lightness.
-  // `noveltyThreshold` is still computed from oklabCost() (includes lightness), but we additionally
-  // require a minimum chroma distance from the main palette.
-  const float noveltyThreshold = 0.010f;
-  const float noveltyChromaThreshold = 0.0025f;
+  const float noveltyThreshold = 0.010f; // oklabCost() (includes weighted lightness)
+  const float noveltyChromaThreshold = 0.0025f; // oklabChromaCost() (a/b only)
 
   const float pendingMergeChromaThreshold = 0.0015f;
   const float cacheMatchChromaThreshold = 0.0012f;
   const float cacheMinSeparationChromaThreshold = 0.0035f;
   const float replaceMargin = 0.0005f;
 
+  // Filter out near-neutral candidates; allow very dark colors only if they're still chromatic.
+  const float minCandidateChroma2 = 0.0009f; // chroma ~ 0.03
+  const float darkL = 0.08f;
+  const float darkMinCandidateChroma2 = 0.0036f; // chroma ~ 0.06
+
   const float memorySecs = std::max(0.001f, windowSecsParameter.get() * chipMemoryMultiplierParameter.get());
   const int64_t ttlFrames = std::max<int64_t>(1, static_cast<int64_t>(std::round(memorySecs * ASSUMED_FPS)));
   const int64_t pendingTimeoutFrames = std::max<int64_t>(requiredFrames, static_cast<int64_t>(std::round(0.75f * ASSUMED_FPS)));
 
-  // Mark cache items as seen if candidates return near them.
-  // Note: Matching uses chroma distance only; we don't want cached novelty to "walk" toward the main palette.
-  for (size_t j = 0; j < SomPalette::size; ++j) {
+  std::vector<float> candChromaScore(n, std::numeric_limits<float>::infinity());
+  std::vector<uint8_t> candEligible(n, 0);
+
+  for (size_t j = 0; j < n; ++j) {
+    const Oklab& cand = candidatesLab[j];
+    const float chroma2 = cand.a * cand.a + cand.b * cand.b;
+    if (chroma2 < minCandidateChroma2) continue;
+    if (cand.L < darkL && chroma2 < darkMinCandidateChroma2) continue;
+
+    float bestNovelty = std::numeric_limits<float>::infinity();
+    float bestChroma = std::numeric_limits<float>::infinity();
+    for (size_t i = 0; i < SomPalette::size; ++i) {
+      bestNovelty = std::min(bestNovelty, oklabCost(persistentChipsLab[i], cand));
+      bestChroma = std::min(bestChroma, oklabChromaCost(persistentChipsLab[i], cand));
+    }
+
+    candChromaScore[j] = bestChroma;
+
+    if (bestNovelty >= noveltyThreshold && bestChroma >= noveltyChromaThreshold) {
+      candEligible[j] = 1;
+    }
+  }
+
+  // Refresh cache items only when we see genuinely-novel candidates near them.
+  // This prevents cached colors from being kept alive by baseline-like colors.
+  for (size_t j = 0; j < n; ++j) {
+    if (!candEligible[j]) continue;
+
     const Oklab& cand = candidatesLab[j];
     for (auto& cached : noveltyCache) {
       float d = oklabChromaCost(cached.lab, cand);
       if (d < cacheMatchChromaThreshold) {
         cached.lastSeenFrame = paletteFrameCount;
+        cached.chromaNoveltyScore = std::max(cached.chromaNoveltyScore, candChromaScore[j]);
       }
     }
   }
@@ -495,17 +528,12 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
   }
 
   // Update pending candidates based on novelty score.
-  for (size_t j = 0; j < SomPalette::size; ++j) {
-    if (noveltyScores[j] < noveltyThreshold) continue;
+  for (size_t j = 0; j < n; ++j) {
+    if (!candEligible[j]) continue;
 
     const Oklab candLab = candidatesLab[j];
     const ofFloatColor candRgb = candidatesRgb[j];
-
-    float chromaScore = std::numeric_limits<float>::infinity();
-    for (size_t i = 0; i < SomPalette::size; ++i) {
-      chromaScore = std::min(chromaScore, oklabChromaCost(persistentChipsLab[i], candLab));
-    }
-    if (chromaScore < noveltyChromaThreshold) continue;
+    const float chromaScore = candChromaScore[j];
 
     int bestIndex = -1;
     float bestDist = std::numeric_limits<float>::infinity();
@@ -572,9 +600,13 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
     }
 
     if (bestCacheIndex >= 0 && bestCacheDist < cacheMatchChromaThreshold) {
+      // Only update the cached color if the incoming one is meaningfully more novel.
+      // Otherwise, keep the existing (more interesting) cached color and just extend its life.
       auto& c = noveltyCache[static_cast<size_t>(bestCacheIndex)];
-      c.lab = it->lab;
-      c.rgb = it->rgb;
+      if (it->chromaNoveltyScore > c.chromaNoveltyScore + replaceMargin) {
+        c.lab = it->lab;
+        c.rgb = it->rgb;
+      }
       c.chromaNoveltyScore = std::max(c.chromaNoveltyScore, it->chromaNoveltyScore);
       c.lastSeenFrame = paletteFrameCount;
       it = pendingNovelty.erase(it);
@@ -619,6 +651,7 @@ void SomPaletteMod::updateNoveltyCache(const std::array<Oklab, SomPalette::size>
   }
 }
 
+
 void SomPaletteMod::updatePersistentChips(float dt) {
   constexpr size_t N = SomPalette::size;
 
@@ -631,9 +664,6 @@ void SomPaletteMod::updatePersistentChips(float dt) {
     candidatesLab[i] = rgbToOklab(c);
   }
 
-  std::array<float, N> noveltyScores;
-  noveltyScores.fill(0.0f);
-
   if (!hasPersistentChips) {
     persistentChipsLab = candidatesLab;
     persistentChipsRgb = candidatesRgb;
@@ -644,15 +674,6 @@ void SomPaletteMod::updatePersistentChips(float dt) {
       for (size_t j = 0; j < N; ++j) {
         cost[i][j] = oklabCost(persistentChipsLab[i], candidatesLab[j]);
       }
-    }
-
-    // Novelty score: distance from the current persistent set.
-    for (size_t j = 0; j < N; ++j) {
-      float best = std::numeric_limits<float>::infinity();
-      for (size_t i = 0; i < N; ++i) {
-        best = std::min(best, cost[i][j]);
-      }
-      noveltyScores[j] = best;
     }
 
     const auto assignment = solveAssignment(cost);
@@ -679,7 +700,6 @@ void SomPaletteMod::updatePersistentChips(float dt) {
     return persistentChipsLab[static_cast<size_t>(a)].L < persistentChipsLab[static_cast<size_t>(b)].L;
   });
 
-  updateNoveltyCache(candidatesLab, candidatesRgb, noveltyScores, dt);
 }
 
 int SomPaletteMod::getPersistentDarkestIndex() const {
@@ -823,6 +843,26 @@ void SomPaletteMod::update() {
   const ofFloatPixels& pixelsRef = somPalette.getPixelsRef();
   if (pixelsRef.getWidth() > 0 && pixelsRef.getHeight() > 0) {
     updatePersistentChips(dt);
+
+    // Novelty candidates come from the whole SOM field (audio-derived outliers),
+    // not just the current 8-chip palette.
+    const int w = pixelsRef.getWidth();
+    const int h = pixelsRef.getHeight();
+
+    std::vector<Oklab> noveltyCandidatesLab;
+    std::vector<ofFloatColor> noveltyCandidatesRgb;
+    noveltyCandidatesLab.reserve(static_cast<size_t>(w) * static_cast<size_t>(h));
+    noveltyCandidatesRgb.reserve(static_cast<size_t>(w) * static_cast<size_t>(h));
+
+    for (int y = 0; y < h; ++y) {
+      for (int x = 0; x < w; ++x) {
+        const ofFloatColor c = pixelsRef.getColor(x, y);
+        noveltyCandidatesRgb.push_back(c);
+        noveltyCandidatesLab.push_back(rgbToOklab(c));
+      }
+    }
+
+    updateNoveltyCache(noveltyCandidatesLab, noveltyCandidatesRgb, dt);
   }
 
   emit(SOURCE_RANDOM, createRandomVec4());

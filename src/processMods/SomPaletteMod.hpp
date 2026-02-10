@@ -145,10 +145,10 @@ private:
   std::uniform_real_distribution<float> random01Distrib { 0.0f, 1.0f };
 
   void updatePersistentChips(float dt);
-  void updateNoveltyCache(const std::array<Oklab, SomPalette::size>& candidatesLab,
-                          const std::array<ofFloatColor, SomPalette::size>& candidatesRgb,
-                          const std::array<float, SomPalette::size>& noveltyScores,
+  void updateNoveltyCache(const std::vector<Oklab>& candidatesLab,
+                          const std::vector<ofFloatColor>& candidatesRgb,
                           float dt);
+
 
   int getPersistentDarkestIndex() const;
   int getPersistentLightestIndex() const;
