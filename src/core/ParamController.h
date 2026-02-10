@@ -140,6 +140,10 @@ public:
   T getManualMax() const {
     return manualValueParameter.getMax();
   }
+
+  T getManualValue() const {
+    return manualValueParameter.get();
+  }
   
   float getTimeSinceLastManualUpdate() const {
     return ofGetElapsedTimef() - lastManualUpdateTime;

@@ -276,16 +276,21 @@ void FluidMod::applyIntent(const Intent& intent, float strength) {
   if (!fluidSimulation.isValid()) return;
 
   IntentMap im(intent);
-  im.E().exp(*dtControllerPtr, strength);
+
+  // Intentionally exclude `dt` from Intent. Time-step changes are too destabilizing,
+  // and `FluidRadialImpulseMod` depends on consistent dt semantics.
 
   // High Structure should read as more ordered/laminar flow.
   // Keep Chaos as the primary vorticity driver, but attenuate it as S rises.
   float vorticityDim = im.C().get() * (1.0f - im.S().get() * 0.75f); // S=1 -> 25% of Chaos
   vorticityDim = std::clamp(vorticityDim, 0.0f, 1.0f);
-  float vorticityI = linearMap(vorticityDim, vorticityControllerPtr->getManualMin(), vorticityControllerPtr->getManualMax());
-  vorticityControllerPtr->updateIntent(vorticityI, strength, "C*(1-0.75*S) -> lin");
+  Mapping(vorticityDim, "C*(1-0.75*S)")
+      .linAround(*vorticityControllerPtr, strength, Mapping::WithFractions{0.25f, 0.25f});
 
-  im.D().inv().lin(*valueDissipationControllerPtr, strength);
-  im.G().inv().exp(*velocityDissipationControllerPtr, strength);
+  im.D().inv().linAround(*valueDissipationControllerPtr, strength, Mapping::WithFractions{0.12f, 0.12f});
+  im.G().inv().expAround(*velocityDissipationControllerPtr,
+                         strength,
+                         2.0f,
+                         Mapping::WithFractions{0.12f, 0.12f});
 }
 } // ofxMarkSynth

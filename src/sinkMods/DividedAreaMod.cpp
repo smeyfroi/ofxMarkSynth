@@ -280,12 +280,12 @@ void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
 void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
-  im.C().exp(angleController, strength, 0.0f, 0.5f, 2.0f);
+  im.C().exp(angleController, strength, Mapping::WithRange{0.0f, 0.5f}, 2.0f);
   im.G().exp(pathWidthController, strength, 1.0f);
 
   // Smoothness: high Structure = more stable/smooth lines, low Structure = responsive
   // Inverted so high structure -> high smoothness (0.3 to 0.9 range)
-  im.S().inv().lin(*smoothnessControllerPtr, strength, 0.3f, 0.9f);
+  im.S().inv().lin(*smoothnessControllerPtr, strength, Mapping::WithRange{0.3f, 0.9f});
 
   // Minor color composition
   ofFloatColor minorColor = ofxMarkSynth::energyToColor(intent);

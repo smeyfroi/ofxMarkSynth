@@ -147,14 +147,14 @@ void RandomHslColorMod::applyIntent(const Intent& intent, float strength) {
   hueCenterController.updateIntent(targetCenter, strength, "E -> hue center");
   hueWidthController.updateIntent(targetWidth, strength, "C -> hue width");
 
-  im.E().lin(minSaturationController, strength, 0.2f, 0.8f);
-  im.E().lin(maxSaturationController, strength, 0.6f, 1.0f);
+  im.E().lin(minSaturationController, strength, Mapping::WithRange{0.2f, 0.8f});
+  im.E().lin(maxSaturationController, strength, Mapping::WithRange{0.6f, 1.0f});
 
-  im.S().inv().lin(minBrightnessController, strength, 0.1f, 0.4f);
-  im.S().lin(maxBrightnessController, strength, 0.6f, 1.0f);
+  im.S().inv().lin(minBrightnessController, strength, Mapping::WithRange{0.1f, 0.4f});
+  im.S().lin(maxBrightnessController, strength, Mapping::WithRange{0.6f, 1.0f});
 
-  im.D().lin(minAlphaController, strength, 0.2f, 0.8f);
-  im.D().lin(maxAlphaController, strength, 0.6f, 1.0f);
+  im.D().lin(minAlphaController, strength, Mapping::WithRange{0.2f, 0.8f});
+  im.D().lin(maxAlphaController, strength, Mapping::WithRange{0.6f, 1.0f});
 }
 
 

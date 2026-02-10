@@ -40,9 +40,9 @@ from typing import Any, Iterable
 ROW_KEYS = ["Motion", "Particles", "Marks", "Geometry"]
 
 # Mark-type row mapping.
-ROW_MOTION = {"Fluid", "FluidRadialImpulse", "VideoFlowSource", "Smear"}
+ROW_MOTION = {"Fluid", "FluidRadialImpulse", "Smear"}
 ROW_PARTICLES = {"ParticleSet", "ParticleField"}
-ROW_MARKS = {"SoftCircle", "SandLine", "Text"}
+ROW_MARKS = {"SoftCircle", "SandLine", "Text", "VideoFlowSource"}
 ROW_GEOMETRY = {"DividedArea", "Collage", "Path"}
 
 MOD_IS_FADE = {"Fade"}
@@ -172,15 +172,77 @@ def impact_to_int(cell: str) -> int:
     return 0
 
 
-def rate_delta(delta: float) -> int:
+DEFAULT_RATE_THRESHOLDS = (0.05, 0.15, 0.30)
+CALIBRATE_RATE_QUANTILES = (0.35, 0.70, 0.90)
+CALIBRATE_RATE_MIN_THRESHOLDS = (0.02, 0.06, 0.12)
+
+
+def rate_delta(
+    delta: float, thresholds: tuple[float, float, float] = DEFAULT_RATE_THRESHOLDS
+) -> int:
+    t0, t1, t2 = thresholds
     a = abs(delta)
-    if a < 0.05:
+    if a < t0:
         return 0
-    if a < 0.15:
+    if a < t1:
         return 1 if delta > 0 else -1
-    if a < 0.30:
+    if a < t2:
         return 2 if delta > 0 else -2
     return 3 if delta > 0 else -3
+
+
+def quantile(sorted_vals: list[float], q: float) -> float:
+    if not sorted_vals:
+        return 0.0
+    if q <= 0.0:
+        return sorted_vals[0]
+    if q >= 1.0:
+        return sorted_vals[-1]
+    pos = (len(sorted_vals) - 1) * q
+    idx = int(pos)
+    frac = pos - idx
+    if idx >= len(sorted_vals) - 1:
+        return sorted_vals[-1]
+    return sorted_vals[idx] * (1.0 - frac) + sorted_vals[idx + 1] * frac
+
+
+def calibrate_rate_thresholds(
+    deltas_by_row: list[dict[str, dict[str, float]]],
+) -> dict[str, tuple[float, float, float]]:
+    thresholds_by_row: dict[str, tuple[float, float, float]] = {}
+
+    for row in ROW_KEYS:
+        samples: list[float] = []
+        for d in deltas_by_row:
+            row_map = d.get(row)
+            if not isinstance(row_map, dict):
+                continue
+            for v in row_map.values():
+                if not isinstance(v, (int, float)):
+                    continue
+                samples.append(abs(float(v)))
+
+        samples = [s for s in samples if s > 1e-9]
+        samples.sort()
+
+        if len(samples) < 8:
+            thresholds_by_row[row] = DEFAULT_RATE_THRESHOLDS
+            continue
+
+        q0, q1, q2 = CALIBRATE_RATE_QUANTILES
+        m0, m1, m2 = CALIBRATE_RATE_MIN_THRESHOLDS
+
+        t0 = max(m0, quantile(samples, q0))
+        t1 = max(m1, quantile(samples, q1))
+        t2 = max(m2, quantile(samples, q2))
+
+        # Ensure increasing thresholds even with clustered distributions.
+        t1 = max(t1, t0 + 1e-4)
+        t2 = max(t2, t1 + 1e-4)
+
+        thresholds_by_row[row] = (t0, t1, t2)
+
+    return thresholds_by_row
 
 
 def parse_ofparameter_specs(paths: Iterable[Path]) -> dict[str, ParamSpec]:
@@ -257,9 +319,12 @@ def build_param_specs(of_root: Path) -> dict[str, dict[str, ParamSpec]]:
 
     specs: dict[str, dict[str, ParamSpec]] = {}
 
-    # Wrapped: ofxRenderer FluidSimulation
+    # Wrapped: ofxRenderer FluidSimulation (+ MarkSynth temp impulse controls)
     specs["Fluid"] = parse_ofparameter_specs(
-        [addons / "ofxRenderer" / "src" / "fluid" / "FluidSimulation.h"]
+        [
+            addons / "ofxRenderer" / "src" / "fluid" / "FluidSimulation.h",
+            src / "layerMods" / "FluidMod.hpp",
+        ]
     )
 
     # MarkSynth-defined params
@@ -339,10 +404,11 @@ def proxies_for_mod_type(mod_type: str) -> list[ProxyParam]:
 
     if mod_type == "Fluid":
         return [
-            ProxyParam("dt", 0.9),
             ProxyParam("Vorticity", 0.9),
             ProxyParam("Value Dissipation", 0.6),
             ProxyParam("Velocity Dissipation", 0.6),
+            ProxyParam("TempImpulseDelta", 0.8),
+            ProxyParam("TempImpulseRadius", 0.4),
         ]
 
     if mod_type == "FluidRadialImpulse":
@@ -354,12 +420,12 @@ def proxies_for_mod_type(mod_type: str) -> list[ProxyParam]:
         ]
 
     if mod_type == "VideoFlowSource":
-        return [ProxyParam("power", 1.0)]
+        return [ProxyParam("PointSamplesPerUpdate", 0.9)]
 
     if mod_type == "Smear":
         return [
             ProxyParam("MixNew", 0.8),
-            ProxyParam("AlphaMultiplier", 0.9),
+            ProxyParam("HalfLifeSec", 0.9),
             ProxyParam("Field2Multiplier", 0.6),
         ]
 
@@ -422,7 +488,7 @@ def proxies_for_mod_type(mod_type: str) -> list[ProxyParam]:
         ]
 
     if mod_type == "Fade":
-        return [ProxyParam("Alpha", 1.0)]
+        return [ProxyParam("HalfLifeSec", 1.0)]
 
     return []
 
@@ -433,13 +499,15 @@ def target_norm_for_proxy(mod_type: str, proxy: ProxyParam, intent: Intent) -> f
     name = proxy.param_name
 
     if mod_type == "Fluid":
-        if name == "dt":
-            return exp_norm(intent.E, 2.0)
         if name == "Vorticity":
             return clamp01(intent.C * (1.0 - 0.75 * intent.S))
         if name == "Value Dissipation":
             return inv_norm(intent.D)
         if name == "Velocity Dissipation":
+            return inv_exp_norm(intent.G, 2.0)
+        if name == "TempImpulseDelta":
+            return exp_norm(intent.E, 2.0)
+        if name == "TempImpulseRadius":
             return inv_exp_norm(intent.G, 2.0)
 
     if mod_type == "FluidRadialImpulse":
@@ -454,14 +522,14 @@ def target_norm_for_proxy(mod_type: str, proxy: ProxyParam, intent: Intent) -> f
             return exp_norm(swirl_dim, 2.0)
 
     if mod_type == "VideoFlowSource":
-        if name == "power":
-            return exp_norm(intent.E, 2.0)
+        if name == "PointSamplesPerUpdate":
+            return exp_norm(intent.D, 2.0)
 
     if mod_type == "Smear":
         if name == "MixNew":
             return exp_norm(intent.E, 2.0)
-        if name == "AlphaMultiplier":
-            return exp_norm(intent.D, 2.0)
+        if name == "HalfLifeSec":
+            return inv_exp_norm(intent.D, 2.0)
         if name == "Field2Multiplier":
             return exp_norm(intent.C, 3.0)
 
@@ -562,12 +630,12 @@ def get_baseline_value(mod: dict, proxy: ProxyParam, spec: ParamSpec) -> float:
     return spec.default
 
 
-def score_config(
+def score_config_deltas(
     config: dict,
     intents: list[Intent],
     specs_by_type: dict[str, dict[str, ParamSpec]],
-) -> dict[str, dict[str, int]]:
-    """Return row -> intentName -> impact int [-3..+3]"""
+) -> dict[str, dict[str, float]]:
+    """Return row -> intentName -> delta float (target - baseline)"""
 
     # Collect mod instances by row
     row_mods: dict[str, list[tuple[str, dict]]] = {k: [] for k in ROW_KEYS}
@@ -609,12 +677,12 @@ def score_config(
             for row in targets:
                 row_mods[row].append(("Fade", fade))
 
-    results: dict[str, dict[str, int]] = {k: {} for k in ROW_KEYS}
+    results: dict[str, dict[str, float]] = {k: {} for k in ROW_KEYS}
 
     for row, mods_list in row_mods.items():
         if not mods_list:
             for intent in intents:
-                results[row][intent.name] = 0
+                results[row][intent.name] = 0.0
             continue
 
         # Compute baseline intensity as weighted mean of normalized proxy values.
@@ -637,7 +705,7 @@ def score_config(
 
         if not base_w:
             for intent in intents:
-                results[row][intent.name] = 0
+                results[row][intent.name] = 0.0
             continue
 
         baseline = sum(v * w for v, w in zip(base_vals, base_w)) / sum(base_w)
@@ -660,13 +728,30 @@ def score_config(
                     t_w.append(proxy.weight)
 
             if not t_w:
-                results[row][intent.name] = 0
+                results[row][intent.name] = 0.0
                 continue
 
             target = sum(v * w for v, w in zip(t_vals, t_w)) / sum(t_w)
-            results[row][intent.name] = rate_delta(target - baseline)
+            results[row][intent.name] = target - baseline
 
     return results
+
+
+def impacts_from_deltas(
+    deltas: dict[str, dict[str, float]],
+    thresholds_by_row: dict[str, tuple[float, float, float]],
+    intents: list[Intent],
+) -> dict[str, dict[str, int]]:
+    impacts: dict[str, dict[str, int]] = {k: {} for k in ROW_KEYS}
+
+    for row in ROW_KEYS:
+        row_deltas = deltas.get(row, {})
+        thresholds = thresholds_by_row.get(row, DEFAULT_RATE_THRESHOLDS)
+        for intent in intents:
+            v = float(row_deltas.get(intent.name, 0.0))
+            impacts[row][intent.name] = rate_delta(v, thresholds)
+
+    return impacts
 
 
 def ensure_ui_written(config: dict, impacts: dict[str, dict[str, int]]) -> bool:
@@ -751,8 +836,10 @@ def write_html(
 ) -> None:
     # blocks elements: {idx, filename, desc, x,y, intents, impacts[row][intent] int}
 
-    max_x = max((b.get("x") for b in blocks if b.get("x") is not None), default=None)
-    max_y = max((b.get("y") for b in blocks if b.get("y") is not None), default=None)
+    xs = [int(b["x"]) for b in blocks if isinstance(b.get("x"), (int, float))]
+    ys = [int(b["y"]) for b in blocks if isinstance(b.get("y"), (int, float))]
+    max_x = max(xs) if xs else None
+    max_y = max(ys) if ys else None
     use_grid = max_x is not None and max_y is not None
 
     css = """
@@ -913,8 +1000,10 @@ h1 {
 """
 
     if use_grid:
-        cols = int(max_x) + 1
-        rows = int(max_y) + 1
+        assert max_x is not None
+        assert max_y is not None
+        cols = max_x + 1
+        rows = max_y + 1
         grid_style = f"grid-template-columns: repeat({cols}, minmax(160px, 1fr));"
     else:
         cols = 0
@@ -1153,7 +1242,7 @@ def main() -> None:
         print(f"{len(changed_paths)} config(s) {suffix}.")
         return
 
-    blocks: list[dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
 
     for cfg_path in config_paths:
         data = json.loads(cfg_path.read_text(encoding="utf-8"))
@@ -1173,23 +1262,18 @@ def main() -> None:
         m = re.match(r"^(\d+)-", cfg_path.name)
         idx = int(m.group(1)) if m else 0
 
-        impacts = score_config(data, intents, specs_by_type)
+        deltas = score_config_deltas(data, intents, specs_by_type)
 
         # Ensure all row/intent keys exist.
         for row in ROW_KEYS:
-            impacts.setdefault(row, {})
+            deltas.setdefault(row, {})
             for it in intents:
-                impacts[row].setdefault(it.name, 0)
+                deltas[row].setdefault(it.name, 0.0)
 
-        if args.write_ui:
-            if ensure_ui_written(data, impacts):
-                cfg_path.write_text(
-                    json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8",
-                )
-
-        blocks.append(
+        items.append(
             {
+                "path": cfg_path,
+                "data": data,
                 "idx": idx,
                 "filename": cfg_path.name,
                 "desc": data.get("description")
@@ -1197,7 +1281,36 @@ def main() -> None:
                 else "",
                 "x": x,
                 "y": y,
-                "intents": [i.name for i in intents],
+                "intents": intents,
+                "intent_names": [i.name for i in intents],
+                "deltas": deltas,
+            }
+        )
+
+    thresholds_by_row = calibrate_rate_thresholds([b["deltas"] for b in items])
+
+    blocks: list[dict[str, Any]] = []
+
+    for item in items:
+        impacts = impacts_from_deltas(
+            item["deltas"], thresholds_by_row, item["intents"]
+        )
+
+        if args.write_ui:
+            if ensure_ui_written(item["data"], impacts):
+                Path(item["path"]).write_text(
+                    json.dumps(item["data"], indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+
+        blocks.append(
+            {
+                "idx": item["idx"],
+                "filename": item["filename"],
+                "desc": item["desc"],
+                "x": item["x"],
+                "y": item["y"],
+                "intents": item["intent_names"],
                 "impacts": impacts,
             }
         )

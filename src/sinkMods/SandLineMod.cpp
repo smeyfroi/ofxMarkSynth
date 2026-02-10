@@ -168,8 +168,8 @@ void SandLineMod::receive(int sinkId, const glm::vec4& v) {
 void SandLineMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
-  (im.E() * im.G()).exp(densityController, strength);
-  im.G().exp(pointRadiusController, strength, 1.0f, 16.0f, 3.0f);
+  (im.E() * im.G()).expAround(densityController, strength);
+  im.G().expAround(pointRadiusController, strength, 3.0f);
 
   // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
@@ -178,8 +178,8 @@ void SandLineMod::applyIntent(const Intent& intent, float strength) {
   color.a = 1.0f;
   colorController.updateIntent(color, strength, "E->color, S->bright, E*(1-S)->sat");
 
-  im.S().inv().lin(stdDevAlongController, strength);
-  im.C().lin(stdDevPerpendicularController, strength);
+  im.S().inv().linAround(stdDevAlongController, strength);
+  im.C().linAround(stdDevPerpendicularController, strength);
 }
 
 

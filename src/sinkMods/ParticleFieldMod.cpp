@@ -254,34 +254,37 @@ void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
     pointColorControllerPtr->updateIntent(intentColor, strength, "E,S,C,D → PointColour");
   }
 
-  // Density controls particle count, but with strong damping to avoid huge swings.
-  im.D().exp(*ln2ParticleCountControllerPtr, strength, 3.0f);
+  // Density controls particle count, but keep it near the tuned baseline.
+  im.D().expAround(*ln2ParticleCountControllerPtr,
+                    strength,
+                    3.0f,
+                    Mapping::WithFractions{0.20f, 0.20f});
 
   // Weight: higher granularity tends to clump more, so increase weight (inertia) as G rises.
-  im.G().lin(*minWeightControllerPtr, strength);
-  im.C().lin(*maxWeightControllerPtr, strength);
+  im.G().linAround(*minWeightControllerPtr, strength);
+  im.C().linAround(*maxWeightControllerPtr, strength);
 
   // Physics parameters
-  im.G().inv().lin(*velocityDampingControllerPtr, strength);
-  im.E().exp(*forceMultiplierControllerPtr, strength, 4.0f);
-  im.E().exp(*maxVelocityControllerPtr, strength, 4.0f);
+  im.G().inv().linAround(*velocityDampingControllerPtr, strength);
+  im.E().expAround(*forceMultiplierControllerPtr, strength, 4.0f);
+  im.E().expAround(*maxVelocityControllerPtr, strength, 4.0f);
 
   // Visual parameters
   // Granularity affects feature size, but with heavy damping.
-  im.G().exp(*particleSizeControllerPtr, strength, 5.0f);
+  im.G().expAround(*particleSizeControllerPtr, strength, 5.0f);
 
   // Jitter parameters
   // Keep particles mostly field-driven even at high Chaos; jitter is mainly an escape from clumping.
-  im.C().exp(*jitterStrengthControllerPtr, strength, 5.0f);
-  im.S().lin(*jitterSmoothingControllerPtr, strength);
+  im.C().expAround(*jitterStrengthControllerPtr, strength, 5.0f);
+  im.S().linAround(*jitterSmoothingControllerPtr, strength);
 
   // Speed threshold
-  (im.E() * im.C()).lin(*speedThresholdControllerPtr, strength);
+  (im.E() * im.C()).linAround(*speedThresholdControllerPtr, strength);
 
   // Field influence
   // Dampen high-intent extremes: fields should remain coherent rather than becoming "teleporty".
-  im.E().exp(*field1MultiplierControllerPtr, strength, 3.0f);
-  im.C().exp(*field2MultiplierControllerPtr, strength, 4.0f);
+  im.E().expAround(*field1MultiplierControllerPtr, strength, 3.0f);
+  im.C().expAround(*field2MultiplierControllerPtr, strength, 4.0f);
 }
 
 } // ofxMarkSynth

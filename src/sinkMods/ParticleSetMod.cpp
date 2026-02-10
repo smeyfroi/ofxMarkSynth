@@ -237,7 +237,7 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
 void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
 
-  (im.C() * im.E()).lin(spinController, strength, -0.05f, 0.05f);
+  (im.C() * im.E()).linAround(spinController, strength);
 
   // Color composition
   ofFloatColor color = ofxMarkSynth::energyToColor(intent);
@@ -246,14 +246,14 @@ void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
   color.a = im.D().get();
   colorController.updateIntent(color, strength, "E->color, S->bright, E*C*(1-S)->sat, D->alpha");
 
-  im.E().exp(*timeStepControllerPtr, strength);
-  im.G().inv().lin(*velocityDampingControllerPtr, strength);
-  im.S().lin(*attractionStrengthControllerPtr, strength);
-  im.D().inv().lin(*attractionRadiusControllerPtr, strength);
-  im.E().lin(*forceScaleControllerPtr, strength);
-  im.D().lin(*connectionRadiusControllerPtr, strength);
-  im.E().lin(*colourMultiplierControllerPtr, strength);
-  im.C().lin(*maxSpeedControllerPtr, strength);
+  im.E().expAround(*timeStepControllerPtr, strength);
+  im.G().inv().linAround(*velocityDampingControllerPtr, strength);
+  im.S().linAround(*attractionStrengthControllerPtr, strength);
+  im.D().inv().linAround(*attractionRadiusControllerPtr, strength);
+  im.E().linAround(*forceScaleControllerPtr, strength);
+  im.D().linAround(*connectionRadiusControllerPtr, strength);
+  im.E().linAround(*colourMultiplierControllerPtr, strength);
+  im.C().linAround(*maxSpeedControllerPtr, strength);
 }
 
 

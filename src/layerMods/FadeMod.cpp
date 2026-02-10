@@ -159,8 +159,12 @@ void FadeMod::applyIntent(const Intent& intent, float strength) {
 
   // Weighted blend: density (80%) + granularity (20%)
   float densityGranularity = im.D().get() * 0.8f + im.G().get() * 0.2f;
-  float halfLifeSecI = inverseExponentialMap(densityGranularity, halfLifeSecController);
-  halfLifeSecController.updateIntent(halfLifeSecI, strength, "D*.8+G -> invexp");
+
+  // Higher density/granularity should generally fade faster (smaller half-life),
+  // but keep the adjustment near the tuned baseline.
+  Mapping(densityGranularity, "D*.8+G*.2")
+      .inv()
+      .expAround(halfLifeSecController, strength);
 }
 
 

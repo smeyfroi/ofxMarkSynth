@@ -172,7 +172,12 @@ float VideoFlowSourceMod::getAgency() const {
 
 void VideoFlowSourceMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
-  im.D().exp(pointSamplesPerUpdateController, strength, 0.5f);
+
+  // Density can increase sampling (more activity), but keep it near the tuned baseline.
+  im.D().expAround(pointSamplesPerUpdateController,
+                   strength,
+                   2.0f,
+                   Mapping::WithFractions{0.15f, 0.15f});
 }
 
 void VideoFlowSourceMod::draw() {

@@ -325,9 +325,13 @@ void SoftCircleMod::receive(int sinkId, const glm::vec4& v) {
 
 void SoftCircleMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
-  im.E().exp(radiusController, strength);
-  im.D().exp(colorMultiplierController, strength, 1.0f, 1.4f, 4.0f); // D=0->1.0, D=0.8->1.16, D=1.0->1.4
-  im.D().lin(alphaMultiplierController, strength);
+
+  // Keep intent changes bounded around the tuned baseline.
+  im.E().expAround(radiusController, strength);
+  im.D().expAround(colorMultiplierController, strength);
+
+  // Alpha is very sensitive (blowouts + persistent layers), so modulate it gently.
+  im.D().expAround(alphaMultiplierController, strength);
 }
 
 } // namespace ofxMarkSynth

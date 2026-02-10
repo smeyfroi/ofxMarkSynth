@@ -267,18 +267,18 @@ bool PathMod::keyPressed(int key) {
 
 void PathMod::applyIntent(const Intent& intent, float strength) {
   IntentMap im(intent);
-  
+
   // Granularity -> larger cluster radius (bigger shapes)
-  // Use a moderate exponent + a capped max so large radii stay controlled.
+  // Keep the intent effect bounded, and preserve the existing max cap.
   float maxIntentClusterRadius = std::min(clusterRadiusController.getManualMax(), 0.4f);
-  im.G().exp(clusterRadiusController,
-             strength,
-             clusterRadiusController.getManualMin(),
-             maxIntentClusterRadius,
-             4.0f);
-  // Density -> more vertices allowed
-  im.D().exp(maxVerticesController, strength);
-  
+  im.G().expAround(clusterRadiusController,
+                   strength,
+                   Mapping::WithRange{clusterRadiusController.getManualMin(), maxIntentClusterRadius},
+                   4.0f);
+
+  // Density -> more vertices allowed (but keep it near the tuned baseline)
+  im.D().expAround(maxVerticesController, strength);
+
   // Strategy selection based on chaos + structure
 //  if (strength > 0.05f) {
 //    if (im.C().get() > 0.6f && im.S().get() < 0.4f) {

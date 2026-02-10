@@ -165,44 +165,21 @@ void FluidRadialImpulseMod::applyIntent(const Intent& intent, float strength) {
   // High Structure should feel more ordered: smaller, gentler impulses.
   const float structure = im.S().get();
 
-  // Radius is primarily Granularity-driven, then attenuated by Structure.
-  float radiusBase = exponentialMap(im.G().get(),
-                                   impulseRadiusController.getManualMin(),
-                                   impulseRadiusController.getManualMax(),
-                                   2.0f);
-  float radiusScale = 1.0f - structure * 0.4f; // S=1 -> 60%
-  float impulseRadiusI = std::clamp(radiusBase * radiusScale,
-                                   impulseRadiusController.getManualMin(),
-                                   impulseRadiusController.getManualMax());
-  impulseRadiusController.updateIntent(impulseRadiusI, strength, "G -> exp; *(1-0.4*S)");
+  // Use bounded "around-manual" mappings so Intent enhances the tuned baseline
+  // instead of swinging across the whole parameter range.
 
-  // Strength is E/C-driven (weighted), then attenuated by Structure.
-  float combinedIntentStrength = im.E().get() * 0.8f + im.C().get() * 0.2f;
-  float strengthBase = exponentialMap(combinedIntentStrength,
-                                     impulseStrengthController.getManualMin(),
-                                     impulseStrengthController.getManualMax() * 0.5f,
-                                     4.0f);
-  float strengthScale = 1.0f - structure * 0.7f; // S=1 -> 30%
-  float impulseStrengthI = std::clamp(strengthBase * strengthScale,
-                                     impulseStrengthController.getManualMin(),
-                                     impulseStrengthController.getManualMax() * 0.5f);
-  impulseStrengthController.updateIntent(impulseStrengthI, strength, "E*.8+C*.2 -> exp(4)[0..0.5] * (1-0.7*S)");
+  float radiusDim = im.G().get() * (1.0f - structure * 0.4f);
+  radiusDim = std::clamp(radiusDim, 0.0f, 1.0f);
+  Mapping(radiusDim, "G*(1-0.4*S)").expAround(impulseRadiusController, strength);
 
-  // Swirl: driven by Chaos, reduced by Structure.
-  float swirlDim = im.C().get() * (1.0f - structure * 0.7f); // S=1 -> 30%
+  float combinedStrengthDim = im.E().get() * 0.8f + im.C().get() * 0.2f;
+  combinedStrengthDim *= (1.0f - structure * 0.7f);
+  combinedStrengthDim = std::clamp(combinedStrengthDim, 0.0f, 1.0f);
+  Mapping(combinedStrengthDim, "(E*.8+C*.2)*(1-0.7*S)").expAround(impulseStrengthController, strength, 4.0f);
+
+  float swirlDim = im.C().get() * (1.0f - structure * 0.7f);
   swirlDim = std::clamp(swirlDim, 0.0f, 1.0f);
-
-  float swirlStrengthI = exponentialMap(swirlDim,
-                                       swirlStrengthController.getManualMin(),
-                                       swirlStrengthController.getManualMax(),
-                                       4.0f);
-  swirlStrengthController.updateIntent(swirlStrengthI, strength, "C*(1-0.7*S) -> exp(4)");
-
-  float swirlVelocityI = exponentialMap(swirlDim,
-                                       swirlVelocityController.getManualMin(),
-                                       swirlVelocityController.getManualMax(),
-                                       4.0f);
-  swirlVelocityController.updateIntent(swirlVelocityI, strength, "C*(1-0.7*S) -> exp(4)");
-
+  Mapping(swirlDim, "C*(1-0.7*S)").expAround(swirlStrengthController, strength, 4.0f);
+  Mapping(swirlDim, "C*(1-0.7*S)").expAround(swirlVelocityController, strength, 4.0f);
 }
 } // ofxMarkSynth
