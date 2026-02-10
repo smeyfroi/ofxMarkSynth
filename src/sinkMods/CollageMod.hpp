@@ -30,6 +30,7 @@ public:
   static constexpr int SINK_PATH = 1;
   static constexpr int SINK_SNAPSHOT_TEXTURE = 11;
   static constexpr int SINK_COLOR = 20;
+  static constexpr int SINK_OUTLINE_COLOR = 21;
   static constexpr int SINK_CHANGE_KEY_COLOUR = 90;
 
 protected:
@@ -60,7 +61,7 @@ protected:
   ParamController<float> saturationController { saturationParameter };
   ofParameter<float> outlineAlphaFactorParameter { "OutlineAlphaFactor", 1.0f, 0.0f, 1.0f };
   ParamController<float> outlineAlphaFactorController { outlineAlphaFactorParameter };
-  ofParameter<float> outlineWidthParameter { "OutlineWidth", 12.0f, 1.0f, 50.0f }; // pixels
+  ofParameter<float> outlineWidthParameter { "OutlineWidth", 12.0f, 0.0f, 50.0f }; // pixels
   ParamController<float> outlineWidthController { outlineWidthParameter };
   ofParameter<ofFloatColor> outlineColorParameter { "OutlineColour",
                                                     ofFloatColor { 1.0, 1.0, 1.0, 1.0 },

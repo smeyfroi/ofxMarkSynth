@@ -19,6 +19,7 @@ CollageMod::CollageMod(std::shared_ptr<Synth> synthPtr, const std::string& name,
     { "Path", SINK_PATH },
     { "SnapshotTexture", SINK_SNAPSHOT_TEXTURE },
     { colorParameter.getName(), SINK_COLOR },
+    { outlineColorParameter.getName(), SINK_OUTLINE_COLOR },
     { "ChangeKeyColour", SINK_CHANGE_KEY_COLOUR }
   };
 
@@ -241,6 +242,9 @@ void CollageMod::receive(int sinkId, const glm::vec4& v) {
   switch (sinkId) {
     case SINK_COLOR:
       colorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
+      break;
+    case SINK_OUTLINE_COLOR:
+      outlineColorController.updateAuto(ofFloatColor { v.r, v.g, v.b, v.a }, getAgency());
       break;
     default:
       ofLogError("CollageMod") << "glm::vec4 receive for unknown sinkId " << sinkId;

@@ -785,6 +785,7 @@ After drawing it clears its stored path/texture and waits for the next pair.
 - `Path` (ofPath): Shape boundary. Typically from `PathMod.Path`.
 - `SnapshotTexture` (texture): Image to collage. Typically from `PixelSnapshotMod.SnapshotTexture`.
 - `Colour` (vec4): Tint color (used when strategy is tinted).
+- `OutlineColour` (vec4): Outline stroke color (used when `OutlineAlphaFactor > 0` and an `outlines` layer exists).
 - `ChangeKeyColour` (float): When > 0.5, cycles through `KeyColours`.
 
 **Layers**:
