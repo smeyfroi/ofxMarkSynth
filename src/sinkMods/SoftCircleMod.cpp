@@ -46,6 +46,7 @@ void SoftCircleMod::initParameters() {
   parameters.add(keyColoursParameter);
   parameters.add(colorMultiplierParameter);
   parameters.add(alphaMultiplierParameter);
+  parameters.add(alphaPreScaleExpParameter);
   parameters.add(softnessParameter);
   parameters.add(falloffParameter);
   parameters.add(agencyFactorParameter);
@@ -98,12 +99,16 @@ void SoftCircleMod::update() {
   float alphaMultiplier = alphaMultiplierController.value;
   baseColor.a *= alphaMultiplier;
 
+  const float alphaExp = alphaPreScaleExpParameter.get();
+  baseColor.a *= std::exp2(alphaExp);
+ 
   softnessController.update();
   float softness = softnessController.value;
 
-  int falloff = falloffParameter.get();
+  const int falloff = falloffParameter.get();
 
   const bool useVelocity = useVelocityParameter.get() > 0;
+
   const float speedMin = velocitySpeedMinParameter.get();
   const float speedMax = velocitySpeedMaxParameter.get();
   const float stretch = velocityStretchParameter.get();
@@ -123,14 +128,9 @@ void SoftCircleMod::update() {
   fboPtr->getSource().begin();
 
   ofPushStyle();
-  if (falloff == 1) {
-    // Dab: premultiplied alpha blend for proper compositing without halos
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  } else {
-    // Glow: standard alpha blending
-    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  }
+  // SoftCircleShader outputs premultiplied alpha; use premultiplied blending.
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   const float baseRadiusPx = radius * fboPtr->getWidth();
 

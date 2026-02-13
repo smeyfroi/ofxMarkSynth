@@ -60,6 +60,10 @@ private:
   ParamController<float> colorMultiplierController { colorMultiplierParameter };
   ofParameter<float> alphaMultiplierParameter { "AlphaMultiplier", 0.2, 0.0, 1.0 }; // A
   ParamController<float> alphaMultiplierController { alphaMultiplierParameter };
+
+  // Alpha scale in log2 space (<= 0). Helps keep AlphaMultiplier in a usable range.
+  ofParameter<float> alphaPreScaleExpParameter { "AlphaPreScaleExp", 0.0f, -12.0f, 0.0f };
+
   ofParameter<float> softnessParameter { "Softness", 0.3, 0.0, 1.0 };
   ParamController<float> softnessController { softnessParameter };
   ofParameter<int> falloffParameter { "Falloff", 0, 0, 1 }; // 0 = Glow, 1 = Dab
