@@ -143,8 +143,9 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
                 std::move(resources)));
 
   // Safe place to load startup config: synth is now owned by a shared_ptr.
+  // Use switchToConfig (not loadFromConfig) so Mods are fully initialized before first update.
   if (synth && synth->pendingStartupConfigPath && !synth->pendingStartupConfigPath->empty()) {
-    synth->loadFromConfig(*synth->pendingStartupConfigPath);
+    synth->switchToConfig(*synth->pendingStartupConfigPath, false);
     synth->pendingStartupConfigPath.reset();
   }
 
