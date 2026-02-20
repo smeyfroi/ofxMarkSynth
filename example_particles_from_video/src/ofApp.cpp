@@ -29,8 +29,11 @@ void ofApp::setup() {
   resources.add("saveRecording", SAVE_RECORDING);
   resources.add("videoRecordingPath", VIDEO_RECORDING_PATH);
 
+  resources.add("compositeSize", COMPOSITE_SIZE);
+  resources.add("startHibernated", START_HIBERNATED);
+
   synthPtr = ofxMarkSynth::Synth::create("example_particles_from_video", ofxMarkSynth::ModConfig {
-  }, START_HIBERNATED, COMPOSITE_SIZE, resources);
+  }, resources);
   if (!synthPtr) {
     ofLogError("example_particles_from_video") << "Failed to create Synth";
     throw std::runtime_error("Failed to create Synth");

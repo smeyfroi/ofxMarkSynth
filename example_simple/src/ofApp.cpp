@@ -19,8 +19,11 @@ void ofApp::setup() {
   resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
   resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
 
+  resources.add("compositeSize", COMPOSITE_SIZE);
+  resources.add("startHibernated", START_HIBERNATED);
+
   synthPtr = ofxMarkSynth::Synth::create("Simple", ofxMarkSynth::ModConfig {
-  }, START_HIBERNATED, COMPOSITE_SIZE, resources);
+  }, resources);
   if (!synthPtr) {
     ofLogError("example_simple") << "Failed to create Synth";
     throw std::runtime_error("Failed to create Synth");

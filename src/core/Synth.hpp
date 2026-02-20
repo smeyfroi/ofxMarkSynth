@@ -51,14 +51,13 @@ using ModPtrMap = std::unordered_map<std::string, ofxMarkSynth::ModPtr>;
 class Synth : public Mod {
 
 public:
-  // The composite is the middle (square) section, scaled to fit the window height
-  static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, bool startHibernated, glm::vec2 compositeSize, ResourceManager resources = {});
+  // The composite is the middle (square) section, scaled to fit the window height.
+  // Required resources: `compositeSize` (glm::vec2) and `startHibernated` (bool).
+  static std::shared_ptr<Synth> create(const std::string& name, ModConfig config, ResourceManager resources = {});
 
 protected:
   Synth(const std::string& name,
         ModConfig config,
-        bool startHibernated,
-        glm::vec2 compositeSize_,
         std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient,
         ResourceManager resources = {});
 

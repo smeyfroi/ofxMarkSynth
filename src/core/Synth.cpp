@@ -127,7 +127,15 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
 
 
 
-std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, bool startHibernated, glm::vec2 compositeSize, ResourceManager resources) {
+std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, ResourceManager resources) {
+  try {
+    resources.getRequired<glm::vec2>("compositeSize");
+    resources.getRequired<bool>("startHibernated");
+  } catch (const std::exception& e) {
+    ofLogError("Synth") << "Synth::create: " << e.what();
+    return nullptr;
+  }
+
   auto audioClient = createAudioAnalysisClient(resources);
   if (!audioClient) {
     ofLogError("Synth") << "Synth::create: failed to create audio source";
@@ -137,8 +145,6 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
   auto synth = std::shared_ptr<Synth>(
       new Synth(name,
                 std::move(config),
-                startHibernated,
-                compositeSize,
                 std::move(audioClient),
                 std::move(resources)));
 
@@ -154,14 +160,22 @@ std::shared_ptr<Synth> Synth::create(const std::string& name, ModConfig config, 
 
 
 
-Synth::Synth(const std::string& name_, ModConfig config, bool startHibernated, glm::vec2 compositeSize_, std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient, ResourceManager resources_) :
+Synth::Synth(const std::string& name_,
+             ModConfig config,
+             std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> audioAnalysisClient,
+             ResourceManager resources_) :
 Mod(nullptr, name_, std::move(config)),
-paused { startHibernated },  // Start paused if hibernated
+paused { false },
 resources { std::move(resources_) },
 audioAnalysisClientPtr { std::move(audioAnalysisClient) }
 {
+  const bool startHibernated = *resources.getRequired<bool>("startHibernated");
+  const glm::vec2 compositeSize = *resources.getRequired<glm::vec2>("compositeSize");
+
+  paused = startHibernated;  // Start paused if hibernated
+
   initControllers(startHibernated);
-  initRendering(compositeSize_);
+  initRendering(compositeSize);
   initResourcePaths();
   initPerformanceNavigator();
   initSinkSourceMappings();

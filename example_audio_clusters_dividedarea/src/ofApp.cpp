@@ -21,8 +21,11 @@ void ofApp::setup() {
   resources.add("audioChannels", AUDIO_CHANNELS);
   resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
 
+  resources.add("compositeSize", COMPOSITE_SIZE);
+  resources.add("startHibernated", START_HIBERNATED);
+
   synthPtr = ofxMarkSynth::Synth::create("Audio Clusters", ofxMarkSynth::ModConfig {
-  }, START_HIBERNATED, COMPOSITE_SIZE, resources);
+  }, resources);
   if (!synthPtr) {
     ofLogError("example_audio_clusters_dividedarea") << "Failed to create Synth";
     throw std::runtime_error("Failed to create Synth");
