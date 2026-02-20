@@ -64,6 +64,7 @@ protected:
 
 public:
   void drawGui();
+  void windowResized(int w, int h);
   void shutdown() override;
 
   template <typename ModT>

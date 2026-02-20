@@ -10,6 +10,7 @@
 #include "ofAppRunner.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace ofxMarkSynth {
 
@@ -50,22 +51,11 @@ ofFloatColor makeBackgroundTintWithBrightness(const ofFloatColor& tint, float br
 
 void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, float windowHeight, float panelGapPx) {
     size = compositeSize;
-    
+
     compositeFbo.allocate(size.x, size.y, GL_RGB16F);
-    scale = std::min(windowWidth / compositeFbo.getWidth(), windowHeight / compositeFbo.getHeight());
-    
-    // Side panels
-    panelWidth = (windowWidth - compositeFbo.getWidth() * scale) / 2.0f - panelGapPx;
-    if (panelWidth > 0.0f) {
-        panelHeight = windowHeight;
-        leftPanel.fbo.allocate(panelWidth, panelHeight, GL_RGB16F);
-        rightPanel.fbo.allocate(panelWidth, panelHeight, GL_RGB16F);
-        leftPanel.timeoutSecs = LEFT_PANEL_TIMEOUT_SECS;
-        rightPanel.timeoutSecs = RIGHT_PANEL_TIMEOUT_SECS;
-    }
-    
+
     tonemapShader.load();
-    
+
     // Composite quad mesh (sized to composite dimensions)
     compositeQuadMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
     compositeQuadMesh.getVertices() = {
@@ -80,7 +70,7 @@ void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, flo
         { 1.0f, 1.0f },
         { 0.0f, 1.0f },
     };
-    
+
     // Unit quad mesh (for side panels)
     unitQuadMesh.setMode(OF_PRIMITIVE_TRIANGLE_FAN);
     unitQuadMesh.getVertices() = {
@@ -95,6 +85,43 @@ void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, flo
         { 1.0f, 1.0f },
         { 0.0f, 1.0f },
     };
+
+    windowResized(windowWidth, windowHeight, panelGapPx);
+}
+
+void CompositeRenderer::windowResized(float windowWidth, float windowHeight, float panelGapPx) {
+    if (!compositeFbo.isAllocated() || windowWidth <= 0.0f || windowHeight <= 0.0f) {
+        return;
+    }
+
+    scale = std::min(windowWidth / compositeFbo.getWidth(), windowHeight / compositeFbo.getHeight());
+
+    float newPanelWidth = (windowWidth - compositeFbo.getWidth() * scale) / 2.0f - panelGapPx;
+    if (newPanelWidth <= 0.0f) {
+        panelWidth = 0.0f;
+        panelHeight = 0.0f;
+        return;
+    }
+
+    panelWidth = newPanelWidth;
+    panelHeight = windowHeight;
+
+    const size_t allocWidth = static_cast<size_t>(std::max<long>(1L, std::lround(panelWidth)));
+    const size_t allocHeight = static_cast<size_t>(std::max<long>(1L, std::lround(panelHeight)));
+
+    const size_t currentWidth = leftPanel.fbo.isAllocated() ? static_cast<size_t>(leftPanel.fbo.getWidth()) : 0U;
+    const size_t currentHeight = leftPanel.fbo.isAllocated() ? static_cast<size_t>(leftPanel.fbo.getHeight()) : 0U;
+
+    if (allocWidth != currentWidth || allocHeight != currentHeight) {
+        leftPanel.fbo.allocate(allocWidth, allocHeight, GL_RGB16F);
+        rightPanel.fbo.allocate(allocWidth, allocHeight, GL_RGB16F);
+    }
+
+    leftPanel.timeoutSecs = LEFT_PANEL_TIMEOUT_SECS;
+    rightPanel.timeoutSecs = RIGHT_PANEL_TIMEOUT_SECS;
+
+    leftPanel.lastUpdateTime = -leftPanel.timeoutSecs;
+    rightPanel.lastUpdateTime = -rightPanel.timeoutSecs;
 }
 
 void CompositeRenderer::updateCompositeBase(const CompositeParams& params) {

@@ -787,6 +787,17 @@ void Synth::drawGui() {
   gui.draw();
 }
 
+void Synth::windowResized(int w, int h) {
+  if (!compositeRenderer) return;
+
+  float panelGapPx = 0.0f;
+  if (auto panelGapPtr = resources.get<float>("compositePanelGapPx"); panelGapPtr) {
+    panelGapPx = *panelGapPtr;
+  }
+
+  compositeRenderer->windowResized(static_cast<float>(w), static_cast<float>(h), panelGapPx);
+}
+
 bool Synth::isRecording() const {
 #ifdef TARGET_MAC
   return videoRecorderPtr && videoRecorderPtr->isRecording();

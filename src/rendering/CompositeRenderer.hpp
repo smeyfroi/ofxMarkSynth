@@ -22,8 +22,13 @@ class CompositeRenderer {
 public:
     CompositeRenderer() = default;
 
-    /// Allocate FBOs. Set panelGapPx to disable side panels if <= 0 after calculation.
+    /// Allocate FBOs.
+    /// `compositeSize` is the fixed-resolution middle panel (independent of window size).
     void allocate(glm::vec2 compositeSize, float windowWidth, float windowHeight, float panelGapPx);
+
+    /// Recompute scale + side panel geometry for a new window size.
+    /// Does not change the composite FBO resolution.
+    void windowResized(float windowWidth, float windowHeight, float panelGapPx);
 
     /// Parameters for composite update
     struct CompositeParams {
