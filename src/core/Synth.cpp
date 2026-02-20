@@ -185,15 +185,15 @@ void Synth::initRendering(glm::vec2 compositeSize) {
   
   compositeRenderer = std::make_unique<CompositeRenderer>();
   compositeRenderer->allocate(compositeSize, ofGetWindowWidth(), ofGetWindowHeight(),
-                              *resources.get<float>("compositePanelGapPx"));
-  
+                              *resources.getRequired<float>("compositePanelGapPx"));
+
   imageSaver = std::make_unique<AsyncImageSaver>(compositeSize);
-  
+
 #ifdef TARGET_MAC
   videoRecorderPtr = std::make_unique<VideoRecorder>();
   videoRecorderPtr->setup(
-      *resources.get<glm::vec2>("recorderCompositeSize"),
-      *resources.get<std::filesystem::path>("ffmpegBinaryPath"));
+      *resources.getRequired<glm::vec2>("recorderCompositeSize"),
+      *resources.getRequired<std::filesystem::path>("ffmpegBinaryPath"));
 #endif
 }
 
@@ -1077,6 +1077,13 @@ bool Synth::loadFromConfig(const std::string& filepath) {
       hibernationController->setConfigId(getCurrentConfigId());
     }
     ofLogNotice("Synth") << "Successfully loaded config from: " << filepath;
+
+    // Eagerly initialise Mod parameters so that ParamController pointers are
+    // created before the first update()/applyIntent() call.  getParameterGroup()
+    // is the lazy-init trigger for each Mod.
+    for (const auto& [name, modPtr] : modPtrs) {
+      modPtr->getParameterGroup();
+    }
 
     // Load global memories once (on first config load)
     if (configRootPathSet) {

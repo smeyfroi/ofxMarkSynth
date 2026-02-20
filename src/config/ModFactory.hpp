@@ -7,12 +7,14 @@
 
 #pragma once
 
-#include <functional>
-#include <unordered_map>
-#include <string>
-#include <memory>
-#include <vector>
 #include <any>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include "ofLog.h"
 
 
 
@@ -54,6 +56,19 @@ public:
     }
   }
   
+  // Like get(), but logs a clear error and throws if the resource is missing or has the wrong type.
+  // Use this for resources that are mandatory for correct operation (e.g. in Synth::initRendering).
+  template<typename T>
+  std::shared_ptr<T> getRequired(const std::string& name) const {
+    auto ptr = get<T>(name);
+    if (!ptr) {
+      std::string msg = "ResourceManager: required resource '" + name + "' is missing or has wrong type";
+      ofLogError("ResourceManager") << msg;
+      throw std::runtime_error(msg);
+    }
+    return ptr;
+  }
+
   bool has(const std::string& name) const {
     return resources.find(name) != resources.end();
   }

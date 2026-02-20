@@ -1,5 +1,5 @@
+#include "ofApp.h"
 #include "ofxTimeMeasurements.h"
-#include "ModFactory.hpp"
 #include <stdexcept>
 
 void ofApp::setup() {
@@ -16,7 +16,10 @@ void ofApp::setup() {
   resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
   resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
 
-  resources.add("fontPath", FONT_PATH);
+  auto fontCachePtr = std::make_shared<ofxMarkSynth::FontStash2Cache>(FONT_PATH.string());
+  fontCachePtr->setup();
+  fontCachePtr->prewarmAll();
+  resources.addShared("fontCache", fontCachePtr);
 
   // Audio resources (Synth-owned)
   resources.add("sourceAudioPath", SOURCE_AUDIO_PATH);
@@ -25,80 +28,41 @@ void ofApp::setup() {
   resources.add("audioChannels", AUDIO_CHANNELS);
   resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
 
-  synthPtr = ofxMarkSynth::Synth::create("Text", ofxMarkSynth::ModConfig { }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  synthPtr = ofxMarkSynth::Synth::create("Text", ofxMarkSynth::ModConfig { }, START_HIBERNATED, COMPOSITE_SIZE, resources);
   if (!synthPtr) {
     ofLogError("example_text") << "Failed to create Synth";
     throw std::runtime_error("Failed to create Synth");
   }
 
   synthPtr->loadFromConfig(ofToDataPath("1.json"));
-  synthPtr->configureGui(nullptr); // nullptr == no imgui window
-
-  // No imgui; we manage an ofxGui here instead
-  parameters.add(synthPtr->getParameterGroup());
-  gui.setup(parameters);
+  synthPtr->configureGui(guiWindowPtr);
 }
 
-//--------------------------------------------------------------
 void ofApp::update(){
   synthPtr->update();
 }
 
-//--------------------------------------------------------------
 void ofApp::draw(){
   synthPtr->draw();
-  if (guiVisible) gui.draw();
 }
 
-//--------------------------------------------------------------
+void ofApp::drawGui(ofEventArgs& args){
+  synthPtr->drawGui();
+}
+
 void ofApp::exit(){
   if (synthPtr) {
     synthPtr->shutdown();
   }
 }
 
-//--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) { guiVisible = not guiVisible; return; }
   if (synthPtr->keyPressed(key)) return;
 }
 
-//--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-  
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y){
-  
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-  
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-  
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-  
-}
-
-//--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-  
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-  
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){
-  
+  if (synthPtr) synthPtr->windowResized(w, h);
 }

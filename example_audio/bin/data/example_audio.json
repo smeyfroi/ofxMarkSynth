@@ -17,7 +17,7 @@
   
   "connections": [
     "Audio.PitchRmsPoint -> Introspector.Point",
-    "Audio.ComplexSpectralDifferenceScalar -> Introspector.HorizontalLine1",
+    "Audio.SpectralCentroidScalar -> Introspector.HorizontalLine1",
     "Audio.SpectralCrestScalar -> Introspector.HorizontalLine2",
     "Audio.ZeroCrossingRateScalar -> Introspector.HorizontalLine3"
   ]

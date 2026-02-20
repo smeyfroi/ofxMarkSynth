@@ -278,6 +278,7 @@ void DividedAreaMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void DividedAreaMod::applyIntent(const Intent& intent, float strength) {
+  if (!smoothnessControllerPtr) return;
   IntentMap im(intent);
 
   im.C().exp(angleController, strength, Mapping::WithRange{0.0f, 0.5f}, 2.0f);

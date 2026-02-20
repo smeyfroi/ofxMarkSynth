@@ -44,6 +44,7 @@ float ClusterMod::getAgency() const {
 }
 
 void ClusterMod::update() {
+  if (!clustersControllerPtr) return;
   syncControllerAgencies();
   clustersControllerPtr->update();
 
@@ -97,6 +98,7 @@ void ClusterMod::receive(int sinkId, const float& v) {
 }
 
 void ClusterMod::applyIntent(const Intent& intent, float strength) {
+  if (!clustersControllerPtr) return;
   IntentMap im(intent);
   im.C().lin(*clustersControllerPtr, strength);
 }

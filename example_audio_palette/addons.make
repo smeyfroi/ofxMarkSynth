@@ -11,6 +11,7 @@ ofxConvexHull
 ofxRenderer
 ofxDividedArea
 ofxFFmpegRecorder
+ofxFontStash2
 ofxImGui
 ofxIntrospector
 ofxMotionFromVideo
@@ -22,5 +23,4 @@ ofxSelfOrganizingMap
 ofxSomPalette
 ofxTimeMeasurements
 ofxTinyEXR
-ofxFontStash2
 ofxMarkSynth

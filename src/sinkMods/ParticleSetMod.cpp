@@ -235,6 +235,7 @@ void ParticleSetMod::receive(int sinkId, const glm::vec4& v) {
 }
 
 void ParticleSetMod::applyIntent(const Intent& intent, float strength) {
+  if (!timeStepControllerPtr) return;
   IntentMap im(intent);
 
   (im.C() * im.E()).linAround(spinController, strength);

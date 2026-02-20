@@ -274,6 +274,7 @@ void FluidMod::applyVelocityFieldTexture() {
 
 void FluidMod::applyIntent(const Intent& intent, float strength) {
   if (!fluidSimulation.isValid()) return;
+  if (!vorticityControllerPtr) return;
 
   IntentMap im(intent);
 

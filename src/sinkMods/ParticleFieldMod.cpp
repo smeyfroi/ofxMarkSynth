@@ -243,6 +243,7 @@ void ParticleFieldMod::receive(int sinkId, const float& value) {
 }
 
 void ParticleFieldMod::applyIntent(const Intent& intent, float strength) {
+  if (!ln2ParticleCountControllerPtr) return;
   IntentMap im(intent);
 
   // Color composition feeds PointColour controller as intent contribution

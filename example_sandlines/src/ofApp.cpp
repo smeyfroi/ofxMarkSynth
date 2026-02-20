@@ -1,5 +1,4 @@
 #include "ofApp.h"
-#include "ModFactory.hpp"
 #include "ofxTimeMeasurements.h"
 #include <stdexcept>
 
@@ -9,7 +8,7 @@ void ofApp::setup() {
   ofSetBackgroundColor(0);
   ofSetFrameRate(FRAME_RATE);
   TIME_SAMPLE_SET_FRAMERATE(FRAME_RATE);
-  
+
   ofxMarkSynth::ResourceManager resources;
   resources.add("sourceVideoPath", SOURCE_VIDEO_PATH);
   resources.add("sourceVideoMute", SOURCE_VIDEO_MUTE);
@@ -18,90 +17,53 @@ void ofApp::setup() {
   resources.add("audioBufferSize", AUDIO_BUFFER_SIZE);
   resources.add("audioChannels", AUDIO_CHANNELS);
   resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
+  resources.add("compositePanelGapPx", COMPOSITE_PANEL_GAP_PX);
+  resources.add("recorderCompositeSize", VIDEO_RECORDER_SIZE);
+  resources.add("ffmpegBinaryPath", FFMPEG_BINARY_PATH);
 
   synthPtr = ofxMarkSynth::Synth::create("Sandline", ofxMarkSynth::ModConfig {
-  }, START_PAUSED, SYNTH_COMPOSITE_SIZE, resources);
+  }, START_HIBERNATED, COMPOSITE_SIZE, resources);
   if (!synthPtr) {
     ofLogError("example_sandlines") << "Failed to create Synth";
     throw std::runtime_error("Failed to create Synth");
   }
 
   synthPtr->loadFromConfig(ofToDataPath("2.json"));
-  synthPtr->configureGui(nullptr); // nullptr == no imgui window
+  synthPtr->configureGui(guiWindowPtr);
 
   ofAddListener(synthPtr->getHibernationCompleteEvent(), this, &ofApp::onSynthHibernationComplete);
-
-  // No imgui; we manage an ofxGui here instead
-  parameters.add(synthPtr->getParameterGroup());
-  gui.setup(parameters);
 }
 
-//--------------------------------------------------------------
 void ofApp::update(){
   synthPtr->update();
 }
 
-//--------------------------------------------------------------
 void ofApp::draw(){
   synthPtr->draw();
-  if (guiVisible) gui.draw();
 }
 
-//--------------------------------------------------------------
+void ofApp::drawGui(ofEventArgs& args){
+  synthPtr->drawGui();
+}
+
 void ofApp::exit(){
   if (synthPtr) {
-    ofRemoveListener(synthPtr->hibernationCompleteEvent, this, &ofApp::onSynthHibernationComplete);
+    ofRemoveListener(synthPtr->getHibernationCompleteEvent(), this, &ofApp::onSynthHibernationComplete);
     synthPtr->shutdown();
   }
 }
 
-//--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == OF_KEY_TAB) guiVisible = not guiVisible;
   if (synthPtr->keyPressed(key)) return;
 }
 
-//--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-
+  if (synthPtr) synthPtr->windowResized(w, h);
 }
 
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){
-
-}
-
-//--------------------------------------------------------------
 void ofApp::onSynthHibernationComplete(ofxMarkSynth::HibernationController::CompleteEvent& e){
   ofLogNotice("ofApp") << "Hibernation complete! Duration: " << e.fadeDuration
                        << "s, Config: " << e.configId;
