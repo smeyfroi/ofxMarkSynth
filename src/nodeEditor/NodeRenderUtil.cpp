@@ -184,7 +184,7 @@ static void addParameterInternal(const ModPtr& modPtr, ofParameter<int>& paramet
 
   std::string id = "##" + fullName;
   ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderInt(id.c_str(), &value, parameter.getMin(), parameter.getMax())) {
+  if (ImGui::SliderInt(id.c_str(), &value, parameter.getMin(), parameter.getMax(), "%d", ImGuiSliderFlags_NoInput)) {
     parameter.set(value);
     parameterModifiedThisFrame = true;
   }
@@ -213,7 +213,12 @@ static void addParameterInternal(const ModPtr& modPtr, ofParameter<float>& param
     fmt = "%.5f";
   }
 
-  if (ImGui::SliderFloat(id.c_str(), &value, parameter.getMin(), parameter.getMax(), fmt, ImGuiSliderFlags_NoRoundToFormat)) {
+  if (ImGui::SliderFloat(id.c_str(),
+                       &value,
+                       parameter.getMin(),
+                       parameter.getMax(),
+                       fmt,
+                       ImGuiSliderFlags_NoRoundToFormat | ImGuiSliderFlags_NoInput)) {
     parameter.set(value);
     parameterModifiedThisFrame = true;
   }
@@ -245,7 +250,12 @@ static void addParameterInternal(const ModPtr& modPtr, ofParameter<glm::vec2>& p
 
   std::string id = "##" + fullName;
   ImGui::PushItemWidth(sliderWidth);
-  if (ImGui::SliderFloat2(id.c_str(), valueArray, parameter.getMin().x, parameter.getMax().x, "%.2f", ImGuiSliderFlags_NoRoundToFormat)) {
+  if (ImGui::SliderFloat2(id.c_str(),
+                         valueArray,
+                         parameter.getMin().x,
+                         parameter.getMax().x,
+                         "%.2f",
+                         ImGuiSliderFlags_NoRoundToFormat | ImGuiSliderFlags_NoInput)) {
     parameter.set(glm::vec2(valueArray[0], valueArray[1]));
     parameterModifiedThisFrame = true;
   }
