@@ -28,6 +28,15 @@ Optional runtime keys (with defaults):
 - `logLevel` (default `notice`)
 - `logDestination` (`console|gui`, default `console`)
 
+Recording keys:
+- `startRecordingOnFirstWake` (default `false`)
+- `muxAudioBitrateKbps` (default `192`)
+
+Autosnapshot keys:
+- `autoSnapshotsEnabled` (default `false`)
+- `autoSnapshotsIntervalSec` (default `20.0`)
+- `autoSnapshotsJitterSec` (default `7.0`)
+
 Reference example:
 - `apps/myApps/fingerprint2/session-config.reference.json`
 

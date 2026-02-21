@@ -241,6 +241,14 @@ private:
   void initResourcePaths();
   void initPerformanceNavigator();
   void initSinkSourceMappings();
+
+  void maybeStartRecordingOnFirstWake();
+
+#ifdef TARGET_MAC
+  void startCompositeRecording(const std::string& configId);
+  void stopCompositeRecordingAndMux();
+  void muxLastRecordingIfAvailable();
+#endif
   
   // Serialization helpers
   void updateModConfigJson(nlohmann::ordered_json& modJson, const ModPtr& modPtr);
@@ -349,7 +357,12 @@ private:
 
 #ifdef TARGET_MAC
   std::unique_ptr<VideoRecorder> videoRecorderPtr;
+  std::filesystem::path lastRecordingVideoPath;
+  std::filesystem::path lastRecordingAudioPath;
 #endif
+
+  bool startRecordingOnFirstWakeEnabled { false };
+  bool startRecordingOnFirstWakeStarted { false };
 
   std::unique_ptr<AsyncImageSaver> imageSaver;
   

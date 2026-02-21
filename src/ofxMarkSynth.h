@@ -57,3 +57,4 @@
 #include "core/FontStash2Cache.hpp"
 #include "util/SessionConfigUtil.h"
 #include "util/SessionResourceUtil.h"
+#include "util/RecordingMuxUtil.h"

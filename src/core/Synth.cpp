@@ -17,6 +17,7 @@
 #include "sourceMods/AudioDataSourceMod.hpp"
 #include "sourceMods/VideoFlowSourceMod.hpp"
 #include "util/TimeStringUtil.h"
+#include "util/RecordingMuxUtil.h"
 #include "ofxImGui.h"
 #include "ofxAudioAnalysisClient.h"
 #include "nlohmann/json.hpp"
@@ -167,6 +168,11 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   const bool startHibernated = *resources.getRequired<bool>("startHibernated");
   const glm::vec2 compositeSize = *resources.getRequired<glm::vec2>("compositeSize");
 
+  startRecordingOnFirstWakeEnabled = false;
+  if (auto startRecordingOnFirstWakePtr = resources.get<bool>("startRecordingOnFirstWake"); startRecordingOnFirstWakePtr) {
+    startRecordingOnFirstWakeEnabled = *startRecordingOnFirstWakePtr;
+  }
+
   paused = startHibernated;  // Start paused if hibernated
 
   initControllers(startHibernated);
@@ -205,6 +211,100 @@ void Synth::initRendering(glm::vec2 compositeSize) {
       *resources.getRequired<std::filesystem::path>("ffmpegBinaryPath"));
 #endif
 }
+
+void Synth::maybeStartRecordingOnFirstWake() {
+  if (!startRecordingOnFirstWakeEnabled || startRecordingOnFirstWakeStarted) {
+    return;
+  }
+
+  if (paused || !timeTracker || !timeTracker->hasEverRun()) {
+    return;
+  }
+
+#ifdef TARGET_MAC
+  if (videoRecorderPtr && videoRecorderPtr->isRecording()) {
+    startRecordingOnFirstWakeStarted = true;
+    return;
+  }
+
+  const std::string configId = getCurrentConfigId();
+  if (configId.empty()) {
+    return;
+  }
+
+  startCompositeRecording(configId);
+#endif
+
+  startRecordingOnFirstWakeStarted = true;
+}
+
+#ifdef TARGET_MAC
+void Synth::startCompositeRecording(const std::string& configId) {
+  if (!videoRecorderPtr) {
+    ofLogError("Synth") << "startCompositeRecording: recorder not setup";
+    return;
+  }
+
+  if (videoRecorderPtr->isRecording()) {
+    ofLogWarning("Synth") << "startCompositeRecording: already recording";
+    return;
+  }
+
+  if (configId.empty()) {
+    ofLogError("Synth") << "startCompositeRecording: empty configId";
+    return;
+  }
+
+  std::string timestamp = ofGetTimestampString();
+  lastRecordingVideoPath = Synth::saveArtefactFilePath(
+      VIDEOS_FOLDER_NAME + "/" + configId + "/drawing-" + timestamp + ".mp4");
+  lastRecordingAudioPath = Synth::saveArtefactFilePath(
+      VIDEOS_FOLDER_NAME + "/" + configId + "/audio-" + timestamp + ".wav");
+
+  if (audioAnalysisClientPtr) {
+    audioAnalysisClientPtr->startSegmentRecording(lastRecordingAudioPath.string());
+  }
+
+  videoRecorderPtr->startRecording(lastRecordingVideoPath.string());
+}
+
+void Synth::muxLastRecordingIfAvailable() {
+  if (lastRecordingVideoPath.empty() || lastRecordingAudioPath.empty()) {
+    return;
+  }
+
+  auto ffmpegPathPtr = resources.get<std::filesystem::path>("ffmpegBinaryPath");
+  if (!ffmpegPathPtr || ffmpegPathPtr->empty()) {
+    ofLogWarning("Synth") << "muxLastRecordingIfAvailable: missing ffmpegBinaryPath";
+    return;
+  }
+
+  int bitrateKbps = 192;
+  if (auto bitratePtr = resources.get<int>("muxAudioBitrateKbps"); bitratePtr) {
+    bitrateKbps = *bitratePtr;
+  }
+
+  spawnDetachedMuxProcess(*ffmpegPathPtr, lastRecordingVideoPath, lastRecordingAudioPath, bitrateKbps);
+}
+
+void Synth::stopCompositeRecordingAndMux() {
+  if (!videoRecorderPtr) {
+    return;
+  }
+
+  if (!videoRecorderPtr->isRecording()) {
+    return;
+  }
+
+  videoRecorderPtr->stopRecording();
+
+  if (audioAnalysisClientPtr) {
+    audioAnalysisClientPtr->stopSegmentRecording();
+  }
+
+  muxLastRecordingIfAvailable();
+}
+#endif
 
 void Synth::initResourcePaths() {
   if (resources.has("performanceArtefactRootPath")) {
@@ -336,6 +436,10 @@ void Synth::shutdown() {
   gui.exit();
   
 #ifdef TARGET_MAC
+  if (videoRecorderPtr && videoRecorderPtr->isRecording()) {
+    stopCompositeRecordingAndMux();
+  }
+
   if (videoRecorderPtr) {
     videoRecorderPtr->shutdown();
   }
@@ -586,6 +690,8 @@ void Synth::update() {
     timeTracker->start();
   }
 
+  maybeStartRecordingOnFirstWake();
+
   // Accumulate running time when not paused
   if (!paused && timeTracker->hasEverRun()) {
     // Cap frame time to avoid time racing ahead during slow/unstable frames at startup
@@ -683,7 +789,20 @@ void Synth::update() {
   // Guards:
   // - Never during pause/hibernation
   // - No overlap: only when saver is fully idle
-  if (AUTO_SNAPSHOTS_ENABLED &&
+  bool autoSnapshotsEnabled = false;
+  float autoSnapshotsIntervalSec = 20.0f;
+  float autoSnapshotsJitterSec = 7.0f;
+  if (auto enabledPtr = resources.get<bool>("autoSnapshotsEnabled"); enabledPtr) {
+    autoSnapshotsEnabled = *enabledPtr;
+  }
+  if (auto intervalPtr = resources.get<float>("autoSnapshotsIntervalSec"); intervalPtr) {
+    autoSnapshotsIntervalSec = *intervalPtr;
+  }
+  if (auto jitterPtr = resources.get<float>("autoSnapshotsJitterSec"); jitterPtr) {
+    autoSnapshotsJitterSec = *jitterPtr;
+  }
+
+  if (autoSnapshotsEnabled &&
       !paused &&
       !currentConfigPath.empty() &&
       hibernationController && !hibernationController->isHibernating() &&
@@ -695,8 +814,8 @@ void Synth::update() {
       imageSaver->requestAutoSaveIfDue(
           compositeRenderer->getCompositeFbo(),
           getClockTimeSinceFirstRun(),
-          AUTO_SNAPSHOTS_INTERVAL_SEC,
-          AUTO_SNAPSHOTS_JITTER_SEC,
+          autoSnapshotsIntervalSec,
+          autoSnapshotsJitterSec,
           [configId]() {
             std::string timestamp = ofGetTimestampString();
             return Synth::saveArtefactFilePath(
@@ -839,13 +958,10 @@ std::string Synth::getCurrentConfigId() const {
 void Synth::toggleRecording() {
 #ifdef TARGET_MAC
   if (!videoRecorderPtr) return;
-  
+
   if (videoRecorderPtr->isRecording()) {
-    videoRecorderPtr->stopRecording();
-    
-    if (audioAnalysisClientPtr) {
-      audioAnalysisClientPtr->stopSegmentRecording();
-    }
+    stopCompositeRecordingAndMux();
+
   } else {
     const std::string configId = getCurrentConfigId();
     if (configId.empty()) {
@@ -853,19 +969,7 @@ void Synth::toggleRecording() {
       return;
     }
 
-    std::string timestamp = ofGetTimestampString();
-    std::string videoPath = Synth::saveArtefactFilePath(
-        VIDEOS_FOLDER_NAME + "/" + configId + "/drawing-" + timestamp + ".mp4");
-    
-    // Start audio segment recording with matching timestamp
-    if (audioAnalysisClientPtr) {
-       std::string audioPath = Synth::saveArtefactFilePath(
-           VIDEOS_FOLDER_NAME + "/" + configId + "/audio-" + timestamp + ".wav");
-
-      audioAnalysisClientPtr->startSegmentRecording(audioPath);
-    }
-    
-    videoRecorderPtr->startRecording(videoPath);
+    startCompositeRecording(configId);
   }
 #endif
 }

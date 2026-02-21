@@ -191,6 +191,21 @@ inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& s
   }
   resources.add("logDestination", logDestination);
 
+  // Recording + mux settings
+  const bool startRecordingOnFirstWake = getBoolValue(sessionJson, "startRecordingOnFirstWake").value_or(false);
+  resources.add("startRecordingOnFirstWake", startRecordingOnFirstWake);
+
+  const int muxAudioBitrateKbps = getIntValue(sessionJson, "muxAudioBitrateKbps").value_or(192);
+  resources.add("muxAudioBitrateKbps", muxAudioBitrateKbps);
+
+  // Autosnapshots
+  const bool autoSnapshotsEnabled = getBoolValue(sessionJson, "autoSnapshotsEnabled").value_or(false);
+  const float autoSnapshotsIntervalSec = getFloatValue(sessionJson, "autoSnapshotsIntervalSec").value_or(20.0f);
+  const float autoSnapshotsJitterSec = getFloatValue(sessionJson, "autoSnapshotsJitterSec").value_or(7.0f);
+  resources.add("autoSnapshotsEnabled", autoSnapshotsEnabled);
+  resources.add("autoSnapshotsIntervalSec", autoSnapshotsIntervalSec);
+  resources.add("autoSnapshotsJitterSec", autoSnapshotsJitterSec);
+
   // === TEXT/FONT RESOURCES ===
   const auto fontFileOpt = getStringValue(sessionJson, "fontFile");
   const auto textSourcesDirOpt = getStringValue(sessionJson, "textSourcesDir");
