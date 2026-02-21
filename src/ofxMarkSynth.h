@@ -55,3 +55,4 @@
 // Config & utilities
 #include "config/ModFactory.hpp"
 #include "core/FontStash2Cache.hpp"
+#include "util/SessionConfigUtil.h"
