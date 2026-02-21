@@ -56,3 +56,4 @@
 #include "config/ModFactory.hpp"
 #include "core/FontStash2Cache.hpp"
 #include "util/SessionConfigUtil.h"
+#include "util/SessionResourceUtil.h"
