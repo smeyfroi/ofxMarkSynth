@@ -13,7 +13,7 @@ namespace ofxMarkSynth {
 namespace IntentMapperDefaults {
 constexpr float AROUND_MANUAL_UP_FRACTION = 0.50f;
 constexpr float AROUND_MANUAL_DOWN_FRACTION = 0.70f;
-constexpr float AROUND_MANUAL_EXPONENT = 2.0f;
+constexpr float AROUND_MANUAL_EXPONENT = 1.2f;
 }
 
 // Represents a mapping from Intent dimension(s) to a value
