@@ -4,7 +4,7 @@
 //  Created by Steve Meyfroidt on 06/05/2025.
 //
 
-#include "SomPaletteMod.hpp"
+#include "processMods/SomPaletteMod.hpp"
 
 #include "core/IntentMapping.hpp"
 #include "core/Synth.hpp"

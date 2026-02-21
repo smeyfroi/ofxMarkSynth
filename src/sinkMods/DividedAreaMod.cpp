@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 07/05/2025.
 //
 
-#include "DividedAreaMod.hpp"
+#include "sinkMods/DividedAreaMod.hpp"
 #include "LineGeom.h"
 #include "core/IntentMapping.hpp"
 #include "config/Parameter.hpp"

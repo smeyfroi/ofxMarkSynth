@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 18/05/2025.
 //
 
-#include "PixelSnapshotMod.hpp"
+#include "processMods/PixelSnapshotMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 

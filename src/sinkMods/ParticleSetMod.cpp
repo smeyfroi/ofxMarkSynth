@@ -4,7 +4,7 @@
 //  Created by Steve Meyfroidt on 09/05/2025.
 //
 
-#include "ParticleSetMod.hpp"
+#include "sinkMods/ParticleSetMod.hpp"
 
 #include <cmath>
 

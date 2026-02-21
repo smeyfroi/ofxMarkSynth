@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 19/05/2025.
 //
 
-#include "PathMod.hpp"
+#include "processMods/PathMod.hpp"
 #include "ofxConvexHull.h"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"

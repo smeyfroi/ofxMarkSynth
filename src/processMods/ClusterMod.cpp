@@ -4,7 +4,7 @@
 //  Created by Steve Meyfroidt on 07/05/2025.
 //
 
-#include "ClusterMod.hpp"
+#include "processMods/ClusterMod.hpp"
 
 #include <algorithm>
 #include <cmath>

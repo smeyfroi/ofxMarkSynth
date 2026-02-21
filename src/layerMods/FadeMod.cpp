@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 29/10/2025.
 //
 
-#include "FadeMod.hpp"
+#include "layerMods/FadeMod.hpp"
 #include "core/IntentMapper.hpp"
 
 #include "ofAppRunner.h"

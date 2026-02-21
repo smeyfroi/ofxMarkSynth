@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "../core/Mod.hpp"
+#include "core/Mod.hpp"
 
 #include <algorithm>
 

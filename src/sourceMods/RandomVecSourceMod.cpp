@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 02/05/2025.
 //
 
-#include "RandomVecSourceMod.hpp"
+#include "sourceMods/RandomVecSourceMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 

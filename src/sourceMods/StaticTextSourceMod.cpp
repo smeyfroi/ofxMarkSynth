@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 18/11/2025.
 //
 
-#include "StaticTextSourceMod.hpp"
+#include "sourceMods/StaticTextSourceMod.hpp"
 #include "core/Synth.hpp"
 
 

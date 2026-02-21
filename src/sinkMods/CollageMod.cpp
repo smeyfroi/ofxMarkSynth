@@ -4,7 +4,7 @@
 //  Created by Steve Meyfroidt on 21/05/2025.
 //
 
-#include "CollageMod.hpp"
+#include "sinkMods/CollageMod.hpp"
 
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"

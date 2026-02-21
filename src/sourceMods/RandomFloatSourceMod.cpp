@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 05/05/2025.
 //
 
-#include "RandomFloatSourceMod.hpp"
+#include "sourceMods/RandomFloatSourceMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 

@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 02/05/2025.
 //
 
-#include "IntrospectorMod.hpp"
+#include "sinkMods/IntrospectorMod.hpp"
 
 
 namespace ofxMarkSynth {

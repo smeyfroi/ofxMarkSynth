@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 01/08/2025.
 //
 
-#include "SmearMod.hpp"
+#include "layerMods/SmearMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 

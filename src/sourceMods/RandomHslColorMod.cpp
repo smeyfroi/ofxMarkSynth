@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 10/05/2025.
 //
 
-#include "RandomHslColorMod.hpp"
+#include "sourceMods/RandomHslColorMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 

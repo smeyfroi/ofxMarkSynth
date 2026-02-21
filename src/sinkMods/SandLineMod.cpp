@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 10/05/2025.
 //
 
-#include "SandLineMod.hpp"
+#include "sinkMods/SandLineMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 

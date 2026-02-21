@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 22/05/2025.
 //
 
-#include "FluidMod.hpp"
+#include "layerMods/FluidMod.hpp"
 
 #include <algorithm>
 #include <cmath>

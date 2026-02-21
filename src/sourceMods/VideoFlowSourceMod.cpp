@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 09/05/2025.
 //
 
-#include "VideoFlowSourceMod.hpp"
+#include "sourceMods/VideoFlowSourceMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "config/Parameter.hpp"
 #include "core/IntentMapper.hpp"

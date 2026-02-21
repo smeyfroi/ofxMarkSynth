@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 02/02/2026.
 //
 
-#include "FadeAlphaMapMod.hpp"
+#include "processMods/FadeAlphaMapMod.hpp"
 
 #include <algorithm>
 #include <cmath>

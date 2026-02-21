@@ -5,12 +5,12 @@
 //  Created by Steve Meyfroidt on 05/11/2025.
 //
 
-#include "Gui.hpp"
-#include "Synth.hpp"
-#include "../processMods/AgencyControllerMod.hpp"
-#include "../processMods/VectorMagnitudeMod.hpp"
-#include "../sourceMods/AudioDataSourceMod.hpp"
-#include "../sourceMods/VideoFlowSourceMod.hpp"
+#include "core/Gui.hpp"
+#include "core/Synth.hpp"
+#include "processMods/AgencyControllerMod.hpp"
+#include "processMods/VectorMagnitudeMod.hpp"
+#include "sourceMods/AudioDataSourceMod.hpp"
+#include "sourceMods/VideoFlowSourceMod.hpp"
 #include "imgui_internal.h" // for DockBuilder
 #include "ofxTimeMeasurements.h"
 #include "imnodes.h"

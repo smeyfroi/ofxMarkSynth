@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 25/05/2025.
 //
 
-#include "FluidRadialImpulseMod.hpp"
+#include "sinkMods/FluidRadialImpulseMod.hpp"
 
 #include <algorithm>
 

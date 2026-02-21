@@ -3,7 +3,7 @@
 //  ofxMarkSynth
 //
 
-#include "TextSourceMod.hpp"
+#include "sourceMods/TextSourceMod.hpp"
 #include "core/Synth.hpp"
 #include "core/IntentMapper.hpp"
 #include "ofUtils.h"

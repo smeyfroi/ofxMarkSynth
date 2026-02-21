@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 18/11/2025.
 //
 
-#include "TextMod.hpp"
+#include "sinkMods/TextMod.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"
 #include "core/Synth.hpp"

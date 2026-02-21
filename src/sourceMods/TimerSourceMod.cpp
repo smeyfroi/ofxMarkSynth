@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 18/11/2025.
 //
 
-#include "TimerSourceMod.hpp"
+#include "sourceMods/TimerSourceMod.hpp"
 #include "core/Synth.hpp"
 #include "core/IntentMapping.hpp"
 #include "core/IntentMapper.hpp"

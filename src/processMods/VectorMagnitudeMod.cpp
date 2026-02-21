@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 10/01/2026.
 //
 
-#include "VectorMagnitudeMod.hpp"
+#include "processMods/VectorMagnitudeMod.hpp"
 
 #include <algorithm>
 #include <cmath>

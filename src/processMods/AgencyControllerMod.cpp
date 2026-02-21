@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 21/01/2026.
 //
 
-#include "AgencyControllerMod.hpp"
+#include "processMods/AgencyControllerMod.hpp"
 
 #include "ofAppRunner.h"
 #include "ofMath.h"

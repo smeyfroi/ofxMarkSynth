@@ -4,8 +4,8 @@
 //  Created by Steve Meyfroidt on 10/09/2025.
 //
 
-#include "ParticleFieldMod.hpp"
-#include "cmath"
+#include "sinkMods/ParticleFieldMod.hpp"
+#include <cmath>
 #include "config/Parameter.hpp"
 #include "core/IntentMapper.hpp"
 #include "core/IntentMapping.hpp"

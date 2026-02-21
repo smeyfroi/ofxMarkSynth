@@ -5,7 +5,7 @@
 //  Created by Steve Meyfroidt on 25/05/2025.
 //
 
-#include "SoftCircleMod.hpp"
+#include "sinkMods/SoftCircleMod.hpp"
 
 #include <algorithm>
 #include <cmath>

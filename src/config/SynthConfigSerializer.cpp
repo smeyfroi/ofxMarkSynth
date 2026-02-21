@@ -10,7 +10,7 @@
 #include <cmath>
 #include "core/Synth.hpp"
 #include "core/Intent.hpp"
-#include "TimeStringUtil.h"
+#include "util/TimeStringUtil.h"
 #include "sourceMods/AudioDataSourceMod.hpp"
 #include "config/ModPresetLibrary.hpp"
 #include "ofLog.h"
