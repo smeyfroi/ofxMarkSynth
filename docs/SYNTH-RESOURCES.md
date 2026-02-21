@@ -10,6 +10,27 @@ This document lists all resources that `Synth` and Mods require via the `Resourc
 - Get (internal): `resources.get<T>("name")`
 - Types must match exactly (e.g., `std::filesystem::path`, `glm::vec2`, `bool`).
 
+## Session Config JSON
+
+Some apps (e.g. `fingerprint2`) use a *flat session JSON* file as the source-of-truth for startup configuration.
+
+- Location: chosen at startup via file chooser (defaults to `~/Documents`).
+- Persistence: the last chosen path is stored at `~/Library/Application Support/<appNamespace>/lastSessionConfig.json`.
+- Convention: underscore-prefixed keys are ignored and can be used as “commented out” alternatives.
+
+Helpers:
+- `ofxMarkSynth::loadSessionConfigJsonOrExit(...)` (`src/util/SessionConfigUtil.h`) loads the JSON (hard-exits on error).
+- `ofxMarkSynth::loadSessionResourceManagerOrExit(...)` (`src/util/SessionResourceUtil.h`) loads the JSON, applies optional runtime settings, and builds a `ResourceManager`.
+
+Optional runtime keys (with defaults):
+- `frameRate` (default `30.0`)
+- `timeMeasurementsEnabled` (default `false`)
+- `logLevel` (default `notice`)
+- `logDestination` (`console|gui`, default `console`)
+
+Reference example:
+- `apps/myApps/fingerprint2/session-config.reference.json`
+
 ## Synth Resources
 
 The `Synth` class itself requires several resources for display layout, artefact management, and recording.
@@ -18,6 +39,8 @@ The `Synth` class itself requires several resources for display layout, artefact
 
 | Resource Name | Type | Description |
 |---------------|------|-------------|
+| `compositeSize` | glm::vec2 | Fixed composite FBO size (width, height) |
+| `startHibernated` | bool | Start in hibernated state (black screen) |
 | `compositePanelGapPx` | float | Gap in pixels between the composite panel and side panels |
 | `performanceArtefactRootPath` | std::filesystem::path | Base directory for saved artefacts (snapshots, node layouts, videos) |
 | `performanceConfigRootPath` | std::filesystem::path | Base directory of performance configs for PerformanceNavigator |
@@ -65,11 +88,12 @@ resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("p
 // Required on macOS for video recording
 resources.add("recorderCompositeSize", glm::vec2(1920, 1080));
 
+resources.add("compositeSize", glm::vec2(1920, 1920));
+resources.add("startHibernated", true);  // Start in hibernated state (black screen, press H to start)
+
 auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
   ofxMarkSynth::ModConfig{},
-  /*startHibernated*/ true,  // Start in hibernated state (black screen, press H to start)
-  /*compositeSize*/ glm::vec2(1920, 1920),
   resources
 );
 ```
@@ -161,6 +185,8 @@ resources.add("compositePanelGapPx", 10.0f);
 resources.add("performanceArtefactRootPath", std::filesystem::path(ofToDataPath("artefacts")));
 resources.add("performanceConfigRootPath", std::filesystem::path(ofToDataPath("performance-configs")));
 resources.add("recorderCompositeSize", glm::vec2(1920, 1080));  // macOS only
+resources.add("compositeSize", glm::vec2(1920, 1920));
+resources.add("startHibernated", true);
 
 // Audio resources (required)
 resources.add("sourceAudioPath", std::filesystem::path("audio/music.wav"));
@@ -175,8 +201,6 @@ resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
 auto synth = ofxMarkSynth::Synth::create(
   "MySynth",
   ofxMarkSynth::ModConfig{},
-  /*startHibernated*/ true,  // Start in hibernated state (black screen, press H to start)
-  /*compositeSize*/ glm::vec2(1920, 1920),
   resources
 );
 

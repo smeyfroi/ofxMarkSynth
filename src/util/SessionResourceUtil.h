@@ -13,6 +13,7 @@
 #include <string>
 
 #include "ofMain.h"
+#include "ofxTimeMeasurements.h"
 
 #include "config/ModFactory.hpp"
 #include "core/FontStash2Cache.hpp"
@@ -78,6 +79,45 @@ inline std::optional<glm::vec2> getVec2Value(const ofJson& j, const std::string&
   return glm::vec2 { a[0].get<float>(), a[1].get<float>() };
 }
 
+inline std::optional<ofLogLevel> parseLogLevelString(const std::string& levelStr) {
+  const std::string s = ofToLower(levelStr);
+  if (s == "verbose") return OF_LOG_VERBOSE;
+  if (s == "notice") return OF_LOG_NOTICE;
+  if (s == "warning") return OF_LOG_WARNING;
+  if (s == "error") return OF_LOG_ERROR;
+  if (s == "fatal") return OF_LOG_FATAL_ERROR;
+  if (s == "silent") return OF_LOG_SILENT;
+  return std::nullopt;
+}
+
+inline void applySessionRuntimeSettings(const ofJson& sessionJson) {
+  const float frameRate = getFloatValue(sessionJson, "frameRate").value_or(30.0f);
+  ofSetFrameRate(frameRate);
+  TIME_SAMPLE_SET_FRAMERATE(frameRate);
+
+  const bool timeMeasurementsEnabled = getBoolValue(sessionJson, "timeMeasurementsEnabled").value_or(false);
+  if (timeMeasurementsEnabled) {
+    TIME_SAMPLE_ENABLE();
+  } else {
+    TIME_SAMPLE_DISABLE();
+  }
+
+  if (auto logLevelStrOpt = getStringValue(sessionJson, "logLevel"); logLevelStrOpt && !logLevelStrOpt->empty()) {
+    if (auto levelOpt = parseLogLevelString(*logLevelStrOpt)) {
+      ofSetLogLevel(*levelOpt);
+    } else {
+      ofLogWarning("SessionResourceUtil") << "Unknown logLevel: " << *logLevelStrOpt;
+    }
+  }
+
+  if (auto destOpt = getStringValue(sessionJson, "logDestination"); destOpt) {
+    const std::string dest = ofToLower(*destOpt);
+    if (dest == "console") {
+      ofLogToConsole();
+    }
+  }
+}
+
 inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& sessionJson) {
   if (!sessionJson.is_object()) {
     throw std::runtime_error("Session config must be a JSON object");
@@ -138,6 +178,18 @@ inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& s
   if (auto startupNameOpt = getStringValue(sessionJson, "startupPerformanceConfigName")) {
     resources.add("startupPerformanceConfigName", *startupNameOpt);
   }
+
+  // Logging destination (optional, default console)
+  std::string logDestination = "console";
+  if (auto logDestinationOpt = getStringValue(sessionJson, "logDestination"); logDestinationOpt && !logDestinationOpt->empty()) {
+    const std::string s = ofToLower(*logDestinationOpt);
+    if (s == "console" || s == "gui") {
+      logDestination = s;
+    } else {
+      ofLogWarning("SessionResourceUtil") << "Unknown logDestination: " << *logDestinationOpt;
+    }
+  }
+  resources.add("logDestination", logDestination);
 
   // === TEXT/FONT RESOURCES ===
   const auto fontFileOpt = getStringValue(sessionJson, "fontFile");
@@ -236,6 +288,7 @@ inline ResourceManager loadResourceManagerFromSessionConfigJsonOrExit(const ofJs
 
 inline ResourceManager loadSessionResourceManagerOrExit(const SessionConfigSelectorOptions& options) {
   const ofJson sessionJson = loadSessionConfigJsonOrExit(options);
+  applySessionRuntimeSettings(sessionJson);
   return loadResourceManagerFromSessionConfigJsonOrExit(sessionJson, options.appNamespace);
 }
 

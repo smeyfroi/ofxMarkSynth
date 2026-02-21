@@ -25,11 +25,6 @@
 
 
 
-// undefine to send logs to the imgui
-#define OF_LOGGING_ENABLED
-
-
-
 namespace ofxMarkSynth {
 
 
@@ -301,9 +296,18 @@ void Synth::configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr) {
   // FIXME: this also means that child params don't get added into the Synth param group
   if (windowPtr) {
     loggerChannelPtr = std::make_shared<LoggerChannel>();
-#ifndef OF_LOGGING_ENABLED
-    ofSetLoggerChannel(loggerChannelPtr);
-#endif
+
+    std::string logDestination = "console";
+    if (auto logDestinationPtr = resources.get<std::string>("logDestination"); logDestinationPtr && !logDestinationPtr->empty()) {
+      logDestination = ofToLower(*logDestinationPtr);
+    }
+
+    if (logDestination == "gui") {
+      ofSetLoggerChannel(loggerChannelPtr);
+    } else {
+      ofLogToConsole();
+    }
+
     gui.setup(dynamic_pointer_cast<Synth>(shared_from_this()), windowPtr);
   } else {
     // Assume that we want Mod params added as child params to the Synth parameter group
