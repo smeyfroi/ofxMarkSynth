@@ -49,8 +49,9 @@ ofFloatColor makeBackgroundTintWithBrightness(const ofFloatColor& tint, float br
 
 } // anonymous namespace
 
-void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, float windowHeight, float panelGapPx) {
+void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, float windowHeight, float panelGapPx_) {
     size = compositeSize;
+    panelGapPx = panelGapPx_;
 
     compositeFbo.allocate(size.x, size.y, GL_RGB16F);
 
@@ -86,13 +87,15 @@ void CompositeRenderer::allocate(glm::vec2 compositeSize, float windowWidth, flo
         { 0.0f, 1.0f },
     };
 
-    windowResized(windowWidth, windowHeight, panelGapPx);
+    windowResized(windowWidth, windowHeight, panelGapPx_);
 }
 
-void CompositeRenderer::windowResized(float windowWidth, float windowHeight, float panelGapPx) {
+void CompositeRenderer::windowResized(float windowWidth, float windowHeight, float panelGapPx_) {
     if (!compositeFbo.isAllocated() || windowWidth <= 0.0f || windowHeight <= 0.0f) {
         return;
     }
+
+    panelGapPx = panelGapPx_;
 
     scale = std::min(windowWidth / compositeFbo.getWidth(), windowHeight / compositeFbo.getHeight());
 
@@ -219,9 +222,23 @@ void CompositeRenderer::drawToFbo(ofFbo& target,
                                    const DisplayController::Settings& mainDisplay,
                                    const DisplayController::Settings& sidePanelDisplay,
                                    const ConfigTransitionManager* transition) {
+    ofEnableBlendMode(OF_BLENDMODE_DISABLED);
+    ofClear(0, 0, 0, 255);
+
     float fboScale = target.getHeight() / compositeFbo.getHeight();
-    float fboSidePanelWidth = (target.getWidth() - compositeFbo.getWidth() * fboScale) / 2.0f;
-    
+
+    // Apply the same panel gap used on-screen, but scaled for the recording FBO.
+    // On-screen gap is specified in window pixels; convert to composite pixels and re-scale.
+    float fboGapPx = 0.0f;
+    if (panelGapPx > 0.0f && scale > 0.0f) {
+        fboGapPx = panelGapPx * (fboScale / scale);
+    }
+
+    float fboSidePanelWidth = (target.getWidth() - compositeFbo.getWidth() * fboScale) / 2.0f - fboGapPx;
+    if (fboSidePanelWidth < 0.0f) {
+        fboSidePanelWidth = 0.0f;
+    }
+
     drawSidePanels(0.0f, target.getWidth() - fboSidePanelWidth, fboSidePanelWidth, panelHeight, sidePanelDisplay);
     drawMiddlePanel(target.getWidth(), target.getHeight(), fboScale, mainDisplay, transition);
 }
