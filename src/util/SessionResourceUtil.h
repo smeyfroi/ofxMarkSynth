@@ -233,15 +233,13 @@ inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& s
     const auto audioOutDeviceNameOpt = getStringValue(sessionJson, "audioOutDeviceName");
     const auto audioBufferSizeOpt = getIntValue(sessionJson, "audioBufferSize");
     const auto audioChannelsOpt = getIntValue(sessionJson, "audioChannels");
-    const auto audioSampleRateOpt = getIntValue(sessionJson, "audioSampleRate");
-    if (!audioOutDeviceNameOpt || audioOutDeviceNameOpt->empty() || !audioBufferSizeOpt || !audioChannelsOpt || !audioSampleRateOpt) {
-      throw std::runtime_error("Audio file mode requires audioOutDeviceName, audioBufferSize, audioChannels, audioSampleRate");
+    if (!audioOutDeviceNameOpt || audioOutDeviceNameOpt->empty() || !audioBufferSizeOpt || !audioChannelsOpt) {
+      throw std::runtime_error("Audio file mode requires audioOutDeviceName, audioBufferSize, audioChannels");
     }
 
     resources.add("audioOutDeviceName", *audioOutDeviceNameOpt);
     resources.add("audioBufferSize", *audioBufferSizeOpt);
     resources.add("audioChannels", *audioChannelsOpt);
-    resources.add("audioSampleRate", *audioSampleRateOpt);
 
     if (auto startPosOpt = getStringValue(sessionJson, "sourceAudioStartPosition"); startPosOpt && !startPosOpt->empty()) {
       resources.add("sourceAudioStartPosition", *startPosOpt);

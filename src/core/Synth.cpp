@@ -81,17 +81,18 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
     auto outDeviceNamePtr = resources.get<std::string>("audioOutDeviceName");
     auto bufferSizePtr = resources.get<int>("audioBufferSize");
     auto nChannelsPtr = resources.get<int>("audioChannels");
-    auto sampleRatePtr = resources.get<int>("audioSampleRate");
+    auto sampleRatePtr = resources.get<int>("audioSampleRate");  // optional; LocalGistClient overrides from file if possible
     auto sourceAudioStartPositionPtr = resources.get<std::string>("sourceAudioStartPosition");
 
-    if (!outDeviceNamePtr || !bufferSizePtr || !nChannelsPtr || !sampleRatePtr) {
+    if (!outDeviceNamePtr || !bufferSizePtr || !nChannelsPtr) {
       ofLogError("Synth")
-          << "Missing required audio resources for file playback: sourceAudioPath requires audioOutDeviceName, audioBufferSize, audioChannels, audioSampleRate";
+          << "Missing required audio resources for file playback: sourceAudioPath requires audioOutDeviceName, audioBufferSize, audioChannels";
       return nullptr;
     }
 
+    const int fallbackSampleRate = sampleRatePtr ? *sampleRatePtr : 48000;
     auto client = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(
-        *sourceAudioPathPtr, *outDeviceNamePtr, *bufferSizePtr, *nChannelsPtr, *sampleRatePtr);
+        *sourceAudioPathPtr, *outDeviceNamePtr, *bufferSizePtr, *nChannelsPtr, fallbackSampleRate);
     
     if (sourceAudioStartPositionPtr && !sourceAudioStartPositionPtr->empty()) {
       int seconds = parseTimeStringToSeconds(*sourceAudioStartPositionPtr);
@@ -117,7 +118,7 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
   }
 
   ofLogError("Synth")
-      << "Missing required audio source resources: provide either (sourceAudioPath + audioOutDeviceName + audioBufferSize + audioChannels + audioSampleRate) or (micDeviceName + recordAudio + audioRecordingPath)";
+      << "Missing required audio source resources: provide either (sourceAudioPath + audioOutDeviceName + audioBufferSize + audioChannels) or (micDeviceName + recordAudio + audioRecordingPath)";
   return nullptr;
 }
 

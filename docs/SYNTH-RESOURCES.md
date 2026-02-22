@@ -76,7 +76,6 @@ Choose one configuration:
   - `audioOutDeviceName` (std::string)
   - `audioBufferSize` (int)
   - `audioChannels` (int)
-  - `audioSampleRate` (int)
   - `sourceAudioStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"` (e.g., `"1:30"` for 1 minute 30 seconds).
 - Microphone input:
   - `micDeviceName` (std::string)
@@ -202,7 +201,6 @@ resources.add("sourceAudioPath", std::filesystem::path("audio/music.wav"));
 resources.add("audioOutDeviceName", std::string("Apple Inc.: MacBook Pro Speakers"));
 resources.add("audioBufferSize", 256);
 resources.add("audioChannels", 1);
-resources.add("audioSampleRate", 48000);
 
 // Add required resources for the Mods you will create
 resources.add("fontPath", std::filesystem::path("fonts/Arial.ttf"));
