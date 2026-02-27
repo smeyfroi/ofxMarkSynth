@@ -586,8 +586,16 @@ void Synth::addConnections(const std::string& dsl) {
   }
 }
 
-void Synth::addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor) {
-  liveTexturePtrFns[name] = textureAccessor;
+void Synth::addLiveTexturePtrFn(std::string name,
+                                std::function<const ofTexture*()> textureAccessor,
+                                int priority) {
+  auto it = liveTexturePtrFns.find(name);
+  if (it == liveTexturePtrFns.end()) {
+    liveTexturePtrFns.emplace(std::move(name), LiveTextureHook{std::move(textureAccessor), priority});
+  } else {
+    it->second.textureAccessor = std::move(textureAccessor);
+    it->second.priority = priority;
+  }
 }
 
 float Synth::getAgency() const {

@@ -211,12 +211,12 @@ void SomPaletteMod::doneModLoad() {
   std::string baseName = getName();
 
   synth->addLiveTexturePtrFn(baseName + ": Active",
-                             [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
+                                                          [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
     if (auto locked = weakSelf.lock()) {
       return locked->getActivePaletteTexturePtr();
     }
     return nullptr;
-  });
+  }, /*priority*/ 2010);
 
   synth->addLiveTexturePtrFn(baseName + ": Next",
                              [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
@@ -224,7 +224,7 @@ void SomPaletteMod::doneModLoad() {
       return locked->getNextPaletteTexturePtr();
     }
     return nullptr;
-  });
+  }, /*priority*/ 2009);
 
   synth->addLiveTexturePtrFn(baseName + ": Chips",
                              [weakSelf = std::weak_ptr<SomPaletteMod>(self)]() -> const ofTexture* {
@@ -232,7 +232,7 @@ void SomPaletteMod::doneModLoad() {
       return locked->getChipsTexturePtr();
     }
     return nullptr;
-  });
+  }, /*priority*/ 2008);
 
 }
 

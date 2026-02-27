@@ -21,6 +21,7 @@
 #include <cmath>
 #include <cfloat>
 #include <filesystem>
+#include <vector>
 
 
 
@@ -777,44 +778,61 @@ constexpr float thumbW = 128.0f;
 constexpr ImVec2 thumbSize(thumbW, thumbW);
 
 void Gui::drawInternalState() {
-  if (synthPtr->liveTexturePtrFns.size() == 0) return;
-  
+  if (synthPtr->liveTexturePtrFns.empty()) return;
+
+  struct Item {
+    const std::string* name { nullptr };
+    const Synth::LiveTextureHook* hook { nullptr };
+  };
+
+  std::vector<Item> items;
+  items.reserve(synthPtr->liveTexturePtrFns.size());
+  for (const auto& [name, hook] : synthPtr->liveTexturePtrFns) {
+    items.push_back({&name, &hook});
+  }
+
+  std::stable_sort(items.begin(), items.end(), [](const Item& a, const Item& b) {
+    return a.hook->priority > b.hook->priority;
+  });
+
   ImGui::SeparatorText("State");
-  
+
   // Calculate total width needed for horizontal scrolling
   const float itemWidth = thumbW + 8.0f;
-  const float totalWidth = itemWidth * synthPtr->liveTexturePtrFns.size();
+  const float totalWidth = itemWidth * items.size();
   const float innerHeight = ImGui::GetTextLineHeightWithSpacing() + thumbW;
   const float panelHeight = innerHeight + ImGui::GetStyle().ScrollbarSize + 4.0f;
-  
+
   // Set exact content size to prevent any vertical overflow
   ImGui::SetNextWindowContentSize(ImVec2(totalWidth, innerHeight));
   ImGui::BeginChild("tex_scroll", ImVec2(0, panelHeight), true, ImGuiWindowFlags_HorizontalScrollbar);
 
   constexpr float spacing = 8.0f;
   int index = 0;
-  for (const auto& tex : synthPtr->liveTexturePtrFns) {
+  for (const auto& item : items) {
     if (index > 0) {
       ImGui::SameLine(0, spacing);
     }
-    
+
     ImGui::BeginGroup();
     {
-      ImGui::Text("%s", tex.first.c_str());
-      const ofTexture* texturePtr = tex.second();
+      ImGui::Text("%s", item.name->c_str());
+      const ofTexture* texturePtr = item.hook->textureAccessor ? item.hook->textureAccessor() : nullptr;
       if (!texturePtr || !texturePtr->isAllocated()) {
         ImGui::Dummy(ImVec2(thumbW, thumbW));
       } else {
         const auto& textureData = texturePtr->getTextureData();
         assert(textureData.textureTarget == GL_TEXTURE_2D);
         ImTextureID imguiTexId = (ImTextureID)(uintptr_t)textureData.textureID;
-        ImGui::PushID(tex.first.c_str());
-        ImGui::Image(imguiTexId, thumbSize);
+        ImGui::PushID(item.name->c_str());
+        ImVec2 uv0(0, textureData.bFlipTexture ? 1 : 0);
+        ImVec2 uv1(1, textureData.bFlipTexture ? 0 : 1);
+        ImGui::Image(imguiTexId, thumbSize, uv0, uv1);
         ImGui::PopID();
       }
     }
     ImGui::EndGroup();
-    
+
     ++index;
   }
 
@@ -2637,26 +2655,6 @@ void Gui::drawVideoInspector() {
     }
   }
 
-  // Flow/video textures (secondary; used for driving fields and sanity-checking)
-  if (ImGui::CollapsingHeader("Textures")) {
-    if (!videoModPtr->isMotionReady()) {
-      ImGui::TextUnformatted("MotionFromVideo not ready.");
-    } else {
-      auto drawFbo = [](const ofFbo& fbo, const ImVec2& size) {
-        const auto& texData = fbo.getTexture().getTextureData();
-        ImTextureID texId = (ImTextureID)(uintptr_t)texData.textureID;
-        ImVec2 uv0(0, texData.bFlipTexture ? 1 : 0);
-        ImVec2 uv1(1, texData.bFlipTexture ? 0 : 1);
-        ImGui::Image(texId, size, uv0, uv1);
-      };
-
-      ImVec2 avail = ImGui::GetContentRegionAvail();
-      const float w = std::min(avail.x, 420.0f);
-      const float h = w * 9.0f / 16.0f;
-      drawFbo(videoModPtr->getVideoFbo(), ImVec2(w, h));
-      drawFbo(videoModPtr->getMotionFbo(), ImVec2(w, h));
-    }
-  }
 }
 
 } // namespace ofxMarkSynth

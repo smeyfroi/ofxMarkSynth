@@ -29,6 +29,7 @@ public:
   VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording, const std::filesystem::path& recordingPath);
   ~VideoFlowSourceMod();
   void shutdown() override;
+  void doneModLoad() override;
   float getAgency() const override;
   void update() override;
   void draw() override;

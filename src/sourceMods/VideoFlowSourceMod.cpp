@@ -6,6 +6,7 @@
 //
 
 #include "sourceMods/VideoFlowSourceMod.hpp"
+#include "core/Synth.hpp"
 #include "core/IntentMapping.hpp"
 #include "config/Parameter.hpp"
 #include "core/IntentMapper.hpp"
@@ -65,6 +66,34 @@ VideoFlowSourceMod::~VideoFlowSourceMod() {
 
 void VideoFlowSourceMod::shutdown() {
   motionFromVideo.stop();
+}
+
+void VideoFlowSourceMod::doneModLoad() {
+  auto synth = getSynth();
+  if (!synth) return;
+
+  auto self = std::static_pointer_cast<VideoFlowSourceMod>(shared_from_this());
+  std::string baseName = getName();
+
+  synth->addLiveTexturePtrFn(baseName + ": Video",
+                             [weakSelf = std::weak_ptr<VideoFlowSourceMod>(self)]() -> const ofTexture* {
+    if (auto locked = weakSelf.lock()) {
+      const auto& fbo = locked->getVideoFbo();
+      if (!fbo.isAllocated()) return nullptr;
+      return &fbo.getTexture();
+    }
+    return nullptr;
+  }, /*priority*/ 1010);
+
+  synth->addLiveTexturePtrFn(baseName + ": Motion",
+                             [weakSelf = std::weak_ptr<VideoFlowSourceMod>(self)]() -> const ofTexture* {
+    if (auto locked = weakSelf.lock()) {
+      const auto& fbo = locked->getMotionFbo();
+      if (!fbo.isAllocated()) return nullptr;
+      return &fbo.getTexture();
+    }
+    return nullptr;
+  }, /*priority*/ 1009);
 }
 
 #ifdef TARGET_MAC

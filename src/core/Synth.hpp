@@ -106,7 +106,13 @@ public:
   void addConnections(const std::string& dsl);
   void configureGui(std::shared_ptr<ofAppBaseWindow> windowPtr);
   ofParameterGroup& getIntentParameterGroup() { return intentController->getParameterGroup(); }
-  void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor);
+
+  struct LiveTextureHook {
+    std::function<const ofTexture*()> textureAccessor;
+    int priority { 0 }; // Higher draws earlier in GUI
+  };
+
+  void addLiveTexturePtrFn(std::string name, std::function<const ofTexture*()> textureAccessor, int priority = 0);
   
   ofParameterGroup& getLayerAlphaParameters() { return layerController->getAlphaParameterGroup(); }
   ofParameterGroup& getLayerPauseParameters() { return layerController->getPauseParameterGroup(); }
@@ -288,7 +294,7 @@ private:
   std::unique_ptr<CueGlyphController> cueGlyphController;
   // <<<
   
-  std::map<std::string, std::function<const ofTexture*()>> liveTexturePtrFns;
+  std::map<std::string, LiveTextureHook> liveTexturePtrFns;
 
   bool paused;
 
