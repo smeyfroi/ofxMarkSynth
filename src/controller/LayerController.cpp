@@ -8,7 +8,7 @@
 
 namespace ofxMarkSynth {
 
-DrawingLayerPtr LayerController::addLayer(const std::string& name, glm::vec2 size,
+DrawingLayerPtr LayerController::addLayer(const std::string& name, const std::string& tag, glm::vec2 size,
                                           GLint internalFormat, int wrap,
                                           bool clearOnUpdate, ofBlendMode blendMode,
                                           bool useStencil, int numSamples,
@@ -18,7 +18,7 @@ DrawingLayerPtr LayerController::addLayer(const std::string& name, glm::vec2 siz
     fboPtr->allocate(size, internalFormat, wrap, useStencil, numSamples);
     fboPtr->clearFloat(ofFloatColor(0, 0, 0, 0));
     
-    auto layerPtr = std::make_shared<DrawingLayer>(name, fboPtr, clearOnUpdate,
+    auto layerPtr = std::make_shared<DrawingLayer>(name, tag, fboPtr, clearOnUpdate,
                                                     blendMode, isDrawn, isOverlay, description);
     layers.insert({ name, layerPtr });
     return layerPtr;

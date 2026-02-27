@@ -18,6 +18,8 @@ namespace NodeRenderUtil {
 static ImFont* monoFont = nullptr;
 // Optional external tooltip map for sliders (e.g. layer descriptions)
 static const std::unordered_map<std::string, std::string>* externalTooltipMap = nullptr;
+// Optional external tag map for sliders (e.g. layer short tags)
+static const std::unordered_map<std::string, std::string>* externalTagMap = nullptr;
 // Track if any parameter was modified via GUI this frame
 static bool parameterModifiedThisFrame = false;
 
@@ -35,6 +37,10 @@ void setMonoFont(ImFont* font) {
 
 void setLayerTooltipMap(const std::unordered_map<std::string, std::string>* tooltipMap) {
   externalTooltipMap = tooltipMap;
+}
+
+void setLayerTagMap(const std::unordered_map<std::string, std::string>* tagMap) {
+  externalTagMap = tagMap;
 }
 
 
@@ -96,6 +102,22 @@ void drawVerticalSliders(ofParameterGroup& paramGroup,
           toggleParam->set(!isRunning);
         }
         ImGui::SetItemTooltip("Enable/disable layer %s", name.c_str());
+      }
+
+      // Optional short tag label (e.g. FLD/MRK/GEO)
+      if (externalTagMap && externalTagMap->contains(name)) {
+        const std::string& tag = externalTagMap->at(name);
+        if (!tag.empty()) {
+          float tagW = ImGui::CalcTextSize(tag.c_str()).x;
+          float xPadTag = (colW - tagW) * 0.5f;
+          ImGui::SetCursorPosX(ImGui::GetCursorPosX() - xPad + xPadTag);
+          ImGui::TextUnformatted(tag.c_str());
+          if (externalTooltipMap && externalTooltipMap->contains(name)) {
+            ImGui::SetItemTooltip("%s", externalTooltipMap->at(name).c_str());
+          } else {
+            ImGui::SetItemTooltip("%s", name.c_str());
+          }
+        }
       }
 
       ImGui::EndGroup();

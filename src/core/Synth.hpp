@@ -92,6 +92,7 @@ public:
   }
 
   DrawingLayerPtr addDrawingLayer(std::string name,
+                                 std::string tag,
                                  glm::vec2 size,
                                  GLint internalFormat,
                                  int wrap,

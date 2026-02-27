@@ -726,16 +726,25 @@ void Gui::drawIntentCharacteristicsEditor() {
 void Gui::drawLayerControls() {
   ImGui::SeparatorText("Layers");
   
-  // Build tooltip map from layer name to description (if available)
+  // Build map from layer name to description/tag (if available)
   std::unordered_map<std::string, std::string> layerTooltips;
+  std::unordered_map<std::string, std::string> layerTags;
   for (const auto& [name, layerPtr] : synthPtr->getDrawingLayers()) {
     if (!layerPtr || !layerPtr->isDrawn) continue;
+
     if (!layerPtr->description.empty()) {
       layerTooltips[layerPtr->name] = layerPtr->description;
     }
+
+    if (!layerPtr->tag.empty()) {
+      layerTags[layerPtr->name] = layerPtr->tag;
+    }
   }
+
   NodeRenderUtil::setLayerTooltipMap(&layerTooltips);
+  NodeRenderUtil::setLayerTagMap(&layerTags);
   drawVerticalSliders(synthPtr->getLayerAlphaParameters(), synthPtr->layerController->getPauseParamPtrs());
+  NodeRenderUtil::setLayerTagMap(nullptr);
   NodeRenderUtil::setLayerTooltipMap(nullptr);
 }
 

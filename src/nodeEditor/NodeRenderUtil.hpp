@@ -23,6 +23,9 @@ void setMonoFont(ImFont* font);
 // Optional map from parameter name to tooltip text (e.g. layer descriptions)
 void setLayerTooltipMap(const std::unordered_map<std::string, std::string>* tooltipMap);
 
+// Optional map from parameter name to short tag text (e.g. layer tags like FLD/MRK)
+void setLayerTagMap(const std::unordered_map<std::string, std::string>* tagMap);
+
 
 
 // Track if any parameter was modified via GUI this frame

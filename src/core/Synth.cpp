@@ -525,8 +525,8 @@ void Synth::restoreModRuntimeStateCache() {
   }
 }
 
-DrawingLayerPtr Synth::addDrawingLayer(std::string name, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
-  return layerController->addLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
+DrawingLayerPtr Synth::addDrawingLayer(std::string name, std::string tag, glm::vec2 size, GLint internalFormat, int wrap, bool clearOnUpdate, ofBlendMode blendMode, bool useStencil, int numSamples, bool isDrawn, bool isOverlay, const std::string& description) {
+  return layerController->addLayer(name, tag, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
 }
 
 void Synth::addConnections(const std::string& dsl) {

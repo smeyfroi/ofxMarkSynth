@@ -20,7 +20,7 @@ public:
     LayerController() = default;
 
     /// Create and add a new drawing layer
-    DrawingLayerPtr addLayer(const std::string& name, glm::vec2 size,
+    DrawingLayerPtr addLayer(const std::string& name, const std::string& tag, glm::vec2 size,
                              GLint internalFormat, int wrap,
                              bool clearOnUpdate, ofBlendMode blendMode,
                              bool useStencil, int numSamples,

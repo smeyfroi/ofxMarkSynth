@@ -7,7 +7,9 @@
 
 #include "config/SynthConfigSerializer.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <unordered_map>
 #include "core/Synth.hpp"
 #include "core/Intent.hpp"
 #include "util/TimeStringUtil.h"
@@ -104,6 +106,45 @@ int SynthConfigSerializer::ofBlendModeFromString(const std::string& str) {
   return OF_BLENDMODE_ALPHA;
 }
 
+static std::string defaultLayerTagForName(const std::string& name) {
+  static const std::unordered_map<std::string, std::string> kTags = {
+    {"ground", "FLD"},
+    {"fluid", "FLD"},
+    {"velocities", "VEL"},
+    {"marksVelocities", "MV"},
+    {"sandvelocities", "SV"},
+    {"marks", "MRK"},
+    {"accents", "ACC"},
+    {"geometry", "GEO"},
+    {"particlefield", "PF"},
+    {"particles", "PRT"},
+    {"particleset", "WEB"},
+    {"particleset1", "W1"},
+    {"particleset2", "W2"},
+    {"collage", "COL"},
+    {"wash", "WSH"},
+    {"smear", "SMR"},
+    {"outlines", "OUT"},
+    {"sand", "SND"},
+    {"sand1", "S1"},
+    {"sand2", "S2"},
+    {"sandfluid", "SNF"},
+  };
+
+  if (auto it = kTags.find(name); it != kTags.end()) {
+    return it->second;
+  }
+
+  std::string tag;
+  tag.reserve(4);
+  for (unsigned char c : name) {
+    if (!std::isalnum(c)) continue;
+    tag.push_back(static_cast<char>(std::toupper(c)));
+    if (tag.size() >= 4) break;
+  }
+  return tag;
+}
+
 SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("drawingLayers") || !j["drawingLayers"].is_object()) {
     ofLogNotice("SynthConfigSerializer") << "No drawingLayers section in config";
@@ -137,6 +178,10 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
       bool isOverlay = getJsonBool(layerJson, "isOverlay", false);
       float alpha = getJsonFloat(layerJson, "alpha", 1.0f);
       bool paused = getJsonBool(layerJson, "paused", false);
+      std::string tag = getJsonString(layerJson, "tag");
+      if (tag.empty()) {
+        tag = defaultLayerTagForName(name);
+      }
       std::string description = getJsonString(layerJson, "description");
       
       // Set layer controller initial values
@@ -144,7 +189,7 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
       synth->layerController->setInitialPaused(name, paused);
       
       // Create layer
-      auto layerPtr = synth->addDrawingLayer(name, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
+      auto layerPtr = synth->addDrawingLayer(name, tag, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
       layers[name] = layerPtr;
       ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << " (size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
     }
