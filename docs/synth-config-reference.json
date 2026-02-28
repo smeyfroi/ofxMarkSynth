@@ -25,6 +25,7 @@
   "drawingLayers": {
     "_comment": "Drawing layers are FBOs that mods can draw to. They are composited in order.",
     "ExampleLayer": {
+      "tag": "LAY",
       "size": [
         1080,
         1080
@@ -40,6 +41,7 @@
       "alpha": 1.0,
       "paused": false,
       "description": "Short human-readable description of what this layer does.",
+      "_comment_tag": "tag: Short label for UI (e.g. 3 letters). Optional; if missing, defaults to the first 3 letters of the layer key.",
       "_comment_size": "size: [width, height] dimensions of the FBO",
       "_comment_internalFormat": "internalFormat: GL_RGBA, GL_RGB, GL_RGBA32F, GL_RGB32F, GL_RG32F, GL_RGBA16F, GL_RGB16F, GL_RG16F, GL_RGBA8, GL_RGB8",
       "_comment_wrap": "wrap: GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT",

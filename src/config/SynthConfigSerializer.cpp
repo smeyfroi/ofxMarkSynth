@@ -106,41 +106,15 @@ int SynthConfigSerializer::ofBlendModeFromString(const std::string& str) {
   return OF_BLENDMODE_ALPHA;
 }
 
-static std::string defaultLayerTagForName(const std::string& name) {
-  static const std::unordered_map<std::string, std::string> kTags = {
-    {"ground", "FLD"},
-    {"fluid", "FLD"},
-    {"velocities", "VEL"},
-    {"marksVelocities", "MV"},
-    {"sandvelocities", "SV"},
-    {"marks", "MRK"},
-    {"accents", "ACC"},
-    {"geometry", "GEO"},
-    {"particlefield", "PF"},
-    {"particles", "PRT"},
-    {"particleset", "WEB"},
-    {"particleset1", "W1"},
-    {"particleset2", "W2"},
-    {"collage", "COL"},
-    {"wash", "WSH"},
-    {"smear", "SMR"},
-    {"outlines", "OUT"},
-    {"sand", "SND"},
-    {"sand1", "S1"},
-    {"sand2", "S2"},
-    {"sandfluid", "SNF"},
-  };
-
-  if (auto it = kTags.find(name); it != kTags.end()) {
-    return it->second;
-  }
-
+static std::string fallbackLayerTagForName(const std::string& name) {
+  // Configs should supply explicit tags; this is only a fallback.
+  // Use first 3 alphanumeric characters of the layer key, uppercased.
   std::string tag;
-  tag.reserve(4);
+  tag.reserve(3);
   for (unsigned char c : name) {
     if (!std::isalnum(c)) continue;
     tag.push_back(static_cast<char>(std::toupper(c)));
-    if (tag.size() >= 4) break;
+    if (tag.size() >= 3) break;
   }
   return tag;
 }
@@ -180,7 +154,7 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
       bool paused = getJsonBool(layerJson, "paused", false);
       std::string tag = getJsonString(layerJson, "tag");
       if (tag.empty()) {
-        tag = defaultLayerTagForName(name);
+        tag = fallbackLayerTagForName(name);
       }
       std::string description = getJsonString(layerJson, "description");
       
