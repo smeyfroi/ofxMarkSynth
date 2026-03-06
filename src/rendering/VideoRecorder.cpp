@@ -79,25 +79,39 @@ void VideoRecorder::shutdown() {
 
 void VideoRecorder::captureFrame(std::function<void(ofFbo& fbo)> renderCallback) {
     if (!recorder_.isRecording()) return;
-    
+
     // Render content into recorder FBO
     compositeFbo_.begin();
     renderCallback(compositeFbo_);
     compositeFbo_.end();
-    
-    int width = compositeFbo_.getWidth();
-    int height = compositeFbo_.getHeight();
-    
+
+    captureFrameFromFbo(compositeFbo_);
+}
+
+void VideoRecorder::captureFrameFromFbo(const ofFbo& sourceFbo) {
+    if (!recorder_.isRecording()) return;
+    if (!sourceFbo.isAllocated()) return;
+
+    int width = sourceFbo.getWidth();
+    int height = sourceFbo.getHeight();
+
+    if (width != static_cast<int>(compositeSize_.x) || height != static_cast<int>(compositeSize_.y)) {
+        ofLogError("VideoRecorder") << "captureFrameFromFbo: size mismatch, expected "
+                                    << compositeSize_.x << "x" << compositeSize_.y << " got "
+                                    << width << "x" << height;
+        return;
+    }
+
     // Bind FBO for reading
-    compositeFbo_.bind();
-    
+    sourceFbo.bind();
+
     // Start async read into current PBO (non-blocking)
     pbos_[pboWriteIndex_].bind(GL_PIXEL_PACK_BUFFER);
     glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
     pbos_[pboWriteIndex_].unbind(GL_PIXEL_PACK_BUFFER);
-    
-    compositeFbo_.unbind();
-    
+
+    sourceFbo.unbind();
+
     // Read from previous PBO (should be ready now) - but only after first frame
     if (frameCount_ > 0) {
         int readIndex = (pboWriteIndex_ + 1) % NUM_PBOS;
@@ -110,7 +124,7 @@ void VideoRecorder::captureFrame(std::function<void(ofFbo& fbo)> renderCallback)
         pbos_[readIndex].unbind(GL_PIXEL_PACK_BUFFER);
         recorder_.addFrame(pixels_);
     }
-    
+
     pboWriteIndex_ = (pboWriteIndex_ + 1) % NUM_PBOS;
     frameCount_++;
 }

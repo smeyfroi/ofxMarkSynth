@@ -10,7 +10,6 @@
 #include "core/IntentMapping.hpp"
 #include "config/Parameter.hpp"
 #include "core/IntentMapper.hpp"
-#include "util/TimeStringUtil.h"
 
 #include <algorithm>
 #include <cmath>
@@ -21,19 +20,13 @@ namespace ofxMarkSynth {
 
 
 
-VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute, const std::string& startPosition)
+VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr,
+                                       const std::string& name,
+                                       ModConfig config,
+                                       std::shared_ptr<VideoStream> videoStreamPtr_)
 : Mod { synthPtr, name, std::move(config) },
-saveRecording { false }
+videoStreamPtr { std::move(videoStreamPtr_) }
 {
-  motionFromVideo.load(sourceVideoFilePath, mute);
-  
-  if (!startPosition.empty()) {
-    int seconds = parseTimeStringToSeconds(startPosition);
-    if (seconds > 0) {
-      motionFromVideo.setPositionSeconds(seconds);
-    }
-  }
-  
   sourceNameIdMap = {
     { "FlowField", SOURCE_FLOW_FIELD },
     { "PointVelocity", SOURCE_POINT_VELOCITY },
@@ -41,28 +34,6 @@ saveRecording { false }
   };
 
   registerControllerForSource(pointSamplesPerUpdateParameter, pointSamplesPerUpdateController);
-}
-
-VideoFlowSourceMod::VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording_, const std::filesystem::path& recordingDir_)
-: Mod { synthPtr, name, std::move(config) },
-saveRecording { saveRecording_ },
-recordingDir { recordingDir_ }
-{
-  motionFromVideo.initialiseCamera(deviceID, size);
-  
-  sourceNameIdMap = {
-    { "FlowField", SOURCE_FLOW_FIELD },
-    { "PointVelocity", SOURCE_POINT_VELOCITY },
-    { "Point", SOURCE_POINT }
-  };
-
-  registerControllerForSource(pointSamplesPerUpdateParameter, pointSamplesPerUpdateController);
-}
-
-VideoFlowSourceMod::~VideoFlowSourceMod() {
-#ifdef TARGET_MAC
-  if (saveRecording) recorder.stop();
-#endif
 }
 
 void VideoFlowSourceMod::shutdown() {
@@ -97,19 +68,6 @@ void VideoFlowSourceMod::doneModLoad() {
   }, /*priority*/ 1009);
 }
 
-#ifdef TARGET_MAC
-void VideoFlowSourceMod::initRecorder() {
-  recorder.setup(/*video*/true, /*audio*/false, motionFromVideo.getSize(), /*fps*/30.0, /*bitrate*/8000);
-  recorder.setOverWrite(true);
-  if (recordingDir == "") recordingDir = ofToDataPath("video-flow-recordings");
-  std::filesystem::create_directory(recordingDir);
-//  recorder.setFFmpegPathToAddonsPath();
-  recorder.setFFmpegPath("/opt/homebrew/bin/ffmpeg");
-//  recorder.setInputPixelFormat(ofPixelFormat::OF_PIXELS_RGB);
-  recorder.setOutputPath(recordingDir+"/video-flow-recording-"+ofGetTimestampString()+".mp4");
-  recorder.startCustomRecord();
-}
-#endif
 
 namespace {
 
@@ -157,6 +115,16 @@ void VideoFlowSourceMod::update() {
   const float attemptMultiplier = std::max(1.0f, pointSampleAttemptMultiplierParameter.get());
   const int sampleAttemptsPerUpdate = std::min(1000, static_cast<int>(std::round(pointSamplesPerUpdate * attemptMultiplier)));
   motionFromVideo.setCpuSamplingEnabled(hasPointSinks && sampleAttemptsPerUpdate > 0);
+
+  if (videoStreamPtr && videoStreamPtr->isAllocated()) {
+    const std::uint64_t frameIndex = videoStreamPtr->getFrameIndex();
+    const bool frameNew = frameIndex != lastVideoFrameIndex;
+    lastVideoFrameIndex = frameIndex;
+
+    motionFromVideo.setExternalFrames(&videoStreamPtr->getCurrentFrameFbo(),
+                                     &videoStreamPtr->getPreviousFrameFbo(),
+                                     frameNew);
+  }
 
   motionFromVideo.update();
 
@@ -211,14 +179,7 @@ void VideoFlowSourceMod::applyIntent(const Intent& intent, float strength) {
 }
 
 void VideoFlowSourceMod::draw() {
-#ifdef TARGET_MAC
-  if (saveRecording) {
-    if (!recorder.isRecording()) initRecorder();
-    ofPixels pixels;
-    motionFromVideo.getVideoFbo().readToPixels(pixels);
-    recorder.addFrame(pixels);
-  }
-#endif
+  motionFromVideo.draw();
 }
 
 bool VideoFlowSourceMod::keyPressed(int key) {

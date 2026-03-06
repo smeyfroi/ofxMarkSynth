@@ -70,8 +70,8 @@ std::string Synth::saveConfigFilePath(const std::string& filename) {
 
 constexpr std::string SNAPSHOTS_FOLDER_NAME = "drawing";
 constexpr std::string AUTO_SNAPSHOTS_FOLDER_NAME = "drawing-auto";
-constexpr std::string VIDEOS_FOLDER_NAME = "drawing-recording";
-// Also: camera-recording, mic-recording
+constexpr std::string RECORDINGS_FOLDER_NAME = "recordings";
+// Also: mod-params/snapshots, node-layouts
 // Also: ModSnapshotManager uses "mod-params/snapshots" and NodeEditorLayoutManager uses "node-layouts"
 
 
@@ -105,20 +105,25 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
   }
 
   auto micDeviceNamePtr = resources.get<std::string>("micDeviceName");
-  auto recordAudioPtr = resources.get<bool>("recordAudio");
-  auto recordingPathPtr = resources.get<std::filesystem::path>("audioRecordingPath");
-  if (micDeviceNamePtr && recordAudioPtr && recordingPathPtr) {
-    std::error_code ec;
-    std::filesystem::create_directories(*recordingPathPtr, ec);
-    if (ec) {
-      ofLogWarning("Synth") << "Failed to create audioRecordingPath: " << *recordingPathPtr << " (" << ec.message() << ")";
+  if (micDeviceNamePtr && !micDeviceNamePtr->empty()) {
+    // For segmented recording (synced to video), Synth drives LocalGistClient::startSegmentRecording.
+    // We intentionally do not start a continuous always-on WAV recording here.
+    std::string recordingPathStr;
+    if (auto recordingPathPtr = resources.get<std::filesystem::path>("audioRecordingPath"); recordingPathPtr) {
+      std::error_code ec;
+      std::filesystem::create_directories(*recordingPathPtr, ec);
+      if (ec) {
+        ofLogWarning("Synth") << "Failed to create audioRecordingPath: " << *recordingPathPtr << " (" << ec.message() << ")";
+      } else {
+        recordingPathStr = recordingPathPtr->string();
+      }
     }
 
-    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(*micDeviceNamePtr, *recordAudioPtr, *recordingPathPtr);
+    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(*micDeviceNamePtr, /*saveRecording*/ false, recordingPathStr);
   }
 
   ofLogError("Synth")
-      << "Missing required audio source resources: provide either (sourceAudioPath + audioOutDeviceName + audioBufferSize + audioChannels) or (micDeviceName + recordAudio + audioRecordingPath)";
+      << "Missing required audio source resources: provide either (sourceAudioPath + audioOutDeviceName + audioBufferSize + audioChannels) or (micDeviceName)";
   return nullptr;
 }
 
@@ -177,6 +182,7 @@ audioAnalysisClientPtr { std::move(audioAnalysisClient) }
   paused = startHibernated;  // Start paused if hibernated
 
   initControllers(startHibernated);
+  initVideoStream();
   initRendering(compositeSize);
   initResourcePaths();
   initPerformanceNavigator();
@@ -195,6 +201,48 @@ void Synth::initControllers(bool startHibernated) {
   cueGlyphController = std::make_unique<CueGlyphController>();
 }
 
+void Synth::initVideoStream() {
+  videoStreamPtr.reset();
+
+  auto sourceVideoPathPtr = resources.get<std::filesystem::path>("sourceVideoPath");
+  if (sourceVideoPathPtr && !sourceVideoPathPtr->empty()) {
+    bool mute = true;
+    if (auto mutePtr = resources.get<bool>("sourceVideoMute"); mutePtr) {
+      mute = *mutePtr;
+    }
+
+    std::optional<int> startPositionSeconds;
+    if (auto startPosPtr = resources.get<std::string>("sourceVideoStartPosition"); startPosPtr && !startPosPtr->empty()) {
+      int seconds = parseTimeStringToSeconds(*startPosPtr);
+      if (seconds > 0) {
+        startPositionSeconds = seconds;
+      }
+    }
+
+    auto stream = std::make_shared<VideoStream>();
+    if (stream->setupFile(*sourceVideoPathPtr, mute, startPositionSeconds)) {
+      videoStreamPtr = std::move(stream);
+      resources.addShared("videoStream", videoStreamPtr);
+      return;
+    }
+
+    ofLogError("Synth") << "Failed to setup file video stream, falling back to camera if available";
+  }
+
+  auto cameraDeviceIdPtr = resources.get<int>("cameraDeviceId");
+  auto videoSizePtr = resources.get<glm::vec2>("videoSize");
+  if (cameraDeviceIdPtr && videoSizePtr) {
+    auto stream = std::make_shared<VideoStream>();
+    if (stream->setupCamera(*cameraDeviceIdPtr, *videoSizePtr)) {
+      videoStreamPtr = std::move(stream);
+      resources.addShared("videoStream", videoStreamPtr);
+    }
+    return;
+  }
+
+  ofLogWarning("Synth") << "No video stream configured (need sourceVideoPath or cameraDeviceId+videoSize)";
+}
+
 void Synth::initRendering(glm::vec2 compositeSize) {
   displayController = std::make_unique<DisplayController>();
   displayController->buildParameterGroup();
@@ -206,10 +254,17 @@ void Synth::initRendering(glm::vec2 compositeSize) {
   imageSaver = std::make_unique<AsyncImageSaver>(compositeSize);
 
 #ifdef TARGET_MAC
+  const auto ffmpegPath = *resources.getRequired<std::filesystem::path>("ffmpegBinaryPath");
+
   videoRecorderPtr = std::make_unique<VideoRecorder>();
   videoRecorderPtr->setup(
       *resources.getRequired<glm::vec2>("recorderCompositeSize"),
-      *resources.getRequired<std::filesystem::path>("ffmpegBinaryPath"));
+      ffmpegPath);
+
+  if (videoStreamPtr && videoStreamPtr->isAllocated()) {
+    rawVideoRecorderPtr = std::make_unique<VideoRecorder>();
+    rawVideoRecorderPtr->setup(videoStreamPtr->getSize(), ffmpegPath);
+  }
 #endif
 }
 
@@ -228,42 +283,41 @@ void Synth::maybeStartRecordingOnFirstWake() {
     return;
   }
 
-  const std::string configId = getCurrentConfigId();
-  if (configId.empty()) {
-    return;
-  }
-
-  startCompositeRecording(configId);
+  startRecordingTake();
 #endif
 
   startRecordingOnFirstWakeStarted = true;
 }
 
 #ifdef TARGET_MAC
-void Synth::startCompositeRecording(const std::string& configId) {
+void Synth::startRecordingTake() {
   if (!videoRecorderPtr) {
-    ofLogError("Synth") << "startCompositeRecording: recorder not setup";
+    ofLogError("Synth") << "startRecordingTake: composite recorder not setup";
     return;
   }
 
   if (videoRecorderPtr->isRecording()) {
-    ofLogWarning("Synth") << "startCompositeRecording: already recording";
+    ofLogWarning("Synth") << "startRecordingTake: already recording";
     return;
   }
 
-  if (configId.empty()) {
-    ofLogError("Synth") << "startCompositeRecording: empty configId";
-    return;
-  }
+  currentTakeId = ofGetTimestampString();
 
-  std::string timestamp = ofGetTimestampString();
   lastRecordingVideoPath = Synth::saveArtefactFilePath(
-      VIDEOS_FOLDER_NAME + "/" + configId + "/drawing-" + timestamp + ".mp4");
+      RECORDINGS_FOLDER_NAME + "/take-" + currentTakeId + "-composite.mp4");
   lastRecordingAudioPath = Synth::saveArtefactFilePath(
-      VIDEOS_FOLDER_NAME + "/" + configId + "/audio-" + timestamp + ".wav");
+      RECORDINGS_FOLDER_NAME + "/take-" + currentTakeId + "-audio.wav");
+  lastRecordingRawVideoPath = Synth::saveArtefactFilePath(
+      RECORDINGS_FOLDER_NAME + "/take-" + currentTakeId + "-raw-video.mp4");
 
   if (audioAnalysisClientPtr) {
     audioAnalysisClientPtr->startSegmentRecording(lastRecordingAudioPath.string());
+  }
+
+  if (rawVideoRecorderPtr) {
+    rawVideoRecorderPtr->startRecording(lastRecordingRawVideoPath.string());
+  } else {
+    ofLogWarning("Synth") << "startRecordingTake: raw video recorder not setup";
   }
 
   videoRecorderPtr->startRecording(lastRecordingVideoPath.string());
@@ -288,13 +342,18 @@ void Synth::muxLastRecordingIfAvailable() {
   spawnDetachedMuxProcess(*ffmpegPathPtr, lastRecordingVideoPath, lastRecordingAudioPath, bitrateKbps);
 }
 
-void Synth::stopCompositeRecordingAndMux() {
+void Synth::stopRecordingTakeAndMux() {
   if (!videoRecorderPtr) {
     return;
   }
 
   if (!videoRecorderPtr->isRecording()) {
     return;
+  }
+
+  // Stop raw video first so any last-frame work happens while composite is still intact.
+  if (rawVideoRecorderPtr && rawVideoRecorderPtr->isRecording()) {
+    rawVideoRecorderPtr->stopRecording();
   }
 
   videoRecorderPtr->stopRecording();
@@ -304,6 +363,8 @@ void Synth::stopCompositeRecordingAndMux() {
   }
 
   muxLastRecordingIfAvailable();
+
+  currentTakeId.clear();
 }
 #endif
 
@@ -438,7 +499,7 @@ void Synth::shutdown() {
   
 #ifdef TARGET_MAC
   if (videoRecorderPtr && videoRecorderPtr->isRecording()) {
-    stopCompositeRecordingAndMux();
+    stopRecordingTakeAndMux();
   }
 
   if (videoRecorderPtr) {
@@ -675,6 +736,11 @@ void Synth::update() {
   
   // Update crossfade transition
   configTransitionManager->update();
+
+  // Persistent video stream runs regardless of pause/config.
+  if (videoStreamPtr) {
+    videoStreamPtr->update();
+  }
   
   // Update per-layer pause envelopes
   layerController->updatePauseStates();
@@ -906,21 +972,24 @@ void Synth::draw() {
   TSGL_STOP("Synth::draw");
 
 #ifdef TARGET_MAC
-  // Capture frames for recording:
-  // - During ACTIVE: capture if not paused
-  // - During FADING_OUT/FADING_IN/HIBERNATED: always capture to stay in sync with audio
-  // Recording captures the full audience experience including fades and black screen
-  bool shouldCaptureFrame = videoRecorderPtr && videoRecorderPtr->isRecording() &&
-      (!paused || hibernationController->isHibernating());
-  
-  if (shouldCaptureFrame) {
-    TS_START("Synth::draw captureFrame");
+  // Capture frames for recording.
+  // Audio segment recording continues regardless of pause; to keep sync we also capture video regardless of pause.
+  const bool shouldCaptureComposite = videoRecorderPtr && videoRecorderPtr->isRecording();
+
+  if (shouldCaptureComposite) {
+    TS_START("Synth::draw captureCompositeFrame");
     videoRecorderPtr->captureFrame([this](ofFbo& fbo) {
       compositeRenderer->drawToFbo(fbo, displayController->getSettings(),
                                    displayController->getSidePanelSettings(),
                                    configTransitionManager.get());
     });
-    TS_STOP("Synth::draw captureFrame");
+    TS_STOP("Synth::draw captureCompositeFrame");
+  }
+
+  if (rawVideoRecorderPtr && rawVideoRecorderPtr->isRecording() && videoStreamPtr && videoStreamPtr->isAllocated()) {
+    TS_START("Synth::draw captureRawVideoFrame");
+    rawVideoRecorderPtr->captureFrameFromFbo(videoStreamPtr->getCurrentFrameFbo());
+    TS_STOP("Synth::draw captureRawVideoFrame");
   }
 #endif
   
@@ -969,16 +1038,10 @@ void Synth::toggleRecording() {
   if (!videoRecorderPtr) return;
 
   if (videoRecorderPtr->isRecording()) {
-    stopCompositeRecordingAndMux();
+    stopRecordingTakeAndMux();
 
   } else {
-    const std::string configId = getCurrentConfigId();
-    if (configId.empty()) {
-      ofLogError("Synth") << "toggleRecording: no config loaded";
-      return;
-    }
-
-    startCompositeRecording(configId);
+    startRecordingTake();
   }
 #endif
 }

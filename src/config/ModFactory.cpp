@@ -8,6 +8,7 @@
 #include "config/ModFactory.hpp"
 #include "core/FontStash2Cache.hpp"
 #include "core/Synth.hpp"
+#include "core/VideoStream.hpp"
 #include "ofLog.h"
 #include "ofxMarkSynth.h"
 #include "ofxAudioData.h"
@@ -111,21 +112,12 @@ void ModFactory::registerSourceMods() {
   });
   
   registerType("VideoFlowSource", [](std::shared_ptr<Synth> s, const std::string& n, ModConfig c, const ResourceManager& r) -> ModPtr {
-    auto sourceVideoPathPtr = r.get<std::filesystem::path>("sourceVideoPath");
-    auto sourceVideoMutePtr = r.get<bool>("sourceVideoMute");
-    auto sourceVideoStartPositionPtr = r.get<std::string>("sourceVideoStartPosition");
-    auto cameraDeviceIdPtr = r.get<int>("cameraDeviceId");
-    auto videoSizePtr = r.get<glm::vec2>("videoSize");
-    auto saveRecordingPtr = r.get<bool>("saveRecording");
-    auto recordingPathPtr = r.get<std::filesystem::path>("videoRecordingPath");
-    if (sourceVideoPathPtr && !sourceVideoPathPtr->empty() && sourceVideoMutePtr) {
-      std::string startPosition = sourceVideoStartPositionPtr ? *sourceVideoStartPositionPtr : "";
-      return std::make_shared<VideoFlowSourceMod>(s, n, std::move(c), *sourceVideoPathPtr, *sourceVideoMutePtr, startPosition);
-    } else if (cameraDeviceIdPtr && videoSizePtr && saveRecordingPtr && recordingPathPtr) {
-      return std::make_shared<VideoFlowSourceMod>(s, n, std::move(c), *cameraDeviceIdPtr, *videoSizePtr, *saveRecordingPtr, *recordingPathPtr);
+    auto videoStreamPtr = r.get<VideoStream>("videoStream");
+    if (!videoStreamPtr) {
+      ofLogError("ModFactory") << "VideoFlowSource requires 'videoStream' resource (Synth-owned persistent stream)";
+      return nullptr;
     }
-    ofLogError("ModFactory") << "VideoFlowSource requires ('sourceVideoPath', 'sourceVideoMute') or ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath') resources";
-    return nullptr;
+    return std::make_shared<VideoFlowSourceMod>(s, n, std::move(c), videoStreamPtr);
   });
 }
 

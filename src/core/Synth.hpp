@@ -20,6 +20,7 @@
 #include <vector>
 #include "rendering/AsyncImageSaver.hpp"
 #include "core/Intent.hpp"
+#include "core/VideoStream.hpp"
 #include "core/ParamController.h"
 #include "core/Gui.hpp"
 #include "nodeEditor/NodeEditorModel.hpp"
@@ -244,6 +245,7 @@ protected:
 private:
   // Constructor helpers
   void initControllers(bool startHibernated);
+  void initVideoStream();
   void initRendering(glm::vec2 compositeSize);
   void initResourcePaths();
   void initPerformanceNavigator();
@@ -252,8 +254,8 @@ private:
   void maybeStartRecordingOnFirstWake();
 
 #ifdef TARGET_MAC
-  void startCompositeRecording(const std::string& configId);
-  void stopCompositeRecordingAndMux();
+  void startRecordingTake();
+  void stopRecordingTakeAndMux();
   void muxLastRecordingIfAvailable();
 #endif
   
@@ -362,10 +364,18 @@ private:
   std::unique_ptr<TimeTracker> timeTracker;
   // <<<
 
+  // Synth-owned persistent video stream (camera OR file playback).
+  std::shared_ptr<VideoStream> videoStreamPtr;
+
 #ifdef TARGET_MAC
-  std::unique_ptr<VideoRecorder> videoRecorderPtr;
+  // Recording (segmented): composite + raw video + raw audio (segment WAV).
+  std::unique_ptr<VideoRecorder> videoRecorderPtr;     // Composite (audience experience)
+  std::unique_ptr<VideoRecorder> rawVideoRecorderPtr;  // Raw video stream
+
+  std::string currentTakeId;
   std::filesystem::path lastRecordingVideoPath;
   std::filesystem::path lastRecordingAudioPath;
+  std::filesystem::path lastRecordingRawVideoPath;
 #endif
 
   bool startRecordingOnFirstWakeEnabled { false };

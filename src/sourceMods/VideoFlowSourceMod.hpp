@@ -7,14 +7,13 @@
 
 #pragma once
 
-#include <filesystem>
+#include <cstdint>
+#include <memory>
 #include <string>
 #include "core/Mod.hpp"
 #include "core/ParamController.h"
+#include "core/VideoStream.hpp"
 #include "ofxMotionFromVideo.h"
-#ifdef TARGET_MAC
-#include "ofxFFmpegRecorder.h"
-#endif
 
 
 
@@ -25,9 +24,11 @@ namespace ofxMarkSynth {
 class VideoFlowSourceMod : public Mod {
 
 public:
-  VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, const std::filesystem::path& sourceVideoFilePath, bool mute, const std::string& startPosition = "");
-  VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr, const std::string& name, ModConfig config, int deviceID, glm::vec2 size, bool saveRecording, const std::filesystem::path& recordingPath);
-  ~VideoFlowSourceMod();
+  VideoFlowSourceMod(std::shared_ptr<Synth> synthPtr,
+                     const std::string& name,
+                     ModConfig config,
+                     std::shared_ptr<VideoStream> videoStreamPtr);
+  ~VideoFlowSourceMod() override = default;
   void shutdown() override;
   void doneModLoad() override;
   float getAgency() const override;
@@ -47,7 +48,7 @@ public:
 
   MotionSampleStats getMotionSampleStats() const { return motionSampleStats; }
   bool isMotionReady() const { return motionFromVideo.isReady(); }
-  const ofFbo& getVideoFbo() const { return motionFromVideo.getVideoFbo(); }
+  const ofFbo& getVideoFbo() const { return videoStreamPtr ? videoStreamPtr->getCurrentFrameFbo() : motionFromVideo.getVideoFbo(); }
   const ofFbo& getMotionFbo() const { return motionFromVideo.getMotionFbo(); }
 
   UiState captureUiState() const override {
@@ -73,8 +74,11 @@ protected:
   void initParameters() override;
 
 private:
-  MotionFromVideo motionFromVideo;
+  std::shared_ptr<VideoStream> videoStreamPtr;
+  std::uint64_t lastVideoFrameIndex { 0 };
 
+  MotionFromVideo motionFromVideo;
+ 
   // Default tuned from performance configs: 140 is a good general baseline.
   ofParameter<float> pointSamplesPerUpdateParameter { "PointSamplesPerUpdate", 140.0f, 0.0f, 500.0f };
   ParamController<float> pointSamplesPerUpdateController { pointSamplesPerUpdateParameter };
@@ -86,13 +90,6 @@ private:
   ofParameter<float> agencyFactorParameter { "AgencyFactor", 1.0f, 0.0f, 1.0f };
 
   MotionSampleStats motionSampleStats;
-
-  bool saveRecording;
-  std::string recordingDir;
-#ifdef TARGET_MAC
-  ofxFFmpegRecorder recorder;
-  void initRecorder();
-#endif
 };
 
 

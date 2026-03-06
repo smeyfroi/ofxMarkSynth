@@ -76,6 +76,10 @@ Extracts motion flow data from video (file or camera).
 
 **Purpose**: Convert video motion into drawing data.
 
+**Video Ownership**:
+- Video capture/playback is configured on `Synth` via `ResourceManager` (see `docs/SYNTH-RESOURCES.md`).
+- `VideoFlowSourceMod` consumes the Synth-owned `videoStream` and does not open/close the camera/player.
+
 **Sources**:
 - `FlowField` (texture): Optical flow field as texture
 - `PointVelocity` (vec2): Motion vectors at sampled points

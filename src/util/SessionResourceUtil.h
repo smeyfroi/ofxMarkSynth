@@ -257,15 +257,20 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
   } else {
     ofLogNotice("SessionResourceUtil") << "Audio mode: microphone";
     const auto micDeviceNameOpt = getStringValue(sessionJson, "micDeviceName");
-    const auto recordAudioOpt = getBoolValue(sessionJson, "recordAudio");
-    const auto audioRecordingDirOpt = getStringValue(sessionJson, "audioRecordingDir");
-    if (!micDeviceNameOpt || micDeviceNameOpt->empty() || !recordAudioOpt || !audioRecordingDirOpt || audioRecordingDirOpt->empty()) {
-      throw std::runtime_error("Mic mode requires micDeviceName, recordAudio, audioRecordingDir");
+    if (!micDeviceNameOpt || micDeviceNameOpt->empty()) {
+      throw std::runtime_error("Mic mode requires micDeviceName");
     }
 
     resources.add("micDeviceName", *micDeviceNameOpt);
-    resources.add("recordAudio", *recordAudioOpt);
-    resources.add("audioRecordingPath", performanceArtefactRootPath / *audioRecordingDirOpt);
+
+    // Legacy continuous audio recording settings (optional). Segment recording is managed by Synth.
+    if (auto recordAudioOpt = getBoolValue(sessionJson, "recordAudio"); recordAudioOpt) {
+      resources.add("recordAudio", *recordAudioOpt);
+    }
+
+    if (auto audioRecordingDirOpt = getStringValue(sessionJson, "audioRecordingDir"); audioRecordingDirOpt && !audioRecordingDirOpt->empty()) {
+      resources.add("audioRecordingPath", performanceArtefactRootPath / *audioRecordingDirOpt);
+    }
   }
 
   // === VIDEO INPUT (file OR camera) ===
@@ -286,16 +291,21 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
     ofLogNotice("SessionResourceUtil") << "Video mode: camera";
     const auto cameraDeviceIdOpt = getIntValue(sessionJson, "cameraDeviceId");
     const auto videoSizeOpt = getVec2Value(sessionJson, "videoSize");
-    const auto saveRecordingOpt = getBoolValue(sessionJson, "saveRecording");
-    const auto videoRecordingDirOpt = getStringValue(sessionJson, "videoRecordingDir");
-    if (!cameraDeviceIdOpt || !videoSizeOpt || !saveRecordingOpt || !videoRecordingDirOpt || videoRecordingDirOpt->empty()) {
-      throw std::runtime_error("Video camera mode requires cameraDeviceId, videoSize, saveRecording, videoRecordingDir");
+    if (!cameraDeviceIdOpt || !videoSizeOpt) {
+      throw std::runtime_error("Video camera mode requires cameraDeviceId, videoSize");
     }
 
     resources.add("cameraDeviceId", *cameraDeviceIdOpt);
     resources.add("videoSize", *videoSizeOpt);
-    resources.add("saveRecording", *saveRecordingOpt);
-    resources.add("videoRecordingPath", performanceArtefactRootPath / *videoRecordingDirOpt);
+
+    // Legacy raw video recording settings (optional). Segmented recording is managed by Synth.
+    if (auto saveRecordingOpt = getBoolValue(sessionJson, "saveRecording"); saveRecordingOpt) {
+      resources.add("saveRecording", *saveRecordingOpt);
+    }
+
+    if (auto videoRecordingDirOpt = getStringValue(sessionJson, "videoRecordingDir"); videoRecordingDirOpt && !videoRecordingDirOpt->empty()) {
+      resources.add("videoRecordingPath", performanceArtefactRootPath / *videoRecordingDirOpt);
+    }
   }
 
   return resources;

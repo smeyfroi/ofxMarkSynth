@@ -29,8 +29,15 @@ Optional runtime keys (with defaults):
 - `logDestination` (`console|gui`, default `console`)
 
 Recording keys:
-- `startRecordingOnFirstWake` (default `false`)
-- `muxAudioBitrateKbps` (default `192`)
+- `startRecordingOnFirstWake` (default `false`) — start a take on first unpause
+- `muxAudioBitrateKbps` (default `192`) — bitrate for muxed audio track
+
+Recording output:
+- Takes are saved under `performanceArtefactRootPath/recordings/` as:
+  - `take-<timestamp>-composite.mp4`
+  - `take-<timestamp>-audio.wav`
+  - `take-<timestamp>-raw-video.mp4`
+  - `take-<timestamp>-composite-muxed.mp4` (spawned mux step)
 
 Autosnapshot keys:
 - `autoSnapshotsEnabled` (default `false`)
@@ -64,7 +71,8 @@ The `Synth` class itself requires several resources for display layout, artefact
 
 | Resource Name | Type | Description |
 |---------------|------|-------------|
-| `recorderCompositeSize` | glm::vec2 | Size (width, height) of the FBO used for video recording |
+| `recorderCompositeSize` | glm::vec2 | Size (width, height) of the FBO used for composite video recording |
+| `ffmpegBinaryPath` | std::filesystem::path | Path to ffmpeg binary used for recording + mux |
 
 ### Audio (Required)
 
@@ -79,10 +87,18 @@ Choose one configuration:
   - `sourceAudioStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"` (e.g., `"1:30"` for 1 minute 30 seconds).
 - Microphone input:
   - `micDeviceName` (std::string)
-  - `recordAudio` (bool)
-  - `audioRecordingPath` (std::filesystem::path)
 
-Note: `AudioDataSourceMod` reads from the Synth-owned audio analysis client; it does not own the stream or recording lifecycle.
+Recording note:
+- For live takes, audio is recorded as **segmented WAV files** controlled by `Synth::toggleRecording()`.
+
+Legacy keys (deprecated):
+- `recordAudio` (bool)
+- `audioRecordingDir` (string)
+
+Note: `AudioDataSourceMod` reads from the Synth-owned audio analysis client; it does not own the stream or segment recording lifecycle.
+
+Legacy output paths:
+- `audioRecordingDir` and `videoRecordingDir` are no longer used by the segmented take recorder.
 
 Example:
 ```cpp
@@ -119,16 +135,27 @@ auto synth = ofxMarkSynth::Synth::create(
 ### VideoFlowSource
 Provides optical flow from a video file or camera.
 
-Choose one configuration:
+Video ownership:
+- Video capture/playback is owned by `Synth` via a persistent `VideoStream`.
+- `VideoFlowSourceMod` consumes the Synth-owned stream to perform optical flow analysis.
+- The stream continues across config switches (even if a given config does not include a video mod).
+
+Choose one configuration (configured at the **Synth/session** level):
 - Video file:
   - `sourceVideoPath` (std::filesystem::path)
   - `sourceVideoMute` (bool)
-  - `sourceVideoStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"` (e.g., `"1:30"` for 1 minute 30 seconds).
+  - `sourceVideoStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"`.
 - Camera input:
   - `cameraDeviceId` (int)
   - `videoSize` (glm::vec2)  // width, height
-  - `saveRecording` (bool)
-  - `videoRecordingPath` (std::filesystem::path)
+
+Resource note:
+- `Synth` publishes `videoStream` (shared) into `ResourceManager`.
+- `VideoFlowSourceMod` requires `videoStream`.
+
+Legacy keys (deprecated):
+- `saveRecording` (bool)
+- `videoRecordingDir` (string)
 
 Example:
 ```cpp
@@ -140,8 +167,6 @@ resources.add("sourceVideoMute", false);
 // OR camera
 resources.add("cameraDeviceId", 0);
 resources.add("videoSize", glm::vec2(1280, 720));
-resources.add("saveRecording", true);
-resources.add("videoRecordingPath", std::filesystem::path("video-recordings/"));
 ```
 
 ---

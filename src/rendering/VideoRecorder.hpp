@@ -47,6 +47,9 @@ public:
     /// Capture a frame. Call during draw() when recording.
     /// @param renderCallback Called with the recorder FBO to render content into
     void captureFrame(std::function<void(ofFbo& fbo)> renderCallback);
+
+    /// Capture a frame from an existing FBO (no extra rendering).
+    void captureFrameFromFbo(const ofFbo& sourceFbo);
     
     /// Check if currently recording
     bool isRecording() const;
