@@ -52,7 +52,8 @@ recordingDir { recordingDir_ }
   
   sourceNameIdMap = {
     { "FlowField", SOURCE_FLOW_FIELD },
-    { "PointVelocity", SOURCE_POINT_VELOCITY }
+    { "PointVelocity", SOURCE_POINT_VELOCITY },
+    { "Point", SOURCE_POINT }
   };
 
   registerControllerForSource(pointSamplesPerUpdateParameter, pointSamplesPerUpdateController);
