@@ -119,7 +119,12 @@ inline std::optional<std::filesystem::path> resolveSessionConfigPath(const Sessi
     return configPath;
 }
 
-inline ofJson loadSessionConfigJsonOrExit(const SessionConfigSelectorOptions& options) {
+struct SessionConfig {
+    std::filesystem::path path;
+    ofJson json;
+};
+
+inline SessionConfig loadSessionConfigOrExit(const SessionConfigSelectorOptions& options) {
     auto configPathOpt = resolveSessionConfigPath(options);
     if (!configPathOpt) {
         hardExitWithAlert("No session config selected. Exiting.");
@@ -133,7 +138,7 @@ inline ofJson loadSessionConfigJsonOrExit(const SessionConfigSelectorOptions& op
         hardExitWithAlert("Failed to load session config JSON. Exiting.");
     }
 
-    return json;
+    return { configPath, json };
 }
 
 } // namespace ofxMarkSynth

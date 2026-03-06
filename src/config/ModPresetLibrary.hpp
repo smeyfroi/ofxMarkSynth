@@ -4,18 +4,20 @@
 
 #include "core/Mod.hpp"
 
+#include "nlohmann/json.hpp"
+
 #include <string>
 
 namespace ofxMarkSynth {
 
-// Loads performance-scoped preset defaults.
+// Loads preset defaults used to initialize Mod parameters.
 //
-// Two preset files are layered during config load:
+// Preset defaults are layered during config load:
 //
-// 1) performanceConfigRootPath/venue-presets.json
+// 1) Session-scoped presets embedded in `session-config.json` under key `modPresets` (passed via ResourceManager)
 // 2) performanceConfigRootPath/mod-params/presets.json
 //
-// Both files use the same schema:
+// Both sources use the same schema:
 //
 // {
 //   "VideoFlowSource": {
@@ -32,7 +34,10 @@ namespace ofxMarkSynth {
 class ModPresetLibrary {
 public:
   static std::string getModPresetsFilePath();
-  static std::string getVenuePresetsFilePath();
+
+  // Returns a flattened ModConfig map (paramName -> valueString) for a JSON object with the preset schema.
+  // Missing blocks return an empty map.
+  static ModConfig loadFromJson(const nlohmann::json& j, const std::string& modType, const std::string& presetKey);
 
   // Returns a flattened ModConfig map (paramName -> valueString) for a single file.
   // Missing files/blocks return an empty map.

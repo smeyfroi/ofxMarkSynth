@@ -86,7 +86,7 @@ Notes:
 #### Encoders (knobs)
 
 These are tuned for quick **audio calibration** in a venue.
-They map onto `AudioDataSourceMod` parameters (typically better stored in `venue-presets.json`, but exposed here for live correction).
+They map onto `AudioDataSourceMod` parameters (typically better stored in `session-config.json` under `modPresets`, but exposed here for live correction).
 
 Row 1:
 - Encoder 1: Synth Agency

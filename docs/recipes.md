@@ -16,7 +16,7 @@ Typical workflow:
 - Set `Audio.MaxRms` so loud passages don’t clamp.
 - Tune `MinPitch`/`MaxPitch` only if pitch-based mappings are flat.
 
-Prefer storing stable venue values in `venue-presets.json`.
+Prefer storing stable venue values in `session-config.json` under `modPresets`.
 
 ## Untether quiet passages from the top edge (drift points)
 

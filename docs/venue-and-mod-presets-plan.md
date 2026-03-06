@@ -19,7 +19,7 @@ This document is the shared implementation plan referenced by:
 
 ## Files (performance scope)
 
-- Venue defaults: `performanceConfigRootPath/venue-presets.json`
+- Session defaults: `session-config.json` under key `modPresets`
 - Type/preset defaults: `performanceConfigRootPath/mod-params/presets.json`
 - Snapshots remain unchanged:
   - `performanceConfigRootPath/mod-params/snapshots/<configId>.json`
@@ -68,7 +68,7 @@ Let a Mod instance have:
 Defaults are applied in this order (later overrides earlier), before per-mod `config` is applied:
 
 1) code defaults (`ofParameter` constructor values)
-2) `venue-presets.json`:
+2) session `modPresets` (in `session-config.json`):
    - `T["_default"]`
    - `T[presetKey]` (if present)
 3) `mod-params/presets.json`:
@@ -91,7 +91,7 @@ Notes:
 2) During config load (`SynthConfigSerializer`):
    - Read `type` and optional `preset` for each Mod config entry
    - Compute `presetKey`
-   - Load defaults from `venue-presets.json` and `mod-params/presets.json`
+    - Load defaults from session `modPresets` (in `session-config.json`) and `mod-params/presets.json`
    - Merge defaults according to precedence rules
    - Call `modPtr->setPresetConfig(mergedDefaults)`
 

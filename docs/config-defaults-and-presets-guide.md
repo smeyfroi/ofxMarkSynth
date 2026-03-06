@@ -21,22 +21,22 @@ It is intended as a practical guide for refactoring existing performance folders
 The node editor tries to make the defaults/presets hierarchy visible while patching.
 
 - **Node titles**: `ModName [PresetName]` is shown when a Mod has an explicit `"preset"` (excluding `_default`).
-- **Dimmed parameter labels**: value matches the Mod’s captured defaults (after applying `venue-presets.json` + `mod-params/presets.json`).
+- **Dimmed parameter labels**: value matches the Mod’s captured defaults (after applying `session-config.json` `modPresets` + `mod-params/presets.json`).
 - **Normal parameter labels**: value differs from defaults (typically from per-config `mods.<ModName>.config`, snapshots, or live control).
 
 ## The hierarchy (“levels”)
 
-MarkSynth uses two performance-scoped preset files plus per-config overrides.
+MarkSynth uses one session-scoped preset block plus one performance-scoped preset file, plus per-config overrides.
 
 ### Level 0 — Code defaults
 
 Every Mod defines base defaults in C++ (`ofParameter` constructor values).
 
-### Level 1 — Venue defaults (`venue-presets.json`)
+### Level 1 — Session defaults (`session-config.json` `modPresets`)
 
 Venue calibration values (mic gain, room lighting, camera placement) live in:
 
-- `performanceConfigRootPath/venue-presets.json`
+- `session-config.json` (performance root), under key `modPresets`
 
 This file is shared across all synth configs in that performance folder.
 
@@ -65,7 +65,7 @@ Snapshots are for performance recall/undo and are not part of the default hierar
 
 ## JSON schema (venue + mod presets)
 
-Both `venue-presets.json` and `mod-params/presets.json` use the same schema.
+Both session `modPresets` (in `session-config.json`) and `mod-params/presets.json` use the same schema.
 
 - Top-level keys are Mod `type` strings (factory types), e.g. `VideoFlowSource`, `Fluid`, `MultiplyAdd`.
 - Each type contains named blocks:
@@ -106,7 +106,7 @@ For a given Mod instance with:
 Values are applied in this order (later overrides earlier):
 
 1) code defaults
-2) `venue-presets.json`: `T["_default"]` then `T[presetKey]` if present
+2) `session-config.json` `modPresets`: `T["_default"]` then `T[presetKey]` if present
 3) `mod-params/presets.json`: `T["_default"]` then `T[presetKey]` if present
 4) per-config `mods.<ModName>.config`
 
@@ -117,7 +117,7 @@ Notes:
 
 ## What belongs in each level
 
-### Venue defaults (`venue-presets.json`)
+### Session defaults (`session-config.json` `modPresets`)
 
 Put values here when they are dependent on the physical venue or hardware and should apply across all configs:
 
@@ -257,7 +257,7 @@ A mixed approach is fine: semantic names for commonly understood roles, numeric 
 
 ## Recommended invariants
 
-- Per-config files should not include venue calibration knobs (keep those in `venue-presets.json`).
+- Per-config files should not include venue calibration knobs (keep those in `session-config.json` `modPresets`).
 - Preset files are performance-scoped: do not store absolute device IDs or file paths there.
 - Snapshot files are not a defaults mechanism.
 

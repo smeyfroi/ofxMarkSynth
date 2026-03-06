@@ -104,17 +104,17 @@ Behavior:
 - The snapshot UI loads the current config’s snapshot file lazily (only when saving/loading a slot).
 - Snapshot files are shared across all synths using the same performance folder (scoped by configId only).
 
-### Venue presets (venue calibration)
+### Session presets (venue calibration)
 
 Venue calibration defaults live in:
 
-- File: `performanceConfigRootPath/venue-presets.json`
+- File: `session-config.json` under key `modPresets`
 
 See `docs/venue-and-mod-presets-plan.md` for schema and precedence.
 
 ## Stripping per-config tuning
 
-Per-config files should remain clean: venue + preset defaults belong in the two performance-scoped preset files.
+Per-config files should remain clean: venue + preset defaults belong in session `modPresets` plus `mod-params/presets.json`.
 
 ## Future work
 

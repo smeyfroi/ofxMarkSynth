@@ -84,8 +84,8 @@ std::string ModPresetLibrary::getModPresetsFilePath() {
   return Synth::saveConfigFilePath("mod-params/presets.json");
 }
 
-std::string ModPresetLibrary::getVenuePresetsFilePath() {
-  return Synth::saveConfigFilePath("venue-presets.json");
+ModConfig ModPresetLibrary::loadFromJson(const nlohmann::json& j, const std::string& modType, const std::string& presetKey) {
+  return loadPresetBlock(j, modType, presetKey);
 }
 
 ModConfig ModPresetLibrary::loadFromFile(const std::string& filePath, const std::string& modType, const std::string& presetKey) {

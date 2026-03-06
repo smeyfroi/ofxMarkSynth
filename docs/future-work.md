@@ -30,7 +30,7 @@ Source: `docs/audio-tuning-inspector-plan.md`
 
 Source: `docs/venue-and-mod-presets-plan.md`
 
-- Optional: GUI tooling for editing/saving `venue-presets.json` and `mod-params/presets.json`
+- Optional: GUI tooling for editing/saving session `modPresets` (in `session-config.json`) and `mod-params/presets.json`
 - Optional: support multiple venue profiles
 - Optional: add schema/versioning for safety
 

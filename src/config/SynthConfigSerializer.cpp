@@ -234,13 +234,17 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
       // For UI/debugging (e.g. node editor): store the explicit preset name from config.
       modPtr->setPresetName(presetName);
 
-      // Performance-scoped defaults (applied before capturing Mod defaults):
-      // - venue-presets.json
+      // Preset defaults (applied before capturing Mod defaults):
+      // - session-config.json `modPresets` (passed via ResourceManager)
       // - mod-params/presets.json
       ModConfig presetDefaults;
-      for (const auto& [k, v] : ModPresetLibrary::loadFromFile(ModPresetLibrary::getVenuePresetsFilePath(), type, presetKey)) {
-        presetDefaults[k] = v;
+
+      if (auto sessionPresetsPtr = resources.get<nlohmann::json>("sessionModPresets"); sessionPresetsPtr) {
+        for (const auto& [k, v] : ModPresetLibrary::loadFromJson(*sessionPresetsPtr, type, presetKey)) {
+          presetDefaults[k] = v;
+        }
       }
+
       for (const auto& [k, v] : ModPresetLibrary::loadFromFile(ModPresetLibrary::getModPresetsFilePath(), type, presetKey)) {
         presetDefaults[k] = v;
       }

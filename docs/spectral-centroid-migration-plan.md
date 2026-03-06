@@ -103,7 +103,7 @@ Checkpoint:
 Changes under `~/Documents/MarkSynth-performances/**`:
 - In `*/config/synth/*.json`:
   - replace `Audio.ComplexSpectralDifferenceScalar` → `Audio.SpectralCentroidScalar`
-- In `*/config/venue-presets.json`:
+- In `*/session-config.json` `modPresets`: 
   - replace `MinComplexSpectralDifference` → `MinSpectralCentroid`
   - replace `MaxComplexSpectralDifference` → `MaxSpectralCentroid`
 

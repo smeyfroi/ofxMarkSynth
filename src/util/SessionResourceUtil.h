@@ -118,7 +118,8 @@ inline void applySessionRuntimeSettings(const ofJson& sessionJson) {
   }
 }
 
-inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& sessionJson) {
+inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig& sessionConfig) {
+  const ofJson& sessionJson = sessionConfig.json;
   if (!sessionJson.is_object()) {
     throw std::runtime_error("Session config must be a JSON object");
   }
@@ -127,22 +128,31 @@ inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& s
 
   // === ROOT PATHS ===
   const auto rootSourceMaterialPathStrOpt = getStringValue(sessionJson, "rootSourceMaterialPath");
-  const auto rootPerformancePathStrOpt = getStringValue(sessionJson, "rootPerformancePath");
   if (!rootSourceMaterialPathStrOpt || rootSourceMaterialPathStrOpt->empty()) {
     throw std::runtime_error("Missing required string key: rootSourceMaterialPath");
   }
-  if (!rootPerformancePathStrOpt || rootPerformancePathStrOpt->empty()) {
-    throw std::runtime_error("Missing required string key: rootPerformancePath");
-  }
 
   const auto rootSourceMaterialPath = expandUserPath(*rootSourceMaterialPathStrOpt);
-  const auto rootPerformancePath = expandUserPath(*rootPerformancePathStrOpt);
+
+  if (sessionJson.contains("rootPerformancePath")) {
+    ofLogWarning("SessionResourceUtil")
+        << "rootPerformancePath is ignored; performance root is derived from the selected session-config.json location";
+  }
+
+  // Opinionated: rootPerformancePath is derived from the selected session-config.json location.
+  const std::filesystem::path rootPerformancePath = sessionConfig.path.parent_path();
 
   const std::filesystem::path performanceConfigRootPath = rootPerformancePath / "config";
   const std::filesystem::path performanceArtefactRootPath = rootPerformancePath / "artefact";
 
   resources.add("performanceConfigRootPath", performanceConfigRootPath);
   resources.add("performanceArtefactRootPath", performanceArtefactRootPath);
+
+  // Optional session-scoped preset defaults for Mods.
+  // Schema matches config/mod-params/presets.json.
+  if (sessionJson.contains("modPresets") && sessionJson["modPresets"].is_object()) {
+    resources.add("sessionModPresets", sessionJson["modPresets"]);
+  }
 
   // === REQUIRED SYNTH RESOURCES ===
   const auto compositeSizeOpt = getVec2Value(sessionJson, "compositeSize");
@@ -291,18 +301,18 @@ inline ResourceManager buildResourceManagerFromSessionConfigJson(const ofJson& s
   return resources;
 }
 
-inline ResourceManager loadResourceManagerFromSessionConfigJsonOrExit(const ofJson& sessionJson, const std::string& appNamespace) {
+inline ResourceManager loadResourceManagerFromSessionConfigOrExit(const SessionConfig& sessionConfig, const std::string& appNamespace) {
   try {
-    return buildResourceManagerFromSessionConfigJson(sessionJson);
+    return buildResourceManagerFromSessionConfig(sessionConfig);
   } catch (const std::exception& e) {
     hardExitWithAlert(std::string("Failed to parse session config for '") + appNamespace + "': " + e.what());
   }
 }
 
 inline ResourceManager loadSessionResourceManagerOrExit(const SessionConfigSelectorOptions& options) {
-  const ofJson sessionJson = loadSessionConfigJsonOrExit(options);
-  applySessionRuntimeSettings(sessionJson);
-  return loadResourceManagerFromSessionConfigJsonOrExit(sessionJson, options.appNamespace);
+  const SessionConfig sessionConfig = loadSessionConfigOrExit(options);
+  applySessionRuntimeSettings(sessionConfig.json);
+  return loadResourceManagerFromSessionConfigOrExit(sessionConfig, options.appNamespace);
 }
 
 } // namespace ofxMarkSynth

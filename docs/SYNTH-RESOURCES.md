@@ -19,8 +19,8 @@ Some apps (e.g. `fingerprint2`) use a *flat session JSON* file as the source-of-
 - Convention: underscore-prefixed keys are ignored and can be used as “commented out” alternatives.
 
 Helpers:
-- `ofxMarkSynth::loadSessionConfigJsonOrExit(...)` (`src/util/SessionConfigUtil.h`) loads the JSON (hard-exits on error).
-- `ofxMarkSynth::loadSessionResourceManagerOrExit(...)` (`src/util/SessionResourceUtil.h`) loads the JSON, applies optional runtime settings, and builds a `ResourceManager`.
+- `ofxMarkSynth::loadSessionConfigOrExit(...)` (`src/util/SessionConfigUtil.h`) loads `{ path, json }` (hard-exits on error).
+- `ofxMarkSynth::loadSessionResourceManagerOrExit(...)` (`src/util/SessionResourceUtil.h`) loads the session config, applies optional runtime settings, and builds a `ResourceManager`.
 
 Optional runtime keys (with defaults):
 - `frameRate` (default `30.0`)
