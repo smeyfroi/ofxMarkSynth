@@ -134,16 +134,12 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
 
   const auto rootSourceMaterialPath = expandUserPath(*rootSourceMaterialPathStrOpt);
 
-  if (sessionJson.contains("rootPerformancePath")) {
-    ofLogWarning("SessionResourceUtil")
-        << "rootPerformancePath is ignored; performance root is derived from the selected session-config.json location";
-  }
 
-  // Opinionated: rootPerformancePath is derived from the selected session-config.json location.
-  const std::filesystem::path rootPerformancePath = sessionConfig.path.parent_path();
+  // Opinionated: performance root is derived from the selected session-config.json location.
+  const std::filesystem::path performanceRootPath = sessionConfig.path.parent_path();
 
-  const std::filesystem::path performanceConfigRootPath = rootPerformancePath / "config";
-  const std::filesystem::path performanceArtefactRootPath = rootPerformancePath / "artefact";
+  const std::filesystem::path performanceConfigRootPath = performanceRootPath / "config";
+  const std::filesystem::path performanceArtefactRootPath = performanceRootPath / "artefact";
 
   resources.add("performanceConfigRootPath", performanceConfigRootPath);
   resources.add("performanceArtefactRootPath", performanceArtefactRootPath);
@@ -263,14 +259,6 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
 
     resources.add("micDeviceName", *micDeviceNameOpt);
 
-    // Legacy continuous audio recording settings (optional). Segment recording is managed by Synth.
-    if (auto recordAudioOpt = getBoolValue(sessionJson, "recordAudio"); recordAudioOpt) {
-      resources.add("recordAudio", *recordAudioOpt);
-    }
-
-    if (auto audioRecordingDirOpt = getStringValue(sessionJson, "audioRecordingDir"); audioRecordingDirOpt && !audioRecordingDirOpt->empty()) {
-      resources.add("audioRecordingPath", performanceArtefactRootPath / *audioRecordingDirOpt);
-    }
   }
 
   // === VIDEO INPUT (file OR camera) ===
@@ -298,14 +286,6 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
     resources.add("cameraDeviceId", *cameraDeviceIdOpt);
     resources.add("videoSize", *videoSizeOpt);
 
-    // Legacy raw video recording settings (optional). Segmented recording is managed by Synth.
-    if (auto saveRecordingOpt = getBoolValue(sessionJson, "saveRecording"); saveRecordingOpt) {
-      resources.add("saveRecording", *saveRecordingOpt);
-    }
-
-    if (auto videoRecordingDirOpt = getStringValue(sessionJson, "videoRecordingDir"); videoRecordingDirOpt && !videoRecordingDirOpt->empty()) {
-      resources.add("videoRecordingPath", performanceArtefactRootPath / *videoRecordingDirOpt);
-    }
   }
 
   return resources;

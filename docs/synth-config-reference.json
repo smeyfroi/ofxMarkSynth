@@ -60,7 +60,7 @@
     "_comment_source_mods": "=== SOURCE MODS ===",
     "ExampleAudioDataSource": {
       "type": "AudioDataSource",
-      "_requires": "ResourceManager with ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', optional 'sourceAudioStartPosition') OR ('micDeviceName', 'recordAudio', 'audioRecordingPath')",
+      "_requires": "ResourceManager with ('sourceAudioPath', 'audioOutDeviceName', 'audioBufferSize', 'audioChannels', optional 'sourceAudioStartPosition') OR ('micDeviceName')",
       "_comment_sourceAudioStartPosition": "sourceAudioStartPosition: Optional start timestamp in MM:SS format (e.g. '1:30' for 1 minute 30 seconds)",
       "config": {
         "MinPitch": "50",
@@ -146,7 +146,7 @@
     },
     "ExampleVideoFlowSource": {
       "type": "VideoFlowSource",
-      "_requires": "ResourceManager with ('sourceVideoPath', 'sourceVideoMute', optional 'sourceVideoStartPosition') OR ('cameraDeviceId', 'videoSize', 'saveRecording', 'videoRecordingPath')",
+      "_requires": "ResourceManager with 'videoStream' (Synth-owned; configured via ('sourceVideoPath','sourceVideoMute', optional 'sourceVideoStartPosition') OR ('cameraDeviceId','videoSize'))",
       "_comment_sourceVideoStartPosition": "sourceVideoStartPosition: Optional start timestamp in MM:SS format (e.g. '1:30' for 1 minute 30 seconds)",
       "_params_from": "ofxMotionFromVideo",
       "config": {

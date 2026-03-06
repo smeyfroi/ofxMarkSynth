@@ -108,18 +108,7 @@ static std::shared_ptr<ofxAudioAnalysisClient::LocalGistClient> createAudioAnaly
   if (micDeviceNamePtr && !micDeviceNamePtr->empty()) {
     // For segmented recording (synced to video), Synth drives LocalGistClient::startSegmentRecording.
     // We intentionally do not start a continuous always-on WAV recording here.
-    std::string recordingPathStr;
-    if (auto recordingPathPtr = resources.get<std::filesystem::path>("audioRecordingPath"); recordingPathPtr) {
-      std::error_code ec;
-      std::filesystem::create_directories(*recordingPathPtr, ec);
-      if (ec) {
-        ofLogWarning("Synth") << "Failed to create audioRecordingPath: " << *recordingPathPtr << " (" << ec.message() << ")";
-      } else {
-        recordingPathStr = recordingPathPtr->string();
-      }
-    }
-
-    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(*micDeviceNamePtr, /*saveRecording*/ false, recordingPathStr);
+    return std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(*micDeviceNamePtr, /*saveRecording*/ false, /*recordingPath*/ "");
   }
 
   ofLogError("Synth")

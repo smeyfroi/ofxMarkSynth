@@ -26,8 +26,6 @@ void ofApp::setup() {
   resources.add("sourceVideoMute", SOURCE_VIDEO_MUTE);
   resources.add("cameraDeviceId", CAMERA_DEVICE_ID);
   resources.add("videoSize", VIDEO_SIZE);
-  resources.add("saveRecording", SAVE_RECORDING);
-  resources.add("videoRecordingPath", VIDEO_RECORDING_PATH);
 
   resources.add("compositeSize", COMPOSITE_SIZE);
   resources.add("startHibernated", START_HIBERNATED);

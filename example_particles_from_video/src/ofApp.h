@@ -27,8 +27,6 @@ const std::filesystem::path SOURCE_VIDEO_PATH { ROOT_SOURCE_MATERIAL_PATH/"belfa
 constexpr bool SOURCE_VIDEO_MUTE = true;
 constexpr int CAMERA_DEVICE_ID = 0;
 const glm::vec2 VIDEO_SIZE { 640, 480 };
-constexpr bool SAVE_RECORDING = false;
-const std::filesystem::path VIDEO_RECORDING_PATH { PERFORMANCE_ARTEFACT_ROOT_PATH/"video-recordings" }; // created
 
 class ofApp: public ofBaseApp{
 public:

@@ -91,14 +91,7 @@ Choose one configuration:
 Recording note:
 - For live takes, audio is recorded as **segmented WAV files** controlled by `Synth::toggleRecording()`.
 
-Legacy keys (deprecated):
-- `recordAudio` (bool)
-- `audioRecordingDir` (string)
-
 Note: `AudioDataSourceMod` reads from the Synth-owned audio analysis client; it does not own the stream or segment recording lifecycle.
-
-Legacy output paths:
-- `audioRecordingDir` and `videoRecordingDir` are no longer used by the segmented take recorder.
 
 Example:
 ```cpp
@@ -152,10 +145,6 @@ Choose one configuration (configured at the **Synth/session** level):
 Resource note:
 - `Synth` publishes `videoStream` (shared) into `ResourceManager`.
 - `VideoFlowSourceMod` requires `videoStream`.
-
-Legacy keys (deprecated):
-- `saveRecording` (bool)
-- `videoRecordingDir` (string)
 
 Example:
 ```cpp
