@@ -72,9 +72,9 @@ nlohmann::json NodeEditorLayoutSerializer::toJson(const NodeEditorModel& model) 
   j["nodes"] = nlohmann::json::array();
   for (const auto& node : model.nodes) {
     nlohmann::json nodeJson;
-    if (const auto modPtr = std::get_if<std::shared_ptr<Mod>>(&node.objectPtr)) {
+    if (std::get_if<std::shared_ptr<Mod>>(&node.objectPtr) != nullptr) {
       nodeJson["type"] = "Mod";
-    } else if (const auto layerPtr = std::get_if<std::shared_ptr<DrawingLayer>>(&node.objectPtr)) {
+    } else if (std::get_if<std::shared_ptr<DrawingLayer>>(&node.objectPtr) != nullptr) {
       nodeJson["type"] = "DrawingLayer";
     }
     nodeJson["id"] = node.getId();
@@ -113,7 +113,6 @@ bool NodeEditorLayoutSerializer::save(const NodeEditorModel& model,
     
     file << j.dump(2); // Pretty print with 2-space indent
     file.close();
-    ofLogNotice("NodeEditorLayoutSerializer") << "Saved layout to: " << filepath;
     return true;
   } catch (const std::exception& e) {
     ofLogError("NodeEditorLayoutSerializer") << "Exception: " << e.what();
@@ -122,14 +121,14 @@ bool NodeEditorLayoutSerializer::save(const NodeEditorModel& model,
 }
 
 void NodeEditorLayoutSerializer::fromJson(const nlohmann::json& j,
-                                          NodeEditorModel& model) {
+                                           NodeEditorModel& model) {
   if (j.contains("version") && j["version"].is_string()) {
     const std::string version = j["version"].get<std::string>();
     if (version != "1.0" && version != "1.1") {
       ofLogWarning("NodeEditorLayoutSerializer") << "Version mismatch";
     }
   }
-  
+
   // Load node positions
   if (!j.contains("nodes") || !j["nodes"].is_array()) {
     ofLogError("NodeEditorLayoutSerializer") << "Invalid JSON: no nodes array";
@@ -175,7 +174,6 @@ bool NodeEditorLayoutSerializer::load(NodeEditorModel& model,
   }
 
   if (!std::filesystem::exists(filepath)) {
-    ofLogNotice("NodeEditorLayoutSerializer") << "No layout file: " << filepath;
     return false;
   }
   
@@ -191,7 +189,6 @@ bool NodeEditorLayoutSerializer::load(NodeEditorModel& model,
     file.close();
     
     fromJson(j, model);
-    ofLogNotice("NodeEditorLayoutSerializer") << "Loaded layout from: " << filepath;
     return true;
   } catch (const std::exception& e) {
     ofLogError("NodeEditorLayoutSerializer") << "Exception: " << e.what();

@@ -121,7 +121,6 @@ static std::string fallbackLayerTagForName(const std::string& name) {
 
 SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("drawingLayers") || !j["drawingLayers"].is_object()) {
-    ofLogNotice("SynthConfigSerializer") << "No drawingLayers section in config";
     return {};
   }
   
@@ -165,7 +164,6 @@ SynthConfigSerializer::NamedLayers SynthConfigSerializer::parseDrawingLayers(con
       // Create layer
       auto layerPtr = synth->addDrawingLayer(name, tag, size, internalFormat, wrap, clearOnUpdate, blendMode, useStencil, numSamples, isDrawn, isOverlay, description);
       layers[name] = layerPtr;
-      ofLogNotice("SynthConfigSerializer") << "Created drawing layer: " << name << " (size: " << size.x << "x" << size.y << ", format: " << internalFormat << ")";
     }
     return layers;
   } catch (const std::exception& e) {
@@ -250,8 +248,6 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
       }
       modPtr->setPresetConfig(std::move(presetDefaults));
 
-      ofLogNotice("SynthConfigSerializer") << "Created Mod: " << name << " (" << type << ")";
-      
       if (modJson.contains("layers") && modJson["layers"].is_object()) {
         for (const auto& [layerPtrName, value] : modJson["layers"].items()) {
           if (value.is_array()) {
@@ -263,7 +259,6 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
               }
               auto drawingLayerPtr = it->second;
               modPtr->receiveDrawingLayerPtr(layerPtrName, drawingLayerPtr);
-              ofLogNotice("SynthConfigSerializer") << "  Assigned drawing layer '" << layerName << "' to Mod '" << name << "' layer key '" << layerPtrName << "'";
             }
           } else {
             ofLogError("SynthConfigSerializer") << "Mod '" << name << "' layers key '" << layerPtrName << "' is not an array";
@@ -280,7 +275,6 @@ bool SynthConfigSerializer::parseMods(const OrderedJson& j, std::shared_ptr<Synt
 
 bool SynthConfigSerializer::parseConnections(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("connections") || !j["connections"].is_array()) {
-    ofLogNotice("SynthConfigSerializer") << "No connections section in config";
     return true; // Not an error - connections are optional
   }
   
@@ -296,7 +290,6 @@ bool SynthConfigSerializer::parseConnections(const OrderedJson& j, std::shared_p
     // Use existing DSL parser
     if (!connectionsDSL.empty()) {
       synth->addConnections(connectionsDSL);
-      ofLogNotice("SynthConfigSerializer") << "Parsed " << j["connections"].size() << " connections";
     }
     
     return true;
@@ -352,7 +345,6 @@ bool SynthConfigSerializer::parseSynthConfig(const OrderedJson& j, std::shared_p
     }
 
     paramOpt->get().fromString(valueStr);
-    ofLogNotice("SynthConfigSerializer") << "  Synth " << key << ": " << valueStr;
   }
 
   return true;
@@ -360,7 +352,6 @@ bool SynthConfigSerializer::parseSynthConfig(const OrderedJson& j, std::shared_p
 
 bool SynthConfigSerializer::parseIntents(const OrderedJson& j, std::shared_ptr<Synth> synth) {
   if (!j.contains("intents") || !j["intents"].is_array()) {
-    ofLogNotice("SynthConfigSerializer") << "No intents array in config";
     return true;
   }
   
@@ -404,7 +395,6 @@ bool SynthConfigSerializer::parseIntents(const OrderedJson& j, std::shared_ptr<S
         }
       }
       intentPresets.push_back(intentPtr);
-      ofLogNotice("SynthConfigSerializer") << "Created intent: " << name;
     }
     
     if (!intentPresets.empty()) {
@@ -495,7 +485,6 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
 
       if (parsed) {
         synth->setIntentStrength(strength);
-        ofLogNotice("SynthConfigSerializer") << "Set intent strength: " << strength;
       } else {
         ofLogWarning("SynthConfigSerializer") << "initialIntent.strength has unsupported type";
       }
@@ -527,11 +516,10 @@ bool SynthConfigSerializer::fromJson(const OrderedJson& j, std::shared_ptr<Synth
             }
           }
 
-          if (parsed) {
-            synth->setIntentActivation(i, activation);
-            ofLogNotice("SynthConfigSerializer") << "Set intent[" << i << "] activation: " << activation;
+            if (parsed) {
+              synth->setIntentActivation(i, activation);
+            }
           }
-        }
       }
     }
   }
