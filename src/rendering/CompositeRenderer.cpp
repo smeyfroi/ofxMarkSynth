@@ -128,6 +128,8 @@ void CompositeRenderer::windowResized(float windowWidth, float windowHeight, flo
 }
 
 void CompositeRenderer::updateCompositeBase(const CompositeParams& params) {
+    hibernationAlpha = std::clamp(params.hibernationAlpha, 0.0f, 1.0f);
+
     // Collect layers and separate base from overlay
     std::vector<LayerInfo> baseLayers;
     overlayLayers.clear();
@@ -315,6 +317,15 @@ void CompositeRenderer::drawPanel(SidePanel& panel, float x, float w, float h,
     ofPopMatrix();
     
     tonemapShader.end();
+
+    const float blackoutAlpha = 1.0f - std::clamp(hibernationAlpha, 0.0f, 1.0f);
+    if (blackoutAlpha > 0.0f) {
+        ofPushStyle();
+        ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+        ofSetColor(0, 0, 0, static_cast<int>(std::lround(255.0f * blackoutAlpha)));
+        ofDrawRectangle(x, 0.0f, w, h);
+        ofPopStyle();
+    }
 }
 
 void CompositeRenderer::beginTonemapShader(const DisplayController::Settings& display,

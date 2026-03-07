@@ -73,6 +73,7 @@ private:
     ofFbo compositeFbo;
     glm::vec2 size { 0, 0 };
     float scale { 1.0f };
+    float hibernationAlpha { 1.0f };
 
     // Side panels
     struct SidePanel {
