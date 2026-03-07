@@ -14,7 +14,7 @@ public:
   struct DrawParams {
     bool audioEnabled { false };
     bool videoEnabled { false };
-    float alpha { 0.15f }; // 0..1 overall opacity
+    float alpha { 0.20f }; // 0..1 overall opacity
 
     // 0..1, only meaningful near end of config duration.
     float imminentConfigChangeProgress { 0.0f };

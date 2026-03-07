@@ -946,10 +946,11 @@ void Synth::draw() {
     cueParams.videoEnabled = performerCues.videoEnabled;
     cueParams.alpha = displayController ? displayController->getCueAlpha().get() : 0.0f;
 
-    constexpr int WARN_SEC = 10;
+    constexpr int WARN_SEC = 15;
     auto& nav = performanceNavigator;
-    if (nav.isConfigTimeExpired(ofGetElapsedTimef())) {
-      cueParams.flashExpired = true;
+    if (nav.isConfigTimeExpired()) {
+      cueParams.flashExpired = nav.isConfigTimeExpired(ofGetElapsedTimef());
+      cueParams.imminentConfigChangeProgress = 0.0f;
     } else {
       cueParams.imminentConfigChangeProgress = nav.getImminentConfigChangeProgress(WARN_SEC);
     }

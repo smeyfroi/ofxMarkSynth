@@ -16,8 +16,10 @@ namespace {
 constexpr float ICON_SIZE_PX = 26.0f;
 constexpr float MARGIN_PX = 14.0f;
 constexpr float STROKE_PX = 2.0f;
-constexpr float TIMING_BAR_HEIGHT_PX = 3.0f;
+constexpr float TIMING_BAR_HEIGHT_PX = 5.0f;
 constexpr float TIMING_BAR_GAP_PX = 6.0f;
+constexpr float BACKPLATE_PAD_PX = 6.0f;
+constexpr float BACKPLATE_ALPHA_FACTOR = 0.45f;
 
 void drawAudioBars(float x, float y, float size, float peakHeightFactor = 0.85f) {
   const float barW = size * 0.12f;
@@ -67,23 +69,37 @@ void CueGlyphController::draw(const DrawParams& params, float windowWidth, float
   ofPushStyle();
   ofEnableAlphaBlending();
 
+  const auto a = static_cast<unsigned char>(255.0f * alpha);
+  const auto backplateA = static_cast<unsigned char>(255.0f * alpha * BACKPLATE_ALPHA_FACTOR);
+
+  // Backplate for contrast on bright backgrounds.
+  // Covers timing bar + icon area.
+  {
+    float barY = y - TIMING_BAR_GAP_PX - TIMING_BAR_HEIGHT_PX;
+    float w = ICON_SIZE_PX;
+    float h = ICON_SIZE_PX + TIMING_BAR_GAP_PX + TIMING_BAR_HEIGHT_PX;
+    ofFill();
+    ofSetColor(0, 0, 0, backplateA);
+    ofDrawRectangle(x - BACKPLATE_PAD_PX, barY - BACKPLATE_PAD_PX, w + BACKPLATE_PAD_PX * 2.0f, h + BACKPLATE_PAD_PX * 2.0f);
+  }
+
   // Timing cue (drawn above icon)
   if (params.flashExpired) {
     ofFill();
-    ofSetColor(255, 80, 80, static_cast<unsigned char>(255.0f * alpha));
+    ofSetColor(255, 255, 255, a);
     float barY = y - TIMING_BAR_GAP_PX - TIMING_BAR_HEIGHT_PX;
     ofDrawRectangle(x, barY, ICON_SIZE_PX, TIMING_BAR_HEIGHT_PX);
   } else if (params.imminentConfigChangeProgress > 0.0f) {
     float p = std::clamp(params.imminentConfigChangeProgress, 0.0f, 1.0f);
     ofFill();
-    ofSetColor(255, 255, 255, static_cast<unsigned char>(200.0f * alpha));
+    ofSetColor(255, 255, 255, a);
     float barY = y - TIMING_BAR_GAP_PX - TIMING_BAR_HEIGHT_PX;
     ofDrawRectangle(x, barY, ICON_SIZE_PX * p, TIMING_BAR_HEIGHT_PX);
   }
 
   // Main icon
   ofFill();
-  ofSetColor(255, 255, 255, static_cast<unsigned char>(255.0f * alpha));
+  ofSetColor(255, 255, 255, a);
 
   if (params.audioEnabled && params.videoEnabled) {
     drawVideoFrame(x, y, ICON_SIZE_PX, true);

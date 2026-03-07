@@ -586,7 +586,10 @@ bool PerformanceNavigator::isConfigTimeExpired() const {
 
 bool PerformanceNavigator::isConfigTimeExpired(float nowSec) const {
   if (!isConfigTimeExpired()) return false;
-  return static_cast<int>(nowSec * 2.0f) % 2 == 0;
+
+  // Flash cadence: toggle every 0.75s (1.5x slower than the previous 0.5s cadence).
+  constexpr float FLASH_TOGGLE_SEC = 0.75f;
+  return static_cast<int>(nowSec / FLASH_TOGGLE_SEC) % 2 == 0;
 }
 
 bool PerformanceNavigator::isConfigChangeImminent(int withinSec) const {

@@ -76,7 +76,7 @@ private:
     ofParameter<float> brightness { "Brightness", 0.0, -0.1, 0.1 };
     ofParameter<float> hueShift { "Hue Shift", 0.0, -1.0, 1.0 };
     ofParameter<float> sideExposure { "Side Exp", 0.6, 0.0, 4.0 };
-    ofParameter<float> cueAlpha { "Cue Alpha", 0.15f, 0.0f, 1.0f };
+    ofParameter<float> cueAlpha { "Cue Alpha", 0.20f, 0.0f, 1.0f };
 };
 
 } // namespace ofxMarkSynth

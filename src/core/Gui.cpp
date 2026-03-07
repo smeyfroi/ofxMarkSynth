@@ -1022,16 +1022,16 @@ void Gui::drawStatus() {
   ImGui::SameLine(0.0f, 20.0f);  // 20 pixels spacing
   ImGui::Text("%s FPS", ofToString(ofGetFrameRate(), 0).c_str());
 
-  // Manual timing cue: extend / start countdown by +10s
+  // Manual timing cue: extend / start countdown by +15s
   ImGui::SameLine(0.0f, 20.0f);
   bool hasConfigLoaded = !synthPtr->currentConfigPath.empty();
   if (!hasConfigLoaded) ImGui::BeginDisabled();
-  if (ImGui::Button("Cue +10s") && hasConfigLoaded) {
-    constexpr int CUE_SEC = 10;
+  if (ImGui::Button("Cue +15s") && hasConfigLoaded) {
+    constexpr int CUE_SEC = 15;
     auto& nav = synthPtr->performanceNavigator;
 
-    // If no duration, or duration has expired, cue a config change 10s from now.
-    // Otherwise extend the current expiry by 10s.
+    // If no duration, or duration has expired, cue a config change 15s from now.
+    // Otherwise extend the current expiry by 15s.
     if (!nav.hasConfigDuration() || nav.isConfigTimeExpired()) {
       int elapsedSec = static_cast<int>(std::ceil(synthPtr->getConfigRunningTime()));
       nav.setConfigDurationSec(elapsedSec + CUE_SEC);
