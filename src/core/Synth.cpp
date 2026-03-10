@@ -218,8 +218,18 @@ void Synth::initVideoStream() {
     ofLogError("Synth") << "Failed to setup file video stream, falling back to camera if available";
   }
 
-  auto cameraDeviceIdPtr = resources.get<int>("cameraDeviceId");
+  auto cameraDeviceNamePtr = resources.get<std::string>("cameraDeviceName");
   auto videoSizePtr = resources.get<glm::vec2>("videoSize");
+  if (cameraDeviceNamePtr && !cameraDeviceNamePtr->empty() && videoSizePtr) {
+    auto stream = std::make_shared<VideoStream>();
+    if (stream->setupCamera(*cameraDeviceNamePtr, *videoSizePtr)) {
+      videoStreamPtr = std::move(stream);
+      resources.addShared("videoStream", videoStreamPtr);
+    }
+    return;
+  }
+
+  auto cameraDeviceIdPtr = resources.get<int>("cameraDeviceId");
   if (cameraDeviceIdPtr && videoSizePtr) {
     auto stream = std::make_shared<VideoStream>();
     if (stream->setupCamera(*cameraDeviceIdPtr, *videoSizePtr)) {
@@ -229,12 +239,13 @@ void Synth::initVideoStream() {
     return;
   }
 
-  ofLogWarning("Synth") << "No video stream configured (need sourceVideoPath or cameraDeviceId+videoSize)";
+  ofLogWarning("Synth") << "No video stream configured (need sourceVideoPath or cameraDeviceName/cameraDeviceId + videoSize)";
 }
 
 void Synth::initRendering(glm::vec2 compositeSize) {
   displayController = std::make_unique<DisplayController>();
   displayController->buildParameterGroup();
+  applySessionDisplaySettings();
   
   compositeRenderer = std::make_unique<CompositeRenderer>();
   compositeRenderer->allocate(compositeSize, ofGetWindowWidth(), ofGetWindowHeight(),
@@ -255,6 +266,43 @@ void Synth::initRendering(glm::vec2 compositeSize) {
     rawVideoRecorderPtr->setup(videoStreamPtr->getSize(), ffmpegPath);
   }
 #endif
+}
+
+void Synth::applySessionDisplaySettings() {
+  if (!displayController) {
+    return;
+  }
+
+  if (auto ptr = resources.get<int>("sessionDisplayToneMapType"); ptr) {
+    displayController->getToneMapType().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayExposure"); ptr) {
+    displayController->getExposure().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayGamma"); ptr) {
+    displayController->getGamma().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayWhitePoint"); ptr) {
+    displayController->getWhitePoint().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayContrast"); ptr) {
+    displayController->getContrast().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplaySaturation"); ptr) {
+    displayController->getSaturation().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayBrightness"); ptr) {
+    displayController->getBrightness().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayHueShift"); ptr) {
+    displayController->getHueShift().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplaySideExposure"); ptr) {
+    displayController->getSideExposure().set(*ptr);
+  }
+  if (auto ptr = resources.get<float>("sessionDisplayCueAlpha"); ptr) {
+    displayController->getCueAlpha().set(*ptr);
+  }
 }
 
 void Synth::maybeStartRecordingOnFirstWake() {

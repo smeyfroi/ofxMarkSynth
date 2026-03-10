@@ -28,6 +28,23 @@ Optional runtime keys (with defaults):
 - `logLevel` (default `notice`)
 - `logDestination` (`console|gui`, default `console`)
 
+Optional display keys:
+- `display` (object) — applied once at startup to `DisplayController`.
+  - Convention: values are strings for human readability (numbers are also accepted).
+  - Underscore-prefixed keys inside `display` are ignored (safe for commented-out alternatives).
+
+`display` fields:
+- `tonemap` (string): `Linear`, `Reinhard`, `Reinhard Extended`, `ACES`, `Filmic`, `Exposure`
+- `exposure` (string/number)
+- `gamma` (string/number)
+- `whitePoint` (string/number) — only used by `Reinhard Extended`
+- `contrast` (string/number)
+- `saturation` (string/number)
+- `brightness` (string/number)
+- `hueShift` (string/number)
+- `sideExposure` (string/number) — exposure for side panels
+- `cueAlpha` (string/number) — cue overlay opacity
+
 Recording keys:
 - `startRecordingOnFirstWake` (default `false`) — start a take on first unpause
 - `muxAudioBitrateKbps` (default `192`) — bitrate for muxed audio track
@@ -139,7 +156,7 @@ Choose one configuration (configured at the **Synth/session** level):
   - `sourceVideoMute` (bool)
   - `sourceVideoStartPosition` (std::string, optional) — Start playback at this timestamp. Format: `"MM:SS"`.
 - Camera input:
-  - `cameraDeviceId` (int)
+  - `cameraDeviceName` (std::string)  // match `ofVideoGrabber::listDevices()` deviceName
   - `videoSize` (glm::vec2)  // width, height
 
 Resource note:
@@ -154,7 +171,7 @@ resources.add("sourceVideoPath", std::filesystem::path("video/input.mp4"));
 resources.add("sourceVideoMute", false);
 
 // OR camera
-resources.add("cameraDeviceId", 0);
+resources.add("cameraDeviceName", std::string("FaceTime HD Camera"));
 resources.add("videoSize", glm::vec2(1280, 720));
 ```
 

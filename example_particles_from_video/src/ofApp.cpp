@@ -24,7 +24,7 @@ void ofApp::setup() {
   resources.add("audioSampleRate", AUDIO_SAMPLE_RATE);
   resources.add("sourceVideoPath", SOURCE_VIDEO_PATH);
   resources.add("sourceVideoMute", SOURCE_VIDEO_MUTE);
-  resources.add("cameraDeviceId", CAMERA_DEVICE_ID);
+  resources.add("cameraDeviceName", CAMERA_DEVICE_NAME);
   resources.add("videoSize", VIDEO_SIZE);
 
   resources.add("compositeSize", COMPOSITE_SIZE);

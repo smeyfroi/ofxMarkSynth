@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <string>
 
 #include "PingPongFbo.h"
 #include "ofFbo.h"
@@ -34,6 +35,7 @@ public:
 
   // Camera mode
   bool setupCamera(int deviceId, glm::vec2 desiredSize);
+  bool setupCamera(const std::string& deviceName, glm::vec2 desiredSize);
 
   // File mode
   bool setupFile(const std::filesystem::path& path, bool mute, std::optional<int> startPositionSeconds);

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cctype>
 #include <filesystem>
 #include <optional>
 #include <stdexcept>
@@ -66,6 +67,26 @@ inline std::optional<float> getFloatValue(const ofJson& j, const std::string& ke
   return j[key].get<float>();
 }
 
+inline std::optional<float> getFloatFromStringValue(const ofJson& j, const std::string& key) {
+  if (!j.contains(key) || !j[key].is_string()) {
+    return std::nullopt;
+  }
+
+  try {
+    return ofToFloat(j[key].get<std::string>());
+  } catch (const std::exception&) {
+    return std::nullopt;
+  }
+}
+
+inline std::optional<float> getFloatFromNumberOrStringValue(const ofJson& j, const std::string& key) {
+  if (auto n = getFloatValue(j, key); n) {
+    return n;
+  }
+
+  return getFloatFromStringValue(j, key);
+}
+
 inline std::optional<glm::vec2> getVec2Value(const ofJson& j, const std::string& key) {
   if (!j.contains(key) || !j[key].is_array() || j[key].size() != 2) {
     return std::nullopt;
@@ -87,6 +108,30 @@ inline std::optional<ofLogLevel> parseLogLevelString(const std::string& levelStr
   if (s == "error") return OF_LOG_ERROR;
   if (s == "fatal") return OF_LOG_FATAL_ERROR;
   if (s == "silent") return OF_LOG_SILENT;
+  return std::nullopt;
+}
+
+inline std::string normalizeEnumKey(const std::string& s) {
+  std::string out;
+  out.reserve(s.size());
+  for (const char c : s) {
+    if (std::isalnum(static_cast<unsigned char>(c)) != 0) {
+      out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+    }
+  }
+  return out;
+}
+
+inline std::optional<int> parseTonemapTypeString(const std::string& tonemapStr) {
+  const std::string s = normalizeEnumKey(tonemapStr);
+
+  if (s == "linear" || s == "linearclamp") return 0;
+  if (s == "reinhard") return 1;
+  if (s == "reinhardextended") return 2;
+  if (s == "aces") return 3;
+  if (s == "filmic") return 4;
+  if (s == "exposure") return 5;
+
   return std::nullopt;
 }
 
@@ -148,6 +193,39 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
   // Schema matches config/mod-params/presets.json.
   if (sessionJson.contains("modPresets") && sessionJson["modPresets"].is_object()) {
     resources.add("sessionModPresets", sessionJson["modPresets"]);
+  }
+
+  // Optional display/tonemap settings.
+  // Convention: values are strings for human readability (numbers are also accepted).
+  if (sessionJson.contains("display") && sessionJson["display"].is_object()) {
+    const ofJson& displayJson = sessionJson["display"];
+
+    auto tonemapOpt = getStringValue(displayJson, "tonemap");
+    if (!tonemapOpt) {
+      tonemapOpt = getStringValue(displayJson, "toneMap");
+    }
+    if (!tonemapOpt) {
+      tonemapOpt = getStringValue(displayJson, "toneMapType");
+    }
+
+    if (tonemapOpt && !tonemapOpt->empty()) {
+      if (auto parsedOpt = parseTonemapTypeString(*tonemapOpt)) {
+        resources.add("sessionDisplayToneMapType", *parsedOpt);
+      } else {
+        ofLogWarning("SessionResourceUtil") << "Unknown display.tonemap: '" << *tonemapOpt
+                                            << "' (expected Linear, Reinhard, Reinhard Extended, ACES, Filmic, Exposure)";
+      }
+    }
+
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "exposure")) resources.add("sessionDisplayExposure", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "gamma")) resources.add("sessionDisplayGamma", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "whitePoint")) resources.add("sessionDisplayWhitePoint", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "contrast")) resources.add("sessionDisplayContrast", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "saturation")) resources.add("sessionDisplaySaturation", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "brightness")) resources.add("sessionDisplayBrightness", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "hueShift")) resources.add("sessionDisplayHueShift", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "sideExposure")) resources.add("sessionDisplaySideExposure", *v);
+    if (auto v = getFloatFromNumberOrStringValue(displayJson, "cueAlpha")) resources.add("sessionDisplayCueAlpha", *v);
   }
 
   // === REQUIRED SYNTH RESOURCES ===
@@ -277,14 +355,24 @@ inline ResourceManager buildResourceManagerFromSessionConfig(const SessionConfig
     }
   } else {
     ofLogNotice("SessionResourceUtil") << "Video mode: camera";
-    const auto cameraDeviceIdOpt = getIntValue(sessionJson, "cameraDeviceId");
+
     const auto videoSizeOpt = getVec2Value(sessionJson, "videoSize");
-    if (!cameraDeviceIdOpt || !videoSizeOpt) {
-      throw std::runtime_error("Video camera mode requires cameraDeviceId, videoSize");
+    if (!videoSizeOpt) {
+      throw std::runtime_error("Video camera mode requires videoSize");
     }
 
-    resources.add("cameraDeviceId", *cameraDeviceIdOpt);
-    resources.add("videoSize", *videoSizeOpt);
+    if (auto cameraDeviceNameOpt = getStringValue(sessionJson, "cameraDeviceName"); cameraDeviceNameOpt && !cameraDeviceNameOpt->empty()) {
+      resources.add("cameraDeviceName", *cameraDeviceNameOpt);
+      resources.add("videoSize", *videoSizeOpt);
+    } else {
+      const auto cameraDeviceIdOpt = getIntValue(sessionJson, "cameraDeviceId");
+      if (!cameraDeviceIdOpt) {
+        throw std::runtime_error("Video camera mode requires cameraDeviceName or cameraDeviceId");
+      }
+
+      resources.add("cameraDeviceId", *cameraDeviceIdOpt);
+      resources.add("videoSize", *videoSizeOpt);
+    }
 
   }
 

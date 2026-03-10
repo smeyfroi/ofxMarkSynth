@@ -146,7 +146,7 @@
     },
     "ExampleVideoFlowSource": {
       "type": "VideoFlowSource",
-      "_requires": "ResourceManager with 'videoStream' (Synth-owned; configured via ('sourceVideoPath','sourceVideoMute', optional 'sourceVideoStartPosition') OR ('cameraDeviceId','videoSize'))",
+      "_requires": "ResourceManager with 'videoStream' (Synth-owned; configured via ('sourceVideoPath','sourceVideoMute', optional 'sourceVideoStartPosition') OR ('cameraDeviceName','videoSize'))",
       "_comment_sourceVideoStartPosition": "sourceVideoStartPosition: Optional start timestamp in MM:SS format (e.g. '1:30' for 1 minute 30 seconds)",
       "_params_from": "ofxMotionFromVideo",
       "config": {

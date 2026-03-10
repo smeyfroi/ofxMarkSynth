@@ -25,7 +25,7 @@ constexpr glm::vec2 VIDEO_RECORDER_SIZE { 1280, 720 };
 
 const std::filesystem::path SOURCE_VIDEO_PATH { ROOT_SOURCE_MATERIAL_PATH/"belfast/trombone-trimmed.mov" };
 constexpr bool SOURCE_VIDEO_MUTE = true;
-constexpr int CAMERA_DEVICE_ID = 0;
+const std::string CAMERA_DEVICE_NAME = "FaceTime HD Camera";
 const glm::vec2 VIDEO_SIZE { 640, 480 };
 
 class ofApp: public ofBaseApp{

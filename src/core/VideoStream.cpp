@@ -10,12 +10,47 @@
 #include "ofGraphics.h"
 #include "ofLog.h"
 #include "ofPixels.h"
+#include "util/SessionConfigUtil.h"
 
 namespace ofxMarkSynth {
 
 namespace {
 
 constexpr int DEFAULT_VIDEO_FPS = 30;
+
+std::optional<int> findUniqueCameraDeviceIdByName(ofVideoGrabber& grabber, const std::string& deviceName) {
+  const auto devices = grabber.listDevices();
+
+  std::optional<int> id;
+  int matchCount = 0;
+
+  for (const auto& d : devices) {
+    if (d.deviceName == deviceName) {
+      id = d.id;
+      matchCount++;
+    }
+  }
+
+  if (matchCount == 1 && id) {
+    return id;
+  }
+
+  std::string message;
+  if (matchCount == 0) {
+    message = "No camera matches cameraDeviceName='" + deviceName + "'";
+  } else {
+    message = "Ambiguous cameraDeviceName='" + deviceName + "' (" + std::to_string(matchCount) + " matches)";
+  }
+
+  ofLogNotice("VideoStream") << "Available cameras:";
+  for (const auto& d : devices) {
+    ofLogNotice("VideoStream") << "  id=" << d.id << " available=" << (d.bAvailable ? "true" : "false")
+                               << " name='" << d.deviceName << "'";
+  }
+
+  // Hard-exit after logging the available camera list.
+  hardExitWithAlert(message);
+}
 
 } // namespace
 
@@ -43,6 +78,38 @@ bool VideoStream::setupCamera(int deviceId, glm::vec2 desiredSize) {
   allocateFbos(grabber_.getSize());
 
   ofLogNotice("VideoStream") << "Camera setup ok deviceId=" << deviceId << " size=" << size_.x << "x" << size_.y;
+  return true;
+}
+
+bool VideoStream::setupCamera(const std::string& deviceName, glm::vec2 desiredSize) {
+  stop();
+
+  mode_ = Mode::Camera;
+
+  const auto deviceIdOpt = findUniqueCameraDeviceIdByName(grabber_, deviceName);
+  if (!deviceIdOpt) {
+    mode_ = Mode::None;
+    return false;
+  }
+
+  const int deviceId = *deviceIdOpt;
+
+  grabber_.setDeviceID(deviceId);
+  grabber_.setPixelFormat(OF_PIXELS_RGB);
+  grabber_.setDesiredFrameRate(DEFAULT_VIDEO_FPS);
+
+  const bool ok = grabber_.setup(static_cast<int>(desiredSize.x), static_cast<int>(desiredSize.y));
+  if (!ok) {
+    ofLogError("VideoStream") << "Failed to setup camera deviceName='" << deviceName << "' deviceId=" << deviceId
+                              << " size=" << desiredSize.x << "x" << desiredSize.y;
+    mode_ = Mode::None;
+    return false;
+  }
+
+  allocateFbos(grabber_.getSize());
+
+  ofLogNotice("VideoStream") << "Camera setup ok deviceName='" << deviceName << "' deviceId=" << deviceId
+                             << " size=" << size_.x << "x" << size_.y;
   return true;
 }
 

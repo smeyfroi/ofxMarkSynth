@@ -247,6 +247,7 @@ private:
   void initControllers(bool startHibernated);
   void initVideoStream();
   void initRendering(glm::vec2 compositeSize);
+  void applySessionDisplaySettings();
   void initResourcePaths();
   void initPerformanceNavigator();
   void initSinkSourceMappings();
